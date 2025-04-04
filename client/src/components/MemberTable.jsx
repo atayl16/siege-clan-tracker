@@ -34,19 +34,32 @@ const FIGHTER_RANKS = [
   { name: "TzKal", range: [1500, Number.MAX_SAFE_INTEGER] }
 ];
 
+// Helper function to safely format numbers
+const safeFormat = (value) => {
+  if (value === null || value === undefined) return "0";
+  return Number(value).toLocaleString();
+};
+
+// Helper function to safely parse integers
+const safeParseInt = (value) => {
+  if (value === null || value === undefined || value === "") return 0;
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 // Function to calculate next level requirement - XP needed for next rank for skillers, EHB needed for fighters
 const calculateNextLevel = (member) => {
   if (!member) return 0;
   
-  const womRole = (member.womrole || "").trim();
+  const womRole = (member.womrole || "").toLowerCase().trim();
   
   // Determine if the member is a skiller or fighter based on their womrole
-  const isSkiller = SKILLER_RANK_NAMES.some(rank => womRole.includes(rank));
-  const isFighter = FIGHTER_RANK_NAMES.some(rank => womRole.includes(rank));
+  const isSkiller = SKILLER_RANK_NAMES.some(rank => womRole.includes(rank.toLowerCase()));
+  const isFighter = FIGHTER_RANK_NAMES.some(rank => womRole.includes(rank.toLowerCase()));
   
   if (isSkiller) {
-    // Calculate clan XP (current - initial)
-    const clanXp = parseInt(member.current_xp || 0) - parseInt(member.initial_xp || 0);
+    // Calculate clan XP (current - initial) with safe parsing
+    const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.xp);
     
     // Find which rank range the member is in
     for (const rank of SKILLER_RANKS) {
@@ -61,8 +74,8 @@ const calculateNextLevel = (member) => {
       return 0; // Already at max rank
     }
   } else if (isFighter) {
-    // Use EHB for fighters
-    const clanEhb = parseInt(member.ehb || 0);
+    // Use EHB for fighters with safe parsing
+    const clanEhb = safeParseInt(member.ehb);
     
     // Find which rank range the member is in
     for (const rank of FIGHTER_RANKS) {
@@ -86,20 +99,20 @@ export default function MemberTable({ members }) {
   const columns = React.useMemo(
     () => [
       {
-        accessorKey: "username",
+        accessorKey: "name",
         header: "Name",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {row.original.username || "N/A"}
+            {row.original.name || row.original.wom_name || "N/A"}
           </div>
         ),
       },
       {
-        accessorKey: "clan_rank",
+        accessorKey: "rank",
         header: "Clan Rank",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {row.original.womrole || "N/A"}
+            {row.original.rank || "N/A"}
           </div>
         ),
       },
@@ -108,36 +121,44 @@ export default function MemberTable({ members }) {
         header: "EHB",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {row.original.ehb !== undefined ? row.original.ehb.toLocaleString() : "0"}
+            {safeFormat(row.original.ehb)}
           </div>
         ),
       },
       {
-        accessorKey: "initial_xp",
+        accessorKey: "xp",
         header: "Starting XP",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {row.original.initial_xp !== undefined ? row.original.initial_xp.toLocaleString() : "0"}
+            {safeFormat(row.original.xp)}
           </div>
         ),
       },
       {
         accessorKey: "clan_xp_gained",
         header: "Clan XP Gained",
-        cell: ({ row }) => (
-          <div style={{ textAlign: "center" }}>
-            {row.original.current_xp !== undefined && row.original.initial_xp !== undefined
-              ? (row.original.current_xp - row.original.initial_xp).toLocaleString()
-              : "0"}
-          </div>
-        ),
+        cell: ({ row }) => {
+          // Safe calculation of XP gained
+          let gainedXp = 0;
+          if (row.original.current_xp !== undefined && row.original.xp !== undefined) {
+            gainedXp = safeParseInt(row.original.current_xp) - safeParseInt(row.original.xp);
+          } else if (row.original.gained_xp !== undefined) {
+            gainedXp = safeParseInt(row.original.gained_xp);
+          }
+          
+          return (
+            <div style={{ textAlign: "center" }}>
+              {safeFormat(gainedXp)}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "next_level",
         header: "Next Level",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {calculateNextLevel(row.original).toLocaleString()}
+            {safeFormat(calculateNextLevel(row.original))}
           </div>
         ),
       },
@@ -146,8 +167,8 @@ export default function MemberTable({ members }) {
         header: "Joined",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {row.original.joined_date
-              ? new Date(row.original.joined_date).toLocaleDateString()
+            {row.original.created_at
+              ? new Date(row.original.created_at).toLocaleDateString()
               : "N/A"}
           </div>
         ),

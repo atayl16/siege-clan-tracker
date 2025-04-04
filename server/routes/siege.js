@@ -5,7 +5,7 @@ const db = require("../db");
 router.get("/leaderboard", (req, res) => {
   db.all(
     `
-    SELECT username, siege_score 
+    SELECT name, siege_score 
     FROM members 
     ORDER BY siege_score DESC
   `,

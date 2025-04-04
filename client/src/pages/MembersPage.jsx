@@ -19,7 +19,7 @@ export default function MembersPage() {
       .sort((a, b) => (b.siege_score || 0) - (a.siege_score || 0))
       .slice(0, 5) // Get only the top 5 players
       .map(member => ({
-        username: member.username,
+        name: member.name,
         score: member.siege_score || 0
       }));
   }, [members]);

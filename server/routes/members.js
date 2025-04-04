@@ -9,7 +9,7 @@ router.get("/", (req, res) => {
     console.log("Fetching members needing updates...");
     db.all(
       `SELECT 
-        username, 
+        name, 
         member_type, 
         skiller_rank, 
         fighter_rank, 

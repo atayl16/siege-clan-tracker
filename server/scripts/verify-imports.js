@@ -12,7 +12,7 @@ db.get('SELECT COUNT(*) as count FROM members', (err, row) => {
   console.log(`Total members in database: ${row.count}`);
   
   // Sample some records - update fields to match your schema
-  db.all('SELECT wom_id, username, womrole, current_xp, ehb FROM members LIMIT 5', (err, rows) => {
+  db.all('SELECT wom_id, name, womrole, current_xp, ehb FROM members LIMIT 5', (err, rows) => {
     if (err) {
       console.error('Error:', err);
       return;

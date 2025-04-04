@@ -18,13 +18,10 @@ export default function RankAlerts() {
       <ul className="alerts-list">
         {alerts.map((member) => (
           <li key={member.wom_id} className="alert-item">
-            <span className="username">{member.username}</span>
+            <span className="name">{member.name}</span>
             <div className="alert-details">
               <span>
                 Current:{" "}
-                {member.member_type === "skiller"
-                  ? member.skiller_rank
-                  : member.fighter_rank}
               </span>
               <span>Calculated: {member.calculated_rank}</span>
             </div>

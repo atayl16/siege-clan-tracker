@@ -23,13 +23,13 @@ async function syncGroup() {
     members.forEach((member) => {
       db.run(
         `
-        INSERT OR IGNORE INTO members (wom_id, username, wom_name) 
+        INSERT OR IGNORE INTO members (wom_id, name, wom_name) 
         VALUES (?, ?, ?)
         ON CONFLICT(wom_id) DO UPDATE SET
-        username = excluded.username,
+        name = excluded.name,
         wom_name = excluded.wom_name
       `,
-        [member.id, member.username, member.displayName]
+        [member.id, member.name, member.displayName]
       );
     });
 
