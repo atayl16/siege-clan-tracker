@@ -10,7 +10,6 @@ router.get("/", (req, res) => {
     db.all(
       `SELECT 
         name, 
-        member_type, 
         skiller_rank, 
         fighter_rank, 
         calculated_rank 
@@ -28,8 +27,7 @@ router.get("/", (req, res) => {
   } else {
     db.all(
       `SELECT 
-        username, 
-        member_type, 
+        name, 
         siege_score, 
         skiller_rank, 
         fighter_rank 
