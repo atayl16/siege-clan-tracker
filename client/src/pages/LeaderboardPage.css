@@ -1,0 +1,73 @@
+.leaderboard-container {
+  padding: 20px;
+  color: white;
+  min-height: 100vh;
+  background-color: black;
+  width: 100%;
+}
+
+.leaderboard-table-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: rgba(34, 34, 34, 0.6);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.page-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  border-top: none;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rank-cell {
+  position: relative;
+  font-weight: bold;
+}
+
+.medal {
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.gold {
+  color: gold;
+}
+
+.silver {
+  color: silver;
+}
+
+.bronze {
+  color: #cd7f32;
+}
+
+.rank-number {
+  font-weight: bold;
+}
+
+/* Make the table full width on small screens */
+@media (max-width: 768px) {
+  .leaderboard-table-container {
+    padding: 10px;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+}

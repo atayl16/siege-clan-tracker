@@ -6,7 +6,13 @@
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server/index.js",
-    "client": "npm start --prefix client"
+    "client": "npm start --prefix client",
+    "setup-db": "node server/scripts/setup-db.js",
+    "import-csv": "node server/scripts/import-csv.js",
+    "verify": "node server/scripts/verify-imports.js",
+    "rebuild-db": "sqlite3 server/db/siege.db < server/db/schema.sql",
+    "reset-db": "npm run rebuild-db && npm run import-csv",
+    "netlify-dev": "cd client && npm run build && cd .. && netlify dev"
   },
   "repository": {
     "type": "git",
@@ -22,5 +28,8 @@
   "description": "",
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.4"
   }
 }

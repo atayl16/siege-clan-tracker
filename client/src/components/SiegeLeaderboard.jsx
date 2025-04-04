@@ -2,27 +2,28 @@ import React from "react";
 
 export default function SiegeLeaderboard({ leaderboard }) {
   return (
-    <table className="table table-dark table-hover table-responsive table-bordered">
+    <table className="table table-dark table-striped table-hover">
       <thead>
         <tr>
-          <th style={{ textAlign: "center" }} colSpan="3">
-            🏆 &nbsp; Top 3 Leaderboard &nbsp; 🏆
-          </th>
-        </tr>
-        <tr>
-          <th style={{ textAlign: "center" }}>Rank</th>
-          <th style={{ textAlign: "left" }}>Name</th>
-          <th style={{ textAlign: "center" }}>Points</th>
+          <th scope="col">Rank</th>
+          <th scope="col">Player</th>
+          <th scope="col">Score</th>
         </tr>
       </thead>
       <tbody>
-        {leaderboard.map((player, index) => (
-          <tr key={player.id}>
-            <td style={{ textAlign: "center" }}>{index + 1}</td>
-            <td style={{ textAlign: "left" }}>{player.name}</td>
-            <td style={{ textAlign: "center" }}>{player.points}</td>
+        {leaderboard.length === 0 ? (
+          <tr>
+            <td colSpan="3" className="text-center">No leaderboard data available</td>
           </tr>
-        ))}
+        ) : (
+          leaderboard.map((player, index) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>{player.username}</td>
+              <td>{player.score.toLocaleString()}</td>
+            </tr>
+          ))
+        )}
       </tbody>
     </table>
   );

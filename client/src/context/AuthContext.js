@@ -12,8 +12,25 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
   };
 
+  const logout = () => {
+    localStorage.removeItem("adminAuth");
+    setIsAuthenticated(false);
+  };
+
+  const isAdmin = () => {
+    return isAuthenticated;
+  };
+
+  const isLoggedIn = () => {
+    return isAuthenticated;
+  };
+
+  const isLoggedOut = () => {
+    return !isAuthenticated;
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, isAdmin, isLoggedIn, isLoggedOut }}>
       {children}
     </AuthContext.Provider>
   );

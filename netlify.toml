@@ -1,22 +1,36 @@
 [build]
-  base = "siege-clan-tracker/client"
+  base = "client" 
+  functions = "../netlify/functions"   # Path is relative to base
   command = "npm run build"
-  publish = "client/build"
-
+  publish = "build"
+  
+# Redirects for client-side routing and API
 [[redirects]]
   from = "/admin/*"
   to = "/admin.html"
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self' https://*.netlify.app; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+    # Content-Security-Policy = "default-src 'self' https://*.netlify.app https://*.supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# Cache control for admin pages
 [[headers]]
   for = "/admin/*"
   [headers.values]
