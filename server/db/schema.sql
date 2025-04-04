@@ -26,3 +26,5 @@ CREATE TABLE audit_log (
   action TEXT,
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE members ADD COLUMN needs_rank_update BOOLEAN DEFAULT FALSE;

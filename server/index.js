@@ -6,8 +6,8 @@ const app = express();
 require("dotenv").config();
 
 // Initialize database
-const db = new sqlite3.Database("./siege.db");
-
+const path = require("path");
+const db = new sqlite3.Database(path.resolve(__dirname, "siege.db"));
 // Middleware
 app.use(cors());
 app.use(express.json());
