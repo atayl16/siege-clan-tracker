@@ -1,24 +1,29 @@
-import { useQuery } from "@tanstack/react-query";
+import React from "react";
 
-export default function SiegeLeaderboard() {
-  const { data: leaderboard } = useQuery({
-    queryKey: ["siege-scores"],
-    queryFn: () =>
-      fetch("/api/siege/leaderboard").then((res) => res.json()),
-  });
-
+export default function SiegeLeaderboard({ leaderboard }) {
   return (
-    <div className="leaderboard">
-      <h2>Siege Scores</h2>
-      <ol>
-        {leaderboard?.map((member, index) => (
-          <li key={member.wom_id}>
-            <span className="rank">{index + 1}.</span>
-            <span className="name">{member.username}</span>
-            <span className="score">{member.siege_score}</span>
-          </li>
+    <table className="table table-dark table-hover table-responsive table-bordered">
+      <thead>
+        <tr>
+          <th style={{ textAlign: "center" }} colSpan="3">
+            🏆 &nbsp; Top 3 Leaderboard &nbsp; 🏆
+          </th>
+        </tr>
+        <tr>
+          <th style={{ textAlign: "center" }}>Rank</th>
+          <th style={{ textAlign: "left" }}>Name</th>
+          <th style={{ textAlign: "center" }}>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        {leaderboard.map((player, index) => (
+          <tr key={player.id}>
+            <td style={{ textAlign: "center" }}>{index + 1}</td>
+            <td style={{ textAlign: "left" }}>{player.name}</td>
+            <td style={{ textAlign: "center" }}>{player.points}</td>
+          </tr>
         ))}
-      </ol>
-    </div>
+      </tbody>
+    </table>
   );
 }
