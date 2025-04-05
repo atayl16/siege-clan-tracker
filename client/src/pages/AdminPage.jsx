@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import MemberTable from "../components/MemberTable";
-import SiegeLeaderboard from "../components/SiegeLeaderboard";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventProcessor from "../components/EventProcessor";
