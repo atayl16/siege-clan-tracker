@@ -30,6 +30,8 @@
     "concurrently": "^9.1.2"
   },
   "dependencies": {
-    "bootstrap": "^5.3.4"
+    "@supabase/supabase-js": "^2.49.4",
+    "bootstrap": "^5.3.4",
+    "node-fetch": "^2.6.12"
   }
 }

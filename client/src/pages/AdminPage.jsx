@@ -5,6 +5,7 @@ import SiegeLeaderboard from "../components/SiegeLeaderboard";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventProcessor from "../components/EventProcessor";
+import WomSyncButton from "../components/WomSyncButton";
 
 export default function AdminPage() {
   const { isAuthenticated } = useAuth();
@@ -43,8 +44,9 @@ export default function AdminPage() {
             <EventProcessor />
           </div>
 
-          <div className="leaderboard-panel">
-            <SiegeLeaderboard showActions={true} />
+          <div className="wom-sync-panel">
+            <h3>Wise Old Man Sync</h3>
+            <WomSyncButton />
           </div>
         </div>
       </div>
