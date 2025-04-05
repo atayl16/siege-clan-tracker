@@ -1,32 +1,52 @@
 const { createClient } = require('@supabase/supabase-js');
 
-exports.handler = async (event, context) => {
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+);
+
+exports.handler = async function(event, context) {
+  // Debug logs (moved inside the handler function)
+  console.log("SUPABASE_URL exists:", !!process.env.REACT_APP_SUPABASE_URL);
+  console.log(
+    "SUPABASE_SERVICE_ROLE_KEY exists:",
+    !!process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  );
+  
   try {
-    const supabase = createClient(
-      process.env.SUPABASE_URL, 
-      process.env.SUPABASE_ANON_KEY
-    );
-    
-    const { data, error } = await supabase.from('members').select('*');
+    // Set CORS headers
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Content-Type': 'application/json'
+    };
+
+    // Handle preflight requests
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: 'Preflight call successful' }),
+      };
+    }
+
+    // Fetch data from Supabase
+    const { data, error } = await supabase
+      .from('members')
+      .select('*');
+
     if (error) throw error;
-    
+
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'  // Add CORS header for testing
-      },
-      body: JSON.stringify(data || [])
+      headers,
+      body: JSON.stringify(data),
     };
   } catch (error) {
-    console.error("Error in members function:", error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'  // Add CORS header for testing
-      },
-      body: JSON.stringify({ error: error.message })
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };

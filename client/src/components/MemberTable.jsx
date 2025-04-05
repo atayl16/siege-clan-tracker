@@ -59,7 +59,7 @@ const calculateNextLevel = (member) => {
   
   if (isSkiller) {
     // Calculate clan XP (current - initial) with safe parsing
-    const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.xp);
+    const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
     
     // Find which rank range the member is in
     for (const rank of SKILLER_RANKS) {
@@ -130,7 +130,7 @@ export default function MemberTable({ members }) {
         header: "Starting XP",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {safeFormat(row.original.xp)}
+            {safeFormat(row.original.first_xp)}
           </div>
         ),
       },
@@ -140,10 +140,8 @@ export default function MemberTable({ members }) {
         cell: ({ row }) => {
           // Safe calculation of XP gained
           let gainedXp = 0;
-          if (row.original.current_xp !== undefined && row.original.xp !== undefined) {
-            gainedXp = safeParseInt(row.original.current_xp) - safeParseInt(row.original.xp);
-          } else if (row.original.gained_xp !== undefined) {
-            gainedXp = safeParseInt(row.original.gained_xp);
+          if (row.original.current_xp !== undefined && row.original.first_xp !== undefined) {
+            gainedXp = safeParseInt(row.original.current_xp) - safeParseInt(row.original.first_xp);
           }
           
           return (
@@ -163,13 +161,11 @@ export default function MemberTable({ members }) {
         ),
       },
       {
-        accessorKey: "joined_date",
-        header: "Joined",
+        accessorKey: "siege_score",
+        header: "Siege Score",
         cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {row.original.created_at
-              ? new Date(row.original.created_at).toLocaleDateString()
-              : "N/A"}
+            {safeFormat(row.original.siege_score)}
           </div>
         ),
       },

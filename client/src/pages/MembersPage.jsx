@@ -15,7 +15,6 @@ export default function MembersPage() {
   const leaderboard = useMemo(() => {
     // Return top 5 members sorted by siege_score (highest first)
     return [...members]
-      .filter(member => !member.deactivated) // Optional: exclude deactivated members
       .sort((a, b) => (b.siege_score || 0) - (a.siege_score || 0))
       .slice(0, 5) // Get only the top 5 players
       .map(member => ({
