@@ -3,13 +3,13 @@ const fetch = require('node-fetch');
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
 );
 
 // WOM API configuration
-const WOM_API_KEY = process.env.WOM_API_KEY;
-const WOM_GROUP_ID = process.env.WOM_GROUP_ID;
+const WOM_API_KEY = process.env.REACT_APP_WOM_API_KEY;
+const WOM_GROUP_ID = process.env.REACT_APP_WOM_GROUP_ID;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
 exports.handler = async (event, context) => {
