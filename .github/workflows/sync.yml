@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          npm install node-fetch@2
+          npm install axios --no-save  # Install axios instead of node-fetch
       
       - name: Run WOM sync script
         run: node server/scripts/sync-group.js
