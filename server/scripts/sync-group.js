@@ -14,6 +14,7 @@ console.log("REACT_APP_SUPABASE_URL exists:", !!process.env.REACT_APP_SUPABASE_U
 console.log("WOM_API_KEY exists:", !!process.env.WOM_API_KEY);
 console.log("REACT_APP_WOM_API_KEY exists:", !!process.env.REACT_APP_WOM_API_KEY);
 console.log("Using values:", !!supabaseUrl, !!supabaseKey, !!womApiKey, !!womGroupId);
+console.log("WOM Group ID:", womGroupId);
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -21,8 +22,8 @@ const supabase = createClient(
   supabaseKey
 );
 
-// WOM API base URL
-const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
+// WOM API base URL - UPDATED to use v3 instead of v2
+const WOM_API_BASE = 'https://api.wiseoldman.net/v3';
 
 // Check if running as a Netlify function or directly
 const isNetlifyFunction = !!process.env.NETLIFY;
@@ -47,8 +48,12 @@ const syncGroup = async (event) => {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': womApiKey
-      }
+      },
+      // Add empty body as some APIs require it for POST requests
+      data: {}
     });
+    
+    console.log("Update response:", updateResponse.status, updateResponse.statusText);
     
     // axios responses have data property instead of json() method
     const updateData = updateResponse.data;
@@ -96,7 +101,7 @@ const syncGroup = async (event) => {
     // Step 3: Fetch updated group data
     console.log('Fetching updated group data...');
     
-    // Using axios instead of fetch
+    // Using axios instead of fetch - using updated v3 API
     const groupResponse = await axios.get(
       `${WOM_API_BASE}/groups/${womGroupId}?includeMemberships=true`
     );
@@ -115,7 +120,7 @@ const syncGroup = async (event) => {
     for (const member of members) {
       memberPromises.push((async () => {
         try {
-          // Fetch detailed player data using axios
+          // Fetch detailed player data using axios - using updated v3 API
           const playerResponse = await axios.get(`${WOM_API_BASE}/players/${member.username}`);
           
           // axios responses have data property
@@ -186,6 +191,16 @@ const syncGroup = async (event) => {
     
   } catch (err) {
     console.error('Error in sync operation:', err);
+    
+    // More detailed error information
+    if (err.response) {
+      console.error('API Error Response:', {
+        status: err.response.status,
+        statusText: err.response.statusText,
+        data: err.response.data,
+        url: err.config.url
+      });
+    }
     
     const errorResult = {
       error: 'Failed to sync with WOM',
