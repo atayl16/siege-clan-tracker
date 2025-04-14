@@ -1,11 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
-const axios = require('axios'); // Replace fetch with axios
+const axios = require('axios');
 
 // Get environment variables with fallbacks between prefixed and non-prefixed versions
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY;
 const womApiKey = process.env.WOM_API_KEY || process.env.REACT_APP_WOM_API_KEY;
 const womGroupId = process.env.WOM_GROUP_ID || process.env.REACT_APP_WOM_GROUP_ID;
+const womVerificationCode = process.env.WOM_VERIFICATION_CODE || process.env.REACT_APP_WOM_VERIFICATION_CODE;
 
 // Debug information
 console.log("Environment variables check:");
@@ -13,7 +14,9 @@ console.log("SUPABASE_URL exists:", !!process.env.SUPABASE_URL);
 console.log("REACT_APP_SUPABASE_URL exists:", !!process.env.REACT_APP_SUPABASE_URL);
 console.log("WOM_API_KEY exists:", !!process.env.WOM_API_KEY);
 console.log("REACT_APP_WOM_API_KEY exists:", !!process.env.REACT_APP_WOM_API_KEY);
-console.log("Using values:", !!supabaseUrl, !!supabaseKey, !!womApiKey, !!womGroupId);
+console.log("WOM_VERIFICATION_CODE exists:", !!process.env.WOM_VERIFICATION_CODE);
+console.log("REACT_APP_WOM_VERIFICATION_CODE exists:", !!process.env.REACT_APP_WOM_VERIFICATION_CODE);
+console.log("Using values:", !!supabaseUrl, !!supabaseKey, !!womApiKey, !!womGroupId, !!womVerificationCode);
 console.log("WOM Group ID:", womGroupId);
 
 // Initialize Supabase client
@@ -22,8 +25,8 @@ const supabase = createClient(
   supabaseKey
 );
 
-// WOM API base URL - UPDATED to use v3 instead of v2
-const WOM_API_BASE = 'https://api.wiseoldman.net/v3';
+// WOM API base URL - Using v2 as per documentation
+const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
 // Check if running as a Netlify function or directly
 const isNetlifyFunction = !!process.env.NETLIFY;
@@ -38,79 +41,56 @@ const syncGroup = async (event) => {
   };
 
   try {
+    if (!womVerificationCode) {
+      throw new Error('WOM verification code is missing. Please add it to your environment variables as WOM_VERIFICATION_CODE or REACT_APP_WOM_VERIFICATION_CODE');
+    }
+
     // Step 1: Request group update
     console.log(`Requesting update for WOM group ${womGroupId}`);
     
-    // Using axios instead of fetch
+    // Using axios with updated endpoint and verification code
     const updateResponse = await axios({
       method: 'POST',
-      url: `${WOM_API_BASE}/groups/${womGroupId}/update`,
+      url: `${WOM_API_BASE}/groups/${womGroupId}/update-all`,
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': womApiKey
       },
-      // Add empty body as some APIs require it for POST requests
-      data: {}
+      data: {
+        verificationCode: womVerificationCode
+      }
     });
     
     console.log("Update response:", updateResponse.status, updateResponse.statusText);
+    console.log("Update response data:", JSON.stringify(updateResponse.data, null, 2));
     
-    // axios responses have data property instead of json() method
-    const updateData = updateResponse.data;
-    const jobId = updateData.job?.id;
+    // The update is now queuing in the background, according to the API docs
+    // We need to wait longer for it to complete
+    console.log('Update initiated. Waiting for group members to be updated (this may take several minutes)...');
     
-    if (!jobId) {
-      throw new Error('No job ID returned from update request');
-    }
+    // Wait longer for updates to process - 30 seconds
+    await new Promise(resolve => setTimeout(resolve, 30000));
     
-    // Step 2: Poll for job completion
-    console.log(`Waiting for job ${jobId} to complete...`);
-    
-    // Poll for a maximum of 5 minutes (30 attempts, 10 seconds apart)
-    let jobComplete = false;
-    let attempts = 0;
-    const maxAttempts = 30;
-    
-    while (!jobComplete && attempts < maxAttempts) {
-      attempts++;
-      
-      // Using axios instead of fetch
-      const jobResponse = await axios.get(`${WOM_API_BASE}/jobs/${jobId}`);
-      
-      // axios responses have data property
-      const jobData = jobResponse.data;
-      
-      if (jobData.status === 'completed') {
-        jobComplete = true;
-        console.log('Job completed successfully');
-      } else if (jobData.status === 'failed') {
-        throw new Error(`Job failed: ${jobData.error || 'Unknown error'}`);
-      } else {
-        // Wait 10 seconds before checking again
-        if (attempts < maxAttempts) {
-          console.log(`Job in progress (${jobData.status}), waiting 10 seconds...`);
-          await new Promise(resolve => setTimeout(resolve, 10000));
-        }
-      }
-    }
-    
-    if (!jobComplete) {
-      throw new Error('Job timed out after 5 minutes');
-    }
-    
-    // Step 3: Fetch updated group data
+    // Step 2: Fetch updated group data
     console.log('Fetching updated group data...');
     
-    // Using axios instead of fetch - using updated v3 API
+    // Using axios to get group data
     const groupResponse = await axios.get(
       `${WOM_API_BASE}/groups/${womGroupId}?includeMemberships=true`
     );
     
     // axios responses have data property
     const groupData = groupResponse.data;
+    
+    // Check if we have members
+    if (!groupData.members || !Array.isArray(groupData.members)) {
+      console.log("Group data structure:", JSON.stringify(groupData, null, 2));
+      throw new Error('No members found in group data');
+    }
+    
     const { members } = groupData;
     
-    // Step 4: Fetch details for each player
+    // Step 3: Fetch details for each player
     console.log(`Updating ${members.length} members in database...`);
     
     let updatedCount = 0;
@@ -120,7 +100,7 @@ const syncGroup = async (event) => {
     for (const member of members) {
       memberPromises.push((async () => {
         try {
-          // Fetch detailed player data using axios - using updated v3 API
+          // Fetch detailed player data using axios
           const playerResponse = await axios.get(`${WOM_API_BASE}/players/${member.username}`);
           
           // axios responses have data property
