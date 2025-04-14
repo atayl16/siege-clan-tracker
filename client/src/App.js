@@ -7,6 +7,7 @@ import {
   useLocation
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import AdminLogin from "./components/AdminLogin";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";

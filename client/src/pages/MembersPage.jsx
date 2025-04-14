@@ -60,21 +60,19 @@ export default function MembersPage() {
   return (
     <div className="page-container" style={{ backgroundColor: "black" }}>
       <h1 className="page-title">XP Tracker</h1>
-      
+
       {loading && <div className="alert alert-info">Loading data...</div>}
       {error && <div className="alert alert-danger">Error: {error}</div>}
-      
+
       <div className="row">
-        {/* Main Table - Takes up 65% on medium+ screens, full width on smaller screens */}
-        <div className="col-12 col-md-7 mb-4">
+        <div className="col-12 col-md-8 mb-4">
           <h2 className="section-title">Members</h2>
           <div className="table-responsive">
             <MemberTable members={members} />
           </div>
         </div>
-  
-        {/* Sidebar - Takes up 35% on medium+ screens, full width on smaller screens */}
-        <div className="col-12 col-md-5">
+
+        <div className="col-12 col-md-4">
           <div className="sidebar-content">
             <div className="mb-4">
               <h2 className="section-title">Leaderboard</h2>
@@ -82,14 +80,14 @@ export default function MembersPage() {
                 <SiegeLeaderboard leaderboard={leaderboard} />
               </div>
             </div>
-  
+
             <div className="mb-4">
               <h2 className="section-title">Events</h2>
               <div className="table-responsive">
                 <EventsTable events={events} />
               </div>
             </div>
-  
+
             <div className="mb-4">
               <h2 className="section-title">Clan Ranks</h2>
               <ClanRanks />

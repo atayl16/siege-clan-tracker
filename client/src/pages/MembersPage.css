@@ -32,6 +32,19 @@
   min-width: 80px;
 }
 
+/* Make the member table take full width */
+.member-table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* Ensure table cells don't get too compressed */
+.member-table th,
+.member-table td {
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+
 /* Additional responsive adjustments */
 @media (max-width: 767.98px) {
   .sidebar-content {

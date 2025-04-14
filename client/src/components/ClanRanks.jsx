@@ -1,17 +1,8 @@
 import React from "react";
+import { ClanIcon, GemIcon } from "./RankIcons";
+import { SKILLER_RANKS, FIGHTER_RANKS } from "../utils/rankUtils";
 
 export default function ClanRanks() {
-  const ranks = [
-    { name: "Opal", color: "moccasin", description: "New Member" },
-    { name: "Sapphire", color: "blue", description: "3,000,000 XP" },
-    { name: "Emerald", color: "lime", description: "8,000,000 XP" },
-    { name: "Ruby", color: "red", description: "15,000,000 XP" },
-    { name: "Diamond", color: "white", description: "40,000,000 XP" },
-    { name: "Dragonstone", color: "magenta", description: "90,000,000 XP" },
-    { name: "Onyx", color: "grey", description: "150,000,000 XP" },
-    { name: "Zenyte", color: "orange", description: "500,000,000 XP" },
-  ];
-
   return (
     <table className="table table-dark table-hover table-sm table-responsive">
       <thead>
@@ -22,19 +13,29 @@ export default function ClanRanks() {
         </tr>
       </thead>
       <tbody>
-        {ranks.map((rank) => (
-          <tr key={rank.name}>
+        {/* First 8 rows have both Skiller and Fighter ranks */}
+        {SKILLER_RANKS.map((skillerRank, index) => (
+          <tr key={skillerRank.name}>
             <td style={{ textAlign: "center" }}>
-              <i
-                className="bi-gem"
-                style={{ fontSize: "1rem", color: rank.color }}
-              >
-                {" "}
-                {rank.name} - {rank.description}
-              </i>
+              <GemIcon gemType={skillerRank.name} color={skillerRank.color} />
+              <span>{skillerRank.name} - {skillerRank.description}</span>
+            </td>
+            <td style={{ textAlign: "center" }}>
+              <ClanIcon name={FIGHTER_RANKS[index]?.name} />
+              {` ${FIGHTER_RANKS[index]?.name} - ${FIGHTER_RANKS[index]?.description}`}
             </td>
           </tr>
         ))}
+        {/* Last row only has TzKal if it wasn't included above */}
+        {FIGHTER_RANKS.length > SKILLER_RANKS.length && (
+          <tr>
+            <td></td>
+            <td style={{ textAlign: "center" }}>
+              <ClanIcon name="TzKal" />
+              {` TzKal - 1500 EHB`}
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
   );

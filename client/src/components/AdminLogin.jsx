@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import React, { useState } from "react"; // Import useState from React
+import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
+import { useAuth } from "../context/AuthContext"; // Import useAuth from your AuthContext
 
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
@@ -11,17 +11,14 @@ export default function AdminLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
+      // Use hardcoded username for testing
+      const username = "admin";
+      const result = login(username, password);
 
-      if (response.ok) {
-        login();
+      if (result && !result.error) {
         navigate("/admin");
       } else {
-        setError("Invalid password");
+        setError(result.error || "Invalid credentials");
       }
     } catch (err) {
       setError("Connection failed");

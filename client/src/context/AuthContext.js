@@ -7,9 +7,16 @@ export function AuthProvider({ children }) {
     localStorage.getItem("adminAuth") === "true"
   );
 
-  const login = () => {
-    localStorage.setItem("adminAuth", "true");
-    setIsAuthenticated(true);
+  const login = (username, password) => {
+    // Temporary hardcoded credentials for testing
+    if (username === "admin" && password === "") {
+      localStorage.setItem("adminAuth", "true");
+      setIsAuthenticated(true);
+      return { token: "temporary-token", user: { username: "admin" } };
+    }
+  
+    // If credentials are incorrect, return an error
+    return { error: "Invalid credentials" };
   };
 
   const logout = () => {

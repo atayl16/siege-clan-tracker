@@ -53,20 +53,6 @@ body, html {
   z-index: 1000;
 }
 
-/* Admin Layout */
-.admin-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
 /* Forms */
 .form-group {
   margin-bottom: 1rem;
