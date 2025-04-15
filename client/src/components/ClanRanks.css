@@ -1,0 +1,38 @@
+.clan-ranks-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.clan-ranks-header {
+  text-align: center;
+  background-color: #333;
+  padding: 12px;
+}
+
+.clan-ranks-cell {
+  text-align: center;
+  padding: 10px 8px;
+  vertical-align: middle;
+}
+
+.rank-name-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.rank-icon {
+  display: inline-flex;
+  margin-right: 6px;
+}
+
+.rank-description {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.empty-cell {
+  background-color: rgba(0, 0, 0, 0.2);
+}

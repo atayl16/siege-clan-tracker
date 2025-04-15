@@ -1,0 +1,154 @@
+.member-editor {
+  color: #e0e0e0;
+  padding: 10px 0;
+}
+
+/* Form groups */
+.member-editor .form-group {
+  margin-bottom: 16px;
+}
+
+.member-editor label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #bbbbbb;
+  font-weight: 500;
+}
+
+.member-editor .form-control {
+  width: 100%;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.member-editor .form-control:focus {
+  outline: none;
+  border-color: #ff9800;
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.25);
+}
+
+.member-editor .form-control::placeholder {
+  color: #666;
+}
+
+/* Number inputs */
+.member-editor input[type="number"] {
+  text-align: right;
+}
+
+/* Select styling */
+.member-editor select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 30px;
+}
+
+/* DatePicker customization */
+.member-editor .react-datepicker-wrapper {
+  width: 100%;
+}
+
+.member-editor .react-datepicker__input-container {
+  width: 100%;
+}
+
+/* Grid system */
+.member-editor .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -10px;
+  margin-left: -10px;
+  margin-bottom: 0;
+}
+
+.member-editor .col-md-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+/* Error alert */
+.member-editor .alert {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.member-editor .alert-danger {
+  background-color: rgba(220, 53, 69, 0.15);
+  color: #ff6b6b;
+  border-left: 3px solid #dc3545;
+}
+
+/* Button group */
+.member-editor .button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+  justify-content: flex-end;
+}
+
+.member-editor .btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.member-editor .btn-primary {
+  background-color: #ff9800;
+  color: #1a1a1a;
+}
+
+.member-editor .btn-primary:hover {
+  background-color: #e68a00;
+}
+
+.member-editor .btn-secondary {
+  background-color: #444;
+  color: #f0f0f0;
+}
+
+.member-editor .btn-secondary:hover {
+  background-color: #555;
+}
+
+.member-editor .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .member-editor .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 0;
+  }
+  
+  .member-editor .row {
+    margin-bottom: 0;
+  }
+  
+  .member-editor .button-group {
+    flex-direction: column;
+  }
+  
+  .member-editor .btn {
+    width: 100%;
+  }
+}

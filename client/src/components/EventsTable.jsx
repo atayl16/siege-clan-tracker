@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import "./EventsTable.css";
 
 export default function EventsTable({ events }) {
   // Process and categorize events

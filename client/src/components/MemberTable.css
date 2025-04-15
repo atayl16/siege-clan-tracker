@@ -1,0 +1,168 @@
+.member-table-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Base table styling */
+.member-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #222;
+  color: #e0e0e0;
+}
+
+/* Header styling */
+.member-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.member-table th {
+  background-color: #333;
+  padding: 12px 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #ff9800;
+  border-bottom: 2px solid #444;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Row styling */
+.member-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.member-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.member-table td {
+  padding: 10px 8px;
+  border-top: 1px solid #333;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Cell styling for different data types */
+.member-table .name-cell {
+  font-weight: 500;
+  color: #f0f0f0;
+}
+
+.member-table .numeric-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.member-table .siege-score-cell {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+/* Rank icon styling */
+.member-table .rank-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Empty state */
+.member-table-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
+/* Admin actions */
+.member-table .action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.member-table .action-buttons button {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.member-table .edit-button {
+  background-color: rgba(23, 162, 184, 0.2);
+  color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.member-table .edit-button:hover {
+  background-color: rgba(23, 162, 184, 0.4);
+}
+
+.member-table .delete-button {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.member-table .delete-button:hover {
+  background-color: rgba(220, 53, 69, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .member-table th,
+  .member-table td {
+    padding: 8px 5px;
+    font-size: 0.9rem;
+  }
+  
+  .member-table .action-buttons {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .member-table .action-buttons button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Cell highlighting for "next level" column */
+.member-table .next-level-cell {
+  position: relative;
+}
+
+.member-table .next-level-cell.close {
+  color: #ffc107;
+}
+
+/* Scrollbar styling for the table container */
+.member-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #666 #333;
+}
+
+.member-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.member-table-container::-webkit-scrollbar-track {
+  background: #333;
+}
+
+.member-table-container::-webkit-scrollbar-thumb {
+  background-color: #666;
+  border-radius: 4px;
+}
+
+.member-table-container::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}

@@ -1,0 +1,10 @@
+/* Add to WomSyncButton.css */
+.sync-features {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.sync-features p {
+  margin: 8px 0;
+  color: #ddd;
+}

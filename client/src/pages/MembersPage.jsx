@@ -98,13 +98,18 @@ export default function MembersPage() {
             <div className="stat-item">
               <div className="stat-label">Total XP</div>
               <div className="stat-value">
-                {Math.floor(
-                  members.reduce(
-                    (sum, m) => sum + (parseInt(m.current_xp) || 0),
-                    0
-                  ) / 1000000
-                )}
-                M
+                {(() => {
+                  const xpInMillions = Math.floor(
+                    members.reduce((sum, m) => sum + (parseInt(m.current_xp) || 0), 0) / 1000000
+                  );
+                  
+                  // Format as billions if over 1000M
+                  if (xpInMillions >= 1000) {
+                    return `${(xpInMillions / 1000).toFixed(1)}B`;
+                  }
+                  
+                  return `${xpInMillions}M`;
+                })()}
               </div>
             </div>
             <div className="stat-item">

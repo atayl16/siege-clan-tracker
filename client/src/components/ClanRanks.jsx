@@ -1,6 +1,7 @@
 import React from "react";
 import { ClanIcon, GemIcon } from "./RankIcons";
 import { SKILLER_RANKS, FIGHTER_RANKS } from "../utils/rankUtils";
+import "./ClanRanks.css";
 
 export default function ClanRanks() {
   return (

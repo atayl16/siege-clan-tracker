@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import MemberTable from "../components/MemberTable";
+import AdminMemberTable from "../components/AdminMemberTable";
 import RankAlerts from "../components/RankAlerts";
-import { memberNeedsRankUpdate } from "../utils/rankUtils";
 import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
 import WomSyncButton from "../components/WomSyncButton";
+import WomEventsSyncButton from "../components/WomEventsSyncButton";
+import { FaDownload, FaEraser, FaSearch, FaFilter } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import "./AdminPage.css";
 
@@ -13,44 +14,37 @@ export default function AdminPage() {
   const { isAuthenticated } = useAuth();
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [notification, setNotification] = useState(null);
   const [activeTab, setActiveTab] = useState("members");
   const [alertsCount, setAlertsCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const searchInputRef = useRef(null);
 
   // Fetch members data when component mounts
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/members');
       
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
+      // Use Supabase to fetch members
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .order('name', { ascending: true });
       
-      const data = await response.json();
-      setMembers(data);
+      if (error) throw error;
+      
+      setMembers(data || []);
+      setFilteredMembers(data || []);
       setError(null);
     } catch (err) {
       console.error("Error fetching members:", err);
       setError("Failed to load members data");
-      // Provide some sample data for testing
-      setMembers([
-        {
-          id: 1,
-          wom_id: "12345",
-          name: "Sample Player",
-          wom_name: "Sample Player",
-          womrole: "zenyte",
-          ehb: 250,
-          current_xp: 1500000,
-          first_xp: 500000,
-          siege_score: 75,
-          created_at: "2025-04-01T12:00:00Z"
-        }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -58,31 +52,76 @@ export default function AdminPage() {
   
   const fetchAlertsCount = async () => {
     try {
-      // Fetch all members from Supabase
+      // Fetch count of members needing rank updates from Supabase
       const { data, error } = await supabase
         .from('members')
         .select('*');
         
       if (error) throw error;
       
-      // Process members to find those needing rank updates
-      // This uses the same logic as RankAlerts component
-      const membersNeedingUpdate = data.filter(member => 
-        memberNeedsRankUpdate(member)
-      );
+      // Count members needing updates
+      const needsUpdates = data.filter(member => {
+        const womRole = (member.womrole || "").toLowerCase();
+        const clanXp = (parseInt(member.current_xp) || 0) - (parseInt(member.first_xp) || 0);
+        const ehb = parseInt(member.ehb) || 0;
+        
+        // Check if the member is a skiller but should be at a different rank
+        if (womRole.includes("opal") && clanXp >= 3000000) return true;
+        if (womRole.includes("sapphire") && (clanXp < 3000000 || clanXp >= 8000000)) return true;
+        if (womRole.includes("emerald") && (clanXp < 8000000 || clanXp >= 15000000)) return true;
+        if (womRole.includes("ruby") && (clanXp < 15000000 || clanXp >= 40000000)) return true;
+        if (womRole.includes("diamond") && (clanXp < 40000000 || clanXp >= 90000000)) return true;
+        if (womRole.includes("dragonstone") && (clanXp < 90000000 || clanXp >= 150000000)) return true;
+        if (womRole.includes("onyx") && (clanXp < 150000000 || clanXp >= 500000000)) return true;
+        if (womRole.includes("zenyte") && clanXp < 500000000) return true;
+        
+        // Check if the member is a fighter but should be at a different rank
+        if (womRole.includes("mentor") && ehb >= 100) return true;
+        if (womRole.includes("prefect") && (ehb < 100 || ehb >= 300)) return true;
+        if (womRole.includes("leader") && (ehb < 300 || ehb >= 500)) return true;
+        if (womRole.includes("supervisor") && (ehb < 500 || ehb >= 700)) return true;
+        if (womRole.includes("superior") && (ehb < 700 || ehb >= 900)) return true;
+        if (womRole.includes("executive") && (ehb < 900 || ehb >= 1100)) return true;
+        if (womRole.includes("senator") && (ehb < 1100 || ehb >= 1300)) return true;
+        if (womRole.includes("monarch") && (ehb < 1300 || ehb >= 1500)) return true;
+        if (womRole.includes("tzkal") && ehb < 1500) return true;
+        
+        return false;
+      });
       
-      setAlertsCount(membersNeedingUpdate.length);
+      setAlertsCount(needsUpdates.length);
     } catch (err) {
       console.error("Error calculating rank alerts count:", err);
       setAlertsCount(0);
     }
   };
 
-
   useEffect(() => {
     fetchMembers();
     fetchAlertsCount();
-  }, []);
+    
+    // Focus search input when switching to members tab
+    if (activeTab === "members" && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [activeTab]);
+  
+  // Filter members when search term changes
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredMembers(members);
+      return;
+    }
+    
+    const lowercaseSearch = searchTerm.toLowerCase();
+    const filtered = members.filter(member => 
+      (member.name || "").toLowerCase().includes(lowercaseSearch) ||
+      (member.wom_name || "").toLowerCase().includes(lowercaseSearch) ||
+      (member.womrole || "").toLowerCase().includes(lowercaseSearch)
+    );
+    
+    setFilteredMembers(filtered);
+  }, [searchTerm, members]);
 
   // Handle deleting a member
   const handleDeleteMember = async (member) => {
@@ -101,9 +140,7 @@ export default function AdminPage() {
     }
     
     try {
-      console.log("Deleting member with wom_id:", member.wom_id);
-      
-      // Use Supabase client directly
+      // Use Supabase client to delete
       const { error } = await supabase
         .from('members')
         .delete()
@@ -111,57 +148,52 @@ export default function AdminPage() {
         
       if (error) throw error;
       
-      // Remove the member from the local state
-      setMembers(members.filter(m => m.wom_id !== member.wom_id));
+      // Remove from local state
+      setMembers(prev => prev.filter(m => m.wom_id !== member.wom_id));
       
-      // If we're editing this member, clear the selection
+      // Clear selection if needed
       if (selectedMember?.wom_id === member.wom_id) {
         setSelectedMember(null);
       }
       
-      // Set success notification
+      // Show notification
       setNotification({
         type: 'success',
         message: `${member.name || member.wom_name} was successfully deleted.`,
         id: Date.now()
       });
       
-      // Auto-dismiss notification after 5 seconds
+      // Auto-dismiss
       setTimeout(() => {
         setNotification(prev => prev?.id === Date.now() ? null : prev);
       }, 5000);
       
     } catch (err) {
       console.error("Error deleting member:", err);
-      
       setNotification({
         type: 'error',
         message: `Failed to delete ${member.name || member.wom_name}: ${err.message}`,
         id: Date.now()
       });
-      
-      setTimeout(() => {
-        setNotification(prev => prev?.id === Date.now() ? null : prev);
-      }, 5000);
     }
   };
 
   // Handle saving member data
   const handleSaveMember = (updatedMember) => {
-    // Update the members list using wom_id
+    // Update the members list
     if (updatedMember.wom_id) {
-      setMembers(members.map(m => 
-        m.wom_id === updatedMember.wom_id ? updatedMember : m
-      ));
+      setMembers(prev => 
+        prev.map(m => m.wom_id === updatedMember.wom_id ? updatedMember : m)
+      );
     } else {
-      setMembers([...members, updatedMember]);
+      setMembers(prev => [...prev, updatedMember]);
     }
     
-    // Clear selection and add mode
+    // Clear selection
     setSelectedMember(null);
     setIsAddingMember(false);
     
-    // Show success notification
+    // Show notification
     setNotification({
       type: 'success',
       message: `${updatedMember.name || updatedMember.wom_name} was successfully saved.`,
@@ -171,6 +203,130 @@ export default function AdminPage() {
     setTimeout(() => {
       setNotification(null);
     }, 5000);
+  };
+  
+  // Export members to CSV
+  const exportToCSV = () => {
+    try {
+      // Prepare CSV data
+      const headers = [
+        "Name", "WOM ID", "WOM Name", "Title", "WOM Role",
+        "Current Level", "Current XP", "Initial Level", "Initial XP",
+        "EHB", "Siege Score", "Join Date", "Updated At"
+      ];
+      
+      const csvRows = [];
+      csvRows.push(headers.join(','));
+      
+      members.forEach(member => {
+        const row = [
+          `"${member.name || ''}"`,
+          member.wom_id || '',
+          `"${member.wom_name || ''}"`,
+          `"${member.title || ''}"`,
+          `"${member.womrole || ''}"`,
+          member.current_lvl || 0,
+          member.current_xp || 0,
+          member.first_lvl || 0,
+          member.first_xp || 0,
+          member.ehb || 0,
+          member.siege_score || 0,
+          member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : '',
+          member.updated_at ? new Date(member.updated_at).toISOString().split('T')[0] : ''
+        ];
+        
+        csvRows.push(row.join(','));
+      });
+      
+      // Create and download the CSV file
+      const csvString = csvRows.join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      
+      const fileName = `siege-members-${new Date().toISOString().split('T')[0]}.csv`;
+      
+      if (navigator.msSaveBlob) {
+        // IE 10+
+        navigator.msSaveBlob(blob, fileName);
+      } else {
+        // Other browsers
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      setNotification({
+        type: 'success',
+        message: `Exported ${members.length} members to CSV.`,
+        id: Date.now()
+      });
+      
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      
+    } catch (err) {
+      console.error("Error exporting to CSV:", err);
+      setNotification({
+        type: 'error',
+        message: `Failed to export to CSV: ${err.message}`,
+        id: Date.now()
+      });
+    }
+  };
+  
+  // Reset all siege scores
+  const handleResetScores = async () => {
+    if (resetConfirmText !== "RESET ALL SCORES") {
+      setNotification({
+        type: 'error',
+        message: "Confirmation text doesn't match. Scores not reset.",
+        id: Date.now()
+      });
+      return;
+    }
+    
+    try {
+      // First, export current scores for backup
+      exportToCSV();
+      
+      // Update all members' siege scores to 0
+      const { error } = await supabase
+        .from('members')
+        .update({ siege_score: 0 })
+        .neq('wom_id', 'no-match'); // Update all rows
+        
+      if (error) throw error;
+      
+      // Update local state
+      setMembers(prev => prev.map(m => ({ ...m, siege_score: 0 })));
+      
+      // Hide confirmation
+      setShowResetConfirm(false);
+      setResetConfirmText("");
+      
+      // Show notification
+      setNotification({
+        type: 'success',
+        message: `Reset all siege scores to 0. A backup CSV was downloaded.`,
+        id: Date.now()
+      });
+      
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      
+    } catch (err) {
+      console.error("Error resetting scores:", err);
+      setNotification({
+        type: 'error',
+        message: `Failed to reset scores: ${err.message}`,
+        id: Date.now()
+      });
+    }
   };
 
   // Notification component
@@ -282,6 +438,55 @@ export default function AdminPage() {
         />
       </Modal>
 
+      {/* Reset confirmation modal */}
+      <Modal
+        isOpen={showResetConfirm}
+        onClose={() => {
+          setShowResetConfirm(false);
+          setResetConfirmText("");
+        }}
+        title="Reset All Siege Scores"
+      >
+        <div className="reset-confirmation">
+          <div className="alert alert-danger">
+            <strong>Warning!</strong> This action will set all members' siege scores to 0. This cannot be undone.
+          </div>
+          
+          <p>A backup CSV of the current data will be automatically downloaded before resetting.</p>
+          
+          <div className="form-group">
+            <label>Type <strong>RESET ALL SCORES</strong> to confirm:</label>
+            <input
+              type="text"
+              className="form-control"
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              placeholder="RESET ALL SCORES"
+            />
+          </div>
+          
+          <div className="button-group">
+            <button
+              className="btn btn-danger"
+              onClick={handleResetScores}
+              disabled={resetConfirmText !== "RESET ALL SCORES"}
+            >
+              Reset All Scores
+            </button>
+            
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setShowResetConfirm(false);
+                setResetConfirmText("");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Admin tab navigation */}
       <div className="admin-tabs">
         <button
@@ -320,15 +525,32 @@ export default function AdminPage() {
           <div className="tab-content members-content">
             <div className="content-header">
               <h2>Member Management</h2>
-              <div className="filters">
-                <input
-                  type="text"
-                  placeholder="Search members..."
-                  className="search-input"
-                />
+              
+              <div className="admin-toolbar">
+                <div className="search-container">
+                  <div className="search-input-wrapper">
+                    <FaSearch className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search members by name, WOM name, or role..."
+                      className="search-input"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      ref={searchInputRef}
+                    />
+                    {searchTerm && (
+                      <button 
+                        className="clear-search"
+                        onClick={() => setSearchTerm("")}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-
+      
             {loading ? (
               <div className="loading-container">
                 <div className="loading-spinner"></div>
@@ -340,17 +562,61 @@ export default function AdminPage() {
                 <div className="error-message">{error}</div>
               </div>
             ) : (
-              <div className="member-table-container">
-                <MemberTable
-                  members={members}
-                  isAdmin={true}
-                  onRowClick={(member) => {
-                    setSelectedMember(member);
-                    setIsAddingMember(false);
-                  }}
-                  onDeleteClick={handleDeleteMember}
-                />
-              </div>
+              <>
+                <div className="stats-and-table">
+                  <div className="stats-panel">
+                    <div className="stat-item">
+                      <div className="stat-label">Total Members</div>
+                      <div className="stat-value">{members.length}</div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-label">Total Siege Points</div>
+                      <div className="stat-value">
+                        {members.reduce((sum, m) => sum + (parseInt(m.siege_score) || 0), 0)}
+                      </div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-label">Search Results</div>
+                      <div className="stat-value">{filteredMembers.length}</div>
+                    </div>
+                  </div>
+                  
+                  <AdminMemberTable
+                    members={filteredMembers}
+                    onEditClick={(member) => {
+                      setSelectedMember(member);
+                      setIsAddingMember(false);
+                    }}
+                    onDeleteClick={handleDeleteMember}
+                    onRefresh={fetchMembers}
+                  />
+                </div>
+                
+                {/* Move Export/Reset buttons to a footer */}
+                <div className="admin-footer">
+                  <h3>Administration Actions</h3>
+                  <div className="admin-footer-actions">
+                    <button 
+                      className="admin-action-btn export-btn"
+                      onClick={exportToCSV}
+                      title="Export to CSV"
+                    >
+                      <FaDownload /> Export Members to CSV
+                    </button>
+                    
+                    <button 
+                      className="admin-action-btn reset-btn"
+                      onClick={() => setShowResetConfirm(true)}
+                      title="Reset all siege scores"
+                    >
+                      <FaEraser /> Reset All Siege Scores
+                    </button>
+                  </div>
+                  <p className="admin-footer-note">
+                    Note: These actions are typically performed once per year during clan resets.
+                  </p>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -360,9 +626,6 @@ export default function AdminPage() {
           <div className="tab-content events-content">
             <div className="content-header">
               <h2>Event Management</h2>
-              <button className="primary-button create-event-button">
-                <span className="button-icon">+</span> Create Event
-              </button>
             </div>
             <div className="events-management-container">
               <EventManagement />
@@ -377,7 +640,10 @@ export default function AdminPage() {
               <h2>Rank Alerts</h2>
             </div>
             <div className="alerts-container">
-              <RankAlerts />
+              <RankAlerts onRankUpdate={() => {
+                fetchMembers();
+                fetchAlertsCount();
+              }} />
             </div>
           </div>
         )}
@@ -391,40 +657,58 @@ export default function AdminPage() {
             <div className="sync-container">
               <div className="sync-cards">
                 <div className="sync-card">
-                  <h3>Wise Old Man Sync</h3>
-                  <p>Update member stats and levels from Wise Old Man</p>
-                  <WomSyncButton />
+                  <h3>Member Data Sync</h3>
+                  <p>Update member stats, levels, and EHB from Wise Old Man</p>
+                  <WomSyncButton 
+                    type="members"
+                    buttonText="Sync Members"
+                    onSyncComplete={fetchMembers} 
+                  />
                 </div>
 
                 <div className="sync-card">
-                  <h3>Event Participation Sync</h3>
-                  <p>Update event participation and competition points</p>
-                  <button className="wom-sync-button">
-                    <span className="sync-icon">↻</span>
-                    Sync Events
-                  </button>
+                  <h3>Event & Competition Sync</h3>
+                  <p>Import WOM competitions and sync event participation</p>
+                  <WomSyncButton 
+                    type="events"
+                    buttonText="Sync WOM Competitions"
+                    onSyncComplete={() => {
+                      // Refresh any event data if needed
+                      if (typeof window !== 'undefined') {
+                        const eventTab = document.querySelector('.admin-tab:nth-child(2)');
+                        if (eventTab) {
+                          // Flash the events tab to indicate new data
+                          eventTab.classList.add('flash-highlight');
+                          setTimeout(() => {
+                            eventTab.classList.remove('flash-highlight');
+                          }, 1000);
+                        }
+                      }
+                    }} 
+                  />
                 </div>
               </div>
 
               <div className="sync-info">
                 <h4>About Synchronization</h4>
                 <p>
-                  Data synchronization keeps your clan tracker up to date with
-                  the latest information:
+                  Regular data synchronization keeps your clan tracker up to date with
+                  the latest information from Wise Old Man:
                 </p>
-                <ul>
+                <ul className="sync-info-list">
                   <li>
-                    <strong>Member Sync:</strong> Updates XP, levels, and boss
-                    kills from Wise Old Man
+                    <strong>Member Data Sync:</strong> Updates XP, levels, boss
+                    kills, and EHB for all clan members
                   </li>
                   <li>
-                    <strong>Event Sync:</strong> Updates event participation and
-                    leaderboard points
+                    <strong>Event & Competition Sync:</strong> Imports official WOM 
+                    competitions and updates participation data
                   </li>
                 </ul>
                 <p className="note">
-                  Synchronization should be performed at least once per week for
-                  best results.
+                  Synchronization is done automatically, but if you need to update it
+                  sooner than the daily tasks, you can do so here.
+                  WOM competitions will appear in the Events tab.
                 </p>
               </div>
             </div>

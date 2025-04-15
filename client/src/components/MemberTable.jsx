@@ -5,6 +5,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { ClanIcon, GemIcon, AdminIcon, ADMIN_RANKS } from "./RankIcons";
+import "./MemberTable.css";
 
 // Define lists of rank names for each type
 const SKILLER_RANK_NAMES = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte"];

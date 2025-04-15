@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import './EventManagement.css';
 import EventEditor from './EventEditor';
-import WomEventsSyncButton from './WomEventsSyncButton'; // Import the new component
+import WomSyncButton from './WomSyncButton';
+import { FaEdit, FaTrash, FaCalendarPlus, FaSync } from 'react-icons/fa';
 
 export default function EventManagement() {
   const [events, setEvents] = useState([]);
@@ -10,6 +11,7 @@ export default function EventManagement() {
   const [error, setError] = useState(null);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     fetchEvents();
@@ -56,10 +58,37 @@ export default function EventManagement() {
     setEditingEvent(null);
   };
 
+  const handleDeleteClick = (event) => {
+    setDeleteConfirm(event);
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!deleteConfirm) return;
+    
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', deleteConfirm.id);
+        
+      if (error) throw error;
+      
+      // Remove from local state
+      setEvents(events.filter(event => event.id !== deleteConfirm.id));
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      setError(`Failed to delete event: ${err.message}`);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   // Helper function to convert text to title case
@@ -82,64 +111,116 @@ export default function EventManagement() {
     } else if (now > endDate) {
       return 'Completed';
     } else {
-      return 'In Progress';
+      return 'Active';
+    }
+  };
+
+  const getStatusClass = (status) => {
+    switch(status) {
+      case 'Active': return 'status-active';
+      case 'Upcoming': return 'status-upcoming';
+      case 'Completed': return 'status-completed';
+      default: return '';
     }
   };
 
   const formatEventType = (event) => {
     if (event.is_wom) return "WOM Competition";
-    
-    // Convert event type to Title Case (capitalize first letter of each word)
     return toTitleCase(event.type || "Custom");
   };
 
   if (loading && events.length === 0) {
-    return <div className="loading-spinner">Loading Events...</div>;
+    return <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div className="loading-text">Loading events data...</div>
+    </div>;
   }
 
   return (
     <div className="event-management">
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <div className="event-actions">
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setIsCreatingEvent(!isCreatingEvent);
-            setEditingEvent(null); // Close edit mode when toggling create
-          }}
-          disabled={editingEvent !== null} // Disable when editing
-        >
-          {isCreatingEvent ? "Cancel" : "Create New Event"}
-        </button>
-        <WomEventsSyncButton />
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <div className="delete-confirm-modal">
+          <div className="delete-confirm-content">
+            <h4>Confirm Deletion</h4>
+            <p>
+              Are you sure you want to delete the event{" "}
+              <strong>{deleteConfirm.name}</strong>?
+            </p>
+            <p className="warning">This action cannot be undone.</p>
+
+            <div className="button-group">
+              <button className="btn btn-danger" onClick={handleDeleteEvent}>
+                Delete Event
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Event button at top */}
+      <div className="event-tools">
+        <div className="event-actions">
+          <button
+            className="create-event-btn"
+            onClick={() => {
+              setIsCreatingEvent(!isCreatingEvent);
+              setEditingEvent(null);
+            }}
+            disabled={editingEvent !== null}
+          >
+            <FaCalendarPlus className="btn-icon" />
+            {isCreatingEvent ? "Cancel" : "Create Event"}
+          </button>
+        </div>
       </div>
 
       {isCreatingEvent && (
-        <EventEditor
-          onSave={handleEventSave}
-          onCancel={() => setIsCreatingEvent(false)}
-        />
+        <div className="event-editor-container">
+          <EventEditor
+            onSave={handleEventSave}
+            onCancel={() => setIsCreatingEvent(false)}
+          />
+        </div>
       )}
 
       {editingEvent && (
-        <div className="editing-container">
-          <h4>Edit Event</h4>
+        <div className="event-editor-container">
           <EventEditor
-            event={editingEvent} // Pass the event to edit
+            event={editingEvent}
             onSave={handleEventSave}
             onCancel={handleCancelEdit}
-            isEditing={true} // Flag to indicate edit mode
+            isEditing={true}
           />
         </div>
       )}
 
       <div className="events-table-container">
-        <h4>Upcoming and Recent Events</h4>
+        <div className="table-header">
+          <h3>Event Calendar</h3>
+          <div className="table-actions">
+            <button className="refresh-btn" onClick={fetchEvents}>
+              <FaSync className="btn-icon" /> Refresh
+            </button>
+          </div>
+        </div>
+
         {events.length === 0 ? (
-          <p>No events found. Create a new event or sync with WOM.</p>
+          <div className="empty-state">
+            <p>
+              No events found. Create a new event or sync with Wise Old Man.
+            </p>
+          </div>
         ) : (
-          <table className="table table-dark table-hover">
+          <table className="events-table">
             <thead>
               <tr>
                 <th>Event Name</th>
@@ -151,32 +232,79 @@ export default function EventManagement() {
               </tr>
             </thead>
             <tbody>
-              {events.map((event) => (
-                <tr
-                  key={event.id}
-                  className={
-                    event.is_wom ? "wom-event-row" : "custom-event-row"
-                  }
-                >
-                  <td>{toTitleCase(event.name)}</td>
-                  <td>{formatEventType(event)}</td>
-                  <td>{formatDate(event.start_date)}</td>
-                  <td>{formatDate(event.end_date)}</td>
-                  <td>{getEventStatus(event)}</td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-info edit-btn"
-                      onClick={() => handleEditEvent(event)}
-                      disabled={event.is_wom} // Disable editing for WOM events
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {events.map((event) => {
+                const status = getEventStatus(event);
+                return (
+                  <tr
+                    key={event.id}
+                    className={`event-row ${
+                      event.is_wom ? "wom-event-row" : "custom-event-row"
+                    }`}
+                  >
+                    <td className="event-name">
+                      {toTitleCase(event.name)}
+                      {event.is_wom && <span className="wom-badge">WOM</span>}
+                    </td>
+                    <td>{formatEventType(event)}</td>
+                    <td>{formatDate(event.start_date)}</td>
+                    <td>{formatDate(event.end_date)}</td>
+                    <td>
+                      <span
+                        className={`status-badge ${getStatusClass(status)}`}
+                      >
+                        {status}
+                      </span>
+                    </td>
+                    <td className="actions-cell">
+                      {!event.is_wom && (
+                        <>
+                          <button
+                            className="action-btn edit-btn"
+                            onClick={() => handleEditEvent(event)}
+                            title="Edit event"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="action-btn delete-btn"
+                            onClick={() => handleDeleteClick(event)}
+                            title="Delete event"
+                          >
+                            <FaTrash />
+                          </button>
+                        </>
+                      )}
+                      {event.is_wom && (
+                        <span className="readonly-note">
+                          WOM Event (read-only)
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
+      </div>
+
+      {/* Sync section moved to bottom */}
+      <div className="event-sync-section">
+        <div className="event-sync-header">
+          <h3>Data Synchronization</h3>
+        </div>
+        <div className="event-sync-content">
+          <p>Import competitions and events from Wise Old Man</p>
+          <WomSyncButton 
+            type="events"
+            buttonText="Sync WOM Competitions"
+            onSyncComplete={fetchEvents} 
+          />
+          <p className="event-sync-note">
+            Sync will import all WOM competitions your clan is participating in.
+            These events are read-only and cannot be edited.
+          </p>
+        </div>
       </div>
     </div>
   );

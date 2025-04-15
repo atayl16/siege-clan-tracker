@@ -1,0 +1,87 @@
+/* Admin table container */
+.admin-table-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Table styling */
+.admin-table-container table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-table-container thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-table-container th {
+  background-color: #222;
+  position: sticky;
+  top: 0;
+  border-bottom: 2px solid #444;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 10px 8px;
+}
+
+.admin-table-container td {
+  padding: 10px 8px;
+}
+
+/* Action buttons cell */
+.admin-actions-cell {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-actions-cell button {
+  min-width: 40px;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+/* Player name cell */
+.player-name-cell {
+  font-weight: 500;
+}
+
+/* Expanded row styling */
+.row-expanded {
+  background-color: #2a2a2a !important;
+}
+
+.expanded-details {
+  background-color: #2a2a2a;
+}
+
+.expanded-details-content {
+  padding: 15px;
+}
+
+.details-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 3px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 500;
+}

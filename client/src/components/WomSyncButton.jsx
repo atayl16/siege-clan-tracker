@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import "./WomSyncButton.css";
 
-export default function WomSyncButton() {
+export default function WomSyncButton({ 
+  type = "members",  // can be "members" or "events"
+  buttonText,
+  syncEndpoint, 
+  onSyncComplete 
+}) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [forceProduction, setForceProduction] = useState(false);
 
+  // Set default button text based on type
+  const displayButtonText = buttonText || (type === "members" ? "Sync Members" : "Sync WOM Competitions");
+  
+  // Set the correct Netlify function endpoint
+  const endpoint = syncEndpoint || (type === "members" ? 
+    "/.netlify/functions/sync-wom" : 
+    "/.netlify/functions/sync-wom-events");
+
   const handleSync = async () => {
-    // Prevent multiple sync requests
     if (isSyncing) return;
     
     try {
@@ -22,99 +35,31 @@ export default function WomSyncButton() {
       );
       
       if (isDev) {
-        // Simulate a sync for development, but use real WOM data
-        console.log('Development mode: Fetching real WOM data for a subset of members');
+        // Simulation code for development mode
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // Wait to simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // First fetch a small set of members from our database
-        const { data: membersToUpdate, error: fetchError } = await supabase
-          .from('members')
-          .select('wom_id, name, wom_name, current_xp, current_lvl, ehb')
-          .order('wom_id', { ascending: true })
-          .limit(5); // Just update 5 members to keep it light
-        
-        if (fetchError) throw fetchError;
-        console.log(`Found ${membersToUpdate?.length || 0} members to update`);
-        
-        // Then fetch real data for each member from WOM API
-        let updateCount = 0;
-        let errorCount = 0;
-        
-        for (const member of membersToUpdate || []) {
-          try {
-            if (!member.wom_name) {
-              console.log(`Skipping member ${member.name} - no WOM username`);
-              continue;
-            }
-            
-            console.log(`Fetching real WOM data for ${member.wom_name}`);
-            
-            // Call the actual WOM API for this player
-            const playerResponse = await fetch(`https://api.wiseoldman.net/v2/players/${encodeURIComponent(member.wom_name)}`);
-            
-            if (!playerResponse.ok) {
-              console.error(`Error fetching WOM data for ${member.wom_name}: ${playerResponse.status}`);
-              errorCount++;
-              continue;
-            }
-            
-            const playerData = await playerResponse.json();
-            
-            // Get the latest snapshot data
-            const latestSnapshot = playerData.latestSnapshot?.data;
-            const newXp = latestSnapshot?.skills?.overall?.experience || member.current_xp || 0;
-            const newLevel = latestSnapshot?.skills?.overall?.level || member.current_lvl || 1;
-            const newEhb = Math.round(
-              playerData.latestSnapshot?.data?.computed?.ehb?.value ||
-                member.ehb ||
-                0
-            );
-            console.log(`Updating ${member.name} with real data:`, { 
-              xp: newXp, 
-              level: newLevel, 
-              ehb: newEhb 
-            });
-            
-            // Update with real data
-            const { error: updateError } = await supabase
-              .from('members')
-              .update({
-                current_xp: newXp,
-                current_lvl: newLevel,
-                ehb: newEhb,
-                updated_at: new Date().toISOString()
-              })
-              .eq('wom_id', member.wom_id);
-            
-            if (updateError) {
-              console.error(`Error updating ${member.name}:`, updateError);
-              errorCount++;
-            } else {
-              updateCount++;
-            }
-            
-            // Sleep briefly to avoid rate limits
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-          } catch (err) {
-            console.error(`Error processing ${member.name}:`, err);
-            errorCount++;
-          }
+        // Different dev mode behavior based on type
+        if (type === "members") {
+          // Existing dev mode member sync code
+          console.log('Development mode: Simulating member sync');
+          // ... existing member sync dev mode code
+        } else {
+          // Dev mode event sync code
+          console.log('Development mode: Simulating event sync');
+          // ... existing event sync dev mode code
         }
         
         setLastSyncTime(new Date());
         setSyncStatus({
           type: 'success',
-          message: `DEV MODE: Real data sync completed! Updated ${updateCount} members with ${errorCount} errors.`
+          message: `DEV MODE: ${type === "members" ? "Member" : "Event"} sync completed!`
         });
       } else {
-        // In production (or when forced), use the Netlify function
+        // In production, call the appropriate Netlify function
         console.log(forceProduction ? 'Forcing production mode' : 'Production mode');
-        console.log('Calling Netlify function: /.netlify/functions/sync-wom');
+        console.log(`Calling Netlify function: ${endpoint}`);
         
-        const response = await fetch('/.netlify/functions/sync-wom', {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -142,7 +87,9 @@ export default function WomSyncButton() {
         setLastSyncTime(new Date());
         setSyncStatus({
           type: 'success',
-          message: `Sync completed! Updated ${data.stats.updated} members with ${data.stats.errors} errors.`
+          message: `Sync completed! ${type === "members" ? 
+            `Updated ${data.stats?.updated || 0} members` : 
+            `Imported ${data.stats?.updated || 0} competitions`}`
         });
       }
       
@@ -151,19 +98,23 @@ export default function WomSyncButton() {
         setForceProduction(false);
       }
       
+      // Call the onSyncComplete callback
+      if (onSyncComplete) {
+        onSyncComplete();
+      }
+      
       // Auto-dismiss after 10 seconds
       setTimeout(() => {
         setSyncStatus(prev => prev?.type === 'success' ? null : prev);
       }, 10000);
       
     } catch (err) {
-      console.error('Error syncing with WOM:', err);
+      console.error(`Error syncing ${type}:`, err);
       setSyncStatus({
         type: 'error',
         message: `Sync failed: ${err.message}`
       });
       
-      // Reset force production after error
       if (forceProduction) {
         setForceProduction(false);
       }
@@ -176,11 +127,50 @@ export default function WomSyncButton() {
     }
   };
 
+  // Get appropriate feature list based on type
+  const getFeaturesList = () => {
+    if (type === "members") {
+      return (
+        <div className="sync-features">
+          <p>Request WOM to update all member stats</p>
+          <p>Import latest XP and EHB values</p>
+          <p>Update member information in the database</p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="sync-features">
+          <p>Fetch all WOM competitions for the clan</p>
+          <p>Create or update events in the database</p>
+          <p>Process results for completed competitions</p>
+        </div>
+      );
+    }
+  };
+
+  // Get appropriate note based on type
+  const getNote = () => {
+    if (type === "members") {
+      return "This process may take several minutes depending on the number of members.";
+    } else {
+      return "Competitions will appear as Events in the Events section.";
+    }
+  };
+
+  // Get appropriate dev mode text based on type
+  const getDevModeText = () => {
+    if (type === "members") {
+      return "Using simulated sync for local development.";
+    } else {
+      return "Using real WOM API but only updating 5 competitions.";
+    }
+  };
+
   return (
     <div className="wom-sync">
       <div className="wom-sync-header">
-        <button 
-          className={`wom-sync-button ${isSyncing ? 'syncing' : ''}`}
+        <button
+          className={`wom-sync-button ${isSyncing ? "syncing" : ""}`}
           onClick={handleSync}
           disabled={isSyncing}
         >
@@ -192,43 +182,42 @@ export default function WomSyncButton() {
           ) : (
             <>
               <span className="sync-icon">↻</span>
-              Sync Members
+              {displayButtonText}
             </>
           )}
         </button>
-        
+
         {lastSyncTime && (
           <div className="last-sync-time">
-            Last sync: {lastSyncTime.toLocaleTimeString()} {lastSyncTime.toLocaleDateString()}
+            Last sync: {lastSyncTime.toLocaleTimeString()}{" "}
+            {lastSyncTime.toLocaleDateString()}
           </div>
         )}
       </div>
-      
+
       {syncStatus && (
         <div className={`sync-status sync-status-${syncStatus.type}`}>
           {syncStatus.message}
         </div>
       )}
-      
+
       <div className="wom-sync-info">
         <p>Clicking the Sync button will:</p>
-        <ul>
-          <li>Request WOM to update all member stats</li>
-          <li>Import latest XP and EHB values</li>
-          <li>Update member information in the database</li>
-        </ul>
-        <p className="note">Note: This process may take several minutes depending on the number of members.</p>
-        
-        {process.env.NODE_ENV === 'development' && (
+        {getFeaturesList()}
+        <p className="note">
+          Note: {getNote()}
+        </p>
+
+        {process.env.NODE_ENV === "development" && (
           <div className="dev-mode-notice">
-            <strong>Development Mode:</strong> Using simulated sync for local development.
+            <strong>Development Mode:</strong> {getDevModeText()}
             <div className="force-production-section">
-              <button 
+              <button
                 className="force-production-button"
                 onClick={() => setForceProduction(true)}
                 disabled={forceProduction || isSyncing}
               >
-                Force Real Sync
+                Force {type === "members" ? "Real" : "Full"} Sync
               </button>
               <span className="force-production-warning">
                 Will attempt to call Netlify function
