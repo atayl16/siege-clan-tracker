@@ -126,15 +126,17 @@ export default function MemberTable({ members, isAdmin = false, onRowClick, onDe
       if (bAdminIndex !== -1) return 1; // b is an admin, a is not
 
       // If neither is an admin, sort by "Clan XP Gained" in descending order
-      const aClanXpGained = (parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10)) || 0;
-      const bClanXpGained = (parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10)) || 0;
+      const aClanXpGained =
+        parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
+      const bClanXpGained =
+        parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10) || 0;
 
       return bClanXpGained - aClanXpGained;
     });
   }, [members]);
 
   // Define base columns that are shown in both public and admin views
-  const baseColumns = [
+  const baseColumns = React.useMemo(() => [
     {
       accessorKey: "name",
       header: "Name",
@@ -220,63 +222,56 @@ export default function MemberTable({ members, isAdmin = false, onRowClick, onDe
         </div>
       ),
     },
-  ];
+  ], []);
 
   // Admin-only columns - only added if isAdmin=true
-  const adminColumns = [
-    {
-      accessorKey: "join_date",
-      header: "Join Date",
-      cell: ({ row }) => (
-        <div style={{ textAlign: "center" }}>
-          {row.original.created_at
-            ? new Date(row.original.created_at).toLocaleDateString()
-            : "N/A"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div style={{ textAlign: "center" }}>
-          <button
-            className="btn btn-sm btn-outline-info mx-1"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent row click from firing
-              onRowClick && onRowClick(row.original);
-            }}
-          >
-            Edit
-          </button>
-          <button
-            className="btn btn-sm btn-outline-danger mx-1"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent row click from firing
-              console.log("Deleting member:", row.original);
-              
-              // Use wom_id as the primary key
-              if (!row.original.wom_id) {
-                console.error("Cannot delete: wom_id is missing", row.original);
-                alert("Cannot delete: Member ID (wom_id) is missing");
-                return;
-              }
-              
-              // Pass the member data to the delete handler
-              onDeleteClick && onDeleteClick(row.original);
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      ),
-    },
-  ];
+  const adminColumns = React.useMemo(
+    () => [
+      {
+        accessorKey: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <div style={{ textAlign: "center" }}>
+            <button
+              className="btn btn-sm btn-outline-info mx-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRowClick && onRowClick(row.original);
+              }}
+            >
+              Edit
+            </button>
+            <button
+              className="btn btn-sm btn-outline-danger mx-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("Deleting member:", row.original);
+
+                if (!row.original.wom_id) {
+                  console.error(
+                    "Cannot delete: wom_id is missing",
+                    row.original
+                  );
+                  alert("Cannot delete: Member ID (wom_id) is missing");
+                  return;
+                }
+
+                onDeleteClick && onDeleteClick(row.original);
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [onRowClick, onDeleteClick]
+  );
 
   // Combine columns based on whether this is the admin view
   const columns = React.useMemo(
-    () => isAdmin ? [...baseColumns, ...adminColumns] : baseColumns,
-    [isAdmin]
+    () => (isAdmin ? [...baseColumns, ...adminColumns] : baseColumns),
+    [isAdmin, baseColumns, adminColumns]
   );
 
   const table = useReactTable({
@@ -309,17 +304,14 @@ export default function MemberTable({ members, isAdmin = false, onRowClick, onDe
       </thead>
       <tbody>
         {table.getRowModel().rows.map((row) => (
-          <tr 
-            key={row.id} 
+          <tr
+            key={row.id}
             onClick={() => isAdmin && onRowClick && onRowClick(row.original)}
             style={isAdmin ? { cursor: "pointer" } : {}}
           >
             {row.getVisibleCells().map((cell) => (
               <td key={cell.id} style={{ textAlign: "center" }}>
-                {flexRender(
-                  cell.column.columnDef.cell,
-                  cell.getContext()
-                )}
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             ))}
           </tr>

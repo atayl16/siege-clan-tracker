@@ -84,3 +84,56 @@ export const calculateNextLevel = (member) => {
   // Default return if we couldn't determine the next level
   return 0;
 };
+
+export const calculateAppropriateRank = (member) => {
+  if (!member) return null;
+  
+  // Calculate clan XP (current - initial) with safe parsing
+  const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
+  const clanEhb = safeParseInt(member.ehb);
+  
+  // Determine if the member is a skiller or fighter based on their womrole
+  const womRole = (member.womrole || "").toLowerCase().trim();
+  const isSkiller = SKILLER_RANK_NAMES.some(rank => womRole.includes(rank.toLowerCase()));
+  const isFighter = FIGHTER_RANK_NAMES.some(rank => womRole.includes(rank.toLowerCase()));
+  
+  let appropriateRank = null;
+  
+  if (isSkiller) {
+    // Find the appropriate skiller rank based on XP
+    for (const rank of SKILLER_RANKS) {
+      if (clanXp >= rank.range[0] && clanXp < rank.range[1]) {
+        appropriateRank = rank.name;
+        break;
+      }
+    }
+    // If they're at max XP, give them the highest rank
+    if (clanXp >= SKILLER_RANKS[SKILLER_RANKS.length - 1].range[0]) {
+      appropriateRank = SKILLER_RANKS[SKILLER_RANKS.length - 1].name;
+    }
+  } else if (isFighter) {
+    // Find the appropriate fighter rank based on EHB
+    for (const rank of FIGHTER_RANKS) {
+      if (clanEhb >= rank.range[0] && clanEhb < rank.range[1]) {
+        appropriateRank = rank.name;
+        break;
+      }
+    }
+    // If they're at max EHB, give them the highest rank
+    if (clanEhb >= FIGHTER_RANKS[FIGHTER_RANKS.length - 1].range[0]) {
+      appropriateRank = FIGHTER_RANKS[FIGHTER_RANKS.length - 1].name;
+    }
+  }
+  
+  return appropriateRank;
+};
+
+export const memberNeedsRankUpdate = (member) => {
+  if (!member || !member.womrole) return false;
+  
+  const appropriateRank = calculateAppropriateRank(member);
+  if (!appropriateRank) return false;
+  
+  // Compare the appropriate rank with the current rank (case-insensitive)
+  return !member.womrole.toLowerCase().includes(appropriateRank.toLowerCase());
+};

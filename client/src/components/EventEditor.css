@@ -1,0 +1,281 @@
+.event-editor {
+  background-color: rgba(32, 32, 32, 0.9);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.event-editor h3 {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.form-row > .form-group {
+  padding-left: 10px;
+  padding-right: 10px;
+  flex: 1 0 0;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.button-group {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.timezone-note {
+  margin-top: -10px;
+  margin-bottom: 15px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.time-selector {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.time-buttons {
+  display: flex;
+  margin-left: 10px;
+}
+
+.time-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f4f4f8;
+  border-radius: 3px;
+  padding: 2px 6px;
+  margin-right: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.time-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.time-button:last-child {
+  margin-right: 0;
+}
+
+/* Hide default minute selector in Chrome/Safari/Firefox using a clever technique */
+.time-input-wrapper {
+  position: relative;
+}
+
+.time-input-wrapper:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+/* Create a more appealing custom time selector */
+.custom-time-select {
+  display: flex;
+  margin-top: 10px;
+  gap: 10px;
+}
+
+.time-segment {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-segment-label {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.time-segment-value {
+  display: flex;
+  align-items: center;
+}
+
+.time-segment-btn {
+  background: none;
+  border: none;
+  color: #4a69bd;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.time-segment-display {
+  width: 40px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.timezone-note {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Additional styles to emphasize the "Quick set" options for better UX */
+.time-quick-set {
+  margin-top: 5px;
+  padding: 8px;
+  background-color: rgba(30, 30, 30, 0.4);
+  border-radius: 4px;
+}
+
+.event-editor {
+  background-color: rgba(32, 32, 32, 0.9);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.event-editor h3 {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.form-row > .form-group {
+  padding-left: 10px;
+  padding-right: 10px;
+  flex: 1 0 0;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.button-group {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.timezone-note {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Compact time picker styles */
+.compact-time-picker {
+  background-color: rgba(30, 30, 30, 0.4);
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 5px;
+}
+
+.time-picker-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.time-picker-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-picker-column label {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-bottom: 2px;
+  font-weight: normal;
+}
+
+.time-select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  width: 70px;
+}
+
+.time-colon {
+  margin: 0 5px;
+  align-self: flex-end;
+  padding-bottom: 5px;
+  font-weight: bold;
+}
+
+.selected-time {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 8px;
+}
+
+.time-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.preset-button {
+  background-color: rgba(74, 105, 189, 0.2);
+  border: 1px solid rgba(74, 105, 189, 0.3);
+  color: #f4f4f8;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.preset-button:hover {
+  background-color: rgba(74, 105, 189, 0.3);
+}
+
+.mt-2 {
+  margin-top: 10px;
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}

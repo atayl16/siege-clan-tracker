@@ -1,0 +1,99 @@
+.event-management {
+  margin-bottom: 20px;
+}
+
+.event-actions {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.events-table-container {
+  overflow-x: auto;
+}
+
+.event-scoring {
+  background-color: rgba(32, 32, 32, 0.9);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 20px;
+}
+
+.wom-event-row {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.custom-event-row {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.event-form-container {
+  background-color: rgba(32, 32, 32, 0.9);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4a69bd;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.alert {
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+}
+
+h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #f4f4f8;
+}

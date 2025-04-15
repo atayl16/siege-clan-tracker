@@ -107,20 +107,26 @@ const syncGroup = async (event) => {
           const playerData = playerResponse.data;
           
           // Update the member in Supabase
-          const { error } = await supabase
-            .from('members')
-            .upsert({
+          const { error } = await supabase.from("members").upsert(
+            {
               wom_id: member.id,
               name: member.displayName || member.username,
               wom_name: member.displayName,
-              current_lvl: playerData.latestSnapshot?.data?.skills?.overall?.level || null,
-              current_xp: playerData.latestSnapshot?.data?.skills?.overall?.experience || null,
-              ehb: playerData.latestSnapshot?.data?.computed?.ehb || null,
-              womrole: member.role || null
-            }, { 
-              onConflict: 'wom_id',
-              ignoreDuplicates: false 
-            });
+              current_lvl:
+                playerData.latestSnapshot?.data?.skills?.overall?.level || null,
+              current_xp:
+                playerData.latestSnapshot?.data?.skills?.overall?.experience ||
+                null,
+              ehb: Math.round(
+                playerData.latestSnapshot?.data?.computed?.ehb?.value || 0
+              ),
+              womrole: member.role || null,
+            },
+            {
+              onConflict: "wom_id",
+              ignoreDuplicates: false,
+            }
+          );
           
           if (error) {
             console.error(`Error updating member ${member.username}:`, error);
