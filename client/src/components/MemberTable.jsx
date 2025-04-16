@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,9 +8,34 @@ import { ClanIcon, GemIcon, AdminIcon, ADMIN_RANKS } from "./RankIcons";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
-const SKILLER_RANK_NAMES = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte"];
-const FIGHTER_RANK_NAMES = ["Mentor", "Prefect", "Leader", "Supervisor", "Superior", "Executive", "Senator", "Monarch", "TzKal"];
-const ADMIN_RANK_ORDER = ["Owner", "Deputy Owner", "General", "Captain", "PvM Organizer"];
+const SKILLER_RANK_NAMES = [
+  "Opal",
+  "Sapphire",
+  "Emerald",
+  "Ruby",
+  "Diamond",
+  "Dragonstone",
+  "Onyx",
+  "Zenyte",
+];
+const FIGHTER_RANK_NAMES = [
+  "Mentor",
+  "Prefect",
+  "Leader",
+  "Supervisor",
+  "Superior",
+  "Executive",
+  "Senator",
+  "Monarch",
+  "TzKal",
+];
+const ADMIN_RANK_ORDER = [
+  "Owner",
+  "Deputy Owner",
+  "General",
+  "Captain",
+  "PvM Organizer",
+];
 
 // Define rank ranges for skillers (XP thresholds)
 const SKILLER_RANKS = [
@@ -21,7 +46,7 @@ const SKILLER_RANKS = [
   { name: "Diamond", range: [40000000, 90000000] },
   { name: "Dragonstone", range: [90000000, 150000000] },
   { name: "Onyx", range: [150000000, 500000000] },
-  { name: "Zenyte", range: [500000000, Infinity] }
+  { name: "Zenyte", range: [500000000, Infinity] },
 ];
 
 // Define rank ranges for fighters (EHB thresholds)
@@ -34,7 +59,7 @@ const FIGHTER_RANKS = [
   { name: "Executive", range: [900, 1100] },
   { name: "Senator", range: [1100, 1300] },
   { name: "Monarch", range: [1300, 1500] },
-  { name: "TzKal", range: [1500, Infinity] }
+  { name: "TzKal", range: [1500, Infinity] },
 ];
 
 // Helper function to safely format numbers
@@ -65,7 +90,8 @@ const calculateNextLevel = (member) => {
 
   if (isSkiller) {
     // Calculate clan XP (current - initial) with safe parsing
-    const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
+    const clanXp =
+      safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
 
     // Find which rank range the member is in
     for (const rank of SKILLER_RANKS) {
@@ -104,7 +130,25 @@ const calculateNextLevel = (member) => {
 };
 
 // Main MemberTable component
-export default function MemberTable({ members, isAdmin = false, onRowClick, onDeleteClick }) {
+export default function MemberTable({
+  members,
+  isAdmin = false,
+  onRowClick,
+  onDeleteClick,
+}) {
+  // Add state to track screen width
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  // Add resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Sort members before passing them to the table
   const sortedMembers = React.useMemo(() => {
     return [...(members || [])].sort((a, b) => {
@@ -137,93 +181,106 @@ export default function MemberTable({ members, isAdmin = false, onRowClick, onDe
   }, [members]);
 
   // Define base columns that are shown in both public and admin views
-  const baseColumns = React.useMemo(() => [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <div style={{ textAlign: "center" }}>
-          {row.original.name || row.original.wom_name || "N/A"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "rank",
-      header: "Clan Rank",
-      cell: ({ row }) => {
-        const womRole = (row.original.womrole || "").toLowerCase().trim();
-
-        // Check if the womrole matches any admin, skiller, or fighter rank
-        const isAdmin = ADMIN_RANKS.find((title) =>
-          womRole.includes(title.toLowerCase())
-        );
-        const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
-          womRole.includes(name.toLowerCase())
-        );
-        const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
-          womRole.includes(name.toLowerCase())
-        );
-
-        return (
+  const baseColumns = React.useMemo(() => {
+    // Start with the columns that always show
+    const columns = [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {isAdmin && <AdminIcon title={isAdmin} />}
-            {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
-            {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+            {row.original.name || row.original.wom_name || "N/A"}
           </div>
-        );
+        ),
       },
-    },
-    {
-      accessorKey: "ehb",
-      header: "EHB",
-      cell: ({ row }) => (
-        <div style={{ textAlign: "center" }}>
-          {safeFormat(row.original.ehb)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "clan_xp_gained",
-      header: "Clan XP Gained",
-      cell: ({ row }) => {
-        // Safe calculation of XP gained
-        let gainedXp = 0;
-        if (
-          row.original.current_xp !== undefined &&
-          row.original.first_xp !== undefined
-        ) {
-          gainedXp =
-            safeParseInt(row.original.current_xp) -
-            safeParseInt(row.original.first_xp);
-        }
+      {
+        accessorKey: "rank",
+        header: "Clan Rank",
+        cell: ({ row }) => {
+          const womRole = (row.original.womrole || "").toLowerCase().trim();
 
-        return (
-          <div style={{ textAlign: "center" }}>{safeFormat(gainedXp)}</div>
-        );
+          // Check if the womrole matches any admin, skiller, or fighter rank
+          const isAdmin = ADMIN_RANKS.find((title) =>
+            womRole.includes(title.toLowerCase())
+          );
+          const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
+            womRole.includes(name.toLowerCase())
+          );
+          const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
+            womRole.includes(name.toLowerCase())
+          );
+
+          return (
+            <div style={{ textAlign: "center" }}>
+              {isAdmin && <AdminIcon title={isAdmin} />}
+              {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
+              {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+            </div>
+          );
+        },
       },
-    },
-    {
-      accessorKey: "next_level",
-      header: "Next Level",
-      cell: ({ row }) => {
-        const nextLevel = calculateNextLevel(row.original);
-        return (
+      {
+        accessorKey: "ehb",
+        header: "EHB",
+        cell: ({ row }) => (
           <div style={{ textAlign: "center" }}>
-            {nextLevel !== null && nextLevel > 0 ? safeFormat(nextLevel) : ""}
+            {safeFormat(row.original.ehb)}
           </div>
-        );
+        ),
       },
-    },
-    {
-      accessorKey: "siege_score",
-      header: "Siege Score",
-      cell: ({ row }) => (
-        <div style={{ textAlign: "center" }}>
-          {safeFormat(row.original.siege_score)}
-        </div>
-      ),
-    },
-  ], []);
+    ];
+
+    // Only add Clan XP Gained column if not on mobile
+    if (!isMobile) {
+      columns.push({
+        accessorKey: "clan_xp_gained",
+        header: "Clan XP Gained",
+        cell: ({ row }) => {
+          // Safe calculation of XP gained
+          let gainedXp = 0;
+          if (
+            row.original.current_xp !== undefined &&
+            row.original.first_xp !== undefined
+          ) {
+            gainedXp =
+              safeParseInt(row.original.current_xp) -
+              safeParseInt(row.original.first_xp);
+          }
+
+          return (
+            <div style={{ textAlign: "center" }}>{safeFormat(gainedXp)}</div>
+          );
+        },
+      });
+    }
+
+    // Add remaining columns
+    columns.push(
+      {
+        accessorKey: "next_level",
+        header: "Next Level",
+        cell: ({ row }) => {
+          const nextLevel = calculateNextLevel(row.original);
+          return (
+            <div style={{ textAlign: "center" }}>
+              {nextLevel !== null && nextLevel > 0 ? safeFormat(nextLevel) : ""}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "siege_score",
+        header: "Siege Score",
+        cell: ({ row }) => (
+          <div style={{ textAlign: "center" }}>
+            {safeFormat(row.original.siege_score)}
+          </div>
+        ),
+      }
+    );
+
+    return columns;
+  }, [isMobile]); // Add isMobile as a dependency to re-render when screen size changes
 
   // Admin-only columns - only added if isAdmin=true
   const adminColumns = React.useMemo(

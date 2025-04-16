@@ -5,8 +5,7 @@ import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
 import WomSyncButton from "../components/WomSyncButton";
-import WomEventsSyncButton from "../components/WomEventsSyncButton";
-import { FaDownload, FaEraser, FaSearch, FaFilter } from "react-icons/fa";
+import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import "./AdminPage.css";
 

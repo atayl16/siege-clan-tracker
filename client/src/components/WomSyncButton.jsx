@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
 import "./WomSyncButton.css";
 
 export default function WomSyncButton({ 

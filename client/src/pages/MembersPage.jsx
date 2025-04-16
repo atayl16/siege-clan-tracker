@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Tab, Nav, Form, InputGroup } from "react-bootstrap";
 import MemberTable from "../components/MemberTable";
-import SiegeLeaderboard from "../components/SiegeLeaderboard";
+import Leaderboard from "../components/Leaderboard";
 import EventsTable from "../components/EventsTable";
 import ClanRanks from "../components/ClanRanks";
 import { FaSearch, FaTrophy, FaCalendarAlt, FaUsers, FaMedal } from "react-icons/fa";
@@ -22,17 +22,6 @@ export default function MembersPage() {
       member.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [members, searchTerm]);
-
-  // Generate leaderboard from members data
-  const leaderboard = useMemo(() => {
-    return [...members]
-      .sort((a, b) => (b.siege_score || 0) - (a.siege_score || 0))
-      .slice(0, 5)
-      .map(member => ({
-        name: member.name,
-        score: member.siege_score || 0
-      }));
-  }, [members]);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -100,14 +89,17 @@ export default function MembersPage() {
               <div className="stat-value">
                 {(() => {
                   const xpInMillions = Math.floor(
-                    members.reduce((sum, m) => sum + (parseInt(m.current_xp) || 0), 0) / 1000000
+                    members.reduce(
+                      (sum, m) => sum + (parseInt(m.current_xp) || 0),
+                      0
+                    ) / 1000000
                   );
-                  
+
                   // Format as billions if over 1000M
                   if (xpInMillions >= 1000) {
                     return `${(xpInMillions / 1000).toFixed(1)}B`;
                   }
-                  
+
                   return `${xpInMillions}M`;
                 })()}
               </div>
@@ -157,13 +149,7 @@ export default function MembersPage() {
         <div className="stat-card">
           <h3>Leaderboard</h3>
           <div className="card-content">
-            {leaderboard.slice(0, 3).map((player, index) => (
-              <div key={index} className="mini-player">
-                <span className="rank-badge">{index + 1}</span>
-                <span className="player-name">{player.name}</span>
-                <span className="player-score">{player.score} pts</span>
-              </div>
-            ))}
+            <Leaderboard members={members} limit={3} compact={true} />
           </div>
         </div>
       </div>
@@ -205,7 +191,7 @@ export default function MembersPage() {
           <Tab.Content className="dashboard-content">
             {/* Members Tab */}
             <Tab.Pane eventKey="members">
-              <div className="content-header">
+              <div className="members-content-header">
                 <h2>Clan Members</h2>
                 <InputGroup className="member-search">
                   <InputGroup.Text>
@@ -273,8 +259,7 @@ export default function MembersPage() {
                 <h2>Siege Leaderboard</h2>
               </div>
               <div className="leaderboard-container">
-                <SiegeLeaderboard leaderboard={leaderboard} />
-                {/* Additional leaderboard stats could go here */}
+                <Leaderboard members={members} showTitle={false} />
                 <div className="leaderboard-info">
                   <p>
                     Points are earned by participating in clan events and

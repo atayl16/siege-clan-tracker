@@ -7,12 +7,12 @@
 .clan-ranks-header {
   text-align: center;
   background-color: #333;
-  padding: 12px;
+  padding: 0.75rem; /* 12px */
 }
 
 .clan-ranks-cell {
   text-align: center;
-  padding: 10px 8px;
+  padding: 0.625rem 0.5rem; /* 10px 8px */
   vertical-align: middle;
 }
 
@@ -20,19 +20,60 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem; /* 8px */
 }
 
 .rank-icon {
   display: inline-flex;
-  margin-right: 6px;
+  margin-right: 0.375rem; /* 6px */
 }
 
 .rank-description {
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
   color: #e0e0e0;
 }
 
 .empty-cell {
   background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .clan-ranks-header {
+    padding: 0.625rem; /* 10px */
+    font-size: 0.9375rem; /* 15px */
+  }
+  
+  .clan-ranks-cell {
+    padding: 0.5rem 0.375rem; /* 8px 6px */
+  }
+  
+  .rank-name-container {
+    gap: 0.375rem; /* 6px */
+  }
+}
+
+@media (max-width: 576px) {
+  .clan-ranks-header {
+    padding: 0.5rem 0.375rem; /* 8px 6px */
+    font-size: 0.875rem; /* 14px */
+  }
+  
+  .clan-ranks-cell {
+    padding: 0.375rem 0.25rem; /* 6px 4px */
+    font-size: 0.875rem; /* 14px */
+  }
+  
+  .rank-name-container {
+    flex-direction: column;
+    gap: 0.25rem; /* 4px */
+  }
+  
+  .rank-icon {
+    margin-right: 0;
+  }
+  
+  .rank-description {
+    font-size: 0.8125rem; /* 13px */
+  }
 }

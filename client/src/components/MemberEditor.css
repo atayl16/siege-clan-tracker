@@ -1,16 +1,16 @@
 .member-editor {
   color: #e0e0e0;
-  padding: 10px 0;
+  padding: 0.625rem 0; /* 10px */
 }
 
 /* Form groups */
 .member-editor .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 1rem; /* 16px */
 }
 
 .member-editor label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 0.375rem; /* 6px */
   font-size: 0.9rem;
   color: #bbbbbb;
   font-weight: 500;
@@ -19,9 +19,9 @@
 .member-editor .form-control {
   width: 100%;
   background-color: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 8px 12px;
+  border: 0.0625rem solid #444; /* 1px */
+  border-radius: 0.25rem; /* 4px */
+  padding: 0.5rem 0.75rem; /* 8px 12px */
   color: #fff;
   font-size: 0.95rem;
   transition: border-color 0.2s;
@@ -30,7 +30,7 @@
 .member-editor .form-control:focus {
   outline: none;
   border-color: #ff9800;
-  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.25);
+  box-shadow: 0 0 0 0.125rem rgba(255, 152, 0, 0.25); /* 2px */
 }
 
 .member-editor .form-control::placeholder {
@@ -47,9 +47,9 @@
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-  padding-right: 30px;
+  background-position: right 0.625rem center; /* 10px */
+  background-size: 1rem; /* 16px */
+  padding-right: 1.875rem; /* 30px */
 }
 
 /* DatePicker customization */
@@ -65,43 +65,43 @@
 .member-editor .row {
   display: flex;
   flex-wrap: wrap;
-  margin-right: -10px;
-  margin-left: -10px;
+  margin-right: -0.625rem; /* -10px */
+  margin-left: -0.625rem; /* -10px */
   margin-bottom: 0;
 }
 
 .member-editor .col-md-6 {
   flex: 0 0 50%;
   max-width: 50%;
-  padding-right: 10px;
-  padding-left: 10px;
+  padding-right: 0.625rem; /* 10px */
+  padding-left: 0.625rem; /* 10px */
 }
 
 /* Error alert */
 .member-editor .alert {
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  border-radius: 4px;
+  padding: 0.75rem 1rem; /* 12px 16px */
+  margin-bottom: 1rem; /* 16px */
+  border-radius: 0.25rem; /* 4px */
   font-size: 0.95rem;
 }
 
 .member-editor .alert-danger {
   background-color: rgba(220, 53, 69, 0.15);
   color: #ff6b6b;
-  border-left: 3px solid #dc3545;
+  border-left: 0.1875rem solid #dc3545; /* 3px */
 }
 
 /* Button group */
 .member-editor .button-group {
   display: flex;
-  gap: 10px;
-  margin-top: 25px;
+  gap: 0.625rem; /* 10px */
+  margin-top: 1.5625rem; /* 25px */
   justify-content: flex-end;
 }
 
 .member-editor .btn {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0.5rem 1rem; /* 8px 16px */
+  border-radius: 0.25rem; /* 4px */
   font-size: 0.95rem;
   font-weight: 500;
   border: none;
@@ -150,5 +150,35 @@
   
   .member-editor .btn {
     width: 100%;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 576px) {
+  .member-editor {
+    padding: 0.5rem 0; /* 8px */
+  }
+  
+  .member-editor .form-group {
+    margin-bottom: 0.875rem; /* 14px */
+  }
+  
+  .member-editor label {
+    font-size: 0.875rem;
+  }
+  
+  .member-editor .form-control {
+    padding: 0.4375rem 0.625rem; /* 7px 10px */
+    font-size: 0.9rem;
+  }
+  
+  .member-editor .alert {
+    padding: 0.625rem 0.875rem; /* 10px 14px */
+    font-size: 0.9rem;
+  }
+  
+  .member-editor .btn {
+    padding: 0.4375rem 0.875rem; /* 7px 14px */
+    font-size: 0.9rem;
   }
 }

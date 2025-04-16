@@ -1,10 +1,87 @@
 /* Add to WomSyncButton.css */
+/* Sync Features Container */
 .sync-features {
-  margin: 15px 0;
+  margin: 0.9375rem 0; /* 15px */
   text-align: center;
 }
 
 .sync-features p {
-  margin: 8px 0;
+  margin: 0.5rem 0; /* 8px */
   color: #ddd;
+  font-size: 0.9375rem;
+}
+
+/* Sync Button Styling */
+.wom-sync-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background-color: #333;
+  color: #f8f8f8;
+  border: 0.0625rem solid #444; /* 1px */
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wom-sync-button:hover {
+  background-color: #444;
+  border-color: #555;
+}
+
+.wom-sync-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-icon {
+  font-size: 1rem;
+}
+
+.sync-label {
+  font-weight: 500;
+}
+
+/* Sync Status Indicators */
+.sync-status {
+  margin-top: 0.625rem; /* 10px */
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.sync-status.success {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border: 0.0625rem solid rgba(40, 167, 69, 0.2);
+}
+
+.sync-status.error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 0.0625rem solid rgba(220, 53, 69, 0.2);
+}
+
+.sync-status.loading {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+  border: 0.0625rem solid rgba(255, 152, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .sync-features {
+    margin: 0.75rem 0;
+  }
+  
+  .sync-features p {
+    font-size: 0.875rem;
+  }
+  
+  .wom-sync-button {
+    padding: 0.5rem 0.75rem;
+  }
 }

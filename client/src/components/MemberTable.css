@@ -1,7 +1,7 @@
 .member-table-container {
-  border-radius: 8px;
+  border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
 }
 
 /* Base table styling */
@@ -22,14 +22,14 @@
 
 .member-table th {
   background-color: #333;
-  padding: 12px 10px;
+  padding: 0.75rem 0.625rem;
   font-weight: 600;
   font-size: 0.9rem;
   text-align: center;
   color: #ff9800;
-  border-bottom: 2px solid #444;
+  border-bottom: 0.125rem solid #444;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.03125rem;
 }
 
 /* Row styling */
@@ -42,8 +42,8 @@
 }
 
 .member-table td {
-  padding: 10px 8px;
-  border-top: 1px solid #333;
+  padding: 0.625rem 0.5rem;
+  border-top: 0.0625rem solid #333;
   text-align: center;
   vertical-align: middle;
 }
@@ -73,7 +73,7 @@
 
 /* Empty state */
 .member-table-empty {
-  padding: 30px 20px;
+  padding: 1.875rem 1.25rem;
   text-align: center;
   color: #999;
   font-style: italic;
@@ -83,15 +83,15 @@
 .member-table .action-buttons {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .member-table .action-buttons button {
-  padding: 5px 10px;
+  padding: 0.3125rem 0.625rem;
   font-size: 0.8rem;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 0.0625rem solid transparent;
   transition: all 0.2s;
 }
 
@@ -115,25 +115,6 @@
   background-color: rgba(220, 53, 69, 0.4);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .member-table th,
-  .member-table td {
-    padding: 8px 5px;
-    font-size: 0.9rem;
-  }
-  
-  .member-table .action-buttons {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .member-table .action-buttons button {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-  }
-}
-
 /* Cell highlighting for "next level" column */
 .member-table .next-level-cell {
   position: relative;
@@ -150,8 +131,8 @@
 }
 
 .member-table-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
 }
 
 .member-table-container::-webkit-scrollbar-track {
@@ -160,9 +141,66 @@
 
 .member-table-container::-webkit-scrollbar-thumb {
   background-color: #666;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .member-table-container::-webkit-scrollbar-thumb:hover {
   background-color: #888;
+}
+
+/* Enhanced Responsive adjustments */
+@media (max-width: 768px) {
+  .member-table th,
+  .member-table td {
+    padding: 0.5rem 0.3125rem;
+    font-size: 0.85rem;
+  }
+  
+  /* Allow text wrapping in table headers on mobile */
+  .member-table th {
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.2;
+    font-size: 0.8rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    height: auto;
+    min-height: 2.5rem;
+    vertical-align: middle;
+  }
+  
+  /* For very small screens, make text smaller */
+  .member-table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .member-table .action-buttons {
+    flex-direction: column;
+    gap: 0.3125rem;
+  }
+  
+  .member-table .action-buttons button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Make sure the table container doesn't overflow */
+  .member-table-container {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 576px) {
+  .member-table th {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.25rem;
+  }
+  
+  .member-table td {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.25rem;
+  }
 }
