@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Tab, Nav, Form, InputGroup } from "react-bootstrap";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import MemberTable from "../components/MemberTable";
 import Leaderboard from "../components/Leaderboard";
 import EventsTable from "../components/EventsTable";
@@ -18,12 +19,19 @@ import {
 import "./MembersPage.css";
 
 export default function MembersPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize state from URL parameters
   const [members, setMembers] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeKey, setActiveKey] = useState("members");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [activeKey, setActiveKey] = useState(
+    location.hash ? location.hash.substring(1) : "members"
+  );
   
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
@@ -32,6 +40,27 @@ export default function MembersPage() {
       member.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [members, searchTerm]);
+
+  // Update URL when tab changes
+  const handleTabChange = (tabKey) => {
+    setActiveKey(tabKey);
+    navigate({ hash: tabKey });
+  };
+
+  // Update URL when search term changes
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // Only update URL params if search has content
+    if (value) {
+      setSearchParams({ search: value });
+    } else {
+      // Remove search param if empty
+      searchParams.delete("search");
+      setSearchParams(searchParams);
+    }
+  };
 
   // Fetch data on component mount
   useEffect(() => {
@@ -88,7 +117,7 @@ export default function MembersPage() {
       {/* Main content with tabs */}
       <Tab.Container
         activeKey={activeKey}
-        onSelect={(k) => setActiveKey(k)}
+        onSelect={handleTabChange}
         transition={true}
       >
         <div className="dashboard-container">
@@ -136,7 +165,7 @@ export default function MembersPage() {
                   <Form.Control
                     placeholder="Search members..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={handleSearchChange}
                   />
                 </InputGroup>
               </div>
