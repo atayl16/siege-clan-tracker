@@ -1,16 +1,9 @@
 [build]
-  base = "client" 
-  functions = "../netlify/functions"   # Path is relative to base
   command = "npm run build"
   publish = "build"
+  functions = "netlify/functions"
   
 # Redirects for client-side routing and API
-[[redirects]]
-  from = "/admin/*"
-  to = "/admin.html"
-  status = 200
-  force = true
-
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
@@ -25,7 +18,6 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # Content-Security-Policy = "default-src 'self' https://*.netlify.app https://*.supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
