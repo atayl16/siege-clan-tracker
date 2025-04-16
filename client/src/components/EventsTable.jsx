@@ -36,7 +36,7 @@ export default function EventsTable({ events }) {
     return {
       activeEvents: active,
       upcomingEvents: upcoming,
-      recentCompletedEvents: completed.slice(0, 3) // Limit to 3 most recent
+      recentCompletedEvents: completed,
     };
   }, [events]);
 
@@ -87,13 +87,6 @@ export default function EventsTable({ events }) {
     );
   }
 
-  // Common styles to ensure consistent column widths
-  const columnStyles = {
-    name: { width: '50%' },
-    date: { width: '30%' },
-    status: { width: '20%' }
-  };
-
   return (
     <div className="events-tables">
       {activeEvents.length > 0 && (
@@ -102,23 +95,21 @@ export default function EventsTable({ events }) {
           <table className="table table-dark table-hover table-sm">
             <thead>
               <tr>
-                <th style={columnStyles.name}>Event</th>
-                <th style={columnStyles.date}>Ends</th>
-                <th style={columnStyles.status}>Remaining</th>
+                <th>Event</th>
+                <th>Ends</th>
+                <th>Remaining</th>
               </tr>
             </thead>
             <tbody>
               {activeEvents.map(event => (
                 <tr key={event.id} className="table-success">
-                  <td style={columnStyles.name}>
+                  <td>
                     <strong>{event.name}</strong>
-                    {event.is_wom && <span className="badge bg-info ms-2">WOM</span>}
-                    {event.metric && <span className="badge bg-secondary ms-2">{event.metric.replace(/_/g, ' ')}</span>}
                   </td>
-                  <td style={columnStyles.date}>
+                  <td>
                     {formatDate(event.end_date)} at {formatTime(event.end_date)}
                   </td>
-                  <td style={columnStyles.status}>
+                  <td>
                     <span className="badge bg-warning text-dark">
                       {formatRelativeTime(event.timeRemaining)} left
                     </span>
@@ -136,23 +127,21 @@ export default function EventsTable({ events }) {
           <table className="table table-dark table-hover table-sm">
             <thead>
               <tr>
-                <th style={columnStyles.name}>Event</th>
-                <th style={columnStyles.date}>Starts</th>
-                <th style={columnStyles.status}>Starting In</th>
+                <th>Event</th>
+                <th>Starts</th>
+                <th>Starting In</th>
               </tr>
             </thead>
             <tbody>
               {upcomingEvents.map(event => (
                 <tr key={event.id} className="table-info">
-                  <td style={columnStyles.name}>
+                  <td>
                     <strong>{event.name}</strong>
-                    {event.is_wom && <span className="badge bg-info ms-2">WOM</span>}
-                    {event.metric && <span className="badge bg-secondary ms-2">{event.metric.replace(/_/g, ' ')}</span>}
                   </td>
-                  <td style={columnStyles.date}>
+                  <td>
                     {formatDate(event.start_date)} at {formatTime(event.start_date)}
                   </td>
-                  <td style={columnStyles.status}>
+                  <td>
                     <span className="badge bg-secondary">
                       {formatRelativeTime(event.timeUntil)}
                     </span>
@@ -163,27 +152,35 @@ export default function EventsTable({ events }) {
           </table>
         </div>
       )}
-
+      
       {recentCompletedEvents.length > 0 && (
         <div className="event-section mt-4">
           <h5 className="mb-3">Recently Completed Events</h5>
           <table className="table table-dark table-hover table-sm">
             <thead>
               <tr>
-                <th style={columnStyles.name}>Event</th>
-                <th style={columnStyles.date}>Ended</th>
+                <th>Event</th>
+                <th>Ended</th>
+                <th>Winner</th>
               </tr>
             </thead>
             <tbody>
               {recentCompletedEvents.map(event => (
                 <tr key={event.id} className="table-secondary">
-                  <td style={columnStyles.name}>
+                  <td>
                     <strong>{event.name}</strong>
-                    {event.is_wom && <span className="badge bg-info ms-2">WOM</span>}
-                    {event.metric && <span className="badge bg-secondary ms-2">{event.metric.replace(/_/g, ' ')}</span>}
                   </td>
-                  <td style={columnStyles.date}>
+                  <td>
                     {formatDate(event.end_date)}
+                  </td>
+                  <td>
+                    {event.winner_username ? (
+                      <span className="winner-badge">
+                        🏆 {event.winner_username}
+                      </span>
+                    ) : (
+                      <span className="text-muted">No winner recorded</span>
+                    )}
                   </td>
                 </tr>
               ))}

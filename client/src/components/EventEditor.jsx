@@ -263,9 +263,9 @@ export default function EventEditor({
             onChange={handleChange}
             className="form-control"
           >
-            <option value="bingo">Bingo</option>
             <option value="skilling">Skilling</option>
-            <option value="pvm">PvM</option>
+            <option value="bossing">Bossing</option>
+            <option value="raids">Raids</option>
             <option value="other">Other</option>
           </select>
         </div>

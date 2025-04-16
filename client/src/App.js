@@ -11,6 +11,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import AdminLogin from "./components/AdminLogin";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
+import EventsPage from "./pages/EventsPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import WelcomePage from "./pages/WelcomePage";
 import DebugPage from "./pages/DebugPage";
@@ -32,10 +33,10 @@ const AppContent = () => {
         <Route path="/members" element={<MembersPage />} />
         <Route path="/login" element={<AdminLogin />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/events" element={<EventsPage />} />
         <Route path="/debug" element={<DebugPage />} />
 
         {/* These routes will use MembersPage component for now */}
-        <Route path="/events" element={<MembersPage />} />
         <Route path="/achievements" element={<MembersPage />} />
         <Route path="/gallery" element={<MembersPage />} />
 

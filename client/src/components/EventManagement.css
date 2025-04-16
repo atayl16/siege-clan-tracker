@@ -96,11 +96,18 @@
   background-color: rgba(74, 105, 189, 0.3);
 }
 
+/* Table styles - updated to ensure proper display */
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
 .events-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-bottom: 0;
+  border-collapse: collapse; /* Changed to collapse for better cell rendering */
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  table-layout: fixed; /* Ensure columns respect widths */
 }
 
 .events-table thead {
@@ -113,12 +120,43 @@
   padding: 0.75rem; /* 12px */
   text-align: left;
   border-bottom: 0.125rem solid #444; /* 2px */
+  border-right: 1px solid #333; /* Ensure cell boundaries are visible */
+}
+
+.events-table th:last-child {
+  border-right: none;
 }
 
 .events-table td {
   padding: 0.75rem; /* 12px */
   vertical-align: middle;
   border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05); /* 1px */
+  border-right: 1px solid #333; /* Ensure cell boundaries are visible */
+}
+
+.events-table td:last-child {
+  border-right: none;
+}
+
+/* Define specific widths for columns */
+.event-name-header, .event-name-cell {
+  width: 30%;
+}
+
+.event-type-header, .event-type-cell {
+  width: 15%;
+}
+
+.event-date-header, .event-date-cell {
+  width: 17.5%;
+}
+
+.event-status-header, .event-status-cell {
+  width: 15%;
+}
+
+.event-actions-header, .event-actions-cell {
+  width: 10%;
 }
 
 .event-row {
@@ -137,8 +175,9 @@
   background-color: rgba(40, 167, 69, 0.05);
 }
 
-.event-name {
+.event-name-cell {
   font-weight: 500;
+  word-break: break-word;
 }
 
 .wom-badge {
@@ -148,6 +187,35 @@
   padding: 0.125rem 0.375rem; /* 2px 6px */
   font-size: 0.7rem;
   margin-left: 0.5rem; /* 8px */
+}
+
+/* Event type styling */
+.event-type {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.type-bossing {
+  background-color: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+.type-skilling {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+
+.type-wom {
+  background-color: rgba(23, 162, 184, 0.15);
+  color: #17a2b8;
+}
+
+.type-custom {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
 }
 
 /* Status badges */
@@ -175,7 +243,7 @@
 }
 
 /* Action buttons */
-.actions-cell {
+.action-buttons {
   display: flex;
   gap: 0.5rem; /* 8px */
   justify-content: flex-start;
@@ -206,7 +274,7 @@
   color: #dc3545;
 }
 
-.readonly-note {
+.wom-label {
   font-style: italic;
   color: #6c757d;
   font-size: 0.85rem;
@@ -390,8 +458,10 @@
 }
 
 @media (max-width: 768px) {
+  /* Critical: Ensure table cells don't convert to blocks at smaller sizes */
   .events-table th,
   .events-table td {
+    display: table-cell !important;
     padding: 0.625rem 0.5rem; /* 10px 8px */
     font-size: 0.9375rem; /* 15px */
   }
@@ -425,14 +495,20 @@
 }
 
 @media (max-width: 576px) {
+  /* Keep table structure intact */
+  .events-table {
+    table-layout: fixed;
+  }
+
   .events-table th,
   .events-table td {
+    display: table-cell !important;
     padding: 0.5rem 0.375rem; /* 8px 6px */
     font-size: 0.875rem; /* 14px */
   }
   
   /* Stack the action buttons on very small screens */
-  .actions-cell {
+  .action-buttons {
     flex-direction: column;
     gap: 0.25rem; /* 4px */
     align-items: flex-start;

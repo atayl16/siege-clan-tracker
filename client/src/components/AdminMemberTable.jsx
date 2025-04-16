@@ -137,7 +137,7 @@ export default function AdminMemberTable({ members, onEditClick, onDeleteClick, 
                         e.stopPropagation(); // Prevent row expansion
                         handleAddPoints(member);
                       }}
-                      title="Add 2 points"
+                      title="+2 Siege Score"
                     >
                       <FaPlus /> 2
                     </button>
@@ -147,7 +147,7 @@ export default function AdminMemberTable({ members, onEditClick, onDeleteClick, 
                         e.stopPropagation(); // Prevent row expansion
                         handleToggleRankType(member);
                       }}
-                      title="Toggle fighter/skiller rank"
+                      title="Switch fighter/skiller rank"
                     >
                       <FaExchangeAlt />
                     </button>

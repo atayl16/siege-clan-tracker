@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
       // Check if this competition already exists in our database
       const { data: existingComp, error: checkError } = await supabase
         .from('events')
-        .select('id')
+        .select('id, status, winner_username')
         .eq('wom_id', comp.id)
         .single();
       
@@ -58,16 +58,76 @@ exports.handler = async (event, context) => {
         continue;
       }
       
+      // Determine status based on dates
+      const now = new Date();
+      const startDate = new Date(comp.startsAt);
+      const endDate = new Date(comp.endsAt);
+      
+      let status = 'upcoming';
+      if (now > endDate) {
+        status = 'completed';
+      } else if (now >= startDate) {
+        status = 'active';
+      }
+      
       // Format the data for our events table
       const eventData = {
         name: comp.title,
         wom_id: comp.id,
         is_wom: true,
+                type: comp.title.toLowerCase().includes('sotw') || comp.title.toLowerCase().includes('skill') 
+              ? 'skilling' 
+              : comp.title.toLowerCase().includes('botw') || comp.title.toLowerCase().includes('boss') 
+              ? 'bossing'
+              : comp.title.toLowerCase().includes('raid') 
+              ? 'raids'
+              : 'other',
         start_date: comp.startsAt,
         end_date: comp.endsAt,
         metric: comp.metric,
-        status: new Date() > new Date(comp.endsAt) ? 'completed' : 'active'
+        status: status,
+        description: `WOM Competition: ${comp.metric.replace(/_/g, ' ')}`
       };
+      
+      // If it's a completed competition and we don't have a winner yet, get the winner
+      if (status === 'completed' && (!existingComp || !existingComp.winner_username)) {
+        try {
+          console.log(`Fetching winner for completed competition ${comp.id}: ${comp.title}`);
+          
+          // Fetch competition details to get participants
+          const detailsResponse = await fetch(`${WOM_API_BASE}/competitions/${comp.id}`, {
+            headers: {
+              'x-api-key': WOM_API_KEY
+            }
+          });
+          
+          if (detailsResponse.ok) {
+            const detailsData = await detailsResponse.json();
+            
+            // Get participants and sort by progress gained (highest first)
+            const participants = detailsData.participations || [];
+            participants.sort((a, b) => (b.progress?.gained || 0) - (a.progress?.gained || 0));
+            
+            // Extract winner info - just store display name or username
+            const winner = participants.length > 0 ? participants[0] : null;
+            
+            if (winner && winner.player) {
+              const winnerName = winner.player.displayName || winner.player.username;
+              console.log(`Winner for "${comp.title}": ${winnerName} with ${winner.progress?.gained} gained`);
+              
+              // Add winner username to event data
+              eventData.winner_username = winnerName;
+            }
+          } else {
+            console.error(`Failed to fetch competition details: ${detailsResponse.status}`);
+          }
+        } catch (err) {
+          console.error(`Error fetching competition winner: ${err}`);
+        }
+      } else if (existingComp && existingComp.winner_username) {
+        // Keep existing winner information
+        eventData.winner_username = existingComp.winner_username;
+      }
       
       if (existingComp) {
         // Update existing event
@@ -91,7 +151,7 @@ exports.handler = async (event, context) => {
       }
       
       // If the competition is completed, process the results
-      if (eventData.status === 'completed' && (!existingComp || existingComp.status !== 'completed')) {
+      if (status === 'completed' && (!existingComp || existingComp.status !== 'completed')) {
         await processCompetitionResults(comp.id);
       }
     }
@@ -123,7 +183,7 @@ exports.handler = async (event, context) => {
   }
 };
 
-// Process competition results and award points
+// Update processCompetitionResults function to also set the winner username
 async function processCompetitionResults(competitionId) {
   try {
     // Fetch competition details to get participants and results
@@ -138,7 +198,7 @@ async function processCompetitionResults(competitionId) {
     }
     
     const compDetails = await compDetailsResponse.json();
-    const { participants } = compDetails;
+    const participants = compDetails.participations || [];
     
     if (!participants || participants.length === 0) {
       console.log(`No participants found for competition ${competitionId}`);
@@ -147,10 +207,29 @@ async function processCompetitionResults(competitionId) {
     
     // Sort participants by their progress (gains)
     const validParticipants = participants
-      .filter(p => p.progress > 0) // Only count those who participated (progress > 0)
-      .sort((a, b) => b.progress - a.progress);
+      .filter(p => p.progress?.gained > 0) // Only count those who participated (progress > 0)
+      .sort((a, b) => (b.progress?.gained || 0) - (a.progress?.gained || 0));
     
     console.log(`Processing results for ${validParticipants.length} participants in competition ${competitionId}`);
+    
+    // Update the competition with winner information
+    if (validParticipants.length > 0) {
+      const winner = validParticipants[0];
+      if (winner && winner.player) {
+        const winnerName = winner.player.displayName || winner.player.username;
+        console.log(`Setting winner for competition ${competitionId}: ${winnerName}`);
+        
+        // Update the event with the winner's username
+        const { error: updateWinnerError } = await supabase
+          .from('events')
+          .update({ winner_username: winnerName })
+          .eq('wom_id', competitionId);
+          
+        if (updateWinnerError) {
+          console.error(`Error updating winner for competition ${competitionId}:`, updateWinnerError);
+        }
+      }
+    }
     
     // Award points based on placement
     for (let i = 0; i < validParticipants.length; i++) {
@@ -166,11 +245,11 @@ async function processCompetitionResults(competitionId) {
       const { data: member, error: memberError } = await supabase
         .from('members')
         .select('wom_id, siege_score')
-        .eq('wom_name', participant.username)
+        .eq('wom_name', participant.player.username)
         .single();
       
       if (memberError) {
-        console.error(`Error finding member ${participant.username}:`, memberError);
+        console.error(`Error finding member ${participant.player.username}:`, memberError);
         continue;
       }
       
@@ -182,9 +261,9 @@ async function processCompetitionResults(competitionId) {
         .eq('wom_id', member.wom_id);
       
       if (updateError) {
-        console.error(`Error updating score for ${participant.username}:`, updateError);
+        console.error(`Error updating score for ${participant.player.username}:`, updateError);
       } else {
-        console.log(`Awarded ${pointsToAward} points to ${participant.username}`);
+        console.log(`Awarded ${pointsToAward} points to ${participant.player.username}`);
       }
       
       // Record this point award in the event_results table
@@ -193,14 +272,14 @@ async function processCompetitionResults(competitionId) {
         .insert([{
           event_id: competitionId,
           wom_id: member.wom_id,
-          player_name: participant.username,
+          player_name: participant.player.username,
           placement: i + 1,
           points_awarded: pointsToAward,
-          progress: participant.progress
+          progress: participant.progress.gained
         }]);
       
       if (resultError) {
-        console.error(`Error recording result for ${participant.username}:`, resultError);
+        console.error(`Error recording result for ${participant.player.username}:`, resultError);
       }
     }
     

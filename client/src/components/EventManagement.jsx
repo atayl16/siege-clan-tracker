@@ -26,6 +26,8 @@ export default function EventManagement() {
         .order('start_date', { ascending: false });
       
       if (error) throw error;
+      
+      console.log("Events data:", data); // Debug log
       setEvents(data || []);
     } catch (err) {
       console.error('Error fetching events:', err);
@@ -37,13 +39,11 @@ export default function EventManagement() {
 
   const handleEventSave = (savedEvent) => {
     if (editingEvent) {
-      // Update the edited event in the list
       setEvents(events.map(event => 
         event.id === savedEvent.id ? savedEvent : event
       ));
-      setEditingEvent(null); // Exit edit mode
+      setEditingEvent(null);
     } else {
-      // Add the new event to the list
       setEvents([savedEvent, ...events]);
       setIsCreatingEvent(false);
     }
@@ -51,7 +51,7 @@ export default function EventManagement() {
 
   const handleEditEvent = (event) => {
     setEditingEvent(event);
-    setIsCreatingEvent(false); // Close the create form if it's open
+    setIsCreatingEvent(false);
   };
 
   const handleCancelEdit = () => {
@@ -73,7 +73,6 @@ export default function EventManagement() {
         
       if (error) throw error;
       
-      // Remove from local state
       setEvents(events.filter(event => event.id !== deleteConfirm.id));
       setDeleteConfirm(null);
     } catch (err) {
@@ -91,7 +90,6 @@ export default function EventManagement() {
     });
   };
 
-  // Helper function to convert text to title case
   const toTitleCase = (text) => {
     if (!text) return '';
     return text.split(' ')
@@ -115,17 +113,8 @@ export default function EventManagement() {
     }
   };
 
-  const getStatusClass = (status) => {
-    switch(status) {
-      case 'Active': return 'status-active';
-      case 'Upcoming': return 'status-upcoming';
-      case 'Completed': return 'status-completed';
-      default: return '';
-    }
-  };
-
   const formatEventType = (event) => {
-    if (event.is_wom) return "WOM Competition";
+    if (event.is_wom) return "WOM";
     return toTitleCase(event.type || "Custom");
   };
 
@@ -140,7 +129,6 @@ export default function EventManagement() {
     <div className="event-management">
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Delete confirmation modal */}
       {deleteConfirm && (
         <div className="delete-confirm-modal">
           <div className="delete-confirm-content">
@@ -166,7 +154,6 @@ export default function EventManagement() {
         </div>
       )}
 
-      {/* Create Event button at top */}
       <div className="event-tools">
         <div className="event-actions">
           <button
@@ -220,85 +207,124 @@ export default function EventManagement() {
             </p>
           </div>
         ) : (
-          <table className="events-table">
-            <thead>
-              <tr>
-                <th>Event Name</th>
-                <th>Type</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((event) => {
-                const status = getEventStatus(event);
-                return (
-                  <tr
-                    key={event.id}
-                    className={`event-row ${
-                      event.is_wom ? "wom-event-row" : "custom-event-row"
-                    }`}
-                  >
-                    <td className="event-name">
-                      {toTitleCase(event.name)}
-                      {event.is_wom && <span className="wom-badge">WOM</span>}
-                    </td>
-                    <td>{formatEventType(event)}</td>
-                    <td>{formatDate(event.start_date)}</td>
-                    <td>{formatDate(event.end_date)}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${getStatusClass(status)}`}
-                      >
-                        {status}
-                      </span>
-                    </td>
-                    <td className="actions-cell">
-                      {!event.is_wom && (
-                        <>
-                          <button
-                            className="action-btn edit-btn"
-                            onClick={() => handleEditEvent(event)}
-                            title="Edit event"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={() => handleDeleteClick(event)}
-                            title="Delete event"
-                          >
-                            <FaTrash />
-                          </button>
-                        </>
-                      )}
-                      {event.is_wom && (
-                        <span className="readonly-note">
-                          WOM Event (read-only)
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #333' }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
+                    Event Name
+                  </th>
+                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
+                    Type
+                  </th>
+                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
+                    Start Date
+                  </th>
+                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
+                    End Date
+                  </th>
+                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
+                    Status
+                  </th>
+                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((event) => {
+                  const status = getEventStatus(event);
+                  return (
+                    <tr key={event.id} style={{ backgroundColor: event.is_wom ? 'rgba(0, 123, 255, 0.05)' : 'rgba(40, 167, 69, 0.05)' }}>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#f4f4f8' }}>
+                        {toTitleCase(event.name)}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#f4f4f8' }}>
+                        {formatEventType(event)}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#ddd' }}>
+                        {formatDate(event.start_date)}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#ddd' }}>
+                        {formatDate(event.end_date)}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #333' }}>
+                        <span style={{ 
+                          padding: '4px 8px', 
+                          borderRadius: '12px', 
+                          fontSize: '0.8rem',
+                          backgroundColor: status === 'Active' ? 'rgba(40, 167, 69, 0.2)' : 
+                                          status === 'Upcoming' ? 'rgba(0, 123, 255, 0.2)' : 
+                                          'rgba(108, 117, 125, 0.2)',
+                          color: status === 'Active' ? '#28a745' : 
+                                 status === 'Upcoming' ? '#007bff' : 
+                                 '#6c757d'
+                        }}>
+                          {status}
                         </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #333' }}>
+                        {!event.is_wom ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                              onClick={() => handleEditEvent(event)}
+                              style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer' }}
+                              title="Edit event"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteClick(event)}
+                              style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer' }}
+                              title="Delete event"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <a 
+                              href={`https://wiseoldman.net/competitions/${event.wom_id}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                background: 'rgba(23, 162, 184, 0.15)', 
+                                color: '#17a2b8', 
+                                border: 'none', 
+                                borderRadius: '4px', 
+                                padding: '4px 8px', 
+                                fontSize: '0.85rem', 
+                                cursor: 'pointer',
+                                textDecoration: 'none'
+                              }}
+                              title="View in Wise Old Man"
+                            >
+                              <FaEdit style={{ marginRight: '4px' }} /> Edit in WOM
+                            </a>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Sync section moved to bottom */}
       <div className="event-sync-section">
         <div className="event-sync-header">
           <h3>Data Synchronization</h3>
         </div>
         <div className="event-sync-content">
           <p>Import competitions and events from Wise Old Man</p>
-          <WomSyncButton 
+          <WomSyncButton
             type="events"
             buttonText="Sync WOM Competitions"
-            onSyncComplete={fetchEvents} 
+            onSyncComplete={fetchEvents}
           />
           <p className="event-sync-note">
             Sync will import all WOM competitions your clan is participating in.
