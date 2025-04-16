@@ -169,38 +169,50 @@ export default function MembersPage() {
                   />
                 </InputGroup>
               </div>
-              <div className="member-table-container table-responsive">
+              <div className="member-table-container table-responsive w-100">
                 <MemberTable members={filteredMembers} />
               </div>
             </Tab.Pane>
-            
+
             {/* Overview Tab */}
             <Tab.Pane eventKey="overview">
               <div className="content-header">
                 <h2>Clan Overview</h2>
               </div>
-              
+
               <div className="events-container">
                 {/* New Clan Information section */}
                 <h3 className="section-title">Clan Information</h3>
                 <div className="clan-info-row">
                   <div className="info-card">
-                    <div className="info-label"><FaCalendarDay /> Founded</div>
+                    <div className="info-label">
+                      <FaCalendarDay /> Founded
+                    </div>
                     <div className="info-value">April 23, 2022</div>
                   </div>
                   <div className="info-card">
                     <div className="info-label">Community Links</div>
                     <div className="info-links">
-                      <a href="https://discord.gg/aXYHD6UdQJ" target="_blank" rel="noopener noreferrer" className="resource-link">
+                      <a
+                        href="https://discord.gg/aXYHD6UdQJ"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="resource-link"
+                      >
                         <FaDiscord /> Discord Server
                       </a>
-                      <a href="https://wiseoldman.net/groups/2928" target="_blank" rel="noopener noreferrer" className="resource-link">
+                      <a
+                        href="https://wiseoldman.net/groups/2928"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="resource-link"
+                      >
                         <FaChartLine /> WiseOldMan Stats
                       </a>
                     </div>
                   </div>
                 </div>
-                
+
                 <h3 className="section-title">Clan Stats</h3>
                 <div className="overview-stats-row">
                   <div className="overview-stat">
@@ -217,9 +229,9 @@ export default function MembersPage() {
                             0
                           ) / 1000000
                         );
-            
-                        return xpInMillions >= 1000 
-                          ? `${(xpInMillions / 1000).toFixed(1)}B` 
+
+                        return xpInMillions >= 1000
+                          ? `${(xpInMillions / 1000).toFixed(1)}B`
                           : `${xpInMillions}M`;
                       })()}
                     </div>
@@ -236,7 +248,7 @@ export default function MembersPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <h3 className="section-title">Active Events</h3>
                 {events.filter(
                   (e) =>
@@ -261,7 +273,7 @@ export default function MembersPage() {
                       </div>
                     ))
                 )}
-                
+
                 <h3 className="section-title">Top Players</h3>
                 <div className="overview-leaderboard">
                   <Leaderboard members={members} limit={3} compact={true} />

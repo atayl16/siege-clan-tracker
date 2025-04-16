@@ -130,251 +130,287 @@ const calculateNextLevel = (member) => {
 };
 
 // Main MemberTable component
-export default function MemberTable({
-  members,
-  isAdmin = false,
-  onRowClick,
-  onDeleteClick,
-}) {
-  // Add state to track screen width
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
-  // Add resize listener
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  export default function MemberTable({
+    members,
+    isAdmin = false,
+    onRowClick,
+    onDeleteClick,
+  }) {
+    // Add state to track screen width
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Sort members before passing them to the table
-  const sortedMembers = React.useMemo(() => {
-    return [...(members || [])].sort((a, b) => {
-      const aRole = (a.womrole || "").toLowerCase().trim();
-      const bRole = (b.womrole || "").toLowerCase().trim();
+    // Add resize listener
+    useEffect(() => {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
 
-      // Check if the roles are admin ranks
-      const aAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
-        aRole.includes(rank.toLowerCase())
-      );
-      const bAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
-        bRole.includes(rank.toLowerCase())
-      );
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
-      // Admin ranks come first, sorted by their order in ADMIN_RANK_ORDER
-      if (aAdminIndex !== -1 && bAdminIndex !== -1) {
-        return aAdminIndex - bAdminIndex;
-      }
-      if (aAdminIndex !== -1) return -1; // a is an admin, b is not
-      if (bAdminIndex !== -1) return 1; // b is an admin, a is not
+    // Sort members before passing them to the table
+    const sortedMembers = React.useMemo(() => {
+      return [...(members || [])].sort((a, b) => {
+        const aRole = (a.womrole || "").toLowerCase().trim();
+        const bRole = (b.womrole || "").toLowerCase().trim();
 
-      // If neither is an admin, sort by "Clan XP Gained" in descending order
-      const aClanXpGained =
-        parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
-      const bClanXpGained =
-        parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10) || 0;
+        // Check if the roles are admin ranks
+        const aAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
+          aRole.includes(rank.toLowerCase())
+        );
+        const bAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
+          bRole.includes(rank.toLowerCase())
+        );
 
-      return bClanXpGained - aClanXpGained;
-    });
-  }, [members]);
+        // Admin ranks come first, sorted by their order in ADMIN_RANK_ORDER
+        if (aAdminIndex !== -1 && bAdminIndex !== -1) {
+          return aAdminIndex - bAdminIndex;
+        }
+        if (aAdminIndex !== -1) return -1; // a is an admin, b is not
+        if (bAdminIndex !== -1) return 1; // b is an admin, a is not
 
-  // Define base columns that are shown in both public and admin views
-  const baseColumns = React.useMemo(() => {
-    // Start with the columns that always show
-    const columns = [
-      {
-        accessorKey: "name",
-        header: "Name",
-        cell: ({ row }) => (
-          <div style={{ textAlign: "center" }}>
-            {row.original.name || row.original.wom_name || "N/A"}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "rank",
-        header: "Clan Rank",
-        cell: ({ row }) => {
-          const womRole = (row.original.womrole || "").toLowerCase().trim();
+        // If neither is an admin, sort by "Clan XP Gained" in descending order
+        const aClanXpGained =
+          parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
+        const bClanXpGained =
+          parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10) || 0;
 
-          // Check if the womrole matches any admin, skiller, or fighter rank
-          const isAdmin = ADMIN_RANKS.find((title) =>
-            womRole.includes(title.toLowerCase())
-          );
-          const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
-            womRole.includes(name.toLowerCase())
-          );
-          const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
-            womRole.includes(name.toLowerCase())
-          );
-
-          return (
-            <div style={{ textAlign: "center" }}>
-              {isAdmin && <AdminIcon title={isAdmin} />}
-              {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
-              {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "ehb",
-        header: "EHB",
-        cell: ({ row }) => (
-          <div style={{ textAlign: "center" }}>
-            {safeFormat(row.original.ehb)}
-          </div>
-        ),
-      },
-    ];
-
-    // Only add Clan XP Gained column if not on mobile
-    if (!isMobile) {
-      columns.push({
-        accessorKey: "clan_xp_gained",
-        header: "Clan XP Gained",
-        cell: ({ row }) => {
-          // Safe calculation of XP gained
-          let gainedXp = 0;
-          if (
-            row.original.current_xp !== undefined &&
-            row.original.first_xp !== undefined
-          ) {
-            gainedXp =
-              safeParseInt(row.original.current_xp) -
-              safeParseInt(row.original.first_xp);
-          }
-
-          return (
-            <div style={{ textAlign: "center" }}>{safeFormat(gainedXp)}</div>
-          );
-        },
+        return bClanXpGained - aClanXpGained;
       });
-    }
+    }, [members]);
 
-    // Add remaining columns
-    columns.push(
-      {
-        accessorKey: "next_level",
-        header: "Next Level",
-        cell: ({ row }) => {
-          const nextLevel = calculateNextLevel(row.original);
-          return (
+    // Define base columns that are shown in both public and admin views
+    const baseColumns = React.useMemo(() => {
+      // Start with the columns that always show
+      const columns = [
+        {
+          accessorKey: "name",
+          header: "Name",
+          cell: ({ row }) => (
             <div style={{ textAlign: "center" }}>
-              {nextLevel !== null && nextLevel > 0 ? safeFormat(nextLevel) : ""}
+              {row.original.name || row.original.wom_name || "N/A"}
             </div>
-          );
+          ),
         },
-      },
-      {
-        accessorKey: "siege_score",
-        header: "Siege Score",
-        cell: ({ row }) => (
-          <div style={{ textAlign: "center" }}>
-            {safeFormat(row.original.siege_score)}
-          </div>
-        ),
+        {
+          accessorKey: "rank",
+          header: "Clan Rank",
+          cell: ({ row }) => {
+            const womRole = (row.original.womrole || "").toLowerCase().trim();
+
+            // Check if the womrole matches any admin, skiller, or fighter rank
+            const isAdmin = ADMIN_RANKS.find((title) =>
+              womRole.includes(title.toLowerCase())
+            );
+            const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
+              womRole.includes(name.toLowerCase())
+            );
+            const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
+              womRole.includes(name.toLowerCase())
+            );
+
+            return (
+              <div style={{ textAlign: "center" }}>
+                {isAdmin && <AdminIcon title={isAdmin} />}
+                {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
+                {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+              </div>
+            );
+          },
+        },
+        {
+          accessorKey: "ehb",
+          header: "EHB",
+          cell: ({ row }) => (
+            <div style={{ textAlign: "center" }}>
+              {safeFormat(row.original.ehb)}
+            </div>
+          ),
+        },
+      ];
+
+      // Only add Clan XP Gained column if not on mobile
+      if (!isMobile) {
+        columns.push({
+          accessorKey: "clan_xp_gained",
+          header: "Clan XP Gained",
+          cell: ({ row }) => {
+            // Safe calculation of XP gained
+            let gainedXp = 0;
+            if (
+              row.original.current_xp !== undefined &&
+              row.original.first_xp !== undefined
+            ) {
+              gainedXp =
+                safeParseInt(row.original.current_xp) -
+                safeParseInt(row.original.first_xp);
+            }
+
+            return (
+              <div style={{ textAlign: "center" }}>{safeFormat(gainedXp)}</div>
+            );
+          },
+        });
       }
+
+      // Add remaining columns
+      columns.push(
+        {
+          accessorKey: "next_level",
+          header: "Next Level",
+          cell: ({ row }) => {
+            const nextLevel = calculateNextLevel(row.original);
+            return (
+              <div style={{ textAlign: "center" }}>
+                {nextLevel !== null && nextLevel > 0
+                  ? safeFormat(nextLevel)
+                  : ""}
+              </div>
+            );
+          },
+        },
+        {
+          accessorKey: "siege_score",
+          header: "Siege Score",
+          cell: ({ row }) => (
+            <div style={{ textAlign: "center" }}>
+              {safeFormat(row.original.siege_score)}
+            </div>
+          ),
+        }
+      );
+
+      return columns;
+    }, [isMobile]); // Add isMobile as a dependency to re-render when screen size changes
+
+    // Admin-only columns - only added if isAdmin=true
+    const adminColumns = React.useMemo(
+      () => [
+        {
+          accessorKey: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <div style={{ textAlign: "center" }}>
+              <button
+                className="btn btn-sm btn-outline-info mx-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRowClick && onRowClick(row.original);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="btn btn-sm btn-outline-danger mx-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log("Deleting member:", row.original);
+
+                  if (!row.original.wom_id) {
+                    console.error(
+                      "Cannot delete: wom_id is missing",
+                      row.original
+                    );
+                    alert("Cannot delete: Member ID (wom_id) is missing");
+                    return;
+                  }
+
+                  onDeleteClick && onDeleteClick(row.original);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          ),
+        },
+      ],
+      [onRowClick, onDeleteClick]
     );
 
-    return columns;
-  }, [isMobile]); // Add isMobile as a dependency to re-render when screen size changes
+    // Combine columns based on whether this is the admin view
+    const columns = React.useMemo(
+      () => (isAdmin ? [...baseColumns, ...adminColumns] : baseColumns),
+      [isAdmin, baseColumns, adminColumns]
+    );
 
-  // Admin-only columns - only added if isAdmin=true
-  const adminColumns = React.useMemo(
-    () => [
-      {
-        accessorKey: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <div style={{ textAlign: "center" }}>
-            <button
-              className="btn btn-sm btn-outline-info mx-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRowClick && onRowClick(row.original);
-              }}
+    const table = useReactTable({
+      data: sortedMembers,
+      columns,
+      getCoreRowModel: getCoreRowModel(),
+    });
+
+    if (!members || members.length === 0) {
+      return <div>No members found.</div>;
+    }
+    return (
+      <table className="member-table w-100">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  style={{
+                    textAlign: "center",
+                    width: getColumnWidth(header.id),
+                  }}
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr
+              key={row.id}
+              onClick={() => isAdmin && onRowClick && onRowClick(row.original)}
+              style={isAdmin ? { cursor: "pointer" } : {}}
             >
-              Edit
-            </button>
-            <button
-              className="btn btn-sm btn-outline-danger mx-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("Deleting member:", row.original);
-
-                if (!row.original.wom_id) {
-                  console.error(
-                    "Cannot delete: wom_id is missing",
-                    row.original
-                  );
-                  alert("Cannot delete: Member ID (wom_id) is missing");
-                  return;
-                }
-
-                onDeleteClick && onDeleteClick(row.original);
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [onRowClick, onDeleteClick]
-  );
-
-  // Combine columns based on whether this is the admin view
-  const columns = React.useMemo(
-    () => (isAdmin ? [...baseColumns, ...adminColumns] : baseColumns),
-    [isAdmin, baseColumns, adminColumns]
-  );
-
-  const table = useReactTable({
-    data: sortedMembers,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (!members || members.length === 0) {
-    return <div>No members found.</div>;
+              {row.getVisibleCells().map((cell) => (
+                <td
+                  key={cell.id}
+                  style={{
+                    textAlign: "center",
+                    width: getColumnWidth(cell.column.id),
+                  }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
   }
-
-  return (
-    <table className="table table-striped table-dark table-hover table-sm table-responsive">
-      <thead>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <th key={header.id} style={{ textAlign: "center" }}>
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map((row) => (
-          <tr
-            key={row.id}
-            onClick={() => isAdmin && onRowClick && onRowClick(row.original)}
-            style={isAdmin ? { cursor: "pointer" } : {}}
-          >
-            {row.getVisibleCells().map((cell) => (
-              <td key={cell.id} style={{ textAlign: "center" }}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
+  
+  // Helper function to distribute column widths
+  function getColumnWidth(columnId) {
+    // Set appropriate widths for each column
+    switch(columnId) {
+      case 'name':
+        return '25%';
+      case 'rank':
+        return '15%';
+      case 'ehb':
+        return '15%';  // Increased from 10% when no actions column
+      case 'clan_xp_gained':
+        return '15%';
+      case 'next_level':
+        return '15%';
+      case 'siege_score':
+        return '15%';  // Increased from 10% when no actions column
+      case 'actions':
+        return '10%';  // Only used in admin view
+      default:
+        return 'auto';
+    }
+  }
