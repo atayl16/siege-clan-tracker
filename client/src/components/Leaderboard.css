@@ -161,3 +161,18 @@
     font-size: 0.875rem; /* 14px */
   }
 }
+
+.gold-icon {
+  color: #ffd700; /* Gold color */
+  font-size: 1.2rem;
+}
+
+.silver-icon {
+  color: #c0c0c0; /* Silver color */
+  font-size: 1.2rem;
+}
+
+.bronze-icon {
+  color: #cd7f32; /* Bronze color */
+  font-size: 1.2rem;
+}

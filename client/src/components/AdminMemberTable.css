@@ -160,3 +160,20 @@
     gap: 0.625rem; /* 10px */
   }
 }
+
+.role-mismatch-row {
+  position: relative;
+  background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.role-mismatch-indicator {
+  position: absolute;
+  margin-left: 5px;
+}
+
+.role-mismatch-alert {
+  background-color: rgba(255, 193, 7, 0.2);
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}

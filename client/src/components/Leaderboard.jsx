@@ -1,12 +1,6 @@
 import React, { useMemo } from "react";
+import { FaCrown, FaMedal } from "react-icons/fa"; // Import icons
 import "./Leaderboard.css";
-
-// Helper function to safely parse integers
-const safeParseInt = (value) => {
-  if (value === null || value === undefined || value === "") return 0;
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? 0 : parsed;
-};
 
 export default function SiegeLeaderboard({ 
   members = [], 
@@ -15,20 +9,18 @@ export default function SiegeLeaderboard({
   showTitle = false,
   compact = false
 }) {
-  // Process and prepare the leaderboard data
   const leaderboardData = useMemo(() => {
     return [...members]
       .map(member => ({
         ...member,
-        siege_score: safeParseInt(member.siege_score || member.score) // Handle both formats
+        siege_score: parseInt(member.siege_score || member.score, 10) || 0
       }))
-      .filter(member => member.siege_score > 0) // Only include members with scores > 0
-      .sort((a, b) => b.siege_score - a.siege_score) // Sort by score (highest first)
-      .slice(0, limit || members.length); // Apply limit if provided
+      .filter(member => member.siege_score > 0)
+      .sort((a, b) => b.siege_score - a.siege_score)
+      .slice(0, limit || members.length);
   }, [members, limit]);
 
   if (compact) {
-    // Compact version for dashboard cards
     return (
       <div className={`siege-leaderboard-compact ${className}`}>
         {leaderboardData.length === 0 ? (
@@ -36,7 +28,9 @@ export default function SiegeLeaderboard({
         ) : (
           leaderboardData.map((player, index) => (
             <div key={player.wom_id || index} className="mini-player">
-              <span className="rank-badge">{index + 1}</span>
+              <span className="rank-badge">
+                {index === 0 ? <FaCrown className="gold-icon" /> : index + 1}
+              </span>
               <span className="player-name">{player.name || player.wom_name || "Unknown"}</span>
               <span className="player-score">{player.siege_score.toLocaleString()} pts</span>
             </div>
@@ -46,7 +40,6 @@ export default function SiegeLeaderboard({
     );
   }
 
-  // Full table version
   return (
     <div className={`siege-leaderboard ${className}`}>
       {showTitle && <h2>Siege Leaderboard</h2>}
@@ -67,7 +60,17 @@ export default function SiegeLeaderboard({
           ) : (
             leaderboardData.map((player, index) => (
               <tr key={player.wom_id || index} className={index < 3 ? `top-${index + 1}` : ""}>
-                <td>{index + 1}</td>
+                <td>
+                  {index === 0 ? (
+                    <FaCrown className="gold-icon" title="1st Place" />
+                  ) : index === 1 ? (
+                    <FaMedal className="silver-icon" title="2nd Place" />
+                  ) : index === 2 ? (
+                    <FaMedal className="bronze-icon" title="3rd Place" />
+                  ) : (
+                    index + 1
+                  )}
+                </td>
                 <td>{player.name || player.wom_name || "Unknown"}</td>
                 <td>{player.siege_score.toLocaleString()}</td>
               </tr>

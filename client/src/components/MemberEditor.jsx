@@ -27,7 +27,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
     first_lvl: 0,
     siege_score: 0,
     created_at: new Date(),
-    siege_competition_place: ""
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +48,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         first_lvl: member.first_lvl || 0,
         siege_score: member.siege_score || 0,
         created_at: member.created_at ? new Date(member.created_at) : new Date(),
-        siege_competition_place: member.siege_competition_place || ""
       });
     } else {
       // Reset form for new member
@@ -66,7 +64,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         first_lvl: 0,
         siege_score: 0,
         created_at: new Date(),
-        siege_competition_place: ""
       });
     }
   }, [member]);
@@ -305,20 +302,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
                 onChange={handleDateChange}
                 className="form-control"
                 dateFormat="yyyy-MM-dd"
-              />
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="form-group">
-              <label htmlFor="siege_competition_place">Siege Competition Place:</label>
-              <input
-                type="text"
-                id="siege_competition_place"
-                name="siege_competition_place"
-                value={formData.siege_competition_place}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="e.g. 1st, 2nd, 3rd"
               />
             </div>
           </div>
