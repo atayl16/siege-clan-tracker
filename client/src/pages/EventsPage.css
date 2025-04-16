@@ -223,17 +223,6 @@
   box-sizing: border-box !important;
 }
 
-/* Make all containers consistent */
-.events-container, 
-.leaderboard-container, 
-.ranks-container, 
-.member-table-container {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-}
-
 /* Fix for content headers */
 .content-header,
 .members-content-header {
