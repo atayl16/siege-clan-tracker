@@ -1,39 +1,76 @@
 {
-  "name": "siege-clan-tracker",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "siege-tracker-client",
+  "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "node server/index.js",
-    "client": "npm start --prefix client",
-    "setup-db": "node server/scripts/setup-db.js",
-    "import-supabase": "node server/scripts/import-csv.js",
-    "verify": "node server/scripts/verify-imports.js",
-    "rebuild-db": "sqlite3 server/db/siege.db < server/db/schema.sql",
-    "reset-db": "npm run rebuild-db && npm run import-csv",
-    "netlify-dev": "cd client && npm run build && cd .. && netlify dev"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/atayl16/siege-clan-tracker.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/atayl16/siege-clan-tracker/issues"
-  },
-  "homepage": "https://github.com/atayl16/siege-clan-tracker#readme",
-  "description": "",
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "@tanstack/react-query": "^5.71.5",
+    "@tanstack/react-query-devtools": "^5.71.5",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table-devtools": "^8.21.2",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
-    "bootstrap": "^5.3.4",
+    "bcryptjs": "^2.4.3",
+    "bootstrap": "^5.3.5",
+    "bootstrap-icons": "^1.11.3",
     "cheerio": "^1.0.0",
-    "node-fetch": "^2.7.0"
+    "express": "^4.21.2",
+    "node-fetch": "^2.7.0",
+    "pako": "^2.1.0",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.9",
+    "react-datepicker": "^8.3.0",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^6.23.1",
+    "react-scripts": "5.0.1",
+    "sql.js": "^1.13.0",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "netlify:dev": "netlify dev",
+    "netlify:build": "netlify build",
+    "netlify:deploy": "netlify deploy"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
+    "netlify-cli": "^20.0.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx}": [
+      "eslint --fix",
+      "git add"
+    ]
   }
 }
