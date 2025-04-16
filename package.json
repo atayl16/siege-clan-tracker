@@ -31,7 +31,9 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "axios": "^1.8.4",
     "bootstrap": "^5.3.4",
-    "node-fetch": "^2.6.12"
+    "cheerio": "^1.0.0",
+    "node-fetch": "^2.7.0"
   }
 }

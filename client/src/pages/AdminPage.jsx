@@ -5,6 +5,7 @@ import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
 import WomSyncButton from "../components/WomSyncButton";
+import RunewatchAlerts from "../components/RunewatchAlerts";
 import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import "./AdminPage.css";
@@ -385,7 +386,7 @@ export default function AdminPage() {
   }
   
   return (
-    <div className="admin-dashboard">      
+    <div className="admin-dashboard">
       <div className="dashboard-header">
         <h1>Clan Administration</h1>
         <div className="admin-actions">
@@ -398,14 +399,14 @@ export default function AdminPage() {
           >
             <span className="button-icon">+</span> Add New Member
           </button>
-          
+
           {alertsCount > 0 && (
             <button
               className="alert-button"
               onClick={() => setActiveTab("alerts")}
             >
               <span className="alert-icon">🔔</span>
-              {alertsCount} Rank Alert{alertsCount !== 1 ? 's' : ''}
+              {alertsCount} Rank Alert{alertsCount !== 1 ? "s" : ""}
             </button>
           )}
         </div>
@@ -448,13 +449,19 @@ export default function AdminPage() {
       >
         <div className="reset-confirmation">
           <div className="alert alert-danger">
-            <strong>Warning!</strong> This action will set all members' siege scores to 0. This cannot be undone.
+            <strong>Warning!</strong> This action will set all members' siege
+            scores to 0. This cannot be undone.
           </div>
-          
-          <p>A backup CSV of the current data will be automatically downloaded before resetting.</p>
-          
+
+          <p>
+            A backup CSV of the current data will be automatically downloaded
+            before resetting.
+          </p>
+
           <div className="form-group">
-            <label>Type <strong>RESET ALL SCORES</strong> to confirm:</label>
+            <label>
+              Type <strong>RESET ALL SCORES</strong> to confirm:
+            </label>
             <input
               type="text"
               className="form-control"
@@ -463,7 +470,7 @@ export default function AdminPage() {
               placeholder="RESET ALL SCORES"
             />
           </div>
-          
+
           <div className="button-group">
             <button
               className="btn btn-danger"
@@ -472,7 +479,7 @@ export default function AdminPage() {
             >
               Reset All Scores
             </button>
-            
+
             <button
               className="btn btn-secondary"
               onClick={() => {
@@ -524,7 +531,7 @@ export default function AdminPage() {
           <div className="tab-content members-content">
             <div className="content-header">
               <h2>Member Management</h2>
-              
+
               <div className="admin-toolbar">
                 <div className="search-container">
                   <div className="search-input-wrapper">
@@ -538,7 +545,7 @@ export default function AdminPage() {
                       ref={searchInputRef}
                     />
                     {searchTerm && (
-                      <button 
+                      <button
                         className="clear-search"
                         onClick={() => setSearchTerm("")}
                       >
@@ -549,7 +556,7 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-      
+
             {loading ? (
               <div className="loading-container">
                 <div className="loading-spinner"></div>
@@ -571,7 +578,10 @@ export default function AdminPage() {
                     <div className="stat-item">
                       <div className="stat-label">Total Siege Points</div>
                       <div className="stat-value">
-                        {members.reduce((sum, m) => sum + (parseInt(m.siege_score) || 0), 0)}
+                        {members.reduce(
+                          (sum, m) => sum + (parseInt(m.siege_score) || 0),
+                          0
+                        )}
                       </div>
                     </div>
                     <div className="stat-item">
@@ -579,7 +589,7 @@ export default function AdminPage() {
                       <div className="stat-value">{filteredMembers.length}</div>
                     </div>
                   </div>
-                  
+
                   <AdminMemberTable
                     members={filteredMembers}
                     onEditClick={(member) => {
@@ -590,20 +600,20 @@ export default function AdminPage() {
                     onRefresh={fetchMembers}
                   />
                 </div>
-                
+
                 {/* Move Export/Reset buttons to a footer */}
                 <div className="admin-footer">
                   <h3>Administration Actions</h3>
                   <div className="admin-footer-actions">
-                    <button 
+                    <button
                       className="admin-action-btn export-btn"
                       onClick={exportToCSV}
                       title="Export to CSV"
                     >
                       <FaDownload /> Export Members to CSV
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="admin-action-btn reset-btn"
                       onClick={() => setShowResetConfirm(true)}
                       title="Reset all siege scores"
@@ -612,7 +622,8 @@ export default function AdminPage() {
                     </button>
                   </div>
                   <p className="admin-footer-note">
-                    Note: These actions are typically performed once per year during clan resets.
+                    Note: These actions are typically performed once per year
+                    during clan resets.
                   </p>
                 </div>
               </>
@@ -639,10 +650,13 @@ export default function AdminPage() {
               <h2>Rank Alerts</h2>
             </div>
             <div className="alerts-container">
-              <RankAlerts onRankUpdate={() => {
-                fetchMembers();
-                fetchAlertsCount();
-              }} />
+              <RankAlerts
+                onRankUpdate={() => {
+                  fetchMembers();
+                  fetchAlertsCount();
+                }}
+              />
+              <RunewatchAlerts />
             </div>
           </div>
         )}
@@ -658,32 +672,34 @@ export default function AdminPage() {
                 <div className="sync-card">
                   <h3>Member Data Sync</h3>
                   <p>Update member stats, levels, and EHB from Wise Old Man</p>
-                  <WomSyncButton 
+                  <WomSyncButton
                     type="members"
                     buttonText="Sync Members"
-                    onSyncComplete={fetchMembers} 
+                    onSyncComplete={fetchMembers}
                   />
                 </div>
 
                 <div className="sync-card">
                   <h3>Event & Competition Sync</h3>
                   <p>Import WOM competitions and sync event participation</p>
-                  <WomSyncButton 
+                  <WomSyncButton
                     type="events"
                     buttonText="Sync WOM Competitions"
                     onSyncComplete={() => {
                       // Refresh any event data if needed
-                      if (typeof window !== 'undefined') {
-                        const eventTab = document.querySelector('.admin-tab:nth-child(2)');
+                      if (typeof window !== "undefined") {
+                        const eventTab = document.querySelector(
+                          ".admin-tab:nth-child(2)"
+                        );
                         if (eventTab) {
                           // Flash the events tab to indicate new data
-                          eventTab.classList.add('flash-highlight');
+                          eventTab.classList.add("flash-highlight");
                           setTimeout(() => {
-                            eventTab.classList.remove('flash-highlight');
+                            eventTab.classList.remove("flash-highlight");
                           }, 1000);
                         }
                       }
-                    }} 
+                    }}
                   />
                 </div>
               </div>
@@ -691,8 +707,8 @@ export default function AdminPage() {
               <div className="sync-info">
                 <h4>About Synchronization</h4>
                 <p>
-                  Regular data synchronization keeps your clan tracker up to date with
-                  the latest information from Wise Old Man:
+                  Regular data synchronization keeps your clan tracker up to
+                  date with the latest information from Wise Old Man:
                 </p>
                 <ul className="sync-info-list">
                   <li>
@@ -700,14 +716,14 @@ export default function AdminPage() {
                     kills, and EHB for all clan members
                   </li>
                   <li>
-                    <strong>Event & Competition Sync:</strong> Imports official WOM 
-                    competitions and updates participation data
+                    <strong>Event & Competition Sync:</strong> Imports official
+                    WOM competitions and updates participation data
                   </li>
                 </ul>
                 <p className="note">
-                  Synchronization is done automatically, but if you need to update it
-                  sooner than the daily tasks, you can do so here.
-                  WOM competitions will appear in the Events tab.
+                  Synchronization is done automatically, but if you need to
+                  update it sooner than the daily tasks, you can do so here. WOM
+                  competitions will appear in the Events tab.
                 </p>
               </div>
             </div>
