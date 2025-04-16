@@ -27,3 +27,7 @@
   for = "/admin/*"
   [headers.values]
     Cache-Control = "no-store, max-age=0"
+
+[[functions]]
+  path = "/netlify/functions/daily-tasks"
+  schedule = "@daily"

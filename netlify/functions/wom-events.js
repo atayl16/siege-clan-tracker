@@ -44,12 +44,24 @@ exports.handler = async (event, context) => {
     
     const competitions = await competitionsResponse.json();
     
+    // Calculate the one month ago date for filtering old events
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    console.log(`Skipping events completed before: ${oneMonthAgo.toISOString()}`);
+    
+    // Track stats for results
+    let totalProcessed = 0;
+    let skippedOld = 0;
+    let skippedProcessed = 0;
+    let updatedEvents = 0;
+    let addedPoints = 0;
+    
     // Store competitions in Supabase
     for (const comp of competitions) {
       // Check if this competition already exists in our database
       const { data: existingComp, error: checkError } = await supabase
         .from('events')
-        .select('id, status, winner_username')
+        .select('id, status, winner_username, points_processed, end_date')
         .eq('wom_id', comp.id)
         .single();
       
@@ -75,11 +87,11 @@ exports.handler = async (event, context) => {
         name: comp.title,
         wom_id: comp.id,
         is_wom: true,
-                type: comp.title.toLowerCase().includes('sotw') || comp.title.toLowerCase().includes('skill') 
-              ? 'skilling' 
-              : comp.title.toLowerCase().includes('botw') || comp.title.toLowerCase().includes('boss') 
-              ? 'bossing'
-              : comp.title.toLowerCase().includes('raid') 
+        type: comp.title.toLowerCase().includes('sotw') || comp.title.toLowerCase().includes('skill') 
+          ? 'skilling' 
+          : comp.title.toLowerCase().includes('botw') || comp.title.toLowerCase().includes('boss') 
+            ? 'bossing'
+            : comp.title.toLowerCase().includes('raid') 
               ? 'raids'
               : 'other',
         start_date: comp.startsAt,
@@ -138,6 +150,8 @@ exports.handler = async (event, context) => {
         
         if (updateError) {
           console.error(`Error updating competition ${comp.id}:`, updateError);
+        } else {
+          updatedEvents++;
         }
       } else {
         // Insert new event
@@ -147,14 +161,50 @@ exports.handler = async (event, context) => {
         
         if (insertError) {
           console.error(`Error inserting competition ${comp.id}:`, insertError);
+        } else {
+          updatedEvents++;
         }
       }
       
-      // If the competition is completed, process the results
-      if (status === 'completed' && (!existingComp || existingComp.status !== 'completed')) {
-        await processCompetitionResults(comp.id);
+      // If the competition is completed, check if we should process results
+      if (status === 'completed') {
+        // Check if points have already been processed
+        const alreadyProcessed = existingComp && existingComp.points_processed === true;
+        
+        // Check if the event is over a month old
+        const eventEndDate = new Date(comp.endsAt);
+        const isTooOld = eventEndDate < oneMonthAgo;
+        
+        if (alreadyProcessed) {
+          console.log(`Skipping points for competition ${comp.id} - already processed`);
+          skippedProcessed++;
+        } else if (isTooOld) {
+          console.log(`Skipping points for competition ${comp.id} - over one month old (ended ${eventEndDate.toISOString()})`);
+          skippedOld++;
+          
+          // Mark old competitions as processed so we don't check them again
+          if (existingComp) {
+            await supabase
+              .from('events')
+              .update({ points_processed: true, skipped_reason: 'too_old' })
+              .eq('id', existingComp.id);
+          }
+        } else {
+          console.log(`Processing points for competition ${comp.id}`);
+          await processCompetitionResults(comp.id);
+          addedPoints++;
+        }
+        
+        totalProcessed++;
       }
     }
+    
+    console.log(`Events processing summary:
+    - Total completed competitions: ${totalProcessed}
+    - Updated events: ${updatedEvents}
+    - Awarded points: ${addedPoints}
+    - Skipped (already processed): ${skippedProcessed}
+    - Skipped (over one month old): ${skippedOld}`);
     
     // Return the current list of events
     const { data: events, error: fetchError } = await supabase
@@ -167,7 +217,16 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(events || [])
+      body: JSON.stringify({
+        events: events || [],
+        stats: {
+          totalProcessed,
+          updatedEvents,
+          addedPoints,
+          skippedProcessed,
+          skippedOld
+        }
+      })
     };
     
   } catch (err) {
@@ -183,9 +242,27 @@ exports.handler = async (event, context) => {
   }
 };
 
-// Update processCompetitionResults function to also set the winner username
+// Process competition results and award points
 async function processCompetitionResults(competitionId) {
   try {
+    // First check if we've already processed points for this competition
+    const { data: existingEvent, error: checkError } = await supabase
+      .from('events')
+      .select('points_processed')
+      .eq('wom_id', competitionId)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error(`Error checking competition ${competitionId} status:`, checkError);
+      return;
+    }
+    
+    // Skip if already processed
+    if (existingEvent && existingEvent.points_processed === true) {
+      console.log(`Points already processed for competition ${competitionId}`);
+      return;
+    }
+    
     // Fetch competition details to get participants and results
     const compDetailsResponse = await fetch(`${WOM_API_BASE}/competitions/${competitionId}`, {
       headers: {
@@ -202,6 +279,17 @@ async function processCompetitionResults(competitionId) {
     
     if (!participants || participants.length === 0) {
       console.log(`No participants found for competition ${competitionId}`);
+      
+      // Mark as processed even if no participants
+      await supabase
+        .from('events')
+        .update({ 
+          status: 'completed',
+          points_processed: true,
+          skipped_reason: 'no_participants'
+        })
+        .eq('wom_id', competitionId);
+        
       return;
     }
     
