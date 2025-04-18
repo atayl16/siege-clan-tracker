@@ -40,15 +40,19 @@ export const ClanIcon = ({ name }) => {
 
 // Helper component for admin icons (using emojis)
 export const AdminIcon = ({ title }) => {
+  // Normalize the title to make matching more reliable
+  // Replace ALL underscores with spaces using a global regex
+  const normalizedTitle = title ? title.toLowerCase().replace(/_/g, ' ') : '';
+  
   const emojiMap = {
-    "Owner": "👑",
-    "Deputy Owner": "🔑",
-    "General": "🌟",
-    "Captain": "🛠",
-    "PvM Organizer": "🐉"
+    "owner": "👑", // Fixed crown emoji
+    "deputy owner": "🔑",
+    "general": "🌟",
+    "captain": "🛠",
+    "pvm organizer": "🐉",
   };
 
-  if (!title || !emojiMap[title]) return null;
+  if (!title || !emojiMap[normalizedTitle]) return null;
 
   return (
     <span 
@@ -60,7 +64,7 @@ export const AdminIcon = ({ title }) => {
       role="img" 
       aria-label={`${title} icon`}
     >
-      {emojiMap[title]}
+      {emojiMap[normalizedTitle]}
     </span>
   );
 };

@@ -29,15 +29,13 @@ const FIGHTER_RANK_NAMES = [
   "Monarch",
   "TzKal",
 ];
+
 const ADMIN_RANK_ORDER = [
-  "Owner",
-  "Deputy Owner",
-  "deputy_owner",
-  "General",
+  "owner",
+  "deputy owner",
   "general",
-  "Captain",
   "captain",
-  "PvM Organizer",
+  "pvm organizer",
 ];
 
 // Define rank ranges for skillers (XP thresholds)
@@ -152,7 +150,6 @@ const calculateNextLevel = (member) => {
       return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Replace the sortedMembers memo with this updated version
     const sortedMembers = React.useMemo(() => {
       // First filter members to remove hidden ones (when not in admin view)
       const visibleMembers = isAdmin 
@@ -161,18 +158,29 @@ const calculateNextLevel = (member) => {
       
       // Then sort the visible members
       return [...visibleMembers].sort((a, b) => {
-        const aRole = (a.womrole || "").toLowerCase().trim();
-        const bRole = (b.womrole || "").toLowerCase().trim();
+        const aRole = (a.womrole || "").toLowerCase().trim().replace(/_/g, ' ');
+        const bRole = (b.womrole || "").toLowerCase().trim().replace(/_/g, ' ');
     
-        // Check if the roles are admin ranks
-        const aAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
-          aRole.includes(rank.toLowerCase())
-        );
-        const bAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
-          bRole.includes(rank.toLowerCase())
-        );
+        // Helper function for more accurate rank detection
+        const getRankIndex = (role) => {
+          if (role === "owner" || (role.includes("owner") && !role.includes("deputy"))) {
+            return 0; // Owner rank
+          } else if (role.includes("deputy owner") || role.includes("deputy_owner")) {
+            return 1; // Deputy owner rank
+          } else if (role.includes("general")) {
+            return 2;
+          } else if (role.includes("captain")) {
+            return 3;
+          } else if (role.includes("pvm organizer") || role.includes("pvm_organizer")) {
+            return 4;
+          }
+          return -1; // Not an admin rank
+        };
     
-        // Admin ranks come first, sorted by their order in ADMIN_RANK_ORDER
+        const aAdminIndex = getRankIndex(aRole);
+        const bAdminIndex = getRankIndex(bRole);
+    
+        // Admin ranks come first, sorted by their order
         if (aAdminIndex !== -1 && bAdminIndex !== -1) {
           return aAdminIndex - bAdminIndex;
         }
@@ -201,27 +209,41 @@ const calculateNextLevel = (member) => {
               {row.original.name || row.original.wom_name || "N/A"}
             </div>
           ),
-        },
+        },        
         {
           accessorKey: "rank",
           header: "Clan Rank",
           cell: ({ row }) => {
             const womRole = (row.original.womrole || "").toLowerCase().trim();
-
-            // Check if the womrole matches any admin, skiller, or fighter rank
-            const isAdmin = ADMIN_RANKS.find((title) =>
-              womRole.includes(title.toLowerCase())
-            );
+        
+            // Normalize the role for comparison
+            const normalizedRole = womRole.replace(/_/g, ' ');
+        
+            // Check for admin rank - try to match with normalized versions
+            let adminRank = null;
+            if (normalizedRole.includes('owner') && !normalizedRole.includes('deputy')) {
+              adminRank = 'Owner';
+            } else if (normalizedRole.includes('deputy owner') || normalizedRole.includes('deputy_owner')) {
+              adminRank = 'Deputy Owner';
+            } else if (normalizedRole.includes('general')) {
+              adminRank = 'General';
+            } else if (normalizedRole.includes('captain')) {
+              adminRank = 'Captain';
+            } else if (normalizedRole.includes('pvm organizer') || normalizedRole.includes('pvm_organizer')) {
+              adminRank = 'PvM Organizer';
+            }
+        
+            // Check for skiller/fighter ranks (no change)
             const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
               womRole.includes(name.toLowerCase())
             );
             const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
               womRole.includes(name.toLowerCase())
             );
-
+        
             return (
               <div style={{ textAlign: "center" }}>
-                {isAdmin && <AdminIcon title={isAdmin} />}
+                {adminRank && <AdminIcon title={adminRank} />}
                 {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
                 {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
               </div>
