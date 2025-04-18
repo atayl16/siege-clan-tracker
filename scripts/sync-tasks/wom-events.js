@@ -217,12 +217,13 @@ async function syncWomEvents() {
 }
 
 // Process competition results and award points
+
 async function processCompetitionResults(competitionId) {
   try {
     // First check if we've already processed points for this competition
     const { data: existingEvent, error: checkError } = await supabase
       .from('events')
-      .select('points_processed')
+      .select('points_processed, processing_started_at')
       .eq('wom_id', competitionId)
       .single();
     
@@ -234,6 +235,27 @@ async function processCompetitionResults(competitionId) {
     // Skip if already processed
     if (existingEvent && existingEvent.points_processed === true) {
       console.log(`Points already processed for competition ${competitionId}`);
+      return;
+    }
+    
+    // Check if processing started but didn't complete (potential previous failure)
+    const processingStartedAt = existingEvent?.processing_started_at;
+    const currentTime = new Date().toISOString();
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString(); // 1 hour ago
+    
+    if (processingStartedAt && processingStartedAt > oneHourAgo) {
+      console.log(`Competition ${competitionId} appears to be in processing (started at ${processingStartedAt}). Skipping to avoid duplicate points.`);
+      return;
+    }
+    
+    // Mark competition as "processing" with timestamp to prevent concurrent processing
+    const { error: markProcessingError } = await supabase
+      .from('events')
+      .update({ processing_started_at: currentTime })
+      .eq('wom_id', competitionId);
+      
+    if (markProcessingError) {
+      console.error(`Error marking competition ${competitionId} as processing:`, markProcessingError);
       return;
     }
     
@@ -260,6 +282,7 @@ async function processCompetitionResults(competitionId) {
         .update({ 
           status: 'completed',
           points_processed: true,
+          processing_started_at: null,
           skipped_reason: 'no_participants'
         })
         .eq('wom_id', competitionId);
@@ -274,75 +297,123 @@ async function processCompetitionResults(competitionId) {
     
     console.log(`Processing results for ${validParticipants.length} participants in competition ${competitionId}`);
     
-    // Update the competition with winner information
-    if (validParticipants.length > 0) {
-      const winner = validParticipants[0];
-      if (winner && winner.player) {
-        const winnerName = winner.player.displayName || winner.player.username;
-        console.log(`Setting winner for competition ${competitionId}: ${winnerName}`);
-        
-        // Update the event with the winner's username
-        const { error: updateWinnerError } = await supabase
-          .from('events')
-          .update({ winner_username: winnerName })
-          .eq('wom_id', competitionId);
-          
-        if (updateWinnerError) {
-          console.error(`Error updating winner for competition ${competitionId}:`, updateWinnerError);
-        }
+    // Group participants by their progress to handle ties
+    const progressGroups = [];
+    let lastProgress = -1;
+    
+    for (const participant of validParticipants) {
+      const progress = participant.progress?.gained || 0;
+      
+      // If this is the same progress as the previous participant, add to the same group
+      if (progress === lastProgress && progressGroups.length > 0) {
+        progressGroups[progressGroups.length - 1].participants.push(participant);
+      } else {
+        // Otherwise start a new group
+        progressGroups.push({
+          progress: progress,
+          participants: [participant]
+        });
       }
+      
+      lastProgress = progress;
     }
     
-    // Award points based on placement
-    for (let i = 0; i < validParticipants.length; i++) {
-      const participant = validParticipants[i];
-      let pointsToAward = 2; // Default points for participation
+    // Calculate places and points based on the progressive groups
+    let currentPlace = 1;
+    const pointsData = [];
+    const memberUpdates = [];
+    
+    for (const group of progressGroups) {
+      // Determine points for this place
+      let pointsToAward = 2; // Default participation points
       
-      // Award bonus points for top 3 places
-      if (i === 0) pointsToAward = 15; // 1st place
-      else if (i === 1) pointsToAward = 10; // 2nd place
-      else if (i === 2) pointsToAward = 5; // 3rd place
-      
-      // Get the member from our database
-      const { data: member, error: memberError } = await supabase
-        .from('members')
-        .select('wom_id, siege_score')
-        .eq('wom_name', participant.player.username)
-        .single();
-      
-      if (memberError) {
-        console.error(`Error finding member ${participant.player.username}:`, memberError);
-        continue;
+      if (currentPlace === 1) {
+        pointsToAward = 15; // First place
+      } else if (currentPlace === 2) {
+        pointsToAward = 10; // Second place
+      } else if (currentPlace === 3) {
+        pointsToAward = 5;  // Third place
       }
       
-      // Update the member's siege score
-      const newScore = (member.siege_score || 0) + pointsToAward;
-      const { error: updateError } = await supabase
-        .from('members')
-        .update({ siege_score: newScore })
-        .eq('wom_id', member.wom_id);
+      console.log(`Place #${currentPlace}: ${group.participants.length} participants with progress ${group.progress} - awarding ${pointsToAward} points each`);
       
-      if (updateError) {
-        console.error(`Error updating score for ${participant.player.username}:`, updateError);
-      } else {
-        console.log(`Awarded ${pointsToAward} points to ${participant.player.username}`);
+      // Process all participants in this tie group
+      for (const participant of group.participants) {
+        try {
+          // Get the member from our database
+          const { data: member, error: memberError } = await supabase
+            .from('members')
+            .select('wom_id, siege_score')
+            .eq('wom_name', participant.player.username)
+            .single();
+          
+          if (memberError) {
+            console.error(`Error finding member ${participant.player.username}:`, memberError);
+            continue;
+          }
+          
+          // Store data for transaction
+          const newScore = (member.siege_score || 0) + pointsToAward;
+          memberUpdates.push({
+            wom_id: member.wom_id,
+            oldScore: member.siege_score || 0,
+            newScore: newScore,
+            pointsToAward: pointsToAward
+          });
+          
+          // Store event result for transaction
+          pointsData.push({
+            event_id: competitionId,
+            wom_id: member.wom_id,
+            player_name: participant.player.username,
+            placement: currentPlace, // Use the actual place, not index
+            points_awarded: pointsToAward,
+            progress: participant.progress.gained
+          });
+        } catch (err) {
+          console.error(`Error preparing data for ${participant.player.username}:`, err);
+        }
       }
       
-      // Record this point award in the event_results table
-      const { error: resultError } = await supabase
-        .from('event_results')
-        .insert([{
-          event_id: competitionId,
-          wom_id: member.wom_id,
-          player_name: participant.player.username,
-          placement: i + 1,
-          points_awarded: pointsToAward,
-          progress: participant.progress.gained
-        }]);
+      // Move to the next place - advance by the number of participants in the current group
+      currentPlace += group.participants.length;
+    }
+    
+    // Now execute the transaction if we have members to award points to
+    if (memberUpdates.length > 0) {
+      console.log(`Executing transaction for ${memberUpdates.length} member point awards`);
       
-      if (resultError) {
-        console.error(`Error recording result for ${participant.player.username}:`, resultError);
+      try {
+        // Start a Supabase transaction (using functions to emulate a transaction)
+        const { data: functionResult, error: functionError } = await supabase.rpc('award_competition_points', {
+          competition_id: competitionId,
+          points_data: JSON.stringify(pointsData),
+          member_updates: JSON.stringify(memberUpdates)
+        });
+        
+        if (functionError) {
+          throw new Error(`Transaction failed: ${functionError.message}`);
+        }
+        
+        console.log(`Transaction completed successfully! Awarded points to ${memberUpdates.length} members`);
+        
+        // Log the awarded points for each member
+        memberUpdates.forEach(update => {
+          console.log(`Awarded ${update.pointsToAward} points to member ${update.wom_id} (${update.oldScore} → ${update.newScore})`);
+        });
+      } catch (transactionError) {
+        console.error(`Transaction error for competition ${competitionId}:`, transactionError);
+        
+        // Reset processing flag since we failed
+        await supabase
+          .from('events')
+          .update({ processing_started_at: null })
+          .eq('wom_id', competitionId);
+          
+        throw transactionError;
       }
+    } else {
+      console.log(`No valid members to award points to in competition ${competitionId}`);
     }
     
     // Mark this competition as processed in our database
@@ -350,7 +421,8 @@ async function processCompetitionResults(competitionId) {
       .from('events')
       .update({ 
         status: 'completed',
-        points_processed: true 
+        points_processed: true,
+        processing_started_at: null
       })
       .eq('wom_id', competitionId);
     
