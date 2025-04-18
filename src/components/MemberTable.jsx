@@ -4,7 +4,7 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { ClanIcon, GemIcon, AdminIcon, ADMIN_RANKS } from "./RankIcons";
+import { ClanIcon, GemIcon, AdminIcon } from "./RankIcons";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -28,14 +28,6 @@ const FIGHTER_RANK_NAMES = [
   "Senator",
   "Monarch",
   "TzKal",
-];
-
-const ADMIN_RANK_ORDER = [
-  "owner",
-  "deputy owner",
-  "general",
-  "captain",
-  "pvm organizer",
 ];
 
 // Define rank ranges for skillers (XP thresholds)
