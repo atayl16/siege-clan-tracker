@@ -8,11 +8,14 @@ export function AuthProvider({ children }) {
   );
 
   const login = (username, password) => {
-    // Temporary hardcoded credentials for testing
-    if (username === "admin" && password === "") {
+    // Use environment variables for authentication
+    const validUsername = process.env.REACT_APP_ADMIN_EMAIL;
+    const validPassword = process.env.REACT_APP_WOM_VERIFICATION_CODE;
+    
+    if (username === validUsername && password === validPassword) {
       localStorage.setItem("adminAuth", "true");
       setIsAuthenticated(true);
-      return { token: "temporary-token", user: { username: "admin" } };
+      return { token: "auth-token", user: { username: validUsername } };
     }
   
     // If credentials are incorrect, return an error
