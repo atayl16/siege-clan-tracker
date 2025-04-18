@@ -1,16 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 exports.handler = async function(event, context) {
   // Debug logs (moved inside the handler function)
-  console.log("SUPABASE_URL exists:", !!process.env.REACT_APP_SUPABASE_URL);
+  console.log("SUPABASE_URL exists:", !!process.env.SUPABASE_URL);
   console.log(
     "SUPABASE_SERVICE_ROLE_KEY exists:",
-    !!process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+    !!process.env.SUPABASE_SERVICE_ROLE_KEY
   );
   
   try {

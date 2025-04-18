@@ -9,8 +9,8 @@ export function AuthProvider({ children }) {
 
   const login = (username, password) => {
     // Use environment variables for authentication
-    const validUsername = process.env.REACT_APP_ADMIN_EMAIL;
-    const validPassword = process.env.REACT_APP_WOM_VERIFICATION_CODE;
+    const validUsername = process.env.ADMIN_EMAIL;
+    const validPassword = process.env.WOM_VERIFICATION_CODE;
     
     if (username === validUsername && password === validPassword) {
       localStorage.setItem("adminAuth", "true");

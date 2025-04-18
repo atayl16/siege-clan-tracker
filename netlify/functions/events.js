@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY // Use service role key for better permissions
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // Use service role key for better permissions
 );
 
 exports.handler = async (event, context) => {

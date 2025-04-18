@@ -16,7 +16,7 @@ const mockContext = {};
 // Function to test a specific handler
 async function testFunction(name, handler) {
   console.log(`\n----- Testing ${name} function -----`);
-  console.log(`Environment variables loaded: ${process.env.REACT_APP_SUPABASE_URL ? '✓' : '✗'}`);
+  console.log(`Environment variables loaded: ${process.env.SUPABASE_URL ? '✓' : '✗'}`);
   
   try {
     const startTime = Date.now();

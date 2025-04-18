@@ -3,8 +3,8 @@ require('dotenv').config();
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Function to convert comma-separated number to integer
