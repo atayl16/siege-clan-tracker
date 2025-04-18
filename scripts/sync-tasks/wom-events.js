@@ -222,156 +222,189 @@ async function processCompetitionResults(competitionId) {
   try {
     // First check if we've already processed points for this competition
     const { data: existingEvent, error: checkError } = await supabase
-      .from('events')
-      .select('points_processed, processing_started_at')
-      .eq('wom_id', competitionId)
+      .from("events")
+      .select("id, points_processed, processing_started_at")
+      .eq("wom_id", competitionId)
       .single();
-    
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error(`Error checking competition ${competitionId} status:`, checkError);
+
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error(
+        `Error checking competition ${competitionId} status:`,
+        checkError
+      );
       return;
     }
-    
+
+    // Store the actual UUID of the event
+    const eventUuid = existingEvent?.id;
+    if (!eventUuid) {
+      console.error(`Cannot find event UUID for competition ${competitionId}`);
+      return;
+    }
+
     // Skip if already processed
     if (existingEvent && existingEvent.points_processed === true) {
       console.log(`Points already processed for competition ${competitionId}`);
       return;
     }
-    
+
     // Check if processing started but didn't complete (potential previous failure)
     const processingStartedAt = existingEvent?.processing_started_at;
     const currentTime = new Date().toISOString();
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString(); // 1 hour ago
-    
+
     if (processingStartedAt && processingStartedAt > oneHourAgo) {
-      console.log(`Competition ${competitionId} appears to be in processing (started at ${processingStartedAt}). Skipping to avoid duplicate points.`);
+      console.log(
+        `Competition ${competitionId} appears to be in processing (started at ${processingStartedAt}). Skipping to avoid duplicate points.`
+      );
       return;
     }
-    
+
     // Mark competition as "processing" with timestamp to prevent concurrent processing
     const { error: markProcessingError } = await supabase
-      .from('events')
+      .from("events")
       .update({ processing_started_at: currentTime })
-      .eq('wom_id', competitionId);
-      
+      .eq("wom_id", competitionId);
+
     if (markProcessingError) {
-      console.error(`Error marking competition ${competitionId} as processing:`, markProcessingError);
+      console.error(
+        `Error marking competition ${competitionId} as processing:`,
+        markProcessingError
+      );
       return;
     }
-    
+
     // Fetch competition details to get participants and results
-    const compDetailsResponse = await fetch(`${WOM_API_BASE}/competitions/${competitionId}`, {
-      headers: {
-        'x-api-key': WOM_API_KEY
+    const compDetailsResponse = await fetch(
+      `${WOM_API_BASE}/competitions/${competitionId}`,
+      {
+        headers: {
+          "x-api-key": WOM_API_KEY,
+        },
       }
-    });
-    
+    );
+
     if (!compDetailsResponse.ok) {
-      throw new Error(`Failed to fetch competition details: ${compDetailsResponse.status}`);
+      throw new Error(
+        `Failed to fetch competition details: ${compDetailsResponse.status}`
+      );
     }
-    
+
     const compDetails = await compDetailsResponse.json();
     const participants = compDetails.participations || [];
-    
+
     if (!participants || participants.length === 0) {
       console.log(`No participants found for competition ${competitionId}`);
-      
+
       // Mark as processed even if no participants
       await supabase
-        .from('events')
-        .update({ 
-          status: 'completed',
+        .from("events")
+        .update({
+          status: "completed",
           points_processed: true,
           processing_started_at: null,
-          skipped_reason: 'no_participants'
+          skipped_reason: "no_participants",
         })
-        .eq('wom_id', competitionId);
-        
+        .eq("wom_id", competitionId);
+
       return;
     }
-    
+
     // Sort participants by their progress (gains)
     const validParticipants = participants
-      .filter(p => p.progress?.gained > 0) // Only count those who participated (progress > 0)
+      .filter((p) => p.progress?.gained > 0) // Only count those who participated (progress > 0)
       .sort((a, b) => (b.progress?.gained || 0) - (a.progress?.gained || 0));
-    
-    console.log(`Processing results for ${validParticipants.length} participants in competition ${competitionId}`);
-    
+
+    console.log(
+      `Processing results for ${validParticipants.length} participants in competition ${competitionId}`
+    );
+
     // Group participants by their progress to handle ties
     const progressGroups = [];
     let lastProgress = -1;
-    
+
     for (const participant of validParticipants) {
       const progress = participant.progress?.gained || 0;
-      
+
       // If this is the same progress as the previous participant, add to the same group
       if (progress === lastProgress && progressGroups.length > 0) {
-        progressGroups[progressGroups.length - 1].participants.push(participant);
+        progressGroups[progressGroups.length - 1].participants.push(
+          participant
+        );
       } else {
         // Otherwise start a new group
         progressGroups.push({
           progress: progress,
-          participants: [participant]
+          participants: [participant],
         });
       }
-      
+
       lastProgress = progress;
     }
-    
+
     // Calculate places and points based on the progressive groups
     let currentPlace = 1;
     const pointsData = [];
     const memberUpdates = [];
-    
+
     for (const group of progressGroups) {
       // Determine points for this place
       let pointsToAward = 2; // Default participation points
-      
+
       if (currentPlace === 1) {
         pointsToAward = 15; // First place
       } else if (currentPlace === 2) {
         pointsToAward = 10; // Second place
       } else if (currentPlace === 3) {
-        pointsToAward = 5;  // Third place
+        pointsToAward = 5; // Third place
       }
-      
-      console.log(`Place #${currentPlace}: ${group.participants.length} participants with progress ${group.progress} - awarding ${pointsToAward} points each`);
-      
+
+      console.log(
+        `Place #${currentPlace}: ${group.participants.length} participants with progress ${group.progress} - awarding ${pointsToAward} points each`
+      );
+
       // Process all participants in this tie group
       for (const participant of group.participants) {
         try {
           // Get the member from our database
           const username = participant.player.username.toLowerCase();
           const { data: members, error: memberQueryError } = await supabase
-            .from('members')
-            .select('wom_id, siege_score')
-            .ilike('wom_name', username);
-      
+            .from("members")
+            .select("wom_id, siege_score")
+            .ilike("wom_name", username);
+
           if (memberQueryError) {
-            console.error(`Error querying member ${username}:`, memberQueryError);
+            console.error(
+              `Error querying member ${username}:`,
+              memberQueryError
+            );
             continue;
           }
-      
+
           // Define member outside of conditional blocks so it's available throughout
           let member;
-          
+
           // Use the first match if any found
           if (!members || members.length === 0) {
-            console.log(`Member not found: ${username} - will try alternative lookup`);
-      
+            console.log(
+              `Member not found: ${username} - will try alternative lookup`
+            );
+
             // Try alternative lookup with display name
             const displayName = participant.player.displayName?.toLowerCase();
             if (displayName && displayName !== username) {
               const { data: altMembers } = await supabase
-                .from('members')
-                .select('wom_id, siege_score')
-                .ilike('wom_name', displayName);
-                
+                .from("members")
+                .select("wom_id, siege_score")
+                .ilike("wom_name", displayName);
+
               if (altMembers && altMembers.length > 0) {
                 console.log(`Found member via display name: ${displayName}`);
                 member = altMembers[0];
               } else {
-                console.error(`Member not found by username or display name: ${username}`);
+                console.error(
+                  `Member not found by username or display name: ${username}`
+                );
                 continue;
               }
             } else {
@@ -381,7 +414,7 @@ async function processCompetitionResults(competitionId) {
           } else {
             member = members[0];
           }
-          
+
           // Only process if we found a valid member
           if (member) {
             // Store data for transaction
@@ -390,84 +423,101 @@ async function processCompetitionResults(competitionId) {
               wom_id: member.wom_id,
               oldScore: member.siege_score || 0,
               newScore: newScore,
-              pointsToAward: pointsToAward
+              pointsToAward: pointsToAward,
             });
-            
+
             // Store event result for transaction
             pointsData.push({
-              event_id: competitionId,
+              event_id: eventUuid,
               wom_id: member.wom_id,
               player_name: participant.player.username,
               placement: currentPlace, // Use the actual place, not index
               points_awarded: pointsToAward,
-              progress: participant.progress.gained
+              progress: participant.progress.gained,
             });
           }
         } catch (err) {
-          console.error(`Error preparing data for ${participant.player.username}:`, err);
+          console.error(
+            `Error preparing data for ${participant.player.username}:`,
+            err
+          );
         }
       } // End of participant loop
-      
+
       // Increment place counter for next group
       currentPlace++;
     } // End of progress groups loop
-    
+
     // Now execute the transaction if we have members to award points to
     if (memberUpdates.length > 0) {
-      console.log(`Executing transaction for ${memberUpdates.length} member point awards`);
-      
+      console.log(
+        `Executing transaction for ${memberUpdates.length} member point awards`
+      );
+
       try {
         // Start a Supabase transaction (using functions to emulate a transaction)
-        const { data: functionResult, error: functionError } = await supabase.rpc(
-          "award_competition_points",
-          {
+        const { data: functionResult, error: functionError } =
+          await supabase.rpc("award_competition_points", {
             competition_id: competitionId,
             points_data: pointsData, // Pass as object, not string
-            member_updates: memberUpdates // Pass as object, not string
-          }
-        );
-        
+            member_updates: memberUpdates, // Pass as object, not string
+          });
+
         if (functionError) {
           throw new Error(`Transaction failed: ${functionError.message}`);
         }
-        
-        console.log(`Transaction completed successfully! Awarded points to ${memberUpdates.length} members`);
-        
+
+        console.log(
+          `Transaction completed successfully! Awarded points to ${memberUpdates.length} members`
+        );
+
         // Log the awarded points for each member
-        memberUpdates.forEach(update => {
-          console.log(`Awarded ${update.pointsToAward} points to member ${update.wom_id} (${update.oldScore} → ${update.newScore})`);
+        memberUpdates.forEach((update) => {
+          console.log(
+            `Awarded ${update.pointsToAward} points to member ${update.wom_id} (${update.oldScore} → ${update.newScore})`
+          );
         });
       } catch (transactionError) {
-        console.error(`Transaction error for competition ${competitionId}:`, transactionError);
-        
+        console.error(
+          `Transaction error for competition ${competitionId}:`,
+          transactionError
+        );
+
         // Reset processing flag since we failed
         await supabase
-          .from('events')
+          .from("events")
           .update({ processing_started_at: null })
-          .eq('wom_id', competitionId);
-          
+          .eq("wom_id", competitionId);
+
         throw transactionError;
       }
     } else {
-      console.log(`No valid members to award points to in competition ${competitionId}`);
+      console.log(
+        `No valid members to award points to in competition ${competitionId}`
+      );
     }
-    
+
     // Mark this competition as processed in our database
     const { error: updateError } = await supabase
-      .from('events')
-      .update({ 
-        status: 'completed',
+      .from("events")
+      .update({
+        status: "completed",
         points_processed: true,
-        processing_started_at: null
+        processing_started_at: null,
       })
-      .eq('wom_id', competitionId);
-    
+      .eq("wom_id", competitionId);
+
     if (updateError) {
-      console.error(`Error updating competition status ${competitionId}:`, updateError);
+      console.error(
+        `Error updating competition status ${competitionId}:`,
+        updateError
+      );
     }
-    
   } catch (err) {
-    console.error(`Error processing competition results for ${competitionId}:`, err);
+    console.error(
+      `Error processing competition results for ${competitionId}:`,
+      err
+    );
     throw err;
   }
 }
