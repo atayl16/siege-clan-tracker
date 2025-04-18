@@ -32,8 +32,11 @@ const FIGHTER_RANK_NAMES = [
 const ADMIN_RANK_ORDER = [
   "Owner",
   "Deputy Owner",
+  "deputy_owner",
   "General",
+  "general",
   "Captain",
+  "captain",
   "PvM Organizer",
 ];
 
