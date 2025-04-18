@@ -142,7 +142,7 @@ async function syncWomMembers() {
     console.log("Fetching all members for updates...");
     const { data: membersToUpdate, error: updateFetchError } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb, status')
+      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb')
       .order('wom_id', { ascending: true });
     
     if (updateFetchError) throw new Error(`Failed to fetch members for update: ${updateFetchError.message}`);
@@ -187,9 +187,6 @@ async function syncWomMembers() {
           // Check if member still exists in the WOM group
           const isInWomGroup = womMembers.some(m => m.wom_id === member.wom_id);
           
-          // Update status if needed
-          const status = isInWomGroup ? 'active' : (member.status === 'active' ? 'inactive' : member.status);
-          
           // Update the member in Supabase
           const { error } = await supabase.from("members").update(
             {
@@ -197,7 +194,6 @@ async function syncWomMembers() {
               current_lvl: newLevel,
               current_xp: newXp,
               ehb: newEhb,
-              status: status,
               updated_at: new Date().toISOString()
             })
             .eq('wom_id', member.wom_id);

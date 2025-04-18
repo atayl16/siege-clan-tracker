@@ -23,6 +23,7 @@ jobs:
         
       - name: Run WOM Sync
         run: node scripts/sync-tasks/sync-wom.js
+        continue-on-error: true     # <- Add this line
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -31,6 +32,7 @@ jobs:
           
       - name: Run WOM Events Sync
         run: node scripts/sync-tasks/wom-events.js
+        continue-on-error: true     # <- Add this line
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -39,7 +41,14 @@ jobs:
           
       - name: Run RuneWatch Check
         run: node scripts/sync-tasks/runewatch-check.js
+        continue-on-error: true     # <- Add this line
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      
+      # Optional summary step to report overall status
+      - name: Summary
+        run: |
+          echo "🔍 Daily clan sync process completed"
+          echo "Check individual step logs for details"
