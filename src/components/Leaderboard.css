@@ -176,3 +176,26 @@
   color: #cd7f32; /* Bronze color */
   font-size: 1.2rem;
 }
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  margin-right: 10px;
+}
+
+.rank-1 .gold-icon {
+  color: #ffd700;
+  font-size: 1.2rem;
+}
+
+.rank-2 .silver-icon {
+  color: #c0c0c0;
+  font-size: 1.1rem;
+}
+
+.rank-3 .bronze-icon {
+  color: #cd7f32;
+  font-size: 1.1rem;
+}

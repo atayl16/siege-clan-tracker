@@ -23,13 +23,7 @@ export default function Navbar() {
         <div className="collapse navbar-collapse" id="navbarContent">
           <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <Link className="nav-link" to="/members">Members</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/events">Events</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/leaderboard">Leaderboard</Link>
+              <Link className="nav-link" to="/members">Home</Link>
             </li>
             
             {isAuthenticated ? (

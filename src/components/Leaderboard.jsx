@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { FaCrown, FaMedal } from "react-icons/fa"; // Import icons
+import { FaCrown, FaMedal } from "react-icons/fa";
 import "./Leaderboard.css";
 
 export default function SiegeLeaderboard({ 
@@ -28,8 +28,16 @@ export default function SiegeLeaderboard({
         ) : (
           leaderboardData.map((player, index) => (
             <div key={player.wom_id || index} className="mini-player">
-              <span className="rank-badge">
-                {index === 0 ? <FaCrown className="gold-icon" /> : index + 1}
+              <span className={`rank-badge rank-${index + 1}`}>
+                {index === 0 ? (
+                  <FaCrown className="gold-icon" />
+                ) : index === 1 ? (
+                  <FaMedal className="silver-icon" />
+                ) : index === 2 ? (
+                  <FaMedal className="bronze-icon" />
+                ) : (
+                  index + 1
+                )}
               </span>
               <span className="player-name">{player.name || player.wom_name || "Unknown"}</span>
               <span className="player-score">{player.siege_score.toLocaleString()} pts</span>
@@ -42,7 +50,7 @@ export default function SiegeLeaderboard({
 
   return (
     <div className={`siege-leaderboard ${className}`}>
-      {showTitle && <h2>Siege Leaderboard</h2>}
+      {showTitle && <h2>Siege Score Leaderboard</h2>}
       
       <table className="table table-dark table-striped table-hover">
         <thead>

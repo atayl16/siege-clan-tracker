@@ -32,6 +32,14 @@ export default function MembersPage() {
   const [activeKey, setActiveKey] = useState(
     location.hash ? location.hash.substring(1) : "members"
   );
+
+  // State for lazy loading and expanded views
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
+  const [showAllEvents, setShowAllEvents] = useState(false);
+  const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
+  const [eventsSearchTerm, setEventsSearchTerm] = useState('');
+  const [eventsFilterType, setEventsFilterType] = useState('all');
   
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
@@ -40,11 +48,47 @@ export default function MembersPage() {
       member.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [members, searchTerm]);
+  
+  // Filter events based on search term and filter type
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const matchesSearch = event.name?.toLowerCase().includes(eventsSearchTerm.toLowerCase());
+      
+      if (eventsFilterType === 'active') {
+        const now = new Date();
+        return matchesSearch && 
+          new Date(event.start_date) <= now && 
+          new Date(event.end_date) >= now;
+      }
+      
+      if (eventsFilterType === 'upcoming') {
+        return matchesSearch && new Date(event.start_date) > new Date();
+      }
+      
+      if (eventsFilterType === 'completed') {
+        return matchesSearch && new Date(event.end_date) < new Date();
+      }
+      
+      return matchesSearch; // 'all' filter
+    });
+  }, [events, eventsSearchTerm, eventsFilterType]);
+  
 
-  // Update URL when tab changes
+  // Update URL when tab changes and trigger lazy loading
   const handleTabChange = (tabKey) => {
     setActiveKey(tabKey);
     navigate({ hash: tabKey });
+    
+    // Lazy load data when tab is first accessed
+    if (tabKey === "events" && !eventsLoaded) {
+      setEventsLoaded(true);
+      // You could optionally fetch events data here if not already loaded
+    }
+    
+    if (tabKey === "leaderboard" && !leaderboardLoaded) {
+      setLeaderboardLoaded(true);
+      // You could optionally fetch leaderboard data here if not already loaded
+    }
   };
 
   // Update URL when search term changes
@@ -61,33 +105,48 @@ export default function MembersPage() {
       setSearchParams(searchParams);
     }
   };
-
-  // Fetch data on component mount
+  
+  // Initial data fetch - only load members initially, then preload events count
   useEffect(() => {
     setLoading(true);
     
-    Promise.all([
-      fetch("/api/members").then(res => {
+    fetch("/api/members")
+      .then(res => {
         if (!res.ok) throw new Error(`Failed to fetch members: ${res.status}`);
         return res.json();
-      }),
-      fetch("/api/events").then(res => {
-        if (!res.ok) throw new Error(`Failed to fetch events: ${res.status}`);
-        return res.json();
       })
-    ])
-    .then(([membersData, eventsData]) => {
-      setMembers(membersData);
-      setEvents(eventsData);
-    })
-    .catch(err => {
-      console.error("Error fetching data:", err);
-      setError(err.message);
-    })
-    .finally(() => {
-      setLoading(false);
-    });
+      .then(membersData => {
+        setMembers(membersData);
+        setLoading(false);
+        
+        // Preload events data in the background after members load
+        // This ensures we have the count available for the navigation badge
+        setEventsLoaded(true);
+      })
+      .catch(err => {
+        console.error("Error fetching data:", err);
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
+  
+  // Lazy load events when needed
+  useEffect(() => {
+    if (eventsLoaded && events.length === 0) {
+      fetch("/api/events")
+        .then(res => {
+          if (!res.ok) throw new Error(`Failed to fetch events: ${res.status}`);
+          return res.json();
+        })
+        .then(eventsData => {
+          setEvents(eventsData);
+        })
+        .catch(err => {
+          console.error("Error fetching events:", err);
+          // Maybe show a specific error for events
+        });
+    }
+  }, [eventsLoaded, events.length]);
 
   return (
     <div className="siege-dashboard">
@@ -181,7 +240,7 @@ export default function MembersPage() {
               </div>
 
               <div className="events-container">
-                {/* New Clan Information section */}
+                {/* Clan Information section */}
                 <h3 className="section-title">Clan Information</h3>
                 <div className="clan-info-row">
                   <div className="info-card">
@@ -249,89 +308,130 @@ export default function MembersPage() {
                   </div>
                 </div>
 
-                <h3 className="section-title">Active Events</h3>
-                {events.filter(
-                  (e) =>
-                    new Date(e.start_date) <= new Date() &&
-                    new Date(e.end_date) >= new Date()
-                ).length === 0 ? (
-                  <p>No active events</p>
-                ) : (
-                  events
-                    .filter(
-                      (e) =>
-                        new Date(e.start_date) <= new Date() &&
-                        new Date(e.end_date) >= new Date()
-                    )
-                    .slice(0, 2)
-                    .map((event) => (
-                      <div key={event.id} className="event-row">
-                        <strong>{event.name}</strong>
-                        <span className="badge bg-warning text-dark">
-                          Ends {new Date(event.end_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    ))
-                )}
-
-                <h3 className="section-title">Top Players</h3>
-                <div className="overview-leaderboard">
-                  <Leaderboard members={members} limit={3} compact={true} />
+                <h3 className="section-title">Events & Rankings</h3>
+                <div className="overview-card-row">
+                  <div className="overview-card">
+                    <div className="overview-card-header">Active Events</div>
+                    <div className="overview-card-content">
+                      <EventsTable
+                        events={events}
+                        activeLimit={3}
+                        upcomingLimit={0}
+                        completedLimit={0}
+                        hideHeaders={true}
+                      />
+                    </div>
+                  </div>
+                  <div className="overview-card">
+                    <div className="overview-card-header">Top Players</div>
+                    <div className="overview-card-content">
+                      <Leaderboard members={members} limit={3} compact={true} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </Tab.Pane>
-
+            
             {/* Events Tab */}
             <Tab.Pane eventKey="events">
-              <div className="content-header">
+              <div className="members-content-header">
                 <h2>Clan Events</h2>
+                <div className="events-filters-container">
+                  <InputGroup className="events-search">
+                    <InputGroup.Text>
+                      <FaSearch />
+                    </InputGroup.Text>
+                    <Form.Control
+                      placeholder="Search events..."
+                      value={eventsSearchTerm}
+                      onChange={(e) => setEventsSearchTerm(e.target.value)}
+                    />
+                  </InputGroup>
+                  <Form.Select
+                    className="event-type-filter"
+                    value={eventsFilterType}
+                    onChange={(e) => setEventsFilterType(e.target.value)}
+                  >
+                    <option value="all">All Events</option>
+                    <option value="active">Active Events</option>
+                    <option value="upcoming">Upcoming Events</option>
+                    <option value="completed">Completed Events</option>
+                  </Form.Select>
+                </div>
               </div>
-
+            
               <div className="events-summary">
                 <div className="event-stat">
                   <span className="event-stat-value">
-                    {
-                      events.filter(
-                        (e) =>
-                          new Date(e.start_date) <= new Date() &&
-                          new Date(e.end_date) >= new Date()
-                      ).length
-                    }
+                    {events.filter(e => 
+                      new Date(e.start_date) <= new Date() && 
+                      new Date(e.end_date) >= new Date()
+                    ).length}
                   </span>
                   <span className="event-stat-label">Active</span>
                 </div>
                 <div className="event-stat">
                   <span className="event-stat-value">
-                    {
-                      events.filter((e) => new Date(e.start_date) > new Date())
-                        .length
-                    }
+                    {events.filter(e => new Date(e.start_date) > new Date()).length}
                   </span>
                   <span className="event-stat-label">Upcoming</span>
                 </div>
                 <div className="event-stat">
                   <span className="event-stat-value">
-                    {
-                      events.filter((e) => new Date(e.end_date) < new Date())
-                        .length
-                    }
+                    {events.filter(e => new Date(e.end_date) < new Date()).length}
                   </span>
                   <span className="event-stat-label">Completed</span>
                 </div>
               </div>
-
+            
               <div className="events-container">
-                <EventsTable events={events} />
+                <EventsTable
+                  events={filteredEvents}
+                  activeLimit={showAllEvents ? null : 3}
+                  upcomingLimit={showAllEvents ? null : 5}
+                  completedLimit={showAllEvents ? null : 5}
+                />
+              </div>
+            
+              <div className="text-center mt-3">
+                <button
+                  className="btn btn-outline-primary"
+                  onClick={() => setShowAllEvents(!showAllEvents)}
+                >
+                  {showAllEvents ? "Show Less" : "Show All Events"}
+                </button>
               </div>
             </Tab.Pane>
 
             {/* Leaderboard Tab */}
             <Tab.Pane eventKey="leaderboard">
               <div className="content-header">
-                <h2>Siege Leaderboard</h2>
+                <h2>Siege Score Leaderboard</h2>
               </div>
               <div className="leaderboard-container">
-                <Leaderboard members={members} showTitle={false} />
+                <Leaderboard
+                  members={members}
+                  showTitle={false}
+                  limit={showFullLeaderboard ? null : 10}
+                />
+
+                {/* Toggle button */}
+                <div className="text-center mt-3">
+                  {members.filter((m) => (parseInt(m.siege_score) || 0) > 0)
+                    .length > 10 && (
+                    <button
+                      className="btn btn-outline-primary"
+                      onClick={() =>
+                        setShowFullLeaderboard(!showFullLeaderboard)
+                      }
+                    >
+                      {showFullLeaderboard
+                        ? "Show Less"
+                        : "Show Full Leaderboard"}
+                    </button>
+                  )}
+                </div>
+
                 <div className="leaderboard-info">
                   <p>
                     Points are earned by participating in clan events and
@@ -357,7 +457,7 @@ export default function MembersPage() {
                 </div>
               </div>
             </Tab.Pane>
-
+            
             {/* Clan Ranks Tab */}
             <Tab.Pane eventKey="ranks">
               <div className="content-header">

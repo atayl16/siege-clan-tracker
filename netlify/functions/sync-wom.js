@@ -3,8 +3,8 @@ const fetch = require('node-fetch');
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
 );
 
 // WOM API configuration
@@ -113,11 +113,14 @@ exports.handler = async (event, context) => {
               wom_name: member.wom_name,
               current_lvl: latestSnapshot?.skills?.overall?.level || 1,
               current_xp: latestSnapshot?.skills?.overall?.experience || 0,
-              ehb: Math.round(playerData.latestSnapshot?.data?.computed?.ehb?.value || 0),
+              ehb: Math.round(
+                playerData.latestSnapshot?.data?.computed?.ehb?.value || 0
+              ),
               womrole: member.womrole,
-              siege_score: 0, // Initial points
+              siege_score: 0,
+              join_date: playerData.registeredAt || new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
             };
             
             // Insert new member with complete data

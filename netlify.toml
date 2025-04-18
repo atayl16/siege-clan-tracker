@@ -14,7 +14,6 @@
   to = "/index.html"
   status = 200
 
-# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
@@ -22,12 +21,11 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Cache control for admin pages
 [[headers]]
   for = "/admin/*"
   [headers.values]
     Cache-Control = "no-store, max-age=0"
 
-[[functions]]
-  path = "/netlify/functions/daily-tasks"
+[functions.daily-tasks]
+  path = "netlify/functions/daily-tasks"
   schedule = "@daily"

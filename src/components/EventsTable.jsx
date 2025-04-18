@@ -1,7 +1,14 @@
 import React, { useMemo } from 'react';
 import "./EventsTable.css";
 
-export default function EventsTable({ events }) {
+// Add limit parameters with default values of null (meaning no limit)
+export default function EventsTable({ 
+  events, 
+  activeLimit = null, 
+  upcomingLimit = null, 
+  completedLimit = null,
+  hideHeaders = false
+}) {
   // Process and categorize events
   const { activeEvents, upcomingEvents, recentCompletedEvents } = useMemo(() => {
     const now = new Date();
@@ -33,12 +40,17 @@ export default function EventsTable({ events }) {
     // Sort completed by most recent
     completed.sort((a, b) => b.completedAt - a.completedAt);
     
+    // Apply limits if specified
+    const limitedActive = activeLimit !== null ? active.slice(0, activeLimit) : active;
+    const limitedUpcoming = upcomingLimit !== null ? upcoming.slice(0, upcomingLimit) : upcoming;
+    const limitedCompleted = completedLimit !== null ? completed.slice(0, completedLimit) : completed;
+    
     return {
-      activeEvents: active,
-      upcomingEvents: upcoming,
-      recentCompletedEvents: completed,
+      activeEvents: limitedActive,
+      upcomingEvents: limitedUpcoming,
+      recentCompletedEvents: limitedCompleted,
     };
-  }, [events]);
+  }, [events, activeLimit, upcomingLimit, completedLimit]); // Add limits to dependencies
 
   // Format the date consistently (handles UTC correctly)
   const formatDate = (dateString) => {
@@ -91,7 +103,7 @@ export default function EventsTable({ events }) {
     <div className="events-tables">
       {activeEvents.length > 0 && (
         <div className="event-section">
-          <h5 className="mb-3">Active Events</h5>
+          {!hideHeaders && <h5 className="mb-3">Active Events</h5>}
           <table className="table table-dark table-hover table-sm">
             <thead>
               <tr>
@@ -101,7 +113,7 @@ export default function EventsTable({ events }) {
               </tr>
             </thead>
             <tbody>
-              {activeEvents.map(event => (
+              {activeEvents.map((event) => (
                 <tr key={event.id} className="table-success">
                   <td>
                     <strong>{event.name}</strong>
@@ -123,7 +135,7 @@ export default function EventsTable({ events }) {
 
       {upcomingEvents.length > 0 && (
         <div className="event-section mt-4">
-          <h5 className="mb-3">Upcoming Events</h5>
+          {!hideHeaders && <h5 className="mb-3">Upcoming Events</h5>}
           <table className="table table-dark table-hover table-sm">
             <thead>
               <tr>
@@ -133,13 +145,14 @@ export default function EventsTable({ events }) {
               </tr>
             </thead>
             <tbody>
-              {upcomingEvents.map(event => (
+              {upcomingEvents.map((event) => (
                 <tr key={event.id} className="table-info">
                   <td>
                     <strong>{event.name}</strong>
                   </td>
                   <td>
-                    {formatDate(event.start_date)} at {formatTime(event.start_date)}
+                    {formatDate(event.start_date)} at{" "}
+                    {formatTime(event.start_date)}
                   </td>
                   <td>
                     <span className="badge bg-secondary">
@@ -152,10 +165,10 @@ export default function EventsTable({ events }) {
           </table>
         </div>
       )}
-      
+
       {recentCompletedEvents.length > 0 && (
         <div className="event-section mt-4">
-          <h5 className="mb-3">Recently Completed Events</h5>
+          {!hideHeaders && <h5 className="mb-3">Completed Events</h5>}
           <table className="table table-dark table-hover table-sm">
             <thead>
               <tr>
@@ -165,14 +178,12 @@ export default function EventsTable({ events }) {
               </tr>
             </thead>
             <tbody>
-              {recentCompletedEvents.map(event => (
+              {recentCompletedEvents.map((event) => (
                 <tr key={event.id} className="table-secondary">
                   <td>
                     <strong>{event.name}</strong>
                   </td>
-                  <td>
-                    {formatDate(event.end_date)}
-                  </td>
+                  <td>{formatDate(event.end_date)}</td>
                   <td>
                     {event.winner_username ? (
                       <span className="winner-badge">

@@ -234,7 +234,7 @@ const calculateNextLevel = (member) => {
       if (!isMobile) {
         columns.push({
           accessorKey: "clan_xp_gained",
-          header: "Clan XP Gained",
+          header: "Clan XP",
           cell: ({ row }) => {
             // Safe calculation of XP gained
             let gainedXp = 0;
@@ -250,6 +250,17 @@ const calculateNextLevel = (member) => {
             return (
               <div style={{ textAlign: "center" }}>{safeFormat(gainedXp)}</div>
             );
+          },
+        });
+
+        columns.push({
+          accessorKey: "join_date",
+          header: "Joined",
+          cell: ({ row }) => {
+            const joinDate = row.original.join_date
+              ? new Date(row.original.join_date).toLocaleDateString()
+              : "N/A";
+            return <div style={{ textAlign: "center" }}>{joinDate}</div>;
           },
         });
       }
@@ -397,17 +408,19 @@ const calculateNextLevel = (member) => {
     // Set appropriate widths for each column
     switch(columnId) {
       case 'name':
-        return '25%';
+        return '20%';
       case 'rank':
-        return '15%';
+        return '12%';
       case 'ehb':
-        return '15%';  // Increased from 10% when no actions column
+        return '10%';
+      case 'join_date':
+        return '13%';  // New column for join date
       case 'clan_xp_gained':
         return '15%';
       case 'next_level':
         return '15%';
       case 'siege_score':
-        return '15%';  // Increased from 10% when no actions column
+        return '10%';
       case 'actions':
         return '10%';  // Only used in admin view
       default:

@@ -11,10 +11,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import AdminLogin from "./components/AdminLogin";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
-import EventsPage from "./pages/EventsPage";
-import LeaderboardPage from "./pages/LeaderboardPage";
 import WelcomePage from "./pages/WelcomePage";
-import DebugPage from "./pages/DebugPage";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
@@ -32,13 +29,6 @@ const AppContent = () => {
         <Route path="/" element={<WelcomePage />} />
         <Route path="/members" element={<MembersPage />} />
         <Route path="/login" element={<AdminLogin />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/debug" element={<DebugPage />} />
-
-        {/* These routes will use MembersPage component for now */}
-        <Route path="/achievements" element={<MembersPage />} />
-        <Route path="/gallery" element={<MembersPage />} />
 
         {/* Admin Routes - All protected */}
         <Route
