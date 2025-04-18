@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
+const axios = require('axios');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -58,11 +59,14 @@ async function syncWomMembers() {
     
     console.log(`Found ${womMembers.length} members in WOM group`);
     
+    // Create a set of WOM IDs for quick lookup
+    const womIds = new Set(womMembers.map(m => m.wom_id));
+    
     // Fetch our existing members from the database
     console.log("Fetching existing members from database...");
     const { data: existingMembers, error: fetchError } = await supabase
       .from('members')
-      .select('wom_id, wom_name');
+      .select('wom_id, wom_name, name');
     
     if (fetchError) throw new Error(`Failed to fetch members: ${fetchError.message}`);
     
@@ -71,6 +75,49 @@ async function syncWomMembers() {
     const newMembers = womMembers.filter(m => !existingWomIds.has(m.wom_id));
     
     console.log(`Found ${newMembers.length} new members to add to the database`);
+    
+    // Find members that exist in our database but not in WOM
+    const missingMembers = existingMembers.filter(m => !womIds.has(m.wom_id));
+    console.log(`Found ${missingMembers.length} members who are no longer in WOM group`);
+    
+    // Mark members who are not in WOM anymore
+    let missingMembersFlagged = 0;
+    let newlyMissingMembers = [];
+    
+    for (const member of missingMembers) {
+      // Check if member was already flagged as missing
+      const { data: existingMember, error: memberCheckError } = await supabase
+        .from('members')
+        .select('not_in_wom')
+        .eq('wom_id', member.wom_id)
+        .single();
+        
+      if (memberCheckError && memberCheckError.code !== 'PGRST116') {
+        console.error(`Error checking missing status for ${member.name || member.wom_name}:`, memberCheckError);
+        continue;
+      }
+      
+      const wasAlreadyMissing = existingMember?.not_in_wom === true;
+      
+      if (!wasAlreadyMissing) {
+        // Update the member to mark them as not in WOM
+        const { error: updateError } = await supabase
+          .from('members')
+          .update({ 
+            not_in_wom: true,
+            not_in_wom_date: new Date().toISOString() 
+          })
+          .eq('wom_id', member.wom_id);
+          
+        if (updateError) {
+          console.error(`Error updating missing status for ${member.name || member.wom_name}:`, updateError);
+        } else {
+          console.log(`Marked ${member.name || member.wom_name} as not in WOM group`);
+          missingMembersFlagged++;
+          newlyMissingMembers.push(member.name || member.wom_name);
+        }
+      }
+    }
     
     // Add new members with as much data as we can get
     let addedCount = 0;
@@ -113,6 +160,7 @@ async function syncWomMembers() {
               join_date: playerData.registeredAt || new Date().toISOString(),
               updated_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
+              not_in_wom: false
             };
             
             // Insert new member with complete data
@@ -142,7 +190,7 @@ async function syncWomMembers() {
     console.log("Fetching all members for updates...");
     const { data: membersToUpdate, error: updateFetchError } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb')
+      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb, not_in_wom')
       .order('wom_id', { ascending: true });
     
     if (updateFetchError) throw new Error(`Failed to fetch members for update: ${updateFetchError.message}`);
@@ -185,17 +233,27 @@ async function syncWomMembers() {
           const newEhb = Math.round(playerData.latestSnapshot?.data?.computed?.ehb?.value || member.ehb || 0);
           
           // Check if member still exists in the WOM group
-          const isInWomGroup = womMembers.some(m => m.wom_id === member.wom_id);
+          const isInWomGroup = womIds.has(member.wom_id);
           
           // Update the member in Supabase
-          const { error } = await supabase.from("members").update(
-            {
-              name: playerData.displayName || member.name || member.wom_name,
-              current_lvl: newLevel,
-              current_xp: newXp,
-              ehb: newEhb,
-              updated_at: new Date().toISOString()
-            })
+          const updateData = {
+            name: playerData.displayName || member.name || member.wom_name,
+            current_lvl: newLevel,
+            current_xp: newXp,
+            ehb: newEhb,
+            updated_at: new Date().toISOString()
+          };
+          
+          // If member is back in WOM group, clear the not_in_wom flag
+          if (isInWomGroup && member.not_in_wom) {
+            updateData.not_in_wom = false;
+            updateData.not_in_wom_date = null;
+            console.log(`Member ${member.name || member.wom_name} has returned to WOM group`);
+          }
+          
+          const { error } = await supabase
+            .from("members")
+            .update(updateData)
             .eq('wom_id', member.wom_id);
           
           if (error) {
@@ -215,9 +273,12 @@ async function syncWomMembers() {
     }
     
     console.log(`Sync completed! Updated ${updatedCount} members, with ${errorCount} errors`);
+    console.log(`Missing members found: ${missingMembers.length}, newly flagged: ${missingMembersFlagged}`);
     
     return {
       newMembers: newMembers.length,
+      missingMembers: missingMembers.length,
+      newlyFlagged: missingMembersFlagged,
       total: membersToUpdate.length,
       updated: updatedCount,
       errors: errorCount
