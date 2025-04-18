@@ -137,6 +137,12 @@
   width: 100%;
 }
 
+.content-header h3 {
+  font-size: 0.875rem; /* 14px */
+  color: #aaa;
+  margin-left: 0.25rem; /* 4px */
+}
+
 /* Admin toolbar and search */
 .admin-toolbar {
   width: 100%;

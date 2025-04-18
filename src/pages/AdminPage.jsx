@@ -9,8 +9,7 @@ import RunewatchAlerts from "../components/RunewatchAlerts";
 import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import {
-  memberNeedsRankUpdate,
-  calculateAppropriateRank,
+  memberNeedsRankUpdate
 } from "../utils/rankUtils";
 import "./AdminPage.css";
 
@@ -653,6 +652,7 @@ export default function AdminPage() {
           <div className="tab-content sync-content">
             <div className="content-header">
               <h2>Data Synchronization</h2>
+              <h3> Only for emergencies!</h3>
             </div>
             <div className="sync-container">
               <div className="sync-cards">
