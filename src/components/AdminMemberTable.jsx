@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { supabase } from "../supabaseClient";
-import { FaEdit, FaTrash, FaPlus, FaExchangeAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaExchangeAlt, FaExclamationTriangle, FaEye, FaEyeSlash } from "react-icons/fa";
 import "./AdminMemberTable.css";
 import { titleize } from "../utils/stringUtils";
 
@@ -206,23 +206,91 @@ export default function AdminMemberTable({
     }
   };
 
-  // Sort members to put incorrect ranks at the top
-  const sortedMembers = useMemo(() => {
-    if (!members || members.length === 0) return [];
-    
-    return [...members].sort((a, b) => {
-      // Calculate role status for both members
-      const aStatus = calculateCorrectRole(a);
-      const bStatus = calculateCorrectRole(b);
+  const handleToggleVisibility = async (member) => {
+    try {
+      // If we're unhiding a member, we need to refresh their WOM data
+      if (member.hidden) {
+        if (window.confirm(`Unhide ${member.name} and refresh their WOM data?`)) {
+          // You'll need to implement or call a function to fetch fresh WOM data
+          await refreshMemberWomData(member.wom_id);
+        } else {
+          return; // User cancelled
+        }
+      }
+  
+      // Toggle the hidden status
+      const { error } = await supabase
+        .from("members")
+        .update({ hidden: !member.hidden })
+        .eq("wom_id", member.wom_id);
+  
+      if (error) throw error;
+  
+      // Refresh the members list after update
+      onRefresh && onRefresh();
+    } catch (err) {
+      console.error("Error toggling member visibility:", err);
+      alert("Failed to update member visibility");
+    }
+  };
+  
+    // Sort members to put incorrect ranks at the top and hidden members at the bottom
+    const sortedMembers = useMemo(() => {
+      if (!members || members.length === 0) return [];
       
-      // If one has incorrect role and the other doesn't, prioritize the incorrect one
-      if (!aStatus.hasCorrectRole && bStatus.hasCorrectRole) return -1;
-      if (aStatus.hasCorrectRole && !bStatus.hasCorrectRole) return 1;
+      return [...members].sort((a, b) => {
+        // First prioritize hidden status - push hidden members to bottom
+        if (a.hidden && !b.hidden) return 1;
+        if (!a.hidden && b.hidden) return -1;
+        
+        // For non-hidden members (or comparing two hidden members), prioritize incorrect roles
+        const aStatus = calculateCorrectRole(a);
+        const bStatus = calculateCorrectRole(b);
+        
+        // If one has incorrect role and the other doesn't, prioritize the incorrect one
+        if (!aStatus.hasCorrectRole && bStatus.hasCorrectRole) return -1;
+        if (aStatus.hasCorrectRole && !bStatus.hasCorrectRole) return 1;
+        
+        // If both have same hidden status and same role correctness, sort alphabetically
+        return (a.name || "").localeCompare(b.name || "");
+      });
+    }, [members]);
+  
+  const refreshMemberWomData = async (womId) => {
+    try {
+      // Fetch latest data from WOM API
+      const response = await fetch(`https://api.wiseoldman.net/v2/players/${womId}`);
+      const womData = await response.json();
       
-      // If both have incorrect or correct roles, sort alphabetically by name
-      return (a.name || "").localeCompare(b.name || "");
-    });
-  }, [members]);
+      if (!womData || womData.error) {
+        throw new Error(womData.error || "Failed to fetch WOM data");
+      }
+      
+      // Extract the relevant data
+      const updatedData = {
+        first_xp: womData.exp, // Reset first_xp to current value
+        current_xp: womData.exp,
+        ehb: womData.ehb || 0,
+        level: womData.level || 0,
+        current_lvl: womData.level || 0,
+        hidden: false,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Update the member in the database
+      const { error } = await supabase
+        .from("members")
+        .update(updatedData)
+        .eq("wom_id", womId);
+      
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error("Error refreshing WOM data:", error);
+      throw error;
+    }
+  };
 
   return (
     <div className="admin-table-container">
@@ -249,7 +317,7 @@ export default function AdminMemberTable({
                     expandedRow === member.wom_id ? "row-expanded" : ""
                   } ${!roleStatus.hasCorrectRole ? "role-mismatch-row" : ""} ${
                     member.not_in_wom ? "not-in-wom-row" : ""
-                  }`}
+                  } ${member.hidden ? "hidden-member-row" : ""}`}
                   onClick={() =>
                     setExpandedRow(
                       expandedRow === member.wom_id ? null : member.wom_id
@@ -329,6 +397,16 @@ export default function AdminMemberTable({
                         title="Edit member"
                       >
                         <FaEdit />
+                      </button>
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleVisibility(member);
+                        }}
+                        title={member.hidden ? "Unhide member" : "Hide member"}
+                      >
+                        {member.hidden ? <FaEye /> : <FaEyeSlash />}
                       </button>
                       <button
                         className="btn btn-sm btn-danger"

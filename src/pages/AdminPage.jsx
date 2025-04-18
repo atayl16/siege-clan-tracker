@@ -8,6 +8,10 @@ import WomSyncButton from "../components/WomSyncButton";
 import RunewatchAlerts from "../components/RunewatchAlerts";
 import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
+import {
+  memberNeedsRankUpdate,
+  calculateAppropriateRank,
+} from "../utils/rankUtils";
 import "./AdminPage.css";
 
 export default function AdminPage() {
@@ -52,42 +56,25 @@ export default function AdminPage() {
   
   const fetchAlertsCount = async () => {
     try {
-      // Fetch count of members needing rank updates from Supabase
+      // Fetch members from Supabase, filtering out hidden members at the DB level
       const { data, error } = await supabase
         .from('members')
-        .select('*');
+        .select('*')
+        .eq('hidden', false);  // Filter hidden members at the database level
         
       if (error) throw error;
       
-      // Count members needing updates
-      const needsUpdates = data.filter(member => {
-        const womRole = (member.womrole || "").toLowerCase();
-        const clanXp = (parseInt(member.current_xp) || 0) - (parseInt(member.first_xp) || 0);
-        const ehb = parseInt(member.ehb) || 0;
-        
-        // Check if the member is a skiller but should be at a different rank
-        if (womRole.includes("opal") && clanXp >= 3000000) return true;
-        if (womRole.includes("sapphire") && (clanXp < 3000000 || clanXp >= 8000000)) return true;
-        if (womRole.includes("emerald") && (clanXp < 8000000 || clanXp >= 15000000)) return true;
-        if (womRole.includes("ruby") && (clanXp < 15000000 || clanXp >= 40000000)) return true;
-        if (womRole.includes("diamond") && (clanXp < 40000000 || clanXp >= 90000000)) return true;
-        if (womRole.includes("dragonstone") && (clanXp < 90000000 || clanXp >= 150000000)) return true;
-        if (womRole.includes("onyx") && (clanXp < 150000000 || clanXp >= 500000000)) return true;
-        if (womRole.includes("zenyte") && clanXp < 500000000) return true;
-        
-        // Check if the member is a fighter but should be at a different rank
-        if (womRole.includes("mentor") && ehb >= 100) return true;
-        if (womRole.includes("prefect") && (ehb < 100 || ehb >= 300)) return true;
-        if (womRole.includes("leader") && (ehb < 300 || ehb >= 500)) return true;
-        if (womRole.includes("supervisor") && (ehb < 500 || ehb >= 700)) return true;
-        if (womRole.includes("superior") && (ehb < 700 || ehb >= 900)) return true;
-        if (womRole.includes("executive") && (ehb < 900 || ehb >= 1100)) return true;
-        if (womRole.includes("senator") && (ehb < 1100 || ehb >= 1300)) return true;
-        if (womRole.includes("monarch") && (ehb < 1300 || ehb >= 1500)) return true;
-        if (womRole.includes("tzkal") && ehb < 1500) return true;
-        
-        return false;
-      });
+      // Additional validation to ensure all required fields exist
+      const validMembers = data.filter(member => 
+        member.name && 
+        member.womrole && 
+        member.first_xp && 
+        member.current_xp && 
+        member.ehb !== undefined
+      );
+      
+      // Use the same memberNeedsRankUpdate function from rankUtils
+      const needsUpdates = validMembers.filter(member => memberNeedsRankUpdate(member));
       
       setAlertsCount(needsUpdates.length);
     } catch (err) {

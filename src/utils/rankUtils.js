@@ -129,11 +129,30 @@ export const calculateAppropriateRank = (member) => {
 };
 
 export const memberNeedsRankUpdate = (member) => {
-  if (!member || !member.womrole) return false;
+  // Comprehensive validation to prevent counting members with incomplete data
+  if (!member || 
+      member.hidden || 
+      !member.womrole || 
+      typeof member.first_xp !== 'number' || 
+      isNaN(member.first_xp) || 
+      typeof member.current_xp !== 'number' || 
+      isNaN(member.current_xp) ||
+      typeof member.ehb !== 'number' || 
+      isNaN(member.ehb)) {
+    return false;
+  }
   
-  const appropriateRank = calculateAppropriateRank(member);
-  if (!appropriateRank) return false;
+  // Ensure members with incorrect XP values are excluded
+  if (member.first_xp <= 0 || member.current_xp <= 0) {
+    return false;
+  }
   
-  // Compare the appropriate rank with the current rank (case-insensitive)
-  return !member.womrole.toLowerCase().includes(appropriateRank.toLowerCase());
+  // Calculate appropriate rank
+  const calculatedRank = calculateAppropriateRank(member);
+  if (!calculatedRank) return false;
+  
+  // Check if current role matches calculated role (case-insensitive)
+  const needsUpdate = member.womrole.toLowerCase() !== calculatedRank.toLowerCase();
+  
+  return needsUpdate;
 };

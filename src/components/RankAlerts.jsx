@@ -46,36 +46,59 @@ export default function RankAlerts() {
     // For now, we'll just assign a medium priority to all other mismatches
     return 2;
   };
-
+  
   const fetchMembers = useCallback(async () => {
     try {
       setLoading(true);
-
-      // Fetch all members from Supabase
-      const { data, error } = await supabase.from("members").select("*");
-
+  
+      // Fetch all members from Supabase, explicitly filtering out hidden members at the database level
+      const { data, error } = await supabase
+        .from("members")
+        .select("*")
+        .eq("hidden", false);  // Filter hidden members at the database level
+  
       if (error) throw error;
-
+  
+      // Add debug logging to see what's happening
+      console.log(`Total non-hidden members: ${data.length}`);
+      
+      // Additional validation to ensure all required fields exist
+      const validMembers = data.filter(member => 
+        member.name && 
+        member.womrole && 
+        member.first_xp && 
+        member.current_xp && 
+        member.ehb !== undefined
+      );
+      
+      console.log(`Members with complete data: ${validMembers.length}`);
+  
       // Process members to find those needing rank updates
-      const membersNeedingUpdate = data
+      const membersNeedingUpdate = validMembers
         .filter((member) => memberNeedsRankUpdate(member))
         .map((member) => ({
           ...member,
           calculated_rank: calculateAppropriateRank(member),
         }));
-
+      
+      console.log(`Members needing updates: ${membersNeedingUpdate.length}`);
+      // Log the members needing updates to see what's in there
+      if (membersNeedingUpdate.length > 0) {
+        console.log("Members needing updates:", membersNeedingUpdate.map(m => `${m.name} (${m.womrole} -> ${m.calculated_rank})`));
+      }
+  
       // Sort members by priority (highest first) then alphabetically
       const sortedMembers = membersNeedingUpdate.sort((a, b) => {
         const priorityA = getRankUpdatePriority(a);
         const priorityB = getRankUpdatePriority(b);
-
+  
         if (priorityB !== priorityA) {
           return priorityB - priorityA;
         }
-
+  
         return (a.name || "").localeCompare(b.name || "");
       });
-
+  
       setAlerts(sortedMembers);
       setError(null);
     } catch (err) {
@@ -85,7 +108,7 @@ export default function RankAlerts() {
       setLoading(false);
     }
   }, []);
-
+  
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);

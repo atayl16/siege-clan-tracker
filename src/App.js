@@ -14,6 +14,7 @@ import MembersPage from "./pages/MembersPage";
 import WelcomePage from "./pages/WelcomePage";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SeasonalFavicon from "./utils/seasonalIcons";
 import "./App.css";
 
 function App() {
@@ -24,6 +25,7 @@ const AppContent = () => {
 
   return (
     <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
+      <SeasonalFavicon />
       {showNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<WelcomePage />} />

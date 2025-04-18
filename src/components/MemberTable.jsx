@@ -149,12 +149,18 @@ const calculateNextLevel = (member) => {
       return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Sort members before passing them to the table
+    // Replace the sortedMembers memo with this updated version
     const sortedMembers = React.useMemo(() => {
-      return [...(members || [])].sort((a, b) => {
+      // First filter members to remove hidden ones (when not in admin view)
+      const visibleMembers = isAdmin 
+        ? members || []
+        : (members || []).filter(member => !member.hidden);
+      
+      // Then sort the visible members
+      return [...visibleMembers].sort((a, b) => {
         const aRole = (a.womrole || "").toLowerCase().trim();
         const bRole = (b.womrole || "").toLowerCase().trim();
-
+    
         // Check if the roles are admin ranks
         const aAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
           aRole.includes(rank.toLowerCase())
@@ -162,23 +168,23 @@ const calculateNextLevel = (member) => {
         const bAdminIndex = ADMIN_RANK_ORDER.findIndex((rank) =>
           bRole.includes(rank.toLowerCase())
         );
-
+    
         // Admin ranks come first, sorted by their order in ADMIN_RANK_ORDER
         if (aAdminIndex !== -1 && bAdminIndex !== -1) {
           return aAdminIndex - bAdminIndex;
         }
         if (aAdminIndex !== -1) return -1; // a is an admin, b is not
         if (bAdminIndex !== -1) return 1; // b is an admin, a is not
-
+    
         // If neither is an admin, sort by "Clan XP Gained" in descending order
         const aClanXpGained =
           parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
         const bClanXpGained =
           parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10) || 0;
-
+    
         return bClanXpGained - aClanXpGained;
       });
-    }, [members]);
+    }, [members, isAdmin]);
 
     // Define base columns that are shown in both public and admin views
     const baseColumns = React.useMemo(() => {
