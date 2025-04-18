@@ -3,34 +3,26 @@ const fetch = require('node-fetch');
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // WOM API configuration
-const WOM_API_KEY = process.env.REACT_APP_WOM_API_KEY;
-const WOM_GROUP_ID = process.env.REACT_APP_WOM_GROUP_ID;
+const WOM_API_KEY = process.env.WOM_API_KEY;
+const WOM_GROUP_ID = process.env.WOM_GROUP_ID;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
-exports.handler = async (event, context) => {
-  // Set CORS headers for all responses
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
-
-  // Handle OPTIONS request (CORS preflight)
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: 'Preflight call successful' }),
-    };
-  }
-  
+// Main function to sync WOM members
+async function syncWomMembers() {
   try {
-    console.log("Starting WOM sync...");
+    console.log("🔄 Starting WOM member sync...");
+    
+    // Log environment variables status (without revealing values)
+    console.log('Environment check:');
+    console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_API_KEY: ${process.env.WOM_API_KEY ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_GROUP_ID: ${process.env.WOM_GROUP_ID ? 'Set ✓' : 'Missing ❌'}`);
     
     // Check if we have all required environment variables
     if (!WOM_GROUP_ID) {
@@ -81,10 +73,10 @@ exports.handler = async (event, context) => {
     console.log(`Found ${newMembers.length} new members to add to the database`);
     
     // Add new members with as much data as we can get
+    let addedCount = 0;
+    let errorCount = 0;
+    
     if (newMembers.length > 0) {
-      let addedCount = 0;
-      let errorCount = 0;
-      
       // Process new members in batches
       const batchSize = 5;
       for (let i = 0; i < newMembers.length; i += batchSize) {
@@ -150,7 +142,7 @@ exports.handler = async (event, context) => {
     console.log("Fetching all members for updates...");
     const { data: membersToUpdate, error: updateFetchError } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb')
+      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb, status')
       .order('wom_id', { ascending: true });
     
     if (updateFetchError) throw new Error(`Failed to fetch members for update: ${updateFetchError.message}`);
@@ -159,7 +151,7 @@ exports.handler = async (event, context) => {
     
     // Process members in batches to avoid overwhelming the API
     let updatedCount = 0;
-    let errorCount = 0;
+    errorCount = 0; // Reset error count
     const batchSize = 5; // Process 5 members at a time
     
     for (let i = 0; i < membersToUpdate.length; i += batchSize) {
@@ -205,6 +197,7 @@ exports.handler = async (event, context) => {
               current_lvl: newLevel,
               current_xp: newXp,
               ehb: newEhb,
+              status: status,
               updated_at: new Date().toISOString()
             })
             .eq('wom_id', member.wom_id);
@@ -228,28 +221,31 @@ exports.handler = async (event, context) => {
     console.log(`Sync completed! Updated ${updatedCount} members, with ${errorCount} errors`);
     
     return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        message: 'Group sync completed',
-        stats: {
-          newMembers: newMembers.length,
-          total: membersToUpdate.length,
-          updated: updatedCount,
-          errors: errorCount
-        }
-      })
+      newMembers: newMembers.length,
+      total: membersToUpdate.length,
+      updated: updatedCount,
+      errors: errorCount
     };
     
   } catch (err) {
-    console.error('Error in sync-wom function:', err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Failed to sync with WOM',
-        message: err.message
-      })
-    };
+    console.error('❌ Error in WOM sync:', err);
+    throw err;
   }
-};
+}
+
+// Run the main function if this script is executed directly
+if (require.main === module) {
+  console.log('🚀 Starting WOM member sync as standalone script');
+  syncWomMembers()
+    .then(results => {
+      console.log('✅ WOM member sync completed successfully', results);
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('❌ WOM member sync failed:', err);
+      process.exit(1);
+    });
+}
+
+// Export the function for potential reuse in other scripts
+module.exports = { syncWomMembers };

@@ -1,16 +1,25 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-exports.handler = async (event, context) => {
+// Main function to check RuneWatch
+async function checkRunewatch() {
   try {
-    console.log("Starting RuneWatch check...");
+    console.log("🔍 Starting RuneWatch check...");
+    
+    // Log environment variables status (without revealing values)
+    console.log('Environment check:');
+    console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- DISCORD_WEBHOOK_URL: ${process.env.DISCORD_WEBHOOK_URL ? 'Set ✓' : 'Missing ❌'}`);
     
     // Get active clan members from database
     const { data: members, error: membersError } = await supabase
@@ -82,28 +91,20 @@ exports.handler = async (event, context) => {
     }
     
     return {
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        reportedCount: reportedUsernames.size,
-        matchedMembers,
-        newlyReportedMembers
-      })
+      success: true,
+      reportedCount: reportedUsernames.size,
+      matchedMembers,
+      newlyReportedMembers
     };
   } catch (error) {
-    console.error("Error in RuneWatch check:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message })
-    };
+    console.error("❌ Error in RuneWatch check:", error);
+    throw error;
   }
-};
+}
 
 async function fetchRunewatchUsernames() {
-  // Check cache first (store in /tmp which is writable in Netlify functions)
-  const fs = require('fs').promises;
-  const path = require('path');
-  const cacheFile = '/tmp/runewatch_cache.json';
+  // Check cache first (use temp dir which is available in both Netlify and GitHub)
+  const cacheFile = path.join(require('os').tmpdir(), 'runewatch_cache.json');
   const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
   
   try {
@@ -216,3 +217,23 @@ async function sendDiscordNotification(reportedMembers) {
     console.error("Error sending Discord notification:", error);
   }
 }
+
+// Run the function if this script is executed directly
+if (require.main === module) {
+  console.log('🚀 Starting RuneWatch check as standalone script');
+  checkRunewatch()
+    .then(results => {
+      console.log('✅ RuneWatch check completed successfully');
+      console.log(`- Total reported accounts checked: ${results.reportedCount}`);
+      console.log(`- Matched members in clan: ${results.matchedMembers.length}`);
+      console.log(`- Newly reported members: ${results.newlyReportedMembers.length}`);
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('❌ RuneWatch check failed:', err);
+      process.exit(1);
+    });
+}
+
+// Export the function for potential reuse
+module.exports = { checkRunewatch };

@@ -3,33 +3,27 @@ const fetch = require('node-fetch');
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // WOM API configuration
-const WOM_API_KEY = process.env.REACT_APP_WOM_API_KEY;
-const WOM_GROUP_ID = process.env.REACT_APP_WOM_GROUP_ID;
+const WOM_API_KEY = process.env.WOM_API_KEY;
+const WOM_GROUP_ID = process.env.WOM_GROUP_ID;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
-exports.handler = async (event, context) => {
-  // Set CORS headers for all responses
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
-
-  // Handle OPTIONS request (CORS preflight)
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: 'Preflight call successful' }),
-    };
-  }
-  
+// Main execution function
+async function syncWomEvents() {
   try {
+    console.log('🔄 Starting WOM Events sync...');
+    
+    // Log environment variables status (without revealing values)
+    console.log('Environment check:');
+    console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_API_KEY: ${process.env.WOM_API_KEY ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_GROUP_ID: ${process.env.WOM_GROUP_ID ? 'Set ✓' : 'Missing ❌'}`);
+    
     // Fetch competitions for the group
     console.log(`Fetching competitions for WOM group ${WOM_GROUP_ID}`);
     const competitionsResponse = await fetch(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}/competitions`, {
@@ -43,6 +37,7 @@ exports.handler = async (event, context) => {
     }
     
     const competitions = await competitionsResponse.json();
+    console.log(`Found ${competitions.length} competitions`);
     
     // Calculate the one month ago date for filtering old events
     const oneMonthAgo = new Date();
@@ -205,42 +200,21 @@ exports.handler = async (event, context) => {
     - Awarded points: ${addedPoints}
     - Skipped (already processed): ${skippedProcessed}
     - Skipped (over one month old): ${skippedOld}`);
-    
-    // Return the current list of events
-    const { data: events, error: fetchError } = await supabase
-      .from('events')
-      .select('*')
-      .order('start_date', { ascending: false });
-    
-    if (fetchError) throw fetchError;
-    
+
     return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        events: events || [],
-        stats: {
-          totalProcessed,
-          updatedEvents,
-          addedPoints,
-          skippedProcessed,
-          skippedOld
-        }
-      })
+      totalProcessed,
+      updatedEvents,
+      addedPoints,
+      skippedProcessed,
+      skippedOld
     };
     
   } catch (err) {
-    console.error('Error in wom-events function:', err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Failed to process WOM events',
-        message: err.message
-      })
-    };
+    console.error('❌ Error in WOM events sync:', err);
+    // Exit with error code for GitHub Actions
+    process.exit(1);
   }
-};
+}
 
 // Process competition results and award points
 async function processCompetitionResults(competitionId) {
@@ -389,3 +363,20 @@ async function processCompetitionResults(competitionId) {
     throw err;
   }
 }
+
+// Run the main function if this script is executed directly
+if (require.main === module) {
+  console.log('🚀 Starting WOM Events sync as standalone script');
+  syncWomEvents()
+    .then(results => {
+      console.log('✅ WOM Events sync completed successfully', results);
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('❌ WOM Events sync failed:', err);
+      process.exit(1);
+    });
+}
+
+// Export the function for potential reuse in other scripts
+module.exports = { syncWomEvents };
