@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { supabase } from "../supabaseClient";
-import { FaEdit, FaTrash, FaPlus, FaExchangeAlt, FaExclamationTriangle, FaUserSlash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaExchangeAlt, FaExclamationTriangle } from "react-icons/fa";
 import "./AdminMemberTable.css";
 import { titleize } from "../utils/stringUtils";
 
@@ -258,14 +258,6 @@ export default function AdminMemberTable({
                 >
                   <td className="player-name-cell">
                     {member.name || member.wom_name || "Unknown"}
-                    {member.not_in_wom && (
-                      <span
-                        className="not-in-wom-indicator"
-                        title="Member not found in WOM group"
-                      >
-                        <FaUserSlash className="text-danger ms-2" />
-                      </span>
-                    )}
                   </td>
                   <td className="text-center">{member.siege_score || 0}</td>
                   <td className="text-center position-relative">
@@ -356,25 +348,6 @@ export default function AdminMemberTable({
                     <td colSpan={7}>
                       <div className="expanded-details-content">
                         <div className="details-section">
-                          {member.not_in_wom && (
-                            <div className="detail-item not-in-wom-alert">
-                              <span className="detail-label">WOM Status:</span>
-                              <span className="detail-value">
-                                <strong className="text-danger">
-                                  Not in WOM Group
-                                </strong>
-                                {member.not_in_wom_date && (
-                                  <>
-                                    {" "}
-                                    since{" "}
-                                    {new Date(
-                                      member.not_in_wom_date
-                                    ).toLocaleDateString()}
-                                  </>
-                                )}
-                              </span>
-                            </div>
-                          )}
                           {!roleStatus.hasCorrectRole && (
                             <div className="detail-item role-mismatch-alert">
                               <span className="detail-label">

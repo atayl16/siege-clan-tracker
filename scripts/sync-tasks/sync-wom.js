@@ -80,42 +80,27 @@ async function syncWomMembers() {
     const missingMembers = existingMembers.filter(m => !womIds.has(m.wom_id));
     console.log(`Found ${missingMembers.length} members who are no longer in WOM group`);
     
-    // Mark members who are not in WOM anymore
-    let missingMembersFlagged = 0;
-    let newlyMissingMembers = [];
+    // DELETE members who are not in WOM anymore (instead of flagging them)
+    let deletedMembers = 0;
+    let deletedMembersList = [];
     
     for (const member of missingMembers) {
-      // Check if member was already flagged as missing
-      const { data: existingMember, error: memberCheckError } = await supabase
+      const memberName = member.name || member.wom_name || `ID ${member.wom_id}`;
+      
+      console.log(`⚠️ DELETING member ${memberName} who is not in WOM group anymore`);
+      
+      // Delete the member from database
+      const { error: deleteError } = await supabase
         .from('members')
-        .select('not_in_wom')
-        .eq('wom_id', member.wom_id)
-        .single();
+        .delete()
+        .eq('wom_id', member.wom_id);
         
-      if (memberCheckError && memberCheckError.code !== 'PGRST116') {
-        console.error(`Error checking missing status for ${member.name || member.wom_name}:`, memberCheckError);
-        continue;
-      }
-      
-      const wasAlreadyMissing = existingMember?.not_in_wom === true;
-      
-      if (!wasAlreadyMissing) {
-        // Update the member to mark them as not in WOM
-        const { error: updateError } = await supabase
-          .from('members')
-          .update({ 
-            not_in_wom: true,
-            not_in_wom_date: new Date().toISOString() 
-          })
-          .eq('wom_id', member.wom_id);
-          
-        if (updateError) {
-          console.error(`Error updating missing status for ${member.name || member.wom_name}:`, updateError);
-        } else {
-          console.log(`Marked ${member.name || member.wom_name} as not in WOM group`);
-          missingMembersFlagged++;
-          newlyMissingMembers.push(member.name || member.wom_name);
-        }
+      if (deleteError) {
+        console.error(`Error deleting ${memberName}:`, deleteError);
+      } else {
+        console.log(`🗑️ Successfully deleted ${memberName} from database`);
+        deletedMembers++;
+        deletedMembersList.push(memberName);
       }
     }
     
@@ -159,8 +144,7 @@ async function syncWomMembers() {
               siege_score: 0,
               join_date: playerData.registeredAt || new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              created_at: new Date().toISOString(),
-              not_in_wom: false
+              created_at: new Date().toISOString()
             };
             
             // Insert new member with complete data
@@ -190,7 +174,7 @@ async function syncWomMembers() {
     console.log("Fetching all members for updates...");
     const { data: membersToUpdate, error: updateFetchError } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb, not_in_wom')
+      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb')
       .order('wom_id', { ascending: true });
     
     if (updateFetchError) throw new Error(`Failed to fetch members for update: ${updateFetchError.message}`);
@@ -232,9 +216,6 @@ async function syncWomMembers() {
           const newLevel = latestSnapshot?.skills?.overall?.level || member.current_lvl || 1;
           const newEhb = Math.round(playerData.latestSnapshot?.data?.computed?.ehb?.value || member.ehb || 0);
           
-          // Check if member still exists in the WOM group
-          const isInWomGroup = womIds.has(member.wom_id);
-          
           // Update the member in Supabase
           const updateData = {
             name: playerData.displayName || member.name || member.wom_name,
@@ -243,13 +224,6 @@ async function syncWomMembers() {
             ehb: newEhb,
             updated_at: new Date().toISOString()
           };
-          
-          // If member is back in WOM group, clear the not_in_wom flag
-          if (isInWomGroup && member.not_in_wom) {
-            updateData.not_in_wom = false;
-            updateData.not_in_wom_date = null;
-            console.log(`Member ${member.name || member.wom_name} has returned to WOM group`);
-          }
           
           const { error } = await supabase
             .from("members")
@@ -273,12 +247,16 @@ async function syncWomMembers() {
     }
     
     console.log(`Sync completed! Updated ${updatedCount} members, with ${errorCount} errors`);
-    console.log(`Missing members found: ${missingMembers.length}, newly flagged: ${missingMembersFlagged}`);
+    console.log(`Members deleted: ${deletedMembers}`);
+    
+    if (deletedMembersList.length > 0) {
+      console.log(`Deleted members list: ${deletedMembersList.join(', ')}`);
+    }
     
     return {
       newMembers: newMembers.length,
-      missingMembers: missingMembers.length,
-      newlyFlagged: missingMembersFlagged,
+      deletedMembers: deletedMembers,
+      deletedList: deletedMembersList,
       total: membersToUpdate.length,
       updated: updatedCount,
       errors: errorCount

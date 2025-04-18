@@ -177,25 +177,3 @@
   border-radius: 4px;
   margin-bottom: 10px;
 }
-
-.not-in-wom-row {
-  background-color: rgba(255, 99, 71, 0.2) !important;
-}
-
-.not-in-wom-row:hover {
-  background-color: rgba(255, 99, 71, 0.3) !important;
-}
-
-.not-in-wom-alert {
-  background-color: rgba(255, 99, 71, 0.1);
-  padding: 6px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  border-left: 3px solid #dc3545;
-}
-
-.not-in-wom-indicator {
-  display: inline-block;
-  margin-left: 5px;
-  vertical-align: middle;
-}
