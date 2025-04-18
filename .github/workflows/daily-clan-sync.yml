@@ -5,7 +5,18 @@ on:
     # Run at 3:00 UTC every day
     - cron: '0 3 * * *'
   workflow_dispatch:
-    # Allows manual triggering for testing
+    # Allows manual triggering with job selection
+    inputs:
+      job_to_run:
+        description: 'Select which job to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - wom-sync
+          - wom-events
+          - runewatch
+        default: 'all'
 
 jobs:
   sync-data:
@@ -22,8 +33,9 @@ jobs:
         run: npm ci
         
       - name: Run WOM Sync
+        if: ${{ github.event.inputs.job_to_run == 'wom-sync' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
         run: node scripts/sync-tasks/sync-wom.js
-        continue-on-error: true     # <- Add this line
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -31,8 +43,9 @@ jobs:
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
           
       - name: Run WOM Events Sync
+        if: ${{ github.event.inputs.job_to_run == 'wom-events' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
         run: node scripts/sync-tasks/wom-events.js
-        continue-on-error: true     # <- Add this line
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -40,8 +53,9 @@ jobs:
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
           
       - name: Run RuneWatch Check
+        if: ${{ github.event.inputs.job_to_run == 'runewatch' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
         run: node scripts/sync-tasks/runewatch-check.js
-        continue-on-error: true     # <- Add this line
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -51,4 +65,8 @@ jobs:
       - name: Summary
         run: |
           echo "🔍 Daily clan sync process completed"
-          echo "Check individual step logs for details"
+          if [[ "${{ github.event.inputs.job_to_run }}" != "" ]]; then
+            echo "Executed job: ${{ github.event.inputs.job_to_run }}"
+          else
+            echo "Ran all jobs via scheduled execution"
+          fi
