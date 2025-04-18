@@ -341,43 +341,76 @@ async function processCompetitionResults(competitionId) {
       for (const participant of group.participants) {
         try {
           // Get the member from our database
-          const { data: member, error: memberError } = await supabase
+          const username = participant.player.username.toLowerCase();
+          const { data: members, error: memberQueryError } = await supabase
             .from('members')
             .select('wom_id, siege_score')
-            .eq('wom_name', participant.player.username)
-            .single();
-          
-          if (memberError) {
-            console.error(`Error finding member ${participant.player.username}:`, memberError);
+            .ilike('wom_name', username);
+      
+          if (memberQueryError) {
+            console.error(`Error querying member ${username}:`, memberQueryError);
             continue;
           }
+      
+          // Define member outside of conditional blocks so it's available throughout
+          let member;
           
-          // Store data for transaction
-          const newScore = (member.siege_score || 0) + pointsToAward;
-          memberUpdates.push({
-            wom_id: member.wom_id,
-            oldScore: member.siege_score || 0,
-            newScore: newScore,
-            pointsToAward: pointsToAward
-          });
+          // Use the first match if any found
+          if (!members || members.length === 0) {
+            console.log(`Member not found: ${username} - will try alternative lookup`);
+      
+            // Try alternative lookup with display name
+            const displayName = participant.player.displayName?.toLowerCase();
+            if (displayName && displayName !== username) {
+              const { data: altMembers } = await supabase
+                .from('members')
+                .select('wom_id, siege_score')
+                .ilike('wom_name', displayName);
+                
+              if (altMembers && altMembers.length > 0) {
+                console.log(`Found member via display name: ${displayName}`);
+                member = altMembers[0];
+              } else {
+                console.error(`Member not found by username or display name: ${username}`);
+                continue;
+              }
+            } else {
+              console.error(`Member not found: ${username}`);
+              continue;
+            }
+          } else {
+            member = members[0];
+          }
           
-          // Store event result for transaction
-          pointsData.push({
-            event_id: competitionId,
-            wom_id: member.wom_id,
-            player_name: participant.player.username,
-            placement: currentPlace, // Use the actual place, not index
-            points_awarded: pointsToAward,
-            progress: participant.progress.gained
-          });
+          // Only process if we found a valid member
+          if (member) {
+            // Store data for transaction
+            const newScore = (member.siege_score || 0) + pointsToAward;
+            memberUpdates.push({
+              wom_id: member.wom_id,
+              oldScore: member.siege_score || 0,
+              newScore: newScore,
+              pointsToAward: pointsToAward
+            });
+            
+            // Store event result for transaction
+            pointsData.push({
+              event_id: competitionId,
+              wom_id: member.wom_id,
+              player_name: participant.player.username,
+              placement: currentPlace, // Use the actual place, not index
+              points_awarded: pointsToAward,
+              progress: participant.progress.gained
+            });
+          }
         } catch (err) {
           console.error(`Error preparing data for ${participant.player.username}:`, err);
         }
-      }
+      } // End of participant loop
       
-      // Move to the next place - advance by the number of participants in the current group
-      currentPlace += group.participants.length;
-    }
+      // Increment place counter for next group
+      currentPlace++;
+    } // End of progress groups loop
     
     // Now execute the transaction if we have members to award points to
     if (memberUpdates.length > 0) {
@@ -385,11 +418,14 @@ async function processCompetitionResults(competitionId) {
       
       try {
         // Start a Supabase transaction (using functions to emulate a transaction)
-        const { data: functionResult, error: functionError } = await supabase.rpc('award_competition_points', {
-          competition_id: competitionId,
-          points_data: JSON.stringify(pointsData),
-          member_updates: JSON.stringify(memberUpdates)
-        });
+        const { data: functionResult, error: functionError } = await supabase.rpc(
+          "award_competition_points",
+          {
+            competition_id: competitionId,
+            points_data: pointsData, // Pass as object, not string
+            member_updates: memberUpdates // Pass as object, not string
+          }
+        );
         
         if (functionError) {
           throw new Error(`Transaction failed: ${functionError.message}`);
