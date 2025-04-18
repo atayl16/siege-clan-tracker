@@ -67,13 +67,13 @@ const WelcomePage = () => {
                   Check out your current rank, see how far to your next level or
                   simply compete with your friends.
                 </p>
-                <Link to="/members" className="btn btn-secondary mt-auto">
+                <Link to="/members#members" className="btn btn-secondary mt-auto">
                   Go
                 </Link>
               </div>
             </div>
           </div>
-
+        
           <div className="col-sm mb-3">
             <div className="card text-dark bg-warning h-100">
               <div className="card-body d-flex flex-column">
@@ -82,13 +82,13 @@ const WelcomePage = () => {
                   See the full event leaderboard including scores, ranks and
                   more. How close are you to leveling up?
                 </p>
-                <Link to="/leaderboard" className="btn btn-secondary mt-auto">
+                <Link to="/members#leaderboard" className="btn btn-secondary mt-auto">
                   Go
                 </Link>
               </div>
             </div>
           </div>
-
+        
           <div className="col-sm mb-3">
             <div className="card text-dark bg-warning h-100">
               <div className="card-body d-flex flex-column">
@@ -97,7 +97,7 @@ const WelcomePage = () => {
                   Check out all events, past and future! Find out when they
                   start, when they end, and who won.
                 </p>
-                <Link to="/events" className="btn btn-secondary mt-auto">
+                <Link to="/members#events" className="btn btn-secondary mt-auto">
                   Go
                 </Link>
               </div>

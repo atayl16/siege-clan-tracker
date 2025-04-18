@@ -13,7 +13,7 @@ export default function AdminLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const result = login(username, password);
+      const result = await login(username, password);
 
       if (result && !result.error) {
         navigate("/admin");
@@ -53,9 +53,9 @@ export default function AdminLogin() {
         <button type="submit" className="login-button">
           Sign In
         </button>
-        
+
         <div className="forgot-password">
-          <a 
+          <a
             href="https://discord.com/channels/967354755045290004/969286091725209600/1084852251882950746"
             target="_blank"
             rel="noopener noreferrer"
