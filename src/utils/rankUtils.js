@@ -129,30 +129,77 @@ export const calculateAppropriateRank = (member) => {
 };
 
 export const memberNeedsRankUpdate = (member) => {
-  // Comprehensive validation to prevent counting members with incomplete data
-  if (!member || 
-      member.hidden || 
-      !member.womrole || 
-      typeof member.first_xp !== 'number' || 
-      isNaN(member.first_xp) || 
-      typeof member.current_xp !== 'number' || 
-      isNaN(member.current_xp) ||
-      typeof member.ehb !== 'number' || 
-      isNaN(member.ehb)) {
+  // Skip hidden members or those with missing wom_id
+  if (!member || member.hidden || !member.wom_id) {
     return false;
   }
   
-  // Ensure members with incorrect XP values are excluded
-  if (member.first_xp <= 0 || member.current_xp <= 0) {
+  // Must have a role to determine current status
+  if (!member.womrole) {
     return false;
   }
   
-  // Calculate appropriate rank
-  const calculatedRank = calculateAppropriateRank(member);
-  if (!calculatedRank) return false;
+  const womRole = (member.womrole || "").toLowerCase();
   
-  // Check if current role matches calculated role (case-insensitive)
-  const needsUpdate = member.womrole.toLowerCase() !== calculatedRank.toLowerCase();
+  // Determine if member is skiller or fighter based on current role
+  const isSkiller = 
+    womRole.includes("opal") || womRole.includes("sapphire") || 
+    womRole.includes("emerald") || womRole.includes("ruby") || 
+    womRole.includes("diamond") || womRole.includes("dragonstone") || 
+    womRole.includes("onyx") || womRole.includes("zenyte");
   
-  return needsUpdate;
+  const isFighter = 
+    womRole.includes("mentor") || womRole.includes("prefect") || 
+    womRole.includes("leader") || womRole.includes("supervisor") || 
+    womRole.includes("superior") || womRole.includes("executive") || 
+    womRole.includes("senator") || womRole.includes("monarch") || 
+    womRole.includes("tzkal");
+  
+  // If we can't determine the type, then they don't need an update
+  if (!isSkiller && !isFighter) {
+    return false;
+  }
+  
+  if (isSkiller) {
+    // Use safe parsing to handle string or number types
+    const firstXp = parseInt(member.first_xp) || 0;
+    const currentXp = parseInt(member.current_xp) || 0;
+    const clanXp = currentXp - firstXp;
+    
+    // Determine correct role based on XP
+    let correctRole;
+    if (clanXp >= 500000000) correctRole = "zenyte";
+    else if (clanXp >= 150000000) correctRole = "onyx";
+    else if (clanXp >= 90000000) correctRole = "dragonstone";
+    else if (clanXp >= 40000000) correctRole = "diamond";
+    else if (clanXp >= 15000000) correctRole = "ruby";
+    else if (clanXp >= 8000000) correctRole = "emerald";
+    else if (clanXp >= 3000000) correctRole = "sapphire";
+    else correctRole = "opal";
+    
+    // Check if current role includes the correct role
+    return !womRole.includes(correctRole);
+  }
+  
+  if (isFighter) {
+    // Use safe parsing for EHB
+    const ehb = parseInt(member.ehb) || 0;
+    
+    // Determine correct role based on EHB
+    let correctRole;
+    if (ehb >= 1500) correctRole = "tzkal";
+    else if (ehb >= 1300) correctRole = "monarch";
+    else if (ehb >= 1100) correctRole = "senator";
+    else if (ehb >= 900) correctRole = "executive";
+    else if (ehb >= 700) correctRole = "superior";
+    else if (ehb >= 500) correctRole = "supervisor";
+    else if (ehb >= 300) correctRole = "leader";
+    else if (ehb >= 100) correctRole = "prefect";
+    else correctRole = "mentor";
+    
+    // Check if current role includes the correct role
+    return !womRole.includes(correctRole);
+  }
+  
+  return false;
 };

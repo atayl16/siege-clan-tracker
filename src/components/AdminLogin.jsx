@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./AdminLogin.css";
 
@@ -15,8 +15,13 @@ export default function AdminLogin() {
     try {
       const result = await login(username, password);
 
-      if (result && !result.error) {
-        navigate("/admin");
+      if (result && result.success) {
+        // Redirect based on user type
+        if (result.isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/profile");
+        }
       } else {
         setError(result.error || "Invalid credentials");
       }
@@ -27,15 +32,15 @@ export default function AdminLogin() {
 
   return (
     <div className="login-container">
-      <h2>Admin Login</h2>
+      <h2>Sign In</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Email:</label>
+          <label>Username:</label>
           <input
-            type="email"
+            type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter your email"
+            placeholder="Enter your username"
             required
           />
         </div>
@@ -45,7 +50,7 @@ export default function AdminLogin() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your WOM verification code"
+            placeholder="Enter your password"
             required
           />
         </div>
@@ -54,14 +59,12 @@ export default function AdminLogin() {
           Sign In
         </button>
 
+        <div className="register-link">
+          Don't have an account? <Link to="/register">Register here</Link>
+        </div>
+
         <div className="forgot-password">
-          <a
-            href="https://discord.com/channels/967354755045290004/969286091725209600/1084852251882950746"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Forgot the password? Click here to get it from Discord.
-          </a>
+          <Link to="/forgot-password">Forgot your password?</Link>
         </div>
       </form>
     </div>

@@ -160,3 +160,47 @@
   text-align: center;
   color: #ccc;
 }
+
+.runewatch-alerts {
+  background-color: #333;
+  border-radius: 8px;
+}
+
+.alert-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.runewatch-alert {
+  background-color: #383838;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-left: 4px solid #dc3545;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.runewatch-alert:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.alert-player {
+  font-weight: 600;
+  color: #dc3545;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.alert-details {
+  color: #bbb;
+  font-size: 0.9rem;
+}
+
+.alerts-empty {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}

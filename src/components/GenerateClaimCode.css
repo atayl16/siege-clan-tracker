@@ -1,0 +1,231 @@
+.generate-code-container h2 {
+  margin-bottom: 20px;
+  color: #ff9800;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.code-result {
+  margin: 30px 0;
+  padding: 20px;
+  background-color: #333;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.code-result h3 {
+  margin-top: 0;
+  color: #28a745;
+}
+
+.code-display {
+  font-family: monospace;
+  font-size: 28px;
+  padding: 15px;
+  background-color: #2a2a2a;
+  border: 1px dashed #28a745;
+  border-radius: 4px;
+  text-align: center;
+  margin: 15px 0;
+  letter-spacing: 2px;
+  color: #e0e0e0;
+}
+
+.code-instructions {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.success-message {
+  padding: 15px;
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #28a745;
+}
+
+.error-message {
+  padding: 15px;
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #ff6b6b;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dc3545;
+}
+
+.loading-indicator {
+  font-size: 14px;
+  color: #aaa;
+  margin-top: 5px;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #ccc;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.25rem;
+  border: 0.063rem solid #444;
+  background-color: #333;
+  color: #e0e0e0;
+  font-size: 1rem;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #ff9800;
+  box-shadow: 0 0 0 0.125rem rgba(255, 152, 0, 0.25);
+}
+
+.generate-button {
+  background-color: #ff9800;
+  color: #1a1a1a;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.generate-button:hover:not(:disabled) {
+  background-color: #e67e00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.generate-button:active {
+  background-color: #cc7000;
+  transform: translateY(0);
+}
+
+.generate-button:disabled {
+  background-color: #5a4421;
+  cursor: not-allowed;
+}
+
+.hint {
+  display: block;
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 5px;
+}
+
+.info-message {
+  padding: 15px;
+  background-color: #333;
+  color: #aaa;
+  border-radius: 8px;
+  margin-top: 8px;
+  text-align: center;
+  border-left: 4px solid #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .code-display {
+    font-size: 20px;
+    padding: 10px;
+    letter-spacing: 1px;
+  }
+  
+  .generate-button {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+
+.generate-code-container {
+  padding: 20px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.generate-code-container h2 {
+  margin-bottom: 20px;
+  color: #ff9800;
+  border-bottom: 1px solid #444;
+  padding-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+/* Update button to match other action buttons */
+.generate-button {
+  background-color: #ff9800;
+  color: #1a1a1a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.generate-button:hover:not(:disabled) {
+  background-color: #e67e00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.generate-button:active:not(:disabled) {
+  background-color: #cc7000;
+  transform: translateY(0);
+}
+
+/* Consistent form styling */
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background-color: #333;
+  color: #e0e0e0;
+  font-size: 1rem;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #ff9800;
+  box-shadow: 0 0 0 0.125rem rgba(255, 152, 0, 0.25);
+}
+
+/* Update status messages to be consistent */
+.success-message {
+  padding: 15px;
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #28a745;
+}
+
+.error-message {
+  padding: 15px;
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #ff6b6b;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dc3545;
+}
+
+/* ...existing code... */

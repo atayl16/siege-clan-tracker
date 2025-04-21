@@ -123,3 +123,64 @@
   background-color: #2c2c2c;
   padding: 20px;
 }
+
+.rank-alerts {
+  background-color: #333;
+  border-radius: 8px;
+}
+
+.rank-alerts__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rank-alert {
+  background-color: #383838;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-left: 4px solid #ffc107;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rank-alerts__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.refresh-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #555;
+}
+
+.view-all-link {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.view-all-button {
+  background: none;
+  border: none;
+  color: #ff9800;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 5px 10px;
+}
+
+.view-all-button:hover {
+  color: #ffb74d;
+}
