@@ -216,9 +216,15 @@ async function syncWomMembers() {
           const newLevel = latestSnapshot?.skills?.overall?.level || member.current_lvl || 1;
           const newEhb = Math.round(playerData.latestSnapshot?.data?.computed?.ehb?.value || member.ehb || 0);
           
-          // Update the member in Supabase
+          const womUsernameChanged = playerData.username && playerData.username !== member.wom_name;
+          if (womUsernameChanged) {
+            console.log(`Username changed for player ${member.wom_id}: ${member.wom_name} → ${playerData.username}`);
+          }
+          
           const updateData = {
             name: playerData.displayName || member.name || member.wom_name,
+            // Only update wom_name if it has changed
+            ...(womUsernameChanged && { wom_name: playerData.username }),
             current_lvl: newLevel,
             current_xp: newXp,
             ehb: newEhb,
