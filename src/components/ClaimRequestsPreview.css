@@ -1,0 +1,234 @@
+.claim-requests-preview {
+  padding: 15px;
+  background-color: #333;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.preview-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+}
+
+.preview-item {
+  padding: 15px;
+  border-bottom: 1px solid #444;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.preview-item:last-child {
+  border-bottom: none;
+}
+
+.preview-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-player {
+  font-weight: 600;
+  color: #ff9800;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.preview-details {
+  display: flex;
+  justify-content: space-between;
+  color: #aaa;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.preview-user {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.preview-date {
+  color: #999;
+}
+
+.preview-message {
+  color: #ccc;
+  font-style: italic;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-button.approve {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.4);
+}
+
+.action-button.approve:hover:not(:disabled) {
+  background-color: rgba(40, 167, 69, 0.4);
+  transform: translateY(-2px);
+}
+
+.action-button.deny {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.4);
+}
+
+.action-button.deny:hover:not(:disabled) {
+  background-color: rgba(220, 53, 69, 0.4);
+  transform: translateY(-2px);
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.view-all-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.view-all-button:hover {
+  background-color: #555;
+}
+
+.action-result {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.action-result.success {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border-left: 4px solid #28a745;
+}
+
+.action-result.error {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-left: 4px solid #dc3545;
+}
+
+.no-requests {
+  text-align: center;
+  color: #999;
+  padding: 15px 0;
+}
+
+.loading-preview {
+  text-align: center;
+  color: #aaa;
+  padding: 15px;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .preview-item {
+    flex-direction: column;
+  }
+  
+  .preview-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+  
+  .preview-details {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+.action-button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-button.approve {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+
+.action-button.approve:hover:not(:disabled) {
+  background-color: rgba(40, 167, 69, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.action-button.deny {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border: 1px solid #dc3545;
+}
+
+.action-button.deny:hover:not(:disabled) {
+  background-color: rgba(220, 53, 69, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Update view-all-button for consistency */
+.view-all-button {
+  background-color: #ff9800;
+  color: #1a1a1a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  width: 100%;
+}
+
+.view-all-button:hover {
+  background-color: #e67e00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+/* ...existing code... */

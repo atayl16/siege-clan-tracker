@@ -6,6 +6,10 @@ import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
 import WomSyncButton from "../components/WomSyncButton";
 import RunewatchAlerts from "../components/RunewatchAlerts";
+import GenerateClaimCode from "../components/GenerateClaimCode";
+import ClaimRequestManager from "../components/ClaimRequestManager";
+import ClaimRequestsPreview from "../components/ClaimRequestsPreview";
+import AdminUserManager from "../components/AdminUserManager";
 import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import {
@@ -22,11 +26,13 @@ export default function AdminPage() {
   const [error, setError] = useState(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [activeTab, setActiveTab] = useState("members");
+  const [activeTab, setActiveTab] = useState("alerts");
   const [alertsCount, setAlertsCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
+  const [userSubTab, setUserSubTab] = useState("requests");
+  const [pendingClaimsCount, setPendingClaimsCount] = useState(0);
   const searchInputRef = useRef(null);
 
   // Fetch members data when component mounts
@@ -63,24 +69,40 @@ export default function AdminPage() {
         
       if (error) throw error;
       
-      // Additional validation to ensure all required fields exist
-      const validMembers = data.filter(member => 
-        member.name && 
-        member.womrole && 
-        member.first_xp && 
-        member.current_xp && 
-        member.ehb !== undefined
-      );
-      
-      // Use the same memberNeedsRankUpdate function from rankUtils
-      const needsUpdates = validMembers.filter(member => memberNeedsRankUpdate(member));
-      
+      // Use the memberNeedsRankUpdate utility function for consistency
+      const needsUpdates = data.filter(member => memberNeedsRankUpdate(member));
       setAlertsCount(needsUpdates.length);
     } catch (err) {
       console.error("Error calculating rank alerts count:", err);
       setAlertsCount(0);
     }
   };
+  
+  const fetchPendingClaimsCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('claim_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      if (error) throw error;
+      setPendingClaimsCount(count || 0);
+    } catch (err) {
+      console.error("Error fetching pending claims count:", err);
+      setPendingClaimsCount(0);
+    }
+  };
+  
+  useEffect(() => {
+    fetchMembers();
+    fetchAlertsCount();
+    fetchPendingClaimsCount();
+    
+    // Focus search input when switching to members tab
+    if (activeTab === "members" && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     fetchMembers();
@@ -92,7 +114,6 @@ export default function AdminPage() {
     }
   }, [activeTab]);
   
-  // Filter members when search term changes
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredMembers(members);
@@ -482,18 +503,6 @@ export default function AdminPage() {
       {/* Admin tab navigation */}
       <div className="admin-tabs">
         <button
-          className={`admin-tab ${activeTab === "members" ? "active" : ""}`}
-          onClick={() => setActiveTab("members")}
-        >
-          <span className="tab-icon">👥</span> Members
-        </button>
-        <button
-          className={`admin-tab ${activeTab === "events" ? "active" : ""}`}
-          onClick={() => setActiveTab("events")}
-        >
-          <span className="tab-icon">📅</span> Events
-        </button>
-        <button
           className={`admin-tab ${activeTab === "alerts" ? "active" : ""}`}
           onClick={() => setActiveTab("alerts")}
         >
@@ -502,6 +511,31 @@ export default function AdminPage() {
             <span className="alert-badge">{alertsCount}</span>
           )}
         </button>
+
+        <button
+          className={`admin-tab ${activeTab === "members" ? "active" : ""}`}
+          onClick={() => setActiveTab("members")}
+        >
+          <span className="tab-icon">👥</span> Members
+        </button>
+
+        <button
+          className={`admin-tab ${activeTab === "events" ? "active" : ""}`}
+          onClick={() => setActiveTab("events")}
+        >
+          <span className="tab-icon">📅</span> Events
+        </button>
+
+        <button
+          className={`admin-tab ${activeTab === "users" ? "active" : ""}`}
+          onClick={() => setActiveTab("users")}
+        >
+          <span className="tab-icon">👤</span> Users
+          {pendingClaimsCount > 0 && (
+            <span className="alert-badge">{pendingClaimsCount}</span>
+          )}
+        </button>
+
         <button
           className={`admin-tab ${activeTab === "sync" ? "active" : ""}`}
           onClick={() => setActiveTab("sync")}
@@ -512,6 +546,72 @@ export default function AdminPage() {
 
       {/* Tab content */}
       <div className="admin-content">
+        {/* Alerts Tab */}
+        {activeTab === "alerts" && (
+          <div className="tab-content alerts-content">
+            <div className="content-header">
+              <h2>Action Items Dashboard</h2>
+              <p>All items requiring admin attention are shown here</p>
+            </div>
+
+            <div className="alerts-container">
+              {/* Top row with Rank Updates and Pending Claims side-by-side */}
+              <div className="alert-section rank-updates">
+                <h3>
+                  <span className="alert-icon">🔔</span>
+                  Rank Updates
+                  {alertsCount > 0 && (
+                    <span className="count-badge">{alertsCount}</span>
+                  )}
+                </h3>
+                <div className="alert-section-content">
+                  <RankAlerts
+                    onRankUpdate={() => {
+                      fetchMembers();
+                      fetchAlertsCount();
+                    }}
+                    previewMode={true}
+                  />
+                </div>
+              </div>
+
+              <div className="alert-section pending-claims">
+                <h3>
+                  <span className="alert-icon">🔑</span>
+                  Pending Player Claims
+                  {pendingClaimsCount > 0 && (
+                    <span className="count-badge">{pendingClaimsCount}</span>
+                  )}
+                </h3>
+                <div className="alert-section-content">
+                  {pendingClaimsCount > 0 ? (
+                    <ClaimRequestsPreview
+                      count={pendingClaimsCount}
+                      onViewAllClick={() => {
+                        setActiveTab("users");
+                        setUserSubTab("requests");
+                      }}
+                      onRequestProcessed={fetchPendingClaimsCount}
+                    />
+                  ) : (
+                    <div className="no-alerts">No pending claim requests</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom row with Runewatch Alerts taking full width */}
+              <div className="alert-section runewatch-alerts full-width">
+                <h3>
+                  <span className="alert-icon">⚠️</span> Runewatch Alerts
+                </h3>
+                <div className="alert-section-content">
+                  <RunewatchAlerts previewMode={true} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Members Tab */}
         {activeTab === "members" && (
           <div className="tab-content members-content">
@@ -629,20 +729,54 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Alerts Tab */}
-        {activeTab === "alerts" && (
-          <div className="tab-content alerts-content">
+        {/* User Management Tab */}
+        {activeTab === "users" && (
+          <div className="tab-content users-content">
             <div className="content-header">
-              <h2>Rank Alerts</h2>
+              <h2>User Management</h2>
             </div>
-            <div className="alerts-container">
-              <RankAlerts
-                onRankUpdate={() => {
-                  fetchMembers();
-                  fetchAlertsCount();
-                }}
-              />
-              <RunewatchAlerts />
+        
+            <div className="users-management-container">
+              <div className="users-tabs">
+                <button
+                  className={`users-tab ${
+                    userSubTab === "requests" ? "active" : ""
+                  }`}
+                  onClick={() => setUserSubTab("requests")}
+                >
+                  Claim Requests
+                </button>
+                <button
+                  className={`users-tab ${
+                    userSubTab === "codes" ? "active" : ""
+                  }`}
+                  onClick={() => setUserSubTab("codes")}
+                >
+                  Claim Codes
+                </button>
+                <button
+                  className={`users-tab ${
+                    userSubTab === "admins" ? "active" : ""
+                  }`}
+                  onClick={() => setUserSubTab("admins")}
+                >
+                  Admin Users
+                </button>
+              </div>
+        
+              {userSubTab === "requests" && <ClaimRequestManager />}
+        
+              {userSubTab === "codes" && (
+                <div className="action-card">
+                  <GenerateClaimCode />
+                </div>
+              )}
+              
+              {userSubTab === "admins" && (
+                <div className="action-card">
+                  <AdminUserManager />
+                </div>
+              )}
             </div>
           </div>
         )}

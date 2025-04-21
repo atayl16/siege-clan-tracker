@@ -8,10 +8,12 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import RegistrationForm from "./components/RegistrationForm";
 import AdminLogin from "./components/AdminLogin";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
 import WelcomePage from "./pages/WelcomePage";
+import ProfilePage from "./pages/ProfilePage";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SeasonalFavicon from "./utils/seasonalIcons";
@@ -31,6 +33,8 @@ const AppContent = () => {
         <Route path="/" element={<WelcomePage />} />
         <Route path="/members" element={<MembersPage />} />
         <Route path="/login" element={<AdminLogin />} />
+        <Route path="/register" element={<RegistrationForm />} />
+        <Route path="/profile" element={<ProfilePage />} />
 
         {/* Admin Routes - All protected */}
         <Route

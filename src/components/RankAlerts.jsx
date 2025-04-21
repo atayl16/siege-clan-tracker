@@ -10,7 +10,7 @@ import { titleize } from "../utils/stringUtils";
 import { supabase } from "../supabaseClient";
 import "./RankAlerts.css";
 
-export default function RankAlerts() {
+export default function RankAlerts({ previewMode = false, onRankUpdate }) {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,46 +46,26 @@ export default function RankAlerts() {
     // For now, we'll just assign a medium priority to all other mismatches
     return 2;
   };
-  
+
   const fetchMembers = useCallback(async () => {
     try {
       setLoading(true);
   
-      // Fetch all members from Supabase, explicitly filtering out hidden members at the database level
       const { data, error } = await supabase
         .from("members")
-        .select("*")
-        .eq("hidden", false);  // Filter hidden members at the database level
-  
+        .select("*");  
       if (error) throw error;
-  
-      // Add debug logging to see what's happening
-      console.log(`Total non-hidden members: ${data.length}`);
       
-      // Additional validation to ensure all required fields exist
-      const validMembers = data.filter(member => 
-        member.name && 
-        member.womrole && 
-        member.first_xp && 
-        member.current_xp && 
-        member.ehb !== undefined
-      );
-      
-      console.log(`Members with complete data: ${validMembers.length}`);
+      // Filter hidden members in JavaScript instead
+      const visibleMembers = data.filter(member => !member.hidden);
   
-      // Process members to find those needing rank updates
-      const membersNeedingUpdate = validMembers
-        .filter((member) => memberNeedsRankUpdate(member))
+      // Use the memberNeedsRankUpdate utility function
+      const membersNeedingUpdate = visibleMembers
+        .filter(member => memberNeedsRankUpdate(member))
         .map((member) => ({
           ...member,
           calculated_rank: calculateAppropriateRank(member),
         }));
-      
-      console.log(`Members needing updates: ${membersNeedingUpdate.length}`);
-      // Log the members needing updates to see what's in there
-      if (membersNeedingUpdate.length > 0) {
-        console.log("Members needing updates:", membersNeedingUpdate.map(m => `${m.name} (${m.womrole} -> ${m.calculated_rank})`));
-      }
   
       // Sort members by priority (highest first) then alphabetically
       const sortedMembers = membersNeedingUpdate.sort((a, b) => {
@@ -108,10 +88,20 @@ export default function RankAlerts() {
       setLoading(false);
     }
   }, []);
-  
+
   useEffect(() => {
     fetchMembers();
-  }, [fetchMembers]);
+    
+    // Set up an interval to refresh data every few minutes if in preview mode
+    let intervalId;
+    if (previewMode) {
+      intervalId = setInterval(fetchMembers, 180000); // 3 minutes
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [fetchMembers, previewMode]);
 
   // Function to handle manual update of a member's rank
   const handleUpdateRank = async (member) => {
@@ -127,6 +117,11 @@ export default function RankAlerts() {
 
       // Remove the updated member from alerts
       setAlerts(alerts.filter((m) => m.wom_id !== member.wom_id));
+
+      // Notify parent component if onRankUpdate is provided
+      if (onRankUpdate && typeof onRankUpdate === 'function') {
+        onRankUpdate();
+      }
 
       // Show a brief success toast
       const successToast = document.createElement("div");
@@ -147,22 +142,53 @@ export default function RankAlerts() {
     }
   };
 
+  // Add a refresh button
+  const handleRefresh = () => {
+    fetchMembers();
+  };
+
   if (loading)
     return <div className="alerts-loading">Loading rank alerts...</div>;
   if (error) return <div className="alerts-error">Error: {error}</div>;
-  if (alerts.length === 0)
-    return <div className="alerts-empty">No rank updates required.</div>;
+  
+  // In preview mode with no alerts, show a shorter message
+  if (alerts.length === 0) {
+    if (previewMode) {
+      return <div className="alerts-empty">No rank updates required.</div>;
+    } else {
+      return (
+        <div className="alerts-empty">
+          <p>No rank updates required at this time.</p>
+          <button onClick={handleRefresh} className="refresh-button">
+            Refresh Data
+          </button>
+        </div>
+      );
+    }
+  }
+
+  // Limit the number of alerts shown in preview mode
+  const displayedAlerts = previewMode ? alerts.slice(0, 3) : alerts;
+  const hasMoreAlerts = previewMode && alerts.length > 3;
 
   return (
     <div className="rank-alerts">
-      <h4 className="rank-alerts__title">Members Needing Rank Updates</h4>
+      <div className="rank-alerts__header">
+        <h4 className="rank-alerts__title">Members Needing Rank Updates</h4>
+        {!previewMode && (
+          <button onClick={handleRefresh} className="refresh-button">
+            Refresh
+          </button>
+        )}
+      </div>
+      
       <div className="rank-alerts__count">
         {alerts.length} {alerts.length === 1 ? "member" : "members"} need
         updates
       </div>
 
       <ul className="rank-alerts__list">
-        {alerts.map((member) => {
+        {displayedAlerts.map((member) => {
           const priority = getRankUpdatePriority(member);
 
           return (
@@ -206,6 +232,19 @@ export default function RankAlerts() {
           );
         })}
       </ul>
+      
+      {hasMoreAlerts && previewMode && (
+        <div className="view-all-link">
+          <button
+            className="view-all-button"
+            onClick={() => {
+              document.querySelector('button[data-tab="alerts"]')?.click();
+            }}
+          >
+            View all {alerts.length} alerts
+          </button>
+        </div>
+      )}
     </div>
   );
 }

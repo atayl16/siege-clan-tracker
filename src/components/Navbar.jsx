@@ -1,11 +1,13 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getSeasonalIcon } from "../utils/seasonalIcons";
+import "./Navbar.css";
 
 export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
-  
+  const location = useLocation();
+  const { isAdmin, logout, isLoggedIn } = useAuth();
+
   return (
     <nav
       className="navbar navbar-dark navbar-expand-lg sticky-top"
@@ -23,56 +25,58 @@ export default function Navbar() {
           Siege Clan
         </Link>
 
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarContent"
-          aria-controls="navbarContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
+        <div className="navbar-links">
+          <Link to="/" className={location.pathname === "/" ? "active" : ""}>
+            Home
+          </Link>
 
-        <div className="collapse navbar-collapse" id="navbarContent">
-          <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
-            {isAuthenticated ? (
-              <>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/members">
-                    Home
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/admin/members">
-                    Admin
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <button
-                    className="nav-link btn btn-link"
-                    onClick={logout}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: "0.5rem 1rem",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    Sign Out
-                  </button>
-                </li>
-              </>
-            ) : (
-              <li className="nav-item">
-                <Link className="nav-link" to="/login">
-                  Admin?
+          <Link
+            to="/members"
+            className={location.pathname === "/members" ? "active" : ""}
+          >
+            Members
+          </Link>
+
+          {/* Authentication links */}
+          {isLoggedIn() ? (
+            <>
+              <Link
+                to="/profile"
+                className={location.pathname === "/profile" ? "active" : ""}
+              >
+                My Profile
+              </Link>
+
+              {isAdmin() && (
+                <Link
+                  to="/admin"
+                  className={location.pathname === "/admin" ? "active" : ""}
+                >
+                  Admin
                 </Link>
-              </li>
-            )}
-          </ul>
+              )}
+
+              <button onClick={logout} className="logout-button">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className={location.pathname === "/login" ? "active" : ""}
+              >
+                Login
+              </Link>
+
+              <Link
+                to="/register"
+                className={location.pathname === "/register" ? "active" : ""}
+              >
+                Register
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
