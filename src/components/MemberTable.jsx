@@ -68,12 +68,12 @@ const safeParseInt = (value) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
-const calculateNextLevel = (member) => {
-  if (!member) return null;
+const getNextRankInfo = (member) => {
+  if (!member) return { amount: null, rank: null };
 
   const womRole = (member.womrole || "").toLowerCase().trim();
-
-  // Determine if the member is a skiller or fighter based on their womrole
+  
+  // Determine if member is skiller or fighter
   const isSkiller = SKILLER_RANK_NAMES.some((rank) =>
     womRole.includes(rank.toLowerCase())
   );
@@ -82,44 +82,40 @@ const calculateNextLevel = (member) => {
   );
 
   if (isSkiller) {
-    // Calculate clan XP (current - initial) with safe parsing
-    const clanXp =
-      safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
-
-    // Find which rank range the member is in
-    for (const rank of SKILLER_RANKS) {
-      if (clanXp >= rank.range[0] && clanXp < rank.range[1]) {
-        // Return the XP needed to reach the next rank
-        return rank.range[1] - clanXp;
+    const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
+    
+    // Find the next rank
+    for (let i = 0; i < SKILLER_RANKS.length; i++) {
+      if (clanXp < SKILLER_RANKS[i].range[1]) {
+        // If this isn't the highest rank, return the current rank's upper limit amount
+        // and the next rank's name
+        if (i < SKILLER_RANKS.length - 1) {
+          return {
+            amount: SKILLER_RANKS[i].range[1] - clanXp,
+            rank: SKILLER_RANKS[i + 1].name
+          };
+        }
       }
-    }
-
-    // If they're at the highest rank already
-    const highestRank = SKILLER_RANKS[SKILLER_RANKS.length - 1];
-    if (clanXp >= highestRank.range[0]) {
-      return null; // No next level
     }
   } else if (isFighter) {
-    // Use EHB for fighters with safe parsing
     const clanEhb = safeParseInt(member.ehb);
-
-    // Find which rank range the member is in
-    for (const rank of FIGHTER_RANKS) {
-      if (clanEhb >= rank.range[0] && clanEhb < rank.range[1]) {
-        // Return the EHB needed to reach the next rank
-        return rank.range[1] - clanEhb;
+    
+    // Find the next rank
+    for (let i = 0; i < FIGHTER_RANKS.length; i++) {
+      if (clanEhb < FIGHTER_RANKS[i].range[1]) {
+        // If this isn't the highest rank, return the current rank's upper limit amount
+        // and the next rank's name
+        if (i < FIGHTER_RANKS.length - 1) {
+          return {
+            amount: FIGHTER_RANKS[i].range[1] - clanEhb,
+            rank: FIGHTER_RANKS[i + 1].name
+          };
+        }
       }
-    }
-
-    // If they're at the highest rank already
-    const highestRank = FIGHTER_RANKS[FIGHTER_RANKS.length - 1];
-    if (clanEhb >= highestRank.range[0]) {
-      return null; // No next level
     }
   }
 
-  // Default return if we couldn't determine the next level
-  return null;
+  return { amount: null, rank: null };
 };
 
 // Main MemberTable component
@@ -294,12 +290,22 @@ const calculateNextLevel = (member) => {
           accessorKey: "next_level",
           header: "Next Level",
           cell: ({ row }) => {
-            const nextLevel = calculateNextLevel(row.original);
+            const nextRankInfo = getNextRankInfo(row.original);
+            
             return (
-              <div style={{ textAlign: "center" }}>
-                {nextLevel !== null && nextLevel > 0
-                  ? safeFormat(nextLevel)
-                  : ""}
+              <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {nextRankInfo.amount !== null && nextRankInfo.amount > 0 ? (
+                  <>
+                    {nextRankInfo.rank && (
+                      <span style={{ marginRight: "5px" }}>
+                        {SKILLER_RANK_NAMES.includes(nextRankInfo.rank) ? 
+                          <GemIcon gemType={nextRankInfo.rank} /> : 
+                          <ClanIcon name={nextRankInfo.rank} />}
+                      </span>
+                    )}
+                    {safeFormat(nextRankInfo.amount)}
+                  </>
+                ) : ""}
               </div>
             );
           },

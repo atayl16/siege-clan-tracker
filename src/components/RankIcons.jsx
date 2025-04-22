@@ -13,7 +13,7 @@ import tzkalIcon from "../assets/images/Clan_icon_-_TzKal.png";
 // Define admin rank titles
 export const ADMIN_RANKS = ["Owner", "Deputy Owner", "General", "Captain", "PvM Organizer"];
 
-// Helper component to display clan icons
+// Helper component for clan icons
 export const ClanIcon = ({ name }) => {
   const iconMap = {
     Mentor: mentorIcon,
@@ -33,39 +33,9 @@ export const ClanIcon = ({ name }) => {
     <img 
       src={iconMap[name]} 
       alt={`${name} icon`} 
+      title={name} // Add title attribute for tooltip
       style={{ height: "20px", width: "auto", marginRight: "5px" }}
     />
-  );
-};
-
-// Helper component for admin icons (using emojis)
-export const AdminIcon = ({ title }) => {
-  // Normalize the title to make matching more reliable
-  // Replace ALL underscores with spaces using a global regex
-  const normalizedTitle = title ? title.toLowerCase().replace(/_/g, ' ') : '';
-  
-  const emojiMap = {
-    "owner": "👑", // Fixed crown emoji
-    "deputy owner": "🔑",
-    "general": "🌟",
-    "captain": "🛠",
-    "pvm organizer": "🐉",
-  };
-
-  if (!title || !emojiMap[normalizedTitle]) return null;
-
-  return (
-    <span 
-      style={{ 
-        fontSize: "1.2rem", 
-        marginRight: "5px",
-        verticalAlign: "middle"
-      }}
-      role="img" 
-      aria-label={`${title} icon`}
-    >
-      {emojiMap[normalizedTitle]}
-    </span>
   );
 };
 
@@ -91,7 +61,8 @@ export const GemIcon = ({ gemType, color }) => {
 
   return (
     <i 
-      className="bi bi-gem" // Note: Added the base 'bi' class as well
+      className="bi bi-gem" 
+      title={normalizedGemType} // Add title attribute for tooltip
       style={{ 
         fontSize: "1.2rem", 
         color: colorMap[normalizedGemType] || color || "white", 
@@ -100,5 +71,36 @@ export const GemIcon = ({ gemType, color }) => {
       }}
       aria-label={`${normalizedGemType} gem`}
     ></i>
+  );
+};
+
+// Also add tooltips to AdminIcon
+export const AdminIcon = ({ title }) => {
+  // Normalize the title to make matching more reliable
+  const normalizedTitle = title ? title.toLowerCase().replace(/_/g, ' ') : '';
+  
+  const emojiMap = {
+    "owner": "👑",
+    "deputy owner": "🔑",
+    "general": "🌟",
+    "captain": "🛠",
+    "pvm organizer": "🐉",
+  };
+
+  if (!title || !emojiMap[normalizedTitle]) return null;
+
+  return (
+    <span 
+      style={{ 
+        fontSize: "1.2rem", 
+        marginRight: "5px",
+        verticalAlign: "middle"
+      }}
+      role="img" 
+      aria-label={`${title} icon`}
+      title={title} // Add title attribute for tooltip
+    >
+      {emojiMap[normalizedTitle]}
+    </span>
   );
 };
