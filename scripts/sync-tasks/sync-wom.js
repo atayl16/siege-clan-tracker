@@ -114,21 +114,25 @@ async function syncWomMembers() {
       for (let i = 0; i < newMembers.length; i += batchSize) {
         const batch = newMembers.slice(i, i + batchSize);
         console.log(`Processing new members batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(newMembers.length/batchSize)}`);
-        
+                
         await Promise.all(batch.map(async (member) => {
           try {
-            // Fetch detailed player data for new member
-            console.log(`Fetching initial data for new member ${member.wom_name}`);
-            const playerResponse = await fetch(`${WOM_API_BASE}/players/${encodeURIComponent(member.wom_name)}`);
+            // Fetch detailed player data for new member using their ID
+            console.log(`Fetching initial data for new member ID ${member.wom_id} (${member.wom_name})`);
+            const playerResponse = await fetch(`${WOM_API_BASE}/players/id/${member.wom_id}`, {
+              headers: {
+                'x-api-key': WOM_API_KEY
+              }
+            });
             
             if (!playerResponse.ok) {
-              console.error(`Error fetching player ${member.wom_name}: ${playerResponse.status}`);
+              console.error(`Error fetching player ID ${member.wom_id}: ${playerResponse.status}`);
               errorCount++;
               return;
             }
             
             const playerData = await playerResponse.json();
-            
+                     
             // Extract all relevant data for database columns
             const latestSnapshot = playerData.latestSnapshot?.data;
             const newMemberData = {
@@ -180,7 +184,7 @@ async function syncWomMembers() {
     if (updateFetchError) throw new Error(`Failed to fetch members for update: ${updateFetchError.message}`);
     
     console.log(`Processing updates for ${membersToUpdate.length} members`);
-    
+        
     // Process members in batches to avoid overwhelming the API
     let updatedCount = 0;
     errorCount = 0; // Reset error count
@@ -192,18 +196,23 @@ async function syncWomMembers() {
       
       await Promise.all(batch.map(async (member) => {
         try {
-          if (!member.wom_name) {
-            console.log(`Skipping member ${member.name || member.wom_id} - no WOM username`);
+          // Use wom_id for API lookup instead of username
+          if (!member.wom_id) {
+            console.log(`Skipping member ${member.name || 'unknown'} - no WOM ID`);
             return;
           }
           
-          console.log(`Fetching data for ${member.wom_name}`);
+          console.log(`Fetching data for player ID ${member.wom_id} (${member.wom_name || member.name || 'unknown'})`);
           
-          // Fetch detailed player data
-          const playerResponse = await fetch(`${WOM_API_BASE}/players/${encodeURIComponent(member.wom_name)}`);
+          // Use the ID endpoint instead of the username endpoint
+          const playerResponse = await fetch(`${WOM_API_BASE}/players/id/${member.wom_id}`, {
+            headers: {
+              'x-api-key': WOM_API_KEY
+            }
+          });
           
           if (!playerResponse.ok) {
-            console.error(`Error fetching player ${member.wom_name}: ${playerResponse.status}`);
+            console.error(`Error fetching player ID ${member.wom_id}: ${playerResponse.status}`);
             errorCount++;
             return;
           }
@@ -218,7 +227,7 @@ async function syncWomMembers() {
           
           const womUsernameChanged = playerData.username && playerData.username !== member.wom_name;
           if (womUsernameChanged) {
-            console.log(`Username changed for player ${member.wom_id}: ${member.wom_name} → ${playerData.username}`);
+            console.log(`Username changed for player ${member.wom_id}: ${member.wom_name || 'unknown'} → ${playerData.username}`);
           }
           
           const updateData = {
@@ -237,13 +246,13 @@ async function syncWomMembers() {
             .eq('wom_id', member.wom_id);
           
           if (error) {
-            console.error(`Error updating member ${member.wom_name}:`, error);
+            console.error(`Error updating member ${member.wom_id}:`, error);
             errorCount++;
           } else {
             updatedCount++;
           }
         } catch (err) {
-          console.error(`Exception processing member ${member.wom_name || member.name || 'unknown'}:`, err);
+          console.error(`Exception processing member ${member.wom_id} (${member.wom_name || member.name || 'unknown'}):`, err);
           errorCount++;
         }
       }));
@@ -251,7 +260,7 @@ async function syncWomMembers() {
       // Add a delay between batches to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 1500));
     }
-    
+        
     console.log(`Sync completed! Updated ${updatedCount} members, with ${errorCount} errors`);
     console.log(`Members deleted: ${deletedMembers}`);
     
