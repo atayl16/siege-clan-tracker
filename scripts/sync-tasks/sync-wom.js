@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
-const axios = require('axios');
+require('dotenv').config();
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -9,9 +9,58 @@ const supabase = createClient(
 );
 
 // WOM API configuration
-const WOM_API_KEY = process.env.WOM_API_KEY;
-const WOM_GROUP_ID = process.env.WOM_GROUP_ID;
+const WOM_API_KEY = process.env.REACT_APP_WOM_API_KEY; // Note that we're using the correct env var
+const WOM_GROUP_ID = process.env.REACT_APP_WOM_GROUP_ID;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
+
+// Helper function to add delay with exponential backoff
+async function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper function for API requests with retry logic
+async function fetchWithRetry(url, options = {}, retries = 3, initialBackoff = 2000) {
+  let lastError;
+  let backoff = initialBackoff;
+  
+  // Ensure headers include API key
+  const headers = {
+    ...options.headers,
+    'x-api-key': WOM_API_KEY
+  };
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, { ...options, headers });
+      
+      if (response.status === 429) {
+        console.log(`Rate limit hit on attempt ${attempt + 1}. Backing off for ${backoff}ms...`);
+        await delay(backoff);
+        // Exponential backoff
+        backoff *= 2;
+        continue;
+      }
+      
+      if (response.ok) {
+        return await response.json();
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+      }
+    } catch (err) {
+      lastError = err;
+      
+      if (attempt < retries) {
+        console.log(`Request failed (attempt ${attempt + 1}/${retries + 1}). Retrying in ${backoff}ms...`);
+        await delay(backoff);
+        // Exponential backoff
+        backoff *= 2;
+      }
+    }
+  }
+  
+  throw lastError || new Error('Request failed after multiple retries');
+}
 
 // Main function to sync WOM members
 async function syncWomMembers() {
@@ -22,8 +71,8 @@ async function syncWomMembers() {
     console.log('Environment check:');
     console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set ✓' : 'Missing ❌'}`);
     console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
-    console.log(`- WOM_API_KEY: ${process.env.WOM_API_KEY ? 'Set ✓' : 'Missing ❌'}`);
-    console.log(`- WOM_GROUP_ID: ${process.env.WOM_GROUP_ID ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_API_KEY: ${WOM_API_KEY ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_GROUP_ID: ${WOM_GROUP_ID ? 'Set ✓' : 'Missing ❌'}`);
     
     // Check if we have all required environment variables
     if (!WOM_GROUP_ID) {
@@ -32,15 +81,9 @@ async function syncWomMembers() {
     
     console.log(`Using WOM Group ID: ${WOM_GROUP_ID}`);
     
-    // Always fetch current WOM group members to ensure we have everyone
+    // Fetch current WOM group members with proper API key authentication
     console.log("Fetching current WOM group members...");
-    const groupResponse = await fetch(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}?includeMemberships=true`);
-    
-    if (!groupResponse.ok) {
-      throw new Error(`Failed to fetch group data: ${groupResponse.status}`);
-    }
-    
-    const groupData = await groupResponse.json();
+    const groupData = await fetchWithRetry(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}?includeMemberships=true`);
     
     // Check if we got memberships from the API
     if (!groupData.memberships || !Array.isArray(groupData.memberships)) {
@@ -52,8 +95,8 @@ async function syncWomMembers() {
       .filter(membership => membership.player && membership.player.username)
       .map(membership => ({
         wom_id: membership.playerId,
-        wom_name: membership.player.username,
-        name: membership.player.displayName || membership.player.username,
+        wom_name: membership.player.username.toLowerCase(), // Store lowercase for easier comparison
+        display_name: membership.player.displayName || membership.player.username,
         womrole: membership.role || null
       }));
     
@@ -61,12 +104,13 @@ async function syncWomMembers() {
     
     // Create a set of WOM IDs for quick lookup
     const womIds = new Set(womMembers.map(m => m.wom_id));
+    const womNamesMap = new Map(womMembers.map(m => [m.wom_name, m]));
     
     // Fetch our existing members from the database
     console.log("Fetching existing members from database...");
     const { data: existingMembers, error: fetchError } = await supabase
-      .from('members')
-      .select('wom_id, wom_name, name');
+      .from("members")
+      .select("wom_id, wom_name, name, first_xp, first_lvl, join_date, name_history");
     
     if (fetchError) throw new Error(`Failed to fetch members: ${fetchError.message}`);
     
@@ -78,29 +122,113 @@ async function syncWomMembers() {
     
     // Find members that exist in our database but not in WOM
     const missingMembers = existingMembers.filter(m => !womIds.has(m.wom_id));
-    console.log(`Found ${missingMembers.length} members who are no longer in WOM group`);
+    console.log(`Found ${missingMembers.length} members who are no longer in WOM group by ID`);
     
-    // DELETE members who are not in WOM anymore (instead of flagging them)
+    // Before deleting, check if any missing members might have changed their name
     let deletedMembers = 0;
-    let deletedMembersList = [];
+    let updatedNames = 0;
+    const deletedMembersList = [];
     
     for (const member of missingMembers) {
       const memberName = member.name || member.wom_name || `ID ${member.wom_id}`;
+      let nameMatch = null;
+      let possibleMatches = [];
       
-      console.log(`⚠️ DELETING member ${memberName} who is not in WOM group anymore`);
+      // First check if we can find an exact match by name in current WOM members
+      if (member.name) {
+        const lowerName = member.name.toLowerCase();
+        if (womNamesMap.has(lowerName)) {
+          nameMatch = womNamesMap.get(lowerName);
+          console.log(`Found exact name match for "${memberName}": WOM ID ${nameMatch.wom_id} (${nameMatch.wom_name})`);
+        } else {
+          // If no exact match, look for similar names
+          for (const womMember of womMembers) {
+            // Check if names are similar enough (case insensitive)
+            if (
+              (womMember.wom_name && member.name && 
+                (womMember.wom_name.toLowerCase().includes(member.name.toLowerCase()) || 
+                 member.name.toLowerCase().includes(womMember.wom_name.toLowerCase()))) ||
+              (womMember.display_name && member.name &&
+                (womMember.display_name.toLowerCase().includes(member.name.toLowerCase()) || 
+                 member.name.toLowerCase().includes(womMember.display_name.toLowerCase())))
+            ) {
+              possibleMatches.push(womMember);
+            }
+          }
+        }
+      }
       
-      // Delete the member from database
-      const { error: deleteError } = await supabase
-        .from('members')
-        .delete()
-        .eq('wom_id', member.wom_id);
+      // If we have possible matches but no exact match
+      if (!nameMatch && possibleMatches.length > 0) {
+        if (possibleMatches.length === 1) {
+          nameMatch = possibleMatches[0];
+          console.log(`Found likely name match for "${memberName}": WOM ID ${nameMatch.wom_id} (${nameMatch.display_name})`);
+        } else {
+          console.log(`Multiple possible name matches for "${memberName}": ${possibleMatches.map(m => m.display_name).join(', ')}`);
+          
+          // If we have multiple matches, try to choose the best one
+          // We'll prefer names that include the original name
+          nameMatch = possibleMatches.find(m => 
+            m.display_name && m.display_name.toLowerCase().includes(member.name.toLowerCase())
+          );
+          
+          if (nameMatch) {
+            console.log(`Selected best name match for "${memberName}": WOM ID ${nameMatch.wom_id} (${nameMatch.display_name})`);
+          }
+        }
+      }
+      
+      if (nameMatch) {
+        // Update the member record with new WOM ID and name
+        console.log(`✏️ Updating member "${memberName}" with new WOM ID: ${nameMatch.wom_id} (${nameMatch.display_name})`);
         
-      if (deleteError) {
-        console.error(`Error deleting ${memberName}:`, deleteError);
+        // Get current name history or initialize empty array
+        const nameHistory = member.name_history || [];
+        
+        // Add current name to history if not already there
+        if (member.name && !nameHistory.includes(member.name)) {
+          nameHistory.push(member.name);
+        }
+        
+        // Preserve historical data when updating the WOM ID
+        const { error: updateError } = await supabase
+          .from('members')
+          .update({
+            wom_id: nameMatch.wom_id,
+            wom_name: nameMatch.wom_name,
+            name: nameMatch.display_name,
+            name_history: nameHistory,
+            updated_at: new Date().toISOString()
+          })
+          .eq('wom_id', member.wom_id);
+        
+        if (updateError) {
+          console.error(`Error updating "${memberName}" with new WOM ID:`, updateError);
+        } else {
+          console.log(`✓ Successfully updated "${memberName}" → "${nameMatch.display_name}"`);
+          updatedNames++;
+        }
       } else {
-        console.log(`🗑️ Successfully deleted ${memberName} from database`);
-        deletedMembers++;
-        deletedMembersList.push(memberName);
+        // Mark member as inactive instead of hard deleting
+        console.log(`⚠️ Member "${memberName}" not found in WOM group and no name match. Marking as inactive.`);
+        
+        const { error: deactivateError } = await supabase
+          .from('members')
+          .update({
+            active: false,
+            left_date: new Date().toISOString(),
+            notes: `Automatically marked inactive - no longer in WOM group as of ${new Date().toISOString()}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('wom_id', member.wom_id);
+          
+        if (deactivateError) {
+          console.error(`Error marking "${memberName}" as inactive:`, deactivateError);
+        } else {
+          console.log(`🚫 Successfully marked "${memberName}" as inactive`);
+          deletedMembers++;
+          deletedMembersList.push(memberName);
+        }
       }
     }
     
@@ -109,170 +237,170 @@ async function syncWomMembers() {
     let errorCount = 0;
     
     if (newMembers.length > 0) {
-      // Process new members in batches
-      const batchSize = 5;
-      for (let i = 0; i < newMembers.length; i += batchSize) {
-        const batch = newMembers.slice(i, i + batchSize);
-        console.log(`Processing new members batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(newMembers.length/batchSize)}`);
-                
-        await Promise.all(batch.map(async (member) => {
-          try {
-            // Fetch detailed player data for new member using their ID
-            console.log(`Fetching initial data for new member ID ${member.wom_id} (${member.wom_name})`);
-            const playerResponse = await fetch(`${WOM_API_BASE}/players/id/${member.wom_id}`, {
-              headers: {
-                'x-api-key': WOM_API_KEY
-              }
-            });
-            
-            if (!playerResponse.ok) {
-              console.error(`Error fetching player ID ${member.wom_id}: ${playerResponse.status}`);
-              errorCount++;
-              return;
-            }
-            
-            const playerData = await playerResponse.json();
-                     
-            // Extract all relevant data for database columns
-            const latestSnapshot = playerData.latestSnapshot?.data;
-            const newMemberData = {
-              wom_id: member.wom_id,
-              name: playerData.displayName || member.name,
-              wom_name: member.wom_name,
-              current_lvl: latestSnapshot?.skills?.overall?.level || 1,
-              current_xp: latestSnapshot?.skills?.overall?.experience || 0,
-              ehb: Math.round(
-                playerData.latestSnapshot?.data?.computed?.ehb?.value || 0
-              ),
-              womrole: member.womrole,
-              siege_score: 0,
-              join_date: playerData.registeredAt || new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              created_at: new Date().toISOString()
-            };
-            
-            // Insert new member with complete data
-            const { error } = await supabase.from("members").insert([newMemberData]);
-            
-            if (error) {
-              console.error(`Error adding new member ${member.wom_name}:`, error);
-              errorCount++;
-            } else {
-              console.log(`Added new member ${member.wom_name} with complete data`);
-              addedCount++;
-            }
-          } catch (err) {
-            console.error(`Exception adding new member ${member.wom_name}:`, err);
+      // Process new members sequentially to avoid rate limits
+      for (const member of newMembers) {
+        try {
+          console.log(`Fetching initial data for new member ID ${member.wom_id} (${member.wom_name})`);
+          
+          // Fetch detailed player data with proper error handling and retries
+          const playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
+          
+          // Extract all relevant data for database columns
+          const latestSnapshot = playerData.latestSnapshot?.data;
+          const newMemberData = {
+            wom_id: member.wom_id,
+            name: playerData.displayName || member.display_name,
+            wom_name: member.wom_name,
+            current_lvl: latestSnapshot?.skills?.overall?.level || 1,
+            current_xp: latestSnapshot?.skills?.overall?.experience || 0,
+            // Set first_xp and first_lvl to current values for new members
+            first_xp: latestSnapshot?.skills?.overall?.experience || 0,
+            first_lvl: latestSnapshot?.skills?.overall?.level || 1,
+            ehb: Math.round(
+              playerData.latestSnapshot?.data?.computed?.ehb?.value || 0
+            ),
+            womrole: member.womrole,
+            siege_score: 0,
+            active: true,
+            join_date: playerData.registeredAt || new Date().toISOString(),
+            name_history: [],
+            updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString()
+          };
+          
+          // Insert new member with complete data
+          const { error } = await supabase.from("members").insert([newMemberData]);
+          
+          if (error) {
+            console.error(`Error adding new member ${member.wom_name}:`, error);
             errorCount++;
+          } else {
+            console.log(`Added new member ${member.wom_name} with complete data`);
+            addedCount++;
           }
-        }));
+        } catch (err) {
+          console.error(`Exception adding new member ${member.wom_name}:`, err);
+          errorCount++;
+        }
         
-        // Add a delay between batches to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Add a delay between requests to avoid rate limiting
+        await delay(2000);
       }
       
       console.log(`Added ${addedCount} new members with ${errorCount} errors`);
     }
     
-    // Now fetch all members from our database for updating
-    console.log("Fetching all members for updates...");
+    // Now fetch all active members from our database for updating
+    console.log("Fetching all active members for updates...");
     const { data: membersToUpdate, error: updateFetchError } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb')
+      .select('wom_id, name, wom_name, current_xp, current_lvl, ehb, name_history')
+      .eq('active', true)
       .order('wom_id', { ascending: true });
     
     if (updateFetchError) throw new Error(`Failed to fetch members for update: ${updateFetchError.message}`);
     
-    console.log(`Processing updates for ${membersToUpdate.length} members`);
-        
-    // Process members in batches to avoid overwhelming the API
+    console.log(`Processing updates for ${membersToUpdate.length} active members`);
+    
+    // For testing - uncomment to limit the number of members processed
+    // const TEST_MODE = true;
+    // const TEST_LIMIT = 5;
+    // const membersToProcess = TEST_MODE ? membersToUpdate.slice(0, TEST_LIMIT) : membersToUpdate;
+    const membersToProcess = membersToUpdate;
+    
+    // Process members sequentially to avoid rate limits
     let updatedCount = 0;
     errorCount = 0; // Reset error count
-    const batchSize = 5; // Process 5 members at a time
     
-    for (let i = 0; i < membersToUpdate.length; i += batchSize) {
-      const batch = membersToUpdate.slice(i, i + batchSize);
-      console.log(`Processing update batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(membersToUpdate.length/batchSize)}`);
+    for (let i = 0; i < membersToProcess.length; i++) {
+      const member = membersToProcess[i];
+      console.log(`Processing member ${i+1}/${membersToProcess.length}: ${member.name || member.wom_name || 'unknown'}`);
       
-      await Promise.all(batch.map(async (member) => {
-        try {
-          // Use wom_id for API lookup instead of username
-          if (!member.wom_id) {
-            console.log(`Skipping member ${member.name || 'unknown'} - no WOM ID`);
-            return;
-          }
-          
-          console.log(`Fetching data for player ID ${member.wom_id} (${member.wom_name || member.name || 'unknown'})`);
-          
-          // Use the ID endpoint instead of the username endpoint
-          const playerResponse = await fetch(`${WOM_API_BASE}/players/id/${member.wom_id}`, {
-            headers: {
-              'x-api-key': WOM_API_KEY
-            }
-          });
-          
-          if (!playerResponse.ok) {
-            console.error(`Error fetching player ID ${member.wom_id}: ${playerResponse.status}`);
-            errorCount++;
-            return;
-          }
-          
-          const playerData = await playerResponse.json();
-          
-          // Get the latest snapshot data
-          const latestSnapshot = playerData.latestSnapshot?.data;
-          const newXp = latestSnapshot?.skills?.overall?.experience || member.current_xp || 0;
-          const newLevel = latestSnapshot?.skills?.overall?.level || member.current_lvl || 1;
-          const newEhb = Math.round(playerData.latestSnapshot?.data?.computed?.ehb?.value || member.ehb || 0);
-          
-          const womUsernameChanged = playerData.username && playerData.username !== member.wom_name;
-          if (womUsernameChanged) {
-            console.log(`Username changed for player ${member.wom_id}: ${member.wom_name || 'unknown'} → ${playerData.username}`);
-          }
-          
-          const updateData = {
-            name: playerData.displayName || member.name || member.wom_name,
-            // Only update wom_name if it has changed
-            ...(womUsernameChanged && { wom_name: playerData.username }),
-            current_lvl: newLevel,
-            current_xp: newXp,
-            ehb: newEhb,
-            updated_at: new Date().toISOString()
-          };
-          
-          const { error } = await supabase
-            .from("members")
-            .update(updateData)
-            .eq('wom_id', member.wom_id);
-          
-          if (error) {
-            console.error(`Error updating member ${member.wom_id}:`, error);
-            errorCount++;
-          } else {
-            updatedCount++;
-          }
-        } catch (err) {
-          console.error(`Exception processing member ${member.wom_id} (${member.wom_name || member.name || 'unknown'}):`, err);
-          errorCount++;
+      try {
+        // Skip members without a WOM ID
+        if (!member.wom_id) {
+          console.log(`Skipping member ${member.name || 'unknown'} - no WOM ID`);
+          continue;
         }
-      }));
-      
-      // Add a delay between batches to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    }
         
+        console.log(`Fetching data for player ID ${member.wom_id} (${member.wom_name || member.name || 'unknown'})`);
+        
+        // Use fetchWithRetry for improved error handling
+        const playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
+        
+        // Get the latest snapshot data
+        const latestSnapshot = playerData.latestSnapshot?.data;
+        const newXp = latestSnapshot?.skills?.overall?.experience || member.current_xp || 0;
+        const newLevel = latestSnapshot?.skills?.overall?.level || member.current_lvl || 1;
+        const newEhb = Math.round(playerData.latestSnapshot?.data?.computed?.ehb?.value || member.ehb || 0);
+        
+        // Check if username has changed
+        const womUsernameChanged = playerData.username && 
+                                  playerData.username.toLowerCase() !== (member.wom_name || '').toLowerCase();
+                                  
+        if (womUsernameChanged) {
+          console.log(`Username changed for player ${member.wom_id}: ${member.wom_name || 'unknown'} → ${playerData.username}`);
+        }
+        
+        // Prepare basic update data (always update this data)
+        const updateData = {
+          name: playerData.displayName || playerData.username || member.name || member.wom_name,
+          current_lvl: newLevel,
+          current_xp: newXp,
+          ehb: newEhb,
+          last_seen_date: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Only update wom_name and name_history if the username changed
+        if (womUsernameChanged) {
+          // Get current name history or initialize empty array
+          const nameHistory = Array.isArray(member.name_history) ? [...member.name_history] : [];
+          
+          // Add current name to history if it's not already there
+          if (member.name && !nameHistory.includes(member.name)) {
+            nameHistory.push(member.name);
+          }
+          
+          updateData.wom_name = playerData.username;
+          updateData.name_history = nameHistory;
+        }
+        
+        // Update the member with all updated data
+        const { error } = await supabase
+          .from("members")
+          .update(updateData)
+          .eq('wom_id', member.wom_id);
+        
+        if (error) {
+          console.error(`Error updating member ${member.wom_id}:`, error);
+          errorCount++;
+        } else {
+          updatedCount++;
+        }
+      } catch (err) {
+        console.error(`Exception processing member ${member.wom_id} (${member.wom_name || member.name || 'unknown'}):`, err);
+        errorCount++;
+      }
+      
+      // Add a delay between requests to avoid rate limiting
+      await delay(2000);
+    }
+    
     console.log(`Sync completed! Updated ${updatedCount} members, with ${errorCount} errors`);
-    console.log(`Members deleted: ${deletedMembers}`);
+    console.log(`Members marked inactive: ${deletedMembers}`);
+    console.log(`Members with updated names: ${updatedNames}`);
     
     if (deletedMembersList.length > 0) {
-      console.log(`Deleted members list: ${deletedMembersList.join(', ')}`);
+      console.log(`Inactive members list: ${deletedMembersList.join(', ')}`);
     }
     
     return {
-      newMembers: newMembers.length,
+      newMembers: addedCount,
       deletedMembers: deletedMembers,
+      updatedNames: updatedNames,
       deletedList: deletedMembersList,
-      total: membersToUpdate.length,
+      total: membersToProcess.length,
       updated: updatedCount,
       errors: errorCount
     };
