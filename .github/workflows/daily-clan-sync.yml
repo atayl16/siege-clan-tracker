@@ -40,7 +40,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
-          WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
+          WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
           
       - name: Run WOM Events Sync
         if: ${{ github.event.inputs.job_to_run == 'wom-events' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}

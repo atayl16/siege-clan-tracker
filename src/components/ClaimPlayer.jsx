@@ -18,20 +18,47 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
   const fetchUserRequests = useCallback(async () => {
     if (!user) return;
-
+  
     try {
+      // Step 1: Fetch basic request data without joins
       const { data, error } = await supabase
         .from("claim_requests")
-        .select(
-          `
-          *,
-          member:wom_id(name)
-        `
-        )
+        .select("*")  // Use simple select without joins
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-
+  
       if (error) throw error;
+      
+      // Step 2: If we have data, fetch the related member info separately
+      if (data && data.length > 0) {
+        const womIds = data.filter(req => req.wom_id).map(req => req.wom_id);
+        
+        if (womIds.length > 0) {
+          const { data: membersData, error: membersError } = await supabase
+            .from('members')
+            .select('wom_id, name')
+            .in('wom_id', womIds);
+          
+          if (!membersError) {
+            // Create a lookup map for member data
+            const memberMap = {};
+            membersData.forEach(member => {
+              memberMap[member.wom_id] = member;
+            });
+            
+            // Attach member data to each request
+            const enhancedData = data.map(req => ({
+              ...req,
+              member: req.wom_id ? memberMap[req.wom_id] : null
+            }));
+            
+            setUserRequests(enhancedData);
+            return;
+          }
+        }
+      }
+      
+      // If we don't have member data or there was an error, just use the basic request data
       setUserRequests(data || []);
     } catch (err) {
       console.error("Error fetching user requests:", err);

@@ -9,8 +9,8 @@ const supabase = createClient(
 );
 
 // WOM API configuration
-const WOM_API_KEY = process.env.REACT_APP_WOM_API_KEY; // Note that we're using the correct env var
-const WOM_GROUP_ID = process.env.REACT_APP_WOM_GROUP_ID;
+const WOM_API_KEY = process.env.WOM_API_KEY || process.env.REACT_APP_WOM_API_KEY;
+const WOM_GROUP_ID = process.env.WOM_GROUP_ID || process.env.REACT_APP_WOM_GROUP_ID;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
 // Helper function to add delay with exponential backoff

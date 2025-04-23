@@ -3,14 +3,17 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../supabaseClient";
 import ClaimPlayer from "../components/ClaimPlayer";
+import GoalsList from "../components/goals/GoalsList";
+import { updatePlayerGoals } from "../services/goalProgressService";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
   const { user, userClaims } = useAuth();
   const [userRequests, setUserRequests] = useState([]);
-  
-  // Memoize the fetchUserRequests function with useCallback
+  const [activePlayer, setActivePlayer] = useState(null);
+  const [showGoals, setShowGoals] = useState(false);
     
+  // Memoize the fetchUserRequests function with useCallback
   const fetchUserRequests = useCallback(async () => {
     if (!user) return;
   
@@ -67,6 +70,39 @@ export default function ProfilePage() {
     }
   }, [user, fetchUserRequests]);
 
+  // Handle showing goals - moved above early return  
+  const handleShowGoals = (player) => {
+    console.log('handleShowGoals called with player:', player);
+    setActivePlayer(player);
+    setShowGoals(true);
+    
+    // Add a small delay to ensure the goals section is rendered before scrolling
+    setTimeout(() => {
+      const goalsSection = document.querySelector('.profile-section.goals-section');
+      if (goalsSection) {
+        goalsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
+  // Update goals effect - moved above early return
+  useEffect(() => {
+    if (user && userClaims.length > 0) {
+      // Update goals for all claimed players
+      const updateGoals = async () => {
+        try {
+          for (const claim of userClaims) {
+            await updatePlayerGoals(claim.wom_id, user.id);
+          }
+        } catch (err) {
+          console.error('Error updating goals:', err);
+        }
+      };
+      
+      updateGoals();
+    }
+  }, [user, userClaims]);
+
   if (!user) {
     return (
       <div className="profile-not-logged-in">
@@ -86,15 +122,20 @@ export default function ProfilePage() {
   return (
     <div className="profile-container">
       <h1>Your Profile</h1>
-      
+
       <div className="profile-section user-info">
         <h2>Account Information</h2>
         <div className="profile-details">
-          <p><strong>Username:</strong> {user.username}</p>
-          <p><strong>Member since:</strong> {new Date(user.created_at).toLocaleDateString()}</p>
+          <p>
+            <strong>Username:</strong> {user.username}
+          </p>
+          <p>
+            <strong>Member since:</strong>{" "}
+            {new Date(user.created_at).toLocaleDateString()}
+          </p>
         </div>
       </div>
-      
+
       <div className="profile-section claimed-players">
         <h2>Your Characters</h2>
         {!hasClaimsOrRequests ? (
@@ -104,7 +145,7 @@ export default function ProfilePage() {
         ) : (
           <div className="player-grid">
             {/* Show claimed characters */}
-            {userClaims.map(claim => (
+            {userClaims.map((claim) => (
               <div className="player-card" key={`claim-${claim.id}`}>
                 <div className="player-card-header">
                   <h3>{claim.members.name}</h3>
@@ -113,7 +154,9 @@ export default function ProfilePage() {
                 <div className="player-card-content">
                   <div className="player-stat">
                     <span className="stat-label">Combat Level</span>
-                    <span className="stat-value">{claim.members.current_lvl || 3}</span>
+                    <span className="stat-value">
+                      {claim.members.current_lvl || 3}
+                    </span>
                   </div>
                   <div className="player-stat">
                     <span className="stat-label">EHB</span>
@@ -121,18 +164,31 @@ export default function ProfilePage() {
                   </div>
                   <div className="player-stat">
                     <span className="stat-label">Siege Score</span>
-                    <span className="stat-value">{claim.members.siege_score || 0}</span>
+                    <span className="stat-value">
+                      {claim.members.siege_score || 0}
+                    </span>
                   </div>
                 </div>
                 <div className="player-card-footer">
-                  <p>Claimed on {new Date(claim.claimed_at).toLocaleDateString()}</p>
+                  <p>
+                    Claimed on {new Date(claim.claimed_at).toLocaleDateString()}
+                  </p>
+                  <button
+                    className="goals-button"
+                    onClick={() => handleShowGoals(claim.members)}
+                  >
+                    Manage Goals
+                  </button>
                 </div>
               </div>
             ))}
-            
+
             {/* Show pending requests */}
-            {userRequests.map(request => (
-              <div className="player-card pending-request" key={`request-${request.id}`}>
+            {userRequests.map((request) => (
+              <div
+                className="player-card pending-request"
+                key={`request-${request.id}`}
+              >
                 <div className="player-card-header">
                   <h3>{request.rsn}</h3>
                   <div className="player-status pending">Pending Approval</div>
@@ -140,26 +196,45 @@ export default function ProfilePage() {
                 <div className="player-card-content">
                   <div className="player-stat">
                     <span className="stat-label">Combat Level</span>
-                    <span className="stat-value">{request.member?.current_lvl || '?'}</span>
+                    <span className="stat-value">
+                      {request.member?.current_lvl || "?"}
+                    </span>
                   </div>
                   <div className="player-stat">
                     <span className="stat-label">EHB</span>
-                    <span className="stat-value">{request.member?.ehb || '?'}</span>
+                    <span className="stat-value">
+                      {request.member?.ehb || "?"}
+                    </span>
                   </div>
                   <div className="player-stat">
                     <span className="stat-label">Siege Score</span>
-                    <span className="stat-value">{request.member?.siege_score || '?'}</span>
+                    <span className="stat-value">
+                      {request.member?.siege_score || "?"}
+                    </span>
                   </div>
                 </div>
                 <div className="player-card-footer">
-                  <p>Requested on {new Date(request.created_at).toLocaleDateString()}</p>
+                  <p>
+                    Requested on{" "}
+                    {new Date(request.created_at).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-      
+
+      {showGoals && activePlayer && (
+        <div className="profile-section goals-section">
+          <GoalsList
+            player={activePlayer}
+            userId={user.id}
+            onClose={() => setShowGoals(false)}
+          />
+        </div>
+      )}
+
       <div className="profile-section claim-section">
         <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
       </div>
