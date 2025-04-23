@@ -16,6 +16,7 @@ import WelcomePage from "./pages/WelcomePage";
 import ProfilePage from "./pages/ProfilePage";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ForgotPassword from "./components/ForgotPassword";
 import SeasonalFavicon from "./utils/seasonalIcons";
 import "./App.css";
 
@@ -34,6 +35,7 @@ const AppContent = () => {
         <Route path="/members" element={<MembersPage />} />
         <Route path="/login" element={<AdminLogin />} />
         <Route path="/register" element={<RegistrationForm />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
 
         {/* Admin Routes - All protected */}

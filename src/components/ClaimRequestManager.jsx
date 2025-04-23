@@ -180,7 +180,7 @@ export default function ClaimRequestManager() {
   };
 
   return (
-    <div className="claim-requests-manager">
+    <div>
       <h2>Player Claim Requests</h2>
 
       <div className="filter-bar">

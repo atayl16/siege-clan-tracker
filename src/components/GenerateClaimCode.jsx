@@ -121,7 +121,7 @@ export default function GenerateClaimCode() {
   };
 
   return (
-    <div className="generate-code-container">
+    <div>
       <h2>Generate Player Claim Code</h2>
       
       {error && <div className="error-message">{error}</div>}

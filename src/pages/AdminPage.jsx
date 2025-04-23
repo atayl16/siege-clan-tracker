@@ -10,6 +10,7 @@ import GenerateClaimCode from "../components/GenerateClaimCode";
 import ClaimRequestManager from "../components/ClaimRequestManager";
 import ClaimRequestsPreview from "../components/ClaimRequestsPreview";
 import AdminUserManager from "../components/AdminUserManager";
+import AdminResetPassword from "../components/AdminResetPassword";
 import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import {
@@ -735,7 +736,7 @@ export default function AdminPage() {
             <div className="content-header">
               <h2>User Management</h2>
             </div>
-        
+
             <div className="users-management-container">
               <div className="users-tabs">
                 <button
@@ -762,10 +763,22 @@ export default function AdminPage() {
                 >
                   Admin Users
                 </button>
+                <button
+                  className={`users-tab ${
+                    userSubTab === "passwords" ? "active" : ""
+                  }`}
+                  onClick={() => setUserSubTab("passwords")}
+                >
+                  Reset Passwords
+                </button>
               </div>
-        
-              {userSubTab === "requests" && <ClaimRequestManager />}
-        
+              
+              {userSubTab === "requests" && (
+                <div className="action-card">
+                  <ClaimRequestManager />
+                </div>
+              )}
+              
               {userSubTab === "codes" && (
                 <div className="action-card">
                   <GenerateClaimCode />
@@ -775,6 +788,12 @@ export default function AdminPage() {
               {userSubTab === "admins" && (
                 <div className="action-card">
                   <AdminUserManager />
+                </div>
+              )}
+              
+              {userSubTab === "passwords" && (
+                <div className="action-card">
+                  <AdminResetPassword />
                 </div>
               )}
             </div>
@@ -854,3 +873,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

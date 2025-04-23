@@ -718,3 +718,149 @@
 .alert-section.full-width {
   grid-column: 1 / -1;
 }
+
+/* Action cards for admin components */
+.action-card {
+  background-color: #222;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.action-card h2 {
+  color: #ff9800;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+}
+
+/* AdminResetPassword specific styles */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.admin-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-form label {
+  font-weight: 500;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.admin-form select,
+.admin-form input {
+  background-color: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.admin-form select:disabled,
+.admin-form input:disabled {
+  background-color: #2a2a2a;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.admin-button {
+  background-color: #ff9800;
+  color: #222;
+  border: none;
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+
+.admin-button:hover:not(:disabled) {
+  background-color: #f57c00;
+  transform: translateY(-2px);
+}
+
+.admin-button:disabled {
+  background-color: #5f5f5f;
+  cursor: not-allowed;
+}
+
+.admin-nav {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #444;
+  text-align: center;
+}
+
+.admin-back-link {
+  color: #aaa;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.admin-back-link:hover {
+  color: #ff9800;
+}
+
+.admin-auth-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: #222;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.admin-auth-error h2 {
+  color: #ff9800;
+  margin-bottom: 15px;
+}
+
+.admin-auth-error p {
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.error-message {
+  background-color: rgba(220,53,69,0.1);
+  color: #ff6b6b;
+  padding: 10px 15px;
+  border-radius: 4px;
+  border-left: 4px solid #dc3545;
+  margin-bottom: 15px;
+}
+
+.success-message {
+  background-color: rgba(40,167,69,0.1);
+  color: #75e090;
+  padding: 10px 15px;
+  border-radius: 4px;
+  border-left: 4px solid #28a745;
+  margin-bottom: 15px;
+}
+
+.claim-requests-manager h2 {
+  color: #ff9800;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+}

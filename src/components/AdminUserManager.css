@@ -389,4 +389,81 @@
   color: #adb5bd;
 }
 
-/* ...existing code... */
+.admin-section, .promote-section {
+  margin-bottom: 30px;
+}
+
+.admin-section h3, .promote-section h3 {
+  color: #ff9800;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.section-description {
+  color: #aaa;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.admins-table-container {
+  margin-bottom: 20px;
+}
+
+.admin-user {
+  background-color: rgba(255, 152, 0, 0.05);
+}
+
+.admin-toggle-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.admin-toggle-btn.add {
+  background-color: #28a745;
+  color: white;
+}
+
+.admin-toggle-btn.add:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.admin-toggle-btn.remove {
+  background-color: #dc3545;
+  color: white;
+}
+
+.admin-toggle-btn.remove:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.admin-toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.user-actions {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #333;
+}
+
+.user-actions h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #e0e0e0;
+}
+
+.info-message {
+  padding: 15px;
+  color: #aaa;
+  text-align: center;
+  background-color: #333;
+  border-radius: 6px;
+}
