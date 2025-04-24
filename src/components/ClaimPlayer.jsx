@@ -126,7 +126,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     e.preventDefault();
 
     if (!user) {
-      setError("You must be logged in to claim a player");
+      setError("You must be logged in to claim an account");
       return;
     }
 

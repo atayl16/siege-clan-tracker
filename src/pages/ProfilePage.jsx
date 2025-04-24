@@ -295,28 +295,6 @@ export default function ProfilePage() {
             <div className="claim-player-section">
               <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
             </div>
-
-            {userRequests.length > 0 && (
-              <div className="pending-requests-section">
-                <h3>Pending Requests</h3>
-                <div className="requests-list">
-                  {userRequests.map((request) => (
-                    <div className="request-card" key={`request-${request.id}`}>
-                      <div className="request-info">
-                        <div className="request-name">{request.rsn}</div>
-                        <div className="request-badge pending">
-                          Pending Approval
-                        </div>
-                      </div>
-                      <div className="request-date">
-                        Requested on{" "}
-                        {new Date(request.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
