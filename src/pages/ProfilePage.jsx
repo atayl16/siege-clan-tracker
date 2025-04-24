@@ -7,12 +7,41 @@ import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
 import { FaUser, FaFlag, FaClock, FaCog } from "react-icons/fa";
+import { titleize } from "../utils/stringUtils";
 import "./ProfilePage.css";
+
+// Add this new component inside the same file, before the main component
+function CharacterGoalCard({ claim, user }) {
+  return (
+    <div className="character-goal-card">
+      <div className="character-goal-header">
+        <div className="character-goal-name">{claim.members.name}</div>
+        <div className="character-goal-stats">
+          <div className="mini-stat">
+            <span className="mini-stat-value">{claim.members.current_lvl || 3}</span>
+            <span className="mini-stat-label">Combat</span>
+          </div>
+          <div className="mini-stat">
+            <span className="mini-stat-value">{claim.members.ehb || 0}</span>
+            <span className="mini-stat-label">EHB</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="character-goal-content">
+        <GoalsList
+          player={claim.members}
+          userId={user.id}
+          onClose={() => {}}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { user, userClaims } = useAuth();
   const [userRequests, setUserRequests] = useState([]);
-  const [activePlayer, setActivePlayer] = useState(null);
   const [activeTab, setActiveTab] = useState("characters");
     
   // Memoize the fetchUserRequests function with useCallback
@@ -72,7 +101,6 @@ export default function ProfilePage() {
 
   // Handle showing goals
   const handleShowGoals = (player) => {
-    setActivePlayer(player);
     setActiveTab("goals");
   };
 
@@ -82,7 +110,7 @@ export default function ProfilePage() {
       const updateGoals = async () => {
         try {
           for (const claim of userClaims) {
-            await updatePlayerGoals(claim.wom_id, user.id);
+            await updatePlayerGoals(claim.members.wom_id, user.id);
           }
         } catch (err) {
           console.error('Error updating goals:', err);
@@ -110,7 +138,7 @@ export default function ProfilePage() {
     <div className="profile-container">
       <div className="profile-header">
         <div className="user-summary">
-          <div className="username">{user.username}</div>
+          <div className="username">{titleize(user.username)}</div>
           <div className="member-since">
             Member since {new Date(user.created_at).toLocaleDateString()}
           </div>
@@ -224,7 +252,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Goals Tab */}
+        {/* Goals Tab - UPDATED */}
         {activeTab === "goals" && (
           <div className="tab-pane">
             <div className="tab-header">
@@ -239,46 +267,11 @@ export default function ProfilePage() {
             ) : (
               <div className="character-goals-list">
                 {userClaims.map((claim) => (
-                  <div className="character-goal-card" key={`goal-card-${claim.id}`}>
-                    <div className="character-goal-header">
-                      <div className="character-goal-name">{claim.members.name}</div>
-                      <div className="character-goal-stats">
-                        <div className="mini-stat">
-                          <span className="mini-stat-value">{claim.members.current_lvl || 3}</span>
-                          <span className="mini-stat-label">Combat</span>
-                        </div>
-                        <div className="mini-stat">
-                          <span className="mini-stat-value">{claim.members.ehb || 0}</span>
-                          <span className="mini-stat-label">EHB</span>
-                        </div>
-                      </div>
-                    </div>
-        
-                    {activePlayer?.wom_id === claim.members.wom_id ? (
-                      <div className="character-goal-content">
-                        <GoalsList
-                          player={claim.members}
-                          userId={user.id}
-                          onClose={() => setActivePlayer(null)}
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <PlayerGoalSummary 
-                          playerId={claim.members.wom_id}
-                          userId={user.id}
-                        />
-                        <div className="character-goal-actions">
-                          <button
-                            className="action-button primary"
-                            onClick={() => setActivePlayer(claim.members)}
-                          >
-                            Manage Goals
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <CharacterGoalCard 
+                    key={`goal-card-${claim.id}`}
+                    claim={claim}
+                    user={user}
+                  />
                 ))}
               </div>
             )}

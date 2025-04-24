@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { FaCrown, FaMedal } from "react-icons/fa";
+import { titleize } from "../utils/stringUtils";
 import "./Leaderboard.css";
 
 export default function SiegeLeaderboard({ 
@@ -39,7 +40,7 @@ export default function SiegeLeaderboard({
                   index + 1
                 )}
               </span>
-              <span className="player-name">{player.name || player.wom_name || "Unknown"}</span>
+              <span className="player-name">{titleize(player.name) || titleize(player.wom_name) || "Unknown"}</span>
               <span className="player-score">{player.siege_score.toLocaleString()} pts</span>
             </div>
           ))
@@ -79,7 +80,7 @@ export default function SiegeLeaderboard({
                     index + 1
                   )}
                 </td>
-                <td>{player.name || player.wom_name || "Unknown"}</td>
+                <td>{titleize(player.name) || titleize(player.wom_name) || "Unknown"}</td>
                 <td>{player.siege_score.toLocaleString()}</td>
               </tr>
             ))

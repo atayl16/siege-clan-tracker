@@ -4,6 +4,7 @@ import GoalProgress from "./GoalProgress";
 import CreateGoal from "./CreateGoal";
 import { refreshPlayerData } from "../../utils/womApi";
 import { updatePlayerGoals } from "../../services/goalProgressService";
+import { titleize } from "../../utils/stringUtils";
 import "./Goals.css";
 
 export default function GoalsList({ player, userId, onClose }) {
@@ -18,19 +19,31 @@ export default function GoalsList({ player, userId, onClose }) {
   const fetchGoals = useCallback(async () => {
     try {
       setLoading(true);
-
-      const { data, error } = await supabase
-        .from("user_goals")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("wom_id", player.wom_id)
-        .order("completed", { ascending: true })
-        .order("goal_type")
-        .order("metric");
-
+  
+      // Replace the direct table query with an RPC call to your function
+      const { data, error } = await supabase.rpc(
+        "get_user_goals",
+        {
+          user_id_param: userId
+        }
+      );
+  
       if (error) throw error;
-
-      setGoals(data || []);
+      
+      // Filter the results for the current player since the function might return all user goals
+      const playerGoals = data ? data.filter(goal => goal.wom_id === player.wom_id) : [];
+      
+      // Sort the goals as needed
+      const sortedGoals = playerGoals.sort((a, b) => {
+        // First by completion status
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        // Then by goal type
+        if (a.goal_type !== b.goal_type) return a.goal_type.localeCompare(b.goal_type);
+        // Then by metric name
+        return a.metric.localeCompare(b.metric);
+      });
+  
+      setGoals(sortedGoals);
       setError(null);
     } catch (err) {
       console.error("Error fetching goals:", err);
@@ -119,7 +132,7 @@ export default function GoalsList({ player, userId, onClose }) {
   return (
     <div className="goals-container">
       <div className="goals-header">
-        <h2>Goals for {player.name}</h2>
+        <h2>Goals for {titleize(player.name)}</h2>
         <button className="close-button" onClick={onClose}>
           &times;
         </button>
@@ -165,7 +178,7 @@ export default function GoalsList({ player, userId, onClose }) {
         <div className="loading-indicator">Loading goals...</div>
       ) : goals.length === 0 ? (
         <div className="no-goals">
-          <p>You haven't set any goals for {player.name} yet.</p>
+          <p>You haven't set any goals for {titleize(player.name)} yet.</p>
           <p>Click "Add New Goal" to get started!</p>
         </div>
       ) : (
@@ -176,7 +189,7 @@ export default function GoalsList({ player, userId, onClose }) {
               className={`goal-card ${goal.completed ? "completed" : ""}`}
             >
               <div className="goal-header">
-                <h3>{goal.metric}</h3>
+                <h3>{titleize(goal.metric)}</h3>
                 <div className="goal-type">{goal.goal_type}</div>
               </div>
 

@@ -13,18 +13,23 @@ export default function PlayerGoalSummary({ playerId, userId }) {
       
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('user_goals')
-          .select('*')
-          .eq('wom_id', playerId)
-          .eq('user_id', userId)
-          .eq('completed', false) // Show only incomplete goals
-          .order('id', { ascending: false }) // Order by id instead of created_at
-          .limit(3); // Show max 3 goals in the summary
+        // Use RPC function to bypass RLS
+        const { data, error } = await supabase.rpc(
+          "get_user_goals",
+          { user_id_param: userId }
+        );
         
         if (error) throw error;
         
-        setGoals(data || []);
+        // Filter goals for this player
+        const playerGoals = data
+          ? data
+              .filter(goal => goal.wom_id === playerId && !goal.completed)
+              .sort((a, b) => b.id - a.id)
+              .slice(0, 3)
+          : [];
+        
+        setGoals(playerGoals);
       } catch (err) {
         console.error('Error fetching player goals:', err);
       } finally {

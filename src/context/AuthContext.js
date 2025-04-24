@@ -209,17 +209,22 @@ export function AuthProvider({ children }) {
 
   // Fetch a user's claimed players
   const fetchUserClaims = async (userId) => {
+    console.log("Fetching claims for user ID:", userId);
+    console.log("User ID type:", typeof userId);
     try {
-      // First fetch the user's claims
-      // player_claims table needs user_id as UUID
-      const { data: claimsData, error: claimsError } = await supabase
-        .from("player_claims")
-        .select("id, wom_id, claimed_at")
-        .eq("user_id", userId);
+      // Use the RPC function that's working correctly
+      const { data: claimsData, error: claimsError } = await supabase.rpc(
+        "get_user_claims",
+        {
+          user_id_param: userId,
+        }
+      );
+
+      console.log("Claims query result:", { claimsData, claimsError });
 
       if (claimsError) {
-        console.error("Error fetching claims:", claimsError);
-        return;
+        console.error("Claims fetch error:", claimsError);
+        throw claimsError;
       }
 
       if (!claimsData || claimsData.length === 0) {
