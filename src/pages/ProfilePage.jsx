@@ -13,7 +13,6 @@ export default function ProfilePage() {
   const { user, userClaims } = useAuth();
   const [userRequests, setUserRequests] = useState([]);
   const [activePlayer, setActivePlayer] = useState(null);
-  const [showGoals, setShowGoals] = useState(false);
   const [activeTab, setActiveTab] = useState("characters");
     
   // Memoize the fetchUserRequests function with useCallback
