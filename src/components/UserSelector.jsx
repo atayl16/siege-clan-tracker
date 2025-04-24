@@ -22,7 +22,7 @@ export default function UserSelector({
         setLoading(true);
         let query = supabase
           .from("users")
-          .select("id, username, email, created_at, is_admin")
+          .select("id, username, created_at, is_admin")
           .order("username", { ascending: true });
 
         // Add filter for excluding admins if needed
@@ -56,8 +56,7 @@ export default function UserSelector({
     const lowercaseSearch = searchTerm.toLowerCase();
     const filtered = users.filter(
       (user) =>
-        user.username.toLowerCase().includes(lowercaseSearch) ||
-        (user.email && user.email.toLowerCase().includes(lowercaseSearch))
+        user.username.toLowerCase().includes(lowercaseSearch)
     );
 
     setFilteredUsers(filtered);
@@ -98,7 +97,7 @@ export default function UserSelector({
       <div className="search-container">
         <input
           type="text"
-          placeholder="Search users by username or email..."
+          placeholder="Search users by username"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -120,7 +119,6 @@ export default function UserSelector({
           <thead>
             <tr>
               <th>Username</th>
-              <th>Email</th>
               <th>Created At</th>
               <th>Status</th>
               <th>Actions</th>
@@ -135,7 +133,6 @@ export default function UserSelector({
                 }`}
               >
                 <td>{user.username}</td>
-                <td>{user.email || "—"}</td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td>
                   <span

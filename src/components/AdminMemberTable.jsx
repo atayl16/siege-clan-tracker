@@ -347,8 +347,13 @@ export default function AdminMemberTable({
                     ).toLocaleString()}
                   </td>
                   <td className="text-center">
-                    {member.created_at
-                      ? new Date(member.created_at).toLocaleDateString()
+                    {member.join_date
+                      ?
+                      new Date(member.join_date).toLocaleDateString(undefined, {
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric'
+                      })
                       : "-"}
                   </td>
                   <td>

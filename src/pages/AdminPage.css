@@ -864,3 +864,28 @@
   padding-bottom: 10px;
   border-bottom: 1px solid #444;
 }
+
+/* Fix for action button layout issues */
+.admin-actions button,
+.admin-toolbar button,
+.admin-footer-actions button,
+.admin-action-btn {
+  width: auto !important;
+  height: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: auto !important;
+}
+
+.action-button,
+.primary-button, 
+.alert-button {
+  width: auto !important;
+  height: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: auto !important;
+  min-width: fit-content;
+}

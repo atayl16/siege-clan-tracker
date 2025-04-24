@@ -18,7 +18,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
     name: "",
     wom_name: "",
     wom_id: "",
-    title: "",
     womrole: "",
     ehb: 0,
     current_xp: 0,
@@ -39,7 +38,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         name: member.name || "",
         wom_name: member.wom_name || "",
         wom_id: member.wom_id || "",
-        title: member.title || "",
         womrole: member.womrole || "",
         ehb: member.ehb || 0,
         current_xp: member.current_xp || 0,
@@ -55,7 +53,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         name: "",
         wom_name: "",
         wom_id: "",
-        title: "",
         womrole: "Opal", // Default to Opal
         ehb: 0,
         current_xp: 0,
@@ -95,22 +92,20 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         updated_at: new Date().toISOString()
       };
       
-      // Use Supabase upsert to handle both creating and updating
-      const { error } = await supabase
-        .from('members')
-        .upsert(memberData, { 
-          onConflict: 'wom_id',
-          returning: 'minimal' 
+      // Use the database function instead of direct upsert
+      const { data, error } = await supabase
+        .rpc('admin_upsert_member', { 
+          member_data: memberData 
         });
       
       if (error) throw error;
       
       // Call the onSave callback with the updated data
-      onSave(memberData);
+      onSave(data || memberData);
       
     } catch (err) {
       console.error("Error saving member:", err);
-      setError("Failed to save member: " + err.message);
+      setError("Failed to save member: " + (err.message || JSON.stringify(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -164,20 +159,6 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         </div>
         
         <div className="row">
-          <div className="col-md-6">
-            <div className="form-group">
-              <label htmlFor="title">Title:</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="e.g. Clan Leader"
-              />
-            </div>
-          </div>
           <div className="col-md-6">
             <div className="form-group">
               <label htmlFor="womrole">Clan Rank:</label>

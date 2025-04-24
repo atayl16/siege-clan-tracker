@@ -199,8 +199,8 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
             </div>
             <div className="stats-value">
               {goalType === "skill"
-                ? currentStats.experience.toLocaleString()
-                : currentStats.kills.toLocaleString()}
+                ? ((currentStats.experience !== undefined ? currentStats.experience : 0)).toLocaleString()
+                : ((currentStats.kills !== undefined ? currentStats.kills : 0)).toLocaleString()}
             </div>
           </div>
         )}

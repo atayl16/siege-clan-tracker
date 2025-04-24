@@ -95,7 +95,7 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
         .from('claim_requests')
         .update({ 
           status: 'approved',
-          admin_notes: 'Approved from alerts dashboard'
+          admin_notes: 'Approved'
         })
         .eq('id', request.id);
         
@@ -134,7 +134,7 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
         .from('claim_requests')
         .update({ 
           status: 'denied',
-          admin_notes: 'Denied from alerts dashboard'
+          admin_notes: 'Denied'
         })
         .eq('id', request.id);
         

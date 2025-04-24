@@ -251,13 +251,19 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           className={`claim-tab ${activeTab === "code" ? "active" : ""}`}
           onClick={() => setActiveTab("code")}
         >
-          Use Claim Code
+          Use a Claim Code
         </button>
         <button
           className={`claim-tab ${activeTab === "request" ? "active" : ""}`}
           onClick={() => setActiveTab("request")}
         >
-          Request Player Claim
+          Search Members
+        </button>
+        <button
+          className={`claim-tab ${activeTab === "my-requests" ? "active" : ""}`}
+          onClick={() => setActiveTab("my-requests")}
+        >
+          View My Requests
         </button>
       </div>
 
@@ -272,7 +278,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
         <div className="claim-code-tab">
           <h2>Claim Your OSRS Account</h2>
           <p>
-            Enter your claim code to connect your account with your in-game
+            Enter the claim code provided by admin to connect your account with your in-game
             character.
           </p>
 
@@ -296,7 +302,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
           <div className="claim-info">
             <h3>How to get a claim code</h3>
-            <p>To obtain a claim code for your account:</p>
             <ol>
               <li>Contact a clan admin in Discord</li>
               <li>Verify your in-game name</li>
@@ -309,7 +314,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
       {activeTab === "request" && (
         <div className="claim-request-tab">
-          <h2>Request Player Claim</h2>
+          <h2>Search for your OSRS Account</h2>
           <p>Select your character from the list to request access.</p>
 
           <form onSubmit={handleRequestClaim}>
@@ -393,7 +398,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
               {userRequests.map((request) => (
                 <div className="request-card" key={request.id}>
                   <div className="request-header">
-                    <h3>{request.rsn}</h3>
+                    <div className="my-request-rsn">{request.rsn}</div>
                     {getStatusBadge(request.status)}
                   </div>
                   <div className="request-details">
@@ -405,13 +410,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                       <p>
                         <strong>Your message:</strong> {request.message}
                       </p>
-                    )}
-                    {request.admin_notes && request.status !== "pending" && (
-                      <div className="admin-notes">
-                        <p>
-                          <strong>Admin response:</strong> {request.admin_notes}
-                        </p>
-                      </div>
                     )}
                   </div>
                 </div>

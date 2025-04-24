@@ -40,7 +40,7 @@ function parseJoinDate(dateStr) {
 const legacyPlayers = [
   { name: "Dan xo", clan_rank: "👑", ehb: 269, starting_xp: "207,137,606", starting_level: 2156, gained_level: 121, next_level: "", join_date: "Apr 23, 2022", siege_score: 0 },
   { name: "Roinrin", clan_rank: "🔑", ehb: 157, starting_xp: "39,455,343", starting_level: 1709, gained_level: 568, next_level: "", join_date: "Aug 04, 2022", siege_score: 0 },
-  { name: "Roinren", clan_rank: "🔑", ehb: 0, starting_xp: "559,855", starting_level: 602, gained_level: 571, next_level: "", join_date: "Jan 22, 2025", siege_score: 0 },
+  { name: "Roinrim", clan_rank: "🔑", ehb: 0, starting_xp: "559,855", starting_level: 602, gained_level: 571, next_level: "", join_date: "Jan 22, 2025", siege_score: 0 },
   { name: "Im Mr Bean", clan_rank: "🌟", ehb: 976, starting_xp: "292,943,366", starting_level: 2171, gained_level: 89, next_level: "", join_date: "Apr 24, 2022", siege_score: 0 },
   { name: "Also Shez", clan_rank: "🌟", ehb: 38, starting_xp: "53,997,571", starting_level: 1516, gained_level: 236, next_level: "", join_date: "Jul 30, 2023", siege_score: 0 },
   { name: "Also Miles", clan_rank: "🌟", ehb: 1, starting_xp: "33,623,908", starting_level: 771, gained_level: 346, next_level: "", join_date: "Dec 18, 2022", siege_score: 0 },
@@ -231,25 +231,15 @@ async function importLegacyData() {
       const member = memberData[0];
       
       const updateData = {};
-      
-      // Only update starting_xp if it's null or 0 in the database
-      if (player.starting_xp && (!member.starting_xp || member.starting_xp === 0)) {
-        updateData.starting_xp = player.starting_xp;
-      }
-      
-      // Only update starting_level if it's null or 0 in the database
-      if (player.starting_level && (!member.starting_level || member.starting_level === 0)) {
-        updateData.starting_level = player.starting_level;
-      }
-      
-      // Only set join_date if it's valid and not already set or if the legacy date is earlier
-      if (player.join_date && (!member.join_date || new Date(player.join_date) < new Date(member.join_date))) {
-        updateData.join_date = player.join_date;
-      }
-      
-      // Only update siege_score if it's in the data and the member doesn't have a score yet
-      if (typeof player.siege_score === 'number' && (!member.siege_score && member.siege_score !== 0)) {
-        updateData.siege_score = player.siege_score;
+            
+      // ONLY set join_date if it's valid and the legacy date is earlier
+      if (player.join_date) {
+        // Add this line to always see the dates for comparison
+        console.log(`  Join dates - Legacy: ${new Date(player.join_date).toISOString().split('T')[0]}, Current: ${member.join_date ? new Date(member.join_date).toISOString().split('T')[0] : 'None'}`);
+        
+        if (!member.join_date || new Date(player.join_date) < new Date(member.join_date)) {
+          updateData.join_date = player.join_date;
+        }
       }
       
       // Only perform update if we have data to update

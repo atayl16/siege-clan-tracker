@@ -207,3 +207,184 @@
     padding: 10px 20px;
   }
 }
+
+/* My Requests Tab Styling */
+.my-requests-tab {
+  padding: 25px;
+  color: #e0e0e0;
+}
+
+.my-requests-tab h2 {
+  margin-bottom: 20px;
+  color: #ff9800;
+  font-size: 1.4rem;
+  position: relative;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #444;
+}
+
+.my-requests-tab h2::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 25px;
+  background-color: #ff9800;
+  margin-right: 15px;
+  border-radius: 4px;
+}
+
+.no-requests {
+  text-align: center;
+  padding: 30px 20px;
+  background-color: #333;
+  border-radius: 8px;
+  color: #aaa;
+}
+
+.secondary-button {
+  background-color: #444;
+  color: #e0e0e0;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  margin-top: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondary-button:hover {
+  background-color: #555;
+  transform: translateY(-2px);
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.request-card {
+  background-color: #333;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+}
+
+.request-header h3 {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 1.2rem;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.approved {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.status-badge.denied {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.status-badge.pending {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.request-details {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.request-details p {
+  margin: 8px 0;
+}
+
+.admin-notes {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #2a2a2a;
+  border-radius: 6px;
+  border-left: 3px solid #ff9800;
+}
+
+@media (max-width: 768px) {
+  .my-requests-tab {
+    padding: 20px 15px;
+  }
+  
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .status-badge {
+    align-self: flex-start;
+  }
+}
+
+.request-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px; /* Add proper spacing between name and badge */
+}
+
+.request-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-right: auto; /* Push the badge to the right */
+}
+
+.request-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0; /* Prevent badge from shrinking */
+  display: inline-flex; /* Better alignment */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fix the same alignment issue in the request header (for My Requests tab) */
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+  gap: 15px; /* Add proper spacing between name and badge */
+}
+
+.request-header h3 {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 1.2rem;
+  margin-right: auto; /* Push the badge to the right */
+}
+
+.my-request-rsn {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 1.2rem;
+}

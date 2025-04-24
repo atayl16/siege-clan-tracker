@@ -105,6 +105,11 @@ async function syncWomMembers() {
     // Create a set of WOM IDs for quick lookup
     const womIds = new Set(womMembers.map(m => m.wom_id));
     const womNamesMap = new Map(womMembers.map(m => [m.wom_name, m]));
+
+    const womRoleMap = new Map();
+    womMembers.forEach((member) => {
+      womRoleMap.set(member.wom_id, member.womrole);
+    });
     
     // Fetch our existing members from the database
     console.log("Fetching existing members from database...");
@@ -351,6 +356,17 @@ async function syncWomMembers() {
           last_seen_date: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
+
+        // Add the WOM role to updateData if available from group API
+        if (womRoleMap.has(member.wom_id)) {
+          const currentRole = womRoleMap.get(member.wom_id);
+          updateData.womrole = currentRole;
+          
+          // Log if role has changed
+          if (member.womrole !== currentRole) {
+            console.log(`Role changed for ${member.name || member.wom_name}: ${member.womrole || 'none'} → ${currentRole}`);
+          }
+        }
         
         // Only update wom_name and name_history if the username changed
         if (womUsernameChanged) {

@@ -277,7 +277,11 @@ const getNextRankInfo = (member) => {
           header: "Joined",
           cell: ({ row }) => {
             const joinDate = row.original.join_date
-              ? new Date(row.original.join_date).toLocaleDateString()
+              ? new Date(row.original.join_date).toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })
               : "N/A";
             return <div style={{ textAlign: "center" }}>{joinDate}</div>;
           },

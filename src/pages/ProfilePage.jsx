@@ -4,7 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../supabaseClient";
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
+import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
+import { FaUser, FaFlag, FaClock, FaCog } from "react-icons/fa";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
@@ -12,22 +14,24 @@ export default function ProfilePage() {
   const [userRequests, setUserRequests] = useState([]);
   const [activePlayer, setActivePlayer] = useState(null);
   const [showGoals, setShowGoals] = useState(false);
+  const [activeTab, setActiveTab] = useState("characters");
     
   // Memoize the fetchUserRequests function with useCallback
   const fetchUserRequests = useCallback(async () => {
     if (!user) return;
   
     try {
-      // Step 1: Fetch basic request data without joins
+      // Only fetch pending requests
       const { data, error } = await supabase
         .from("claim_requests")
-        .select("*")  // Use simple select without joins
+        .select("*")
         .eq("user_id", user.id)
+        .eq("status", "pending")
         .order("created_at", { ascending: false });
   
       if (error) throw error;
       
-      // Step 2: If we have data, fetch the related member info separately
+      // Fetch the related member info separately
       if (data && data.length > 0) {
         const womIds = data.filter(req => req.wom_id).map(req => req.wom_id);
         
@@ -38,13 +42,11 @@ export default function ProfilePage() {
             .in('wom_id', womIds);
           
           if (!membersError) {
-            // Create a lookup map for member data
             const memberMap = {};
             membersData.forEach(member => {
               memberMap[member.wom_id] = member;
             });
             
-            // Attach member data to each request
             const enhancedData = data.map(req => ({
               ...req,
               member: req.wom_id ? memberMap[req.wom_id] : null
@@ -56,7 +58,6 @@ export default function ProfilePage() {
         }
       }
       
-      // If we don't have member data or there was an error, just use the basic request data
       setUserRequests(data || []);
     } catch (err) {
       console.error("Error fetching user requests:", err);
@@ -70,25 +71,15 @@ export default function ProfilePage() {
     }
   }, [user, fetchUserRequests]);
 
-  // Handle showing goals - moved above early return  
+  // Handle showing goals
   const handleShowGoals = (player) => {
-    console.log('handleShowGoals called with player:', player);
     setActivePlayer(player);
-    setShowGoals(true);
-    
-    // Add a small delay to ensure the goals section is rendered before scrolling
-    setTimeout(() => {
-      const goalsSection = document.querySelector('.profile-section.goals-section');
-      if (goalsSection) {
-        goalsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+    setActiveTab("goals");
   };
 
-  // Update goals effect - moved above early return
+  // Update goals effect
   useEffect(() => {
     if (user && userClaims.length > 0) {
-      // Update goals for all claimed players
       const updateGoals = async () => {
         try {
           for (const claim of userClaims) {
@@ -115,128 +106,262 @@ export default function ProfilePage() {
       </div>
     );
   }
-  
-  // Check if user has any claims or pending requests
-  const hasClaimsOrRequests = userClaims.length > 0 || userRequests.length > 0;
 
   return (
     <div className="profile-container">
-      <h1>Your Profile</h1>
-
-      <div className="profile-section user-info">
-        <h2>Account Information</h2>
-        <div className="profile-details">
-          <p>
-            <strong>Username:</strong> {user.username}
-          </p>
-          <p>
-            <strong>Member since:</strong>{" "}
-            {new Date(user.created_at).toLocaleDateString()}
-          </p>
+      <div className="profile-header">
+        <div className="user-summary">
+          <div className="username">{user.username}</div>
+          <div className="member-since">
+            Member since {new Date(user.created_at).toLocaleDateString()}
+          </div>
         </div>
       </div>
 
-      <div className="profile-section claimed-players">
-        <h2>Your Characters</h2>
-        {!hasClaimsOrRequests ? (
-          <div className="no-claims">
-            <p>You haven't claimed any players yet.</p>
-          </div>
-        ) : (
-          <div className="player-grid">
-            {/* Show claimed characters */}
-            {userClaims.map((claim) => (
-              <div className="player-card" key={`claim-${claim.id}`}>
-                <div className="player-card-header">
-                  <h3>{claim.members.name}</h3>
-                  <div className="player-status claimed">Claimed</div>
-                </div>
-                <div className="player-card-content">
-                  <div className="player-stat">
-                    <span className="stat-label">Combat Level</span>
-                    <span className="stat-value">
-                      {claim.members.current_lvl || 3}
-                    </span>
-                  </div>
-                  <div className="player-stat">
-                    <span className="stat-label">EHB</span>
-                    <span className="stat-value">{claim.members.ehb || 0}</span>
-                  </div>
-                  <div className="player-stat">
-                    <span className="stat-label">Siege Score</span>
-                    <span className="stat-value">
-                      {claim.members.siege_score || 0}
-                    </span>
-                  </div>
-                </div>
-                <div className="player-card-footer">
-                  <p>
-                    Claimed on {new Date(claim.claimed_at).toLocaleDateString()}
-                  </p>
-                  <button
-                    className="goals-button"
-                    onClick={() => handleShowGoals(claim.members)}
-                  >
-                    Manage Goals
-                  </button>
-                </div>
-              </div>
-            ))}
+      <div className="profile-tabs">
+        <button
+          className={`tab-button ${activeTab === "characters" ? "active" : ""}`}
+          onClick={() => setActiveTab("characters")}
+        >
+          <FaUser /> <span>Characters</span>
+        </button>
+        <button
+          className={`tab-button ${activeTab === "goals" ? "active" : ""}`}
+          onClick={() => setActiveTab("goals")}
+        >
+          <FaFlag /> <span>Goals</span>
+        </button>
+        <button
+          className={`tab-button ${activeTab === "requests" ? "active" : ""}`}
+          onClick={() => setActiveTab("requests")}
+          data-count={userRequests.length}
+        >
+          <FaClock /> <span>Requests</span>
+          {userRequests.length > 0 && (
+            <span className="badge">{userRequests.length}</span>
+          )}
+        </button>
+        <button
+          className={`tab-button ${activeTab === "account" ? "active" : ""}`}
+          onClick={() => setActiveTab("account")}
+        >
+          <FaCog /> <span>Account</span>
+        </button>
+      </div>
 
-            {/* Show pending requests */}
-            {userRequests.map((request) => (
-              <div
-                className="player-card pending-request"
-                key={`request-${request.id}`}
+      <div className="tab-content">
+        {/* Characters Tab */}
+        {activeTab === "characters" && (
+          <div className="tab-pane">
+            <div className="tab-header">
+              <h2>Your Characters</h2>
+              <button
+                className="action-button"
+                onClick={() => setActiveTab("requests")}
               >
-                <div className="player-card-header">
-                  <h3>{request.rsn}</h3>
-                  <div className="player-status pending">Pending Approval</div>
-                </div>
-                <div className="player-card-content">
-                  <div className="player-stat">
-                    <span className="stat-label">Combat Level</span>
-                    <span className="stat-value">
-                      {request.member?.current_lvl || "?"}
-                    </span>
-                  </div>
-                  <div className="player-stat">
-                    <span className="stat-label">EHB</span>
-                    <span className="stat-value">
-                      {request.member?.ehb || "?"}
-                    </span>
-                  </div>
-                  <div className="player-stat">
-                    <span className="stat-label">Siege Score</span>
-                    <span className="stat-value">
-                      {request.member?.siege_score || "?"}
-                    </span>
-                  </div>
-                </div>
-                <div className="player-card-footer">
-                  <p>
-                    Requested on{" "}
-                    {new Date(request.created_at).toLocaleDateString()}
-                  </p>
-                </div>
+                Claim New Character
+              </button>
+            </div>
+
+            {userClaims.length === 0 ? (
+              <div className="empty-state">
+                <h3>No Characters Yet</h3>
+                <p>
+                  You haven't claimed any characters yet. Click "Claim New
+                  Character" to get started.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="character-list">
+                {userClaims.map((claim) => (
+                  <div className="character-card" key={`claim-${claim.id}`}>
+                    <div className="character-info">
+                      <div className="character-name">{claim.members.name}</div>
+                      <div className="character-badge">Claimed</div>
+                    </div>
+
+                    <div className="character-stats">
+                      <div className="stat">
+                        <div className="stat-value">
+                          {claim.members.current_lvl || 3}
+                        </div>
+                        <div className="stat-label">Combat Level</div>
+                      </div>
+                      <div className="stat">
+                        <div className="stat-value">
+                          {claim.members.ehb || 0}
+                        </div>
+                        <div className="stat-label">EHB</div>
+                      </div>
+                      <div className="stat">
+                        <div className="stat-value">
+                          {claim.members.siege_score || 0}
+                        </div>
+                        <div className="stat-label">Siege Score</div>
+                      </div>
+                    </div>
+
+                    <PlayerGoalSummary
+                      playerId={claim.members.wom_id}
+                      userId={user.id}
+                    />
+
+                    <div className="character-actions">
+                      <button
+                        className="action-button primary"
+                        onClick={() => handleShowGoals(claim.members)}
+                      >
+                        Manage Goals
+                      </button>
+                      <div className="claim-date">
+                        Claimed on{" "}
+                        {new Date(claim.claimed_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-      </div>
 
-      {showGoals && activePlayer && (
-        <div className="profile-section goals-section">
-          <GoalsList
-            player={activePlayer}
-            userId={user.id}
-            onClose={() => setShowGoals(false)}
-          />
-        </div>
-      )}
+        {/* Goals Tab */}
+        {activeTab === "goals" && (
+          <div className="tab-pane">
+            <div className="tab-header">
+              <h2>Character Goals</h2>
+            </div>
+        
+            {userClaims.length === 0 ? (
+              <div className="empty-state">
+                <h3>No Characters to Track</h3>
+                <p>You need to claim a character before setting goals.</p>
+              </div>
+            ) : (
+              <div className="character-goals-list">
+                {userClaims.map((claim) => (
+                  <div className="character-goal-card" key={`goal-card-${claim.id}`}>
+                    <div className="character-goal-header">
+                      <div className="character-goal-name">{claim.members.name}</div>
+                      <div className="character-goal-stats">
+                        <div className="mini-stat">
+                          <span className="mini-stat-value">{claim.members.current_lvl || 3}</span>
+                          <span className="mini-stat-label">Combat</span>
+                        </div>
+                        <div className="mini-stat">
+                          <span className="mini-stat-value">{claim.members.ehb || 0}</span>
+                          <span className="mini-stat-label">EHB</span>
+                        </div>
+                      </div>
+                    </div>
+        
+                    {activePlayer?.wom_id === claim.members.wom_id ? (
+                      <div className="character-goal-content">
+                        <GoalsList
+                          player={claim.members}
+                          userId={user.id}
+                          onClose={() => setActivePlayer(null)}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <PlayerGoalSummary 
+                          playerId={claim.members.wom_id}
+                          userId={user.id}
+                        />
+                        <div className="character-goal-actions">
+                          <button
+                            className="action-button primary"
+                            onClick={() => setActivePlayer(claim.members)}
+                          >
+                            Manage Goals
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-      <div className="profile-section claim-section">
-        <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
+        {/* Requests Tab */}
+        {activeTab === "requests" && (
+          <div className="tab-pane">
+            <div className="tab-header">
+              <h2>Character Claims</h2>
+            </div>
+
+            <div className="claim-player-section">
+              <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
+            </div>
+
+            {userRequests.length > 0 && (
+              <div className="pending-requests-section">
+                <h3>Pending Requests</h3>
+                <div className="requests-list">
+                  {userRequests.map((request) => (
+                    <div className="request-card" key={`request-${request.id}`}>
+                      <div className="request-info">
+                        <div className="request-name">{request.rsn}</div>
+                        <div className="request-badge pending">
+                          Pending Approval
+                        </div>
+                      </div>
+                      <div className="request-date">
+                        Requested on{" "}
+                        {new Date(request.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Account Tab */}
+        {activeTab === "account" && (
+          <div className="tab-pane">
+            <div className="tab-header">
+              <h2>Account Management</h2>
+            </div>
+
+            <div className="account-details">
+              <div className="account-field">
+                <label>Username</label>
+                <div className="field-value">{user.username}</div>
+              </div>
+              <div className="account-field">
+                <label>Member Since</label>
+                <div className="field-value">
+                  {new Date(user.created_at).toLocaleDateString()}
+                </div>
+              </div>
+
+              <div className="account-field">
+                <label>Email Address</label>
+                <div className="field-value">
+                  {user.email || "Coming Soon"}
+                </div>
+              </div>
+              
+              <div className="account-field">
+                <label>Discord Name</label>
+                <div className="field-value">
+                  {"Coming Soon"}
+                </div>
+              </div>
+
+              <div className="account-actions">
+                <button className="action-button secondary" disabled>
+                  Change Password (Coming Soon)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

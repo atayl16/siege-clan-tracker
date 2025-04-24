@@ -10,7 +10,8 @@ export default function AdminUserManager() {
   const [adminUsers, setAdminUsers] = useState([]);
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [message, setMessage] = useState(null);
-  const { toggleAdminStatus } = useAuth();
+  const [supabaseUUID, setSupabaseUUID] = useState('');
+  const { toggleAdminStatus, linkUserToSupabaseAuth } = useAuth();
 
   // Fetch all admin users when the component loads
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function AdminUserManager() {
         setLoadingAdmins(true);
         const { data, error } = await supabase
           .from('users')
-          .select('id, username, email, created_at')
+          .select('id, username, created_at, is_admin')
           .eq('is_admin', true)
           .order('username', { ascending: true });
 
@@ -41,6 +42,7 @@ export default function AdminUserManager() {
 
   const handleUserSelect = (user) => {
     setSelectedUser(user);
+    setSupabaseUUID(''); // Reset UUID field when selecting a new user
     setMessage(null);
   };
 
@@ -50,12 +52,48 @@ export default function AdminUserManager() {
       const result = await toggleAdminStatus(userId, makeAdmin);
       
       if (result.success) {
+        // Link with Supabase Auth if UUID is provided (completely optional)
+        if (makeAdmin && supabaseUUID.trim() && typeof linkUserToSupabaseAuth === 'function') {
+          try {
+            const linkResult = await linkUserToSupabaseAuth(userId, supabaseUUID.trim());
+            if (!linkResult.success) {
+              setMessage({
+                type: 'warning',
+                text: `${username} is now an admin, but linking to Supabase Auth failed: ${linkResult.error}`
+              });
+            } else {
+              setMessage({
+                type: 'success',
+                text: `${username} is now an admin and linked to Supabase Auth`
+              });
+            }
+          } catch (err) {
+            console.error('Error linking to Supabase Auth:', err);
+            setMessage({
+              type: 'warning',
+              text: `${username} is now an admin, but linking to Supabase Auth failed: ${err.message}`
+            });
+          }
+        } else if (makeAdmin && supabaseUUID.trim()) {
+          // We have a UUID but the linking function isn't available
+          console.warn('linkUserToSupabaseAuth function is not available');
+          setMessage({
+            type: 'warning',
+            text: `${username} is now an admin, but Supabase Auth linking is not available.`
+          });
+        } else {
+          setMessage({
+            type: 'success',
+            text: `${username} is now ${makeAdmin ? 'an admin' : 'a regular user'}`
+          });
+        }
+        
         // Update the admin users list
         if (makeAdmin) {
           // Find the full user data and add to admins list
           const { data: userData } = await supabase
             .from('users')
-            .select('id, username, email, created_at')
+            .select('id, username, created_at')
             .eq('id', userId)
             .single();
             
@@ -77,10 +115,8 @@ export default function AdminUserManager() {
           });
         }
         
-        setMessage({
-          type: 'success',
-          text: `${username} is now ${makeAdmin ? 'an admin' : 'a regular user'}`
-        });
+        // Reset UUID field
+        if (makeAdmin) setSupabaseUUID('');
       } else {
         setMessage({
           type: 'error',
@@ -103,7 +139,8 @@ export default function AdminUserManager() {
       <h2>Admin User Management</h2>
       
       {message && (
-        <div className={message.type === 'error' ? 'error-message' : 'success-message'}>
+        <div className={message.type === 'error' ? 'error-message' : 
+             message.type === 'warning' ? 'warning-message' : 'success-message'}>
           {message.text}
         </div>
       )}
@@ -120,7 +157,6 @@ export default function AdminUserManager() {
               <thead>
                 <tr>
                   <th>Username</th>
-                  <th>Email</th>
                   <th>Created</th>
                   <th>Actions</th>
                 </tr>
@@ -129,7 +165,6 @@ export default function AdminUserManager() {
                 {adminUsers.map(admin => (
                   <tr key={admin.id} className="admin-user">
                     <td>{admin.username}</td>
-                    <td>{admin.email || '—'}</td>
                     <td>{new Date(admin.created_at).toLocaleDateString()}</td>
                     <td>
                       <button
@@ -159,12 +194,29 @@ export default function AdminUserManager() {
           selectedUserId={selectedUser?.id}
           disabled={loading}
           viewMode="table"
-          excludeAdmins={true} // This would be a new prop to filter out admins
+          excludeAdmins={true}
         />
         
         {selectedUser && !selectedUser.is_admin && (
           <div className="user-actions">
             <h4>Selected User: {selectedUser.username}</h4>
+            
+            <div className="supabase-uuid-field">
+              <label htmlFor="supabase-uuid">Supabase Auth UUID (optional):</label>
+              <input
+                type="text"
+                id="supabase-uuid"
+                value={supabaseUUID}
+                onChange={e => setSupabaseUUID(e.target.value)}
+                placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
+                disabled={loading}
+              />
+              <p className="field-help">
+                This field is completely optional. Users will have admin access in the app without a Supabase Auth ID.
+                Only provide this if you need the user to have database-level admin access.
+              </p>
+            </div>
+            
             <button
               className="admin-toggle-btn add"
               onClick={() => handleToggleAdmin(selectedUser.id, true, selectedUser.username)}

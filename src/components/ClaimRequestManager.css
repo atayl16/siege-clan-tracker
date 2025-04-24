@@ -152,6 +152,8 @@
 .actions-cell {
   white-space: nowrap;
   text-align: right;
+  gap: 10px;
+  display: flex;
 }
 
 .action-button {

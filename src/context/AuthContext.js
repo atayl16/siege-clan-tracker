@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
           const { data, error } = await supabase
             .from("users")
             .select("*")
-            .eq("id", userId)
+            .eq("id", userId) // This now works with UUID
             .single();
 
           if (data && !error) {
@@ -107,24 +107,85 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Add a function to promote/demote admin users
+  // Add a function to promote/demote admin users  
   const toggleAdminStatus = async (userId, makeAdmin) => {
-    if (!isAuthenticated) {
-      return { error: "You must be an admin to perform this action" };
-    }
-
     try {
-      const { error } = await supabase
+      console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
+      
+      // For master admin, we'll need to use a different approach
+      // since we can't use headers() method
+      
+      // Update the user record in the database
+      const { data, error } = await supabase
         .from("users")
         .update({ is_admin: makeAdmin })
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      return { success: true };
+        .eq("id", userId)
+        .select();
+  
+      if (error) {
+        console.error("Error updating admin status:", error);
+        return { error: error.message || "Failed to update admin status" };
+      }
+      
+      console.log("Admin update response:", data);
+      
+      // Verify the update was successful
+      if (!data || data.length === 0) {
+        console.error("No rows were updated");
+        
+        // Special handling for master admin
+        if (localStorage.getItem("adminAuth") === "true") {
+          // Try a direct SQL approach for master admin
+          const { error: directError } = await supabase
+            .rpc('admin_set_user_admin_status', { 
+              target_user_id: userId,
+              is_admin_value: makeAdmin 
+            });
+            
+          if (directError) {
+            console.error("Direct admin update failed:", directError);
+            return { error: directError.message };
+          }
+          
+          return { success: true };
+        }
+        
+        return { error: "No changes were made" };
+      }
+      
+      return { success: true, data: data[0] };
     } catch (error) {
       console.error("Error toggling admin status:", error);
-      return { error: "Failed to update admin status" };
+      return { error: "Failed to update admin status: " + error.message };
+    }
+  };
+  
+  // Make sure this function is included in your exported context
+  
+  // Link a user to a specific Supabase Auth ID (for admin users)
+  const linkUserToSupabaseAuth = async (userId, supabaseAuthId) => {
+    try {
+      // Validate the UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(supabaseAuthId)) {
+        return { error: "Invalid UUID format" };
+      }
+  
+      // Update the user record with the Supabase Auth ID
+      const { error } = await supabase
+        .from("users")
+        .update({ supabase_auth_id: supabaseAuthId })
+        .eq("id", userId);
+  
+      if (error) {
+        console.error("Error linking user to Supabase Auth:", error);
+        return { error: error.message || "Failed to link user" };
+      }
+  
+      return { success: true };
+    } catch (error) {
+      console.error("Error linking user to Supabase Auth:", error);
+      return { error: "Failed to link user: " + error.message };
     }
   };
 
@@ -132,6 +193,7 @@ export function AuthProvider({ children }) {
     if (!userId) return 0;
 
     try {
+      // Make sure claim_requests table has user_id as UUID
       const { error, count } = await supabase
         .from("claim_requests")
         .select("id", { count: "exact", head: true })
@@ -149,6 +211,7 @@ export function AuthProvider({ children }) {
   const fetchUserClaims = async (userId) => {
     try {
       // First fetch the user's claims
+      // player_claims table needs user_id as UUID
       const { data: claimsData, error: claimsError } = await supabase
         .from("player_claims")
         .select("id, wom_id, claimed_at")
@@ -164,12 +227,12 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Get the member details - REMOVE THE 'title' COLUMN FROM THIS QUERY
+      // Get the member details
       const womIds = claimsData.map((claim) => claim.wom_id);
 
       const { data: membersData, error: membersError } = await supabase
         .from("members")
-        .select("wom_id, name, current_lvl, ehb, siege_score") // Removed 'title'
+        .select("wom_id, name, current_lvl, ehb, siege_score")
         .in("wom_id", womIds);
 
       if (membersError) {
@@ -183,7 +246,7 @@ export function AuthProvider({ children }) {
         membersMap[member.wom_id] = member;
       });
 
-      // Combine the data - add a default title property since we're not querying it
+      // Combine the data
       const combinedClaims = claimsData.map((claim) => ({
         ...claim,
         members: membersMap[claim.wom_id] || {
@@ -210,39 +273,101 @@ export function AuthProvider({ children }) {
         .select("id")
         .eq("username", username.trim().toLowerCase())
         .single();
-
+  
       if (existingUser) {
         return { error: "Username already taken" };
       }
-
-      // Hash password
-      const passwordHash = await sha256(password);
-
-      // Insert new user
-      const { data, error } = await supabase
-        .from("users")
-        .insert([
-          {
-            username: username.trim().toLowerCase(),
-            email: null, // Optional for now
-            password_hash: passwordHash,
-          },
-        ])
-        .select();
-
-      if (error) {
-        return { error: "Registration failed" };
+  
+      // First create the user in auth system
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: `${username.trim().toLowerCase()}@example.com`,
+        password: password,
+      });
+  
+      if (authError) {
+        console.error("Auth registration error:", authError);
+        return { error: authError.message || "Registration failed" };
       }
-
-      // Log in the new user
-      localStorage.setItem("userId", data[0].id);
-      localStorage.setItem("user", JSON.stringify(data[0]));
-      setUser(data[0]);
-
+  
+      // Hash password - use a different method to ensure it works
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      console.log("Generated hash:", passwordHash);
+  
+      // Try RPC call instead of direct insert to bypass RLS issues
+      const { error: rpcError } = await supabase.rpc('create_user', {
+        user_id: authData.user.id,
+        user_name: username.trim().toLowerCase(),
+        user_password_hash: passwordHash,
+        is_user_admin: false
+      });
+  
+      if (rpcError) {
+        console.error("RPC error:", rpcError);
+        
+        // Fallback to direct insert if RPC fails
+        const { error } = await supabase
+          .from("users")
+          .insert([
+            {
+              id: authData.user.id,
+              username: username.trim().toLowerCase(),
+              password_hash: passwordHash,
+              is_admin: false,
+            },
+          ])
+          .select();
+          
+        if (error) {
+          console.error("Insert error:", error);
+          return { error: error.message || "Registration failed" };
+        }
+        
+        // After successful direct insert:
+        const created_at = new Date().toISOString();
+        
+        localStorage.setItem("userId", authData.user.id);
+        localStorage.setItem("user", JSON.stringify({
+          id: authData.user.id,
+          username: username.trim().toLowerCase(),
+          is_admin: false,
+          created_at: created_at
+        }));
+        setUser({
+          id: authData.user.id,
+          username: username.trim().toLowerCase(),
+          is_admin: false,
+          created_at: created_at
+        });
+        
+        return { success: true };
+      }
+      
+      // After successful RPC call - need to add created_at here too!
+      const created_at = new Date().toISOString();
+      
+      localStorage.setItem("userId", authData.user.id);
+      localStorage.setItem("user", JSON.stringify({
+        id: authData.user.id,
+        username: username.trim().toLowerCase(),
+        is_admin: false,
+        created_at: created_at  // Add this line
+      }));
+      setUser({
+        id: authData.user.id,
+        username: username.trim().toLowerCase(),
+        is_admin: false,
+        created_at: created_at  // Add this line
+      });
+  
       return { success: true };
     } catch (error) {
       console.error("Registration error:", error);
-      return { error: "Registration failed" };
+      return { error: "Registration failed: " + error.message };
     }
   };
 
@@ -279,11 +404,13 @@ export function AuthProvider({ children }) {
         return { error: "This player has already been claimed" };
       }
 
-      // Get player info - make sure we're querying with the exact same ID type
-      const womId =
-        typeof codeData.wom_id === "string"
-          ? parseInt(codeData.wom_id, 10)
-          : codeData.wom_id;
+      // Get player info - ensure wom_id is handled correctly
+      let womId = codeData.wom_id;
+      
+      // Convert if needed (depends on your wom_id type in members table)
+      if (typeof womId === "string" && !isNaN(womId)) {
+        womId = parseInt(womId, 10);
+      }
 
       const { data: playerData, error: playerError } = await supabase
         .from("members")
@@ -295,22 +422,23 @@ export function AuthProvider({ children }) {
 
       if (playerError) {
         console.warn("Player not found in members table:", playerError);
-        // Continue anyway, as we'll use the ID from claim_codes
       } else if (playerData) {
         playerName = playerData.name;
       }
 
       // Create new claim using the wom_id from the claim code
+      // user.id is now a UUID
       const { error: insertError } = await supabase
         .from("player_claims")
         .insert([
           {
-            user_id: user.id,
+            user_id: user.id, // This is now a UUID
             wom_id: codeData.wom_id,
           },
         ]);
 
       if (insertError) {
+        console.error("Error inserting player claim:", insertError);
         return { error: "Failed to claim player" };
       }
 
@@ -322,7 +450,6 @@ export function AuthProvider({ children }) {
 
       if (updateError) {
         console.error("Error marking code as claimed:", updateError);
-        // Continue anyway, as the player is claimed
       }
 
       // Refresh user claims
@@ -376,7 +503,8 @@ export function AuthProvider({ children }) {
         isLoggedOut,
         fetchUserClaims,
         fetchUserRequestsCount,
-        toggleAdminStatus, // Add this new function
+        toggleAdminStatus,
+        linkUserToSupabaseAuth,
       }}
     >
       {children}

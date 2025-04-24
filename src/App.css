@@ -20,11 +20,6 @@ body, html {
   background-color: black;
 }
 
-/* Page Layout with Navbar */
-.has-navbar {
-  padding-top: 3.5rem; /* Use rem instead of fixed 56px */
-}
-
 /* Standard Page Container - used in most pages */
 .page-container {
   flex: 1;

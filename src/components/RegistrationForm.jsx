@@ -14,28 +14,33 @@ export default function RegistrationForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+  
     // Validate inputs
     if (password !== confirmPassword) {
       setError("Passwords don't match");
       return;
     }
-
+  
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
-
+  
     try {
+      console.log("Starting registration for:", username);
       const result = await register(username, password);
-
+      console.log("Registration result:", result);
+  
       if (result && result.success) {
-        navigate("/profile");
+        console.log("Registration successful, redirecting...");
+        navigate("/profile");  // Make sure this executes
       } else {
-        setError(result.error || "Registration failed");
+        console.error("Registration failed:", result?.error);
+        setError(result?.error || "Registration failed");
       }
     } catch (err) {
-      setError("Connection failed");
+      console.error("Registration exception:", err);
+      setError("Connection failed: " + (err.message || "Unknown error"));
     }
   };
 
