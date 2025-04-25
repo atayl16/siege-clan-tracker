@@ -1,43 +1,11 @@
 /* Base styles */
 .profile-container {
   width: 85%;
-  max-width: 1400px;
-  min-width: 320px;
-  margin: 30px auto;
-  padding: 20px;
-  color: #e0e0e0;
-}
-
-
-@media (min-width: 768px) {
-  .character-list {
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); /* Reduced from 450px */
-  }
-  
-  .character-goals-list {
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); /* Applied earlier than the 1024px breakpoint */
-  }
-}
-
-@media (min-width: 992px) {
-  .profile-container {
-    padding: 20px 40px;
-  }
-  
-  .character-list {
-    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  }
-  
-  .tab-pane {
-    padding: 30px; /* Add more breathing room in the content */
-  }
-}
-
-@media (min-width: 1400px) {
-  .profile-container {
-    max-width: 1800px;
-    padding: 20px 60px;
-  }
+  max-width: 87.5rem; /* 1400px */
+  min-width: 20rem; /* 320px */
+  margin: 1.875rem auto; /* 30px auto */
+  padding: 1.25rem; /* 20px */
+  color: var(--color-text, #e0e0e0);
 }
 
 /* Profile Header */
@@ -45,15 +13,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
+  margin-bottom: 1.875rem; /* 30px */
+  padding-bottom: 1.25rem; /* 20px */
   border-bottom: 1px solid #444;
-}
-
-.profile-header h1 {
-  font-size: 2.2rem;
-  margin: 0;
-  color: #e0e0e0;
 }
 
 .user-summary {
@@ -76,266 +38,67 @@
   margin-left: auto;
 }
 
-/* Tab Navigation */
-.profile-tabs {
-  display: flex;
-  gap: 10px;
-  border-bottom: 1px solid #444;
-  margin-bottom: 30px;
-}
-
-.tab-button {
-  background: none;
-  border: none;
-  color: #aaa;
-  padding: 12px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-}
-
-.tab-button:hover {
-  color: #ff9800;
-}
-
-.tab-button.active {
-  color: #ff9800;
-  border-bottom: 2px solid #ff9800;
-}
-
-.tab-button .badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #ff9800;
-  color: #222;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-/* Tab Content */
-.tab-pane {
-  background-color: #222;
-  border-radius: 8px;
-  padding: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
+/* Tab Header */
 .tab-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 1.5625rem; /* 25px */
 }
 
 .tab-header h2 {
   margin: 0;
-  color: #ff9800;
+  color: var(--color-orange, #ff9800);
   font-size: 1.5rem;
 }
 
-/* Characters Tab */
-.character-list {
-  display: grid;
-  gap: 25px;
-  width: 100%;
-  margin: 0 auto;
+/* Character Card Styling - UNIFIED */
+.ui-character-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.character-card {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.character-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.character-info {
+.ui-character-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.character-name {
-  font-size: 1.3rem;
+.ui-character-name {
+  font-size: 1.4rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-orange, #ff9800);
+  margin-right: 0.625rem; /* 10px */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.character-badge {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
+.ui-character-stats {
+  margin-bottom: 1.25rem; /* 20px */
 }
 
-.character-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+.ui-character-goal-content {
+  margin-top: 1.25rem; /* 20px */
 }
 
-.stat {
-  flex: 1;
-  text-align: center;
-  padding: 12px 5px;
-  background-color: #222;
-  border-radius: 8px;
-  margin: 0 5px;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #ff9800;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.character-actions {
+.ui-character-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
 }
 
-.claim-date {
+.ui-claim-date {
   font-size: 0.8rem;
   color: #777;
+  margin-left: auto;
 }
 
-/* Goals Tab */
-.select-character-prompt {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.select-character-prompt h3 {
-  margin-top: 0;
-  color: #e0e0e0;
-}
-
-.character-selector {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-.character-select-button {
-  background-color: #444;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 15px 25px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.character-select-button:hover {
-  background-color: #ff9800;
-  color: #222;
-  transform: translateY(-3px);
-}
-
-/* Requests Tab */
-.claim-player-section {
-  margin-bottom: 30px;
-  padding-bottom: 30px;
-  border-bottom: 1px solid #444;
-}
-
-.claim-player-section h3 {
-  margin-top: 0;
-  color: #e0e0e0;
-  margin-bottom: 20px;
-}
-
-.pending-requests-section h3 {
-  margin-top: 0;
-  color: #e0e0e0;
-  margin-bottom: 20px;
-}
-
-.requests-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 15px;
-}
-
-.request-card {
-  background-color: #333;
-  border-radius: 8px;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.request-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.request-name {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-.request-badge {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.request-badge.pending {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.request-date {
-  font-size: 0.9rem;
-  color: #777;
-}
-
-/* Account Tab */
-.account-details {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 25px;
-}
-
+/* Account Tab Specific */
 .account-field {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
+  margin-bottom: 1.25rem; /* 20px */
+  padding-bottom: 0.9375rem; /* 15px */
   border-bottom: 1px solid #444;
   display: flex;
   flex-direction: column;
@@ -344,7 +107,7 @@
 .account-field label {
   font-size: 0.9rem;
   color: #aaa;
-  margin-bottom: 5px;
+  margin-bottom: 0.3125rem; /* 5px */
 }
 
 .account-field .field-value {
@@ -354,87 +117,22 @@
 }
 
 .account-actions {
-  margin-top: 30px;
-}
-
-/* Empty States */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  background-color: #333;
-  border-radius: 10px;
-  color: #aaa;
-}
-
-.empty-state h3 {
-  font-size: 1.5rem;
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #e0e0e0;
-}
-
-.empty-state p {
-  font-size: 1rem;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-/* Buttons */
-.action-button {
-  background-color: #444;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-button:hover {
-  background-color: #555;
-  transform: translateY(-2px);
-}
-
-.action-button.primary {
-  background-color: #ff9800;
-  color: #222;
-}
-
-.action-button.primary:hover {
-  background-color: #ff8c00;
-}
-
-.action-button.secondary {
-  background-color: #444;
-  color: #fff;
-}
-
-.action-button.secondary:hover {
-  background-color: #555;
-}
-
-.action-button:disabled {
-  background-color: #444;
-  color: #777;
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+  margin-top: 1.875rem; /* 30px */
 }
 
 /* Login Prompt */
 .profile-not-logged-in {
   text-align: center;
-  padding: 80px 20px;
-  max-width: 600px;
-  margin: 40px auto;
+  padding: 5rem 1.25rem; /* 80px 20px */
+  max-width: 37.5rem; /* 600px */
+  margin: 2.5rem auto; /* 40px auto */
   background-color: #222;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-radius: 0.625rem; /* 10px */
+  box-shadow: 0 0.3125rem 0.9375rem rgba(0, 0, 0, 0.3); /* 0 5px 15px */
 }
 
 .profile-not-logged-in h2 {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem; /* 20px */
   color: #e0e0e0;
   font-size: 2rem;
 }
@@ -442,426 +140,114 @@
 .profile-not-logged-in p {
   font-size: 1.1rem;
   color: #aaa;
-  margin-bottom: 30px;
+  margin-bottom: 1.875rem; /* 30px */
 }
 
-.auth-links {
-  margin-top: 30px;
+.profile-auth-links {
+  margin-top: 1.875rem; /* 30px */
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 1.25rem; /* 20px */
 }
 
-.auth-links a {
-  padding: 12px 25px;
-  border-radius: 6px;
+.profile-auth-links a {
+  padding: 0.75rem 1.5625rem; /* 12px 25px */
+  border-radius: 0.375rem; /* 6px */
   font-weight: 600;
   font-size: 1rem;
   text-decoration: none;
   transition: all 0.3s;
 }
 
-.auth-links .btn-primary {
-  background-color: #ff9800;
+.profile-auth-links .btn-primary {
+  background-color: var(--color-orange, #ff9800);
   color: #1a1a1a;
   border: none;
 }
 
-.auth-links .btn-primary:hover {
+.profile-auth-links .btn-primary:hover {
   background-color: #e67e00;
-  transform: translateY(-3px);
+  transform: translateY(-0.1875rem); /* -3px */
 }
 
-.auth-links .btn-secondary {
+.profile-auth-links .btn-secondary {
   background-color: #333;
   color: #e0e0e0;
   border: 1px solid #444;
 }
 
-.auth-links .btn-secondary:hover {
+.profile-auth-links .btn-secondary:hover {
   background-color: #444;
-  transform: translateY(-3px);
+  transform: translateY(-0.1875rem); /* -3px */
+}
+
+/* Claim player section */
+.claim-player-section {
+  margin-bottom: 1.875rem; /* 30px */
+  padding-bottom: 1.875rem; /* 30px */
+  border-bottom: 1px solid #444;
+}
+
+/* Override GoalsList when inside cards */
+.ui-character-goal-content .ui-goals-container {
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ui-character-goal-content .ui-goals-header {
+  display: none;
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .profile-tabs {
-    flex-wrap: wrap;
-  }
-  
-  .tab-button {
-    flex: 1 0 calc(50% - 10px);
-    justify-content: center;
-  }
-  
-  .character-stats {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .stat {
-    margin: 0;
-  }
-  
-  .character-actions {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
-  
   .profile-header {
     flex-direction: column;
     text-align: center;
   }
   
   .user-summary {
+    flex-direction: column;
     text-align: center;
-    margin-top: 15px;
   }
   
-  .request-card {
+  .username {
+    text-align: center;
+  }
+  
+  .member-since {
+    margin-left: 0;
+    margin-top: 0.625rem; /* 10px */
+    text-align: center;
+  }
+  
+  .ui-character-card-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 0.625rem; /* 10px */
   }
   
-  .request-date {
-    align-self: flex-end;
-  }
-}
-
-.tab-content {
-  width: 100%;
-  display: block;
-  margin-top: 0;
-  position: relative;
-  z-index: 1;
-}
-
-/* Ensure tab panes have proper dimensions */
-.tab-pane {
-  width: 100%;
-  min-height: 200px; /* Ensures there's always some visible height */
-  display: block;
-}
-
-/* Make sure content within tab panes is visible */
-.tab-pane > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* Make sure empty states are visible */
-.empty-state {
-  width: 100%;
-  display: block;
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.profile-container .tab-content,
-.profile-container .tab-pane {
-  display: block !important; /* Force display with !important */
-  visibility: visible !important;
-  opacity: 1 !important;
-  height: auto !important;
-  overflow: visible !important;
-  max-height: none !important;
-}
-
-/* Higher z-index to ensure content appears above other elements */
-.profile-container .tab-content {
-  position: relative;
-  z-index: 5;
-}
-
-/* Make tab pane background solid to hide any elements behind it */
-.profile-container .tab-pane {
-  background-color: #222;
-  position: relative;
-}
-
-/* Ensure correct positioning of tab pane content */
-.profile-container .tab-header,
-.profile-container .character-list,
-.profile-container .empty-state,
-.profile-container .account-details,
-.profile-container .claim-player-section,
-.profile-container .pending-requests-section {
-  position: relative;
-  z-index: 6;
-}
-
-/* Fix for action button layout issues */
-.character-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  flex-direction: row !important; /* Force row layout */
-}
-
-.action-button {
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: auto !important;
-}
-
-.action-button.primary {
-  margin-right: auto !important;
-}
-
-.claim-date {
-  margin-left: auto;
-}
-
-/* Fix media query that's causing stacking */
-@media (max-width: 768px) {
-  .character-actions {
-    flex-direction: row !important;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .character-actions .action-button {
-    margin-right: auto !important;
-  }
-  
-  .claim-date {
-    width: 100%;
-    text-align: right;
-    margin-top: 8px;
-  }
-}
-
-/* Character Goals Tab Styling */
-.character-goals-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 25px;
-}
-
-.character-goal-card {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-}
-
-.character-goal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
-}
-
-.character-goal-name {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-.character-goal-stats {
-  display: flex;
-  gap: 15px;
-}
-
-.mini-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #222;
-  padding: 8px 15px;
-  border-radius: 6px;
-}
-
-.mini-stat-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #ff9800;
-}
-
-.mini-stat-label {
-  font-size: 0.75rem;
-  color: #aaa;
-  text-transform: uppercase;
-}
-
-.character-goal-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 15px;
-}
-
-.character-goal-content {
-  margin-top: 15px;
-}
-
-/* Make sure goals container fits in the card */
-.character-goal-content .goals-container {
-  background-color: transparent;
-  padding: 0;
-  margin: 0;
-  box-shadow: none;
-}
-
-.character-goal-content .goals-header {
-  display: none;
-}
-
-/* Media query for larger screens */
-@media (min-width: 1024px) {
-  .character-goals-list {
-    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  }
-}
-
-/* Enhanced Character Goal Card Styling */
-.character-goal-card {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  margin-bottom: 25px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.character-goal-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
-.character-goal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
-}
-
-.character-goal-name {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #ff9800;
-}
-
-.character-goal-stats {
-  display: flex;
-  gap: 15px;
-}
-
-.mini-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #222;
-  padding: 10px 15px;
-  border-radius: 6px;
-}
-
-.mini-stat-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #ff9800;
-}
-
-.mini-stat-label {
-  font-size: 0.75rem;
-  color: #aaa;
-  text-transform: uppercase;
-}
-
-/* Override GoalsList styling when inside character goal card */
-.character-goal-content .goals-container {
-  background-color: transparent;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-}
-
-.character-goal-content .goals-header {
-  display: none;
-}
-
-.character-goal-content .goals-actions {
-  justify-content: flex-end;
-}
-
-.character-goal-content .goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.character-goal-content .goal-card {
-  background-color: #222;
-  padding: 18px;
-  margin: 0;
-}
-
-.character-goal-content .goal-header {
-  border-bottom: 1px solid #444;
-  padding-bottom: 12px;
-  margin-bottom: 15px;
-}
-
-.character-goal-content .goal-progress {
-  margin: 15px 0;
-}
-
-/* Fix goal progress styling */
-.character-goal-content .progress-header {
-  margin-bottom: 8px;
-}
-
-.character-goal-content .goal-progress-container {
-  height: 10px;
-  margin: 10px 0;
-}
-
-/* Better loading state */
-.character-goal-content .loading-indicator {
-  padding: 20px;
-  text-align: center;
-  color: #aaa;
-  font-style: italic;
-  background-color: #222;
-  border-radius: 8px;
-}
-
-/* No goals state */
-.character-goal-content .no-goals {
-  background-color: #222;
-  padding: 25px;
-  text-align: center;
-  border-radius: 8px;
-}
-
-/* Make it responsive */
-@media (max-width: 768px) {
-  .character-goal-header {
+  .ui-character-card-footer {
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    gap: 0.9375rem; /* 15px */
   }
   
-  .character-goal-stats {
-    width: 100%;
-    justify-content: space-around;
+  .ui-claim-date {
+    margin-left: 0;
   }
-  
-  .character-goal-content .goals-actions {
-    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .profile-container {
+    padding: 1.25rem 2.5rem; /* 20px 40px */
   }
-  
-  .character-goal-content .goals-actions button {
-    width: 100%;
+}
+
+@media (min-width: 1400px) {
+  .profile-container {
+    max-width: 112.5rem; /* 1800px */
+    padding: 1.25rem 3.75rem; /* 20px 60px */
   }
 }

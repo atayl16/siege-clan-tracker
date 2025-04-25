@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import "./EventsTable.css";
 
-// Add limit parameters with default values of null (meaning no limit)
 export default function EventsTable({ 
   events, 
   activeLimit = null, 
@@ -50,7 +49,7 @@ export default function EventsTable({
       upcomingEvents: limitedUpcoming,
       recentCompletedEvents: limitedCompleted,
     };
-  }, [events, activeLimit, upcomingLimit, completedLimit]); // Add limits to dependencies
+  }, [events, activeLimit, upcomingLimit, completedLimit]);
 
   // Format the date consistently (handles UTC correctly)
   const formatDate = (dateString) => {
@@ -95,108 +94,133 @@ export default function EventsTable({
 
   if (events.length === 0) {
     return (
-      <div className="alert alert-info">No events found</div>
+      <div className="ui-empty-message">
+        <p>No events found</p>
+      </div>
     );
   }
 
+  // Check if any category has events
+  const hasActiveEvents = activeEvents.length > 0;
+  const hasUpcomingEvents = upcomingEvents.length > 0;
+  const hasCompletedEvents = recentCompletedEvents.length > 0;
+
   return (
-    <div className="events-tables">
-      {activeEvents.length > 0 && (
-        <div className="event-section">
-          {!hideHeaders && <h5 className="mb-3">Active Events</h5>}
-          <table className="table table-dark table-hover table-sm">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Ends</th>
-                <th>Remaining</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeEvents.map((event) => (
-                <tr key={event.id} className="table-success">
-                  <td>
-                    <strong>{event.name}</strong>
-                  </td>
-                  <td>
-                    {formatDate(event.end_date)} at {formatTime(event.end_date)}
-                  </td>
-                  <td>
-                    <span className="badge bg-warning text-dark">
-                      {formatRelativeTime(event.timeRemaining)} left
-                    </span>
-                  </td>
+    <div className="ui-events-tables">
+      {hasActiveEvents && (
+        <div className="ui-event-section">
+          {!hideHeaders && (
+            <h3 className="ui-section-heading">Active Events</h3>
+          )}
+          <div className="ui-table-container">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Ends</th>
+                  <th>Remaining</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {upcomingEvents.length > 0 && (
-        <div className="event-section mt-4">
-          {!hideHeaders && <h5 className="mb-3">Upcoming Events</h5>}
-          <table className="table table-dark table-hover table-sm">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Starts</th>
-                <th>Starting In</th>
-              </tr>
-            </thead>
-            <tbody>
-              {upcomingEvents.map((event) => (
-                <tr key={event.id} className="table-info">
-                  <td>
-                    <strong>{event.name}</strong>
-                  </td>
-                  <td>
-                    {formatDate(event.start_date)} at{" "}
-                    {formatTime(event.start_date)}
-                  </td>
-                  <td>
-                    <span className="badge bg-secondary">
-                      {formatRelativeTime(event.timeUntil)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {recentCompletedEvents.length > 0 && (
-        <div className="event-section mt-4">
-          {!hideHeaders && <h5 className="mb-3">Completed Events</h5>}
-          <table className="table table-dark table-hover table-sm">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Ended</th>
-                <th>Winner</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentCompletedEvents.map((event) => (
-                <tr key={event.id} className="table-secondary">
-                  <td>
-                    <strong>{event.name}</strong>
-                  </td>
-                  <td>{formatDate(event.end_date)}</td>
-                  <td>
-                    {event.winner_username ? (
-                      <span className="winner-badge">
-                        🏆 {event.winner_username}
+              </thead>
+              <tbody>
+                {activeEvents.map((event) => (
+                  <tr key={event.id} className="ui-event-row ui-event-active">
+                    <td>
+                      <strong className="ui-event-name">{event.name}</strong>
+                    </td>
+                    <td className="ui-event-date">
+                      {formatDate(event.end_date)} at {formatTime(event.end_date)}
+                    </td>
+                    <td>
+                      <span className="ui-badge ui-badge-warning">
+                        {formatRelativeTime(event.timeRemaining)} left
                       </span>
-                    ) : (
-                      <span className="text-muted">No winner recorded</span>
-                    )}
-                  </td>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {hasUpcomingEvents && (
+        <div className="ui-event-section">
+          {!hideHeaders && (
+            <h3 className="ui-section-heading">Upcoming Events</h3>
+          )}
+          <div className="ui-table-container">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Starts</th>
+                  <th>Starting In</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {upcomingEvents.map((event) => (
+                  <tr key={event.id} className="ui-event-row ui-event-upcoming">
+                    <td>
+                      <strong className="ui-event-name">{event.name}</strong>
+                    </td>
+                    <td className="ui-event-date">
+                      {formatDate(event.start_date)} at {formatTime(event.start_date)}
+                    </td>
+                    <td>
+                      <span className="ui-badge ui-badge-info">
+                        {formatRelativeTime(event.timeUntil)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {hasCompletedEvents && (
+        <div className="ui-event-section">
+          {!hideHeaders && (
+            <h3 className="ui-section-heading">Completed Events</h3>
+          )}
+          <div className="ui-table-container">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Ended</th>
+                  <th>Winner</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentCompletedEvents.map((event) => (
+                  <tr key={event.id} className="ui-event-row ui-event-completed">
+                    <td>
+                      <strong className="ui-event-name">{event.name}</strong>
+                    </td>
+                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
+                    <td>
+                      {event.winner_username ? (
+                        <span className="ui-winner-badge">
+                          🏆 {event.winner_username}
+                        </span>
+                      ) : (
+                        <span className="ui-text-muted">No winner recorded</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Show message if no events of any type are available */}
+      {!hasActiveEvents && !hasUpcomingEvents && !hasCompletedEvents && (
+        <div className="ui-empty-message">
+          <p>No events available</p>
         </div>
       )}
     </div>

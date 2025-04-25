@@ -1,0 +1,206 @@
+/* Admin table container */
+.ui-admin-table-container {
+  border-radius: var(--border-radius-lg, 0.5rem);
+  overflow: hidden;
+  box-shadow: var(--shadow-md, 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2));
+  margin-bottom: 1.5rem;
+  background-color: #222;
+}
+
+.ui-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ui-table th {
+  background-color: #222;
+  position: sticky;
+  top: 0;
+  border-bottom: 0.125rem solid #444;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
+  padding: 0.625rem 0.5rem;
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.03125rem;
+}
+
+.ui-table td {
+  padding: 0.625rem 0.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.ui-table tbody tr {
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 0.2s);
+}
+
+.ui-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Text alignment helpers */
+.ui-text-center {
+  text-align: center;
+}
+
+.ui-position-relative {
+  position: relative;
+}
+
+/* Action buttons cell */
+.ui-admin-actions-cell {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.5rem, auto));
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Player name cell */
+.ui-player-name-cell {
+  font-weight: 500;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-player-name-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ui-expand-icon {
+  margin-left: 0.5rem;
+  opacity: 0.5;
+  font-size: 0.75rem;
+}
+
+/* Expanded row styling */
+.ui-row-expanded {
+  background-color: #2a2a2a !important;
+}
+
+.ui-expanded-details-row td {
+  padding: 0;
+  background-color: #2a2a2a;
+}
+
+/* Details grid for expanded content */
+.ui-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+  gap: 0.9375rem;
+}
+
+.ui-detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-detail-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 0.1875rem;
+}
+
+.ui-detail-value {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Role mismatch styles */
+.ui-role-mismatch-row {
+  position: relative;
+  background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.ui-role-badge {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  height: auto;
+}
+
+.ui-role-mismatch-alert {
+  background-color: rgba(255, 193, 7, 0.2);
+  padding: 0.5rem;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin-bottom: 0.625rem;
+  grid-column: 1 / -1;
+}
+
+/* Hidden member styles */
+.ui-hidden-member-row {
+  opacity: 0.7;
+  font-style: italic;
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.ui-hidden-member-row td {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .ui-table th {
+    padding: 0.5rem 0.375rem;
+    font-size: 0.875rem;
+  }
+  
+  .ui-table td {
+    padding: 0.5rem 0.375rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .ui-admin-actions-cell {
+    grid-template-columns: repeat(3, auto);
+    gap: 0.375rem;
+  }
+  
+  .ui-table th {
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .ui-details-grid {
+    grid-template-columns: repeat(auto-fill, minmax(9.375rem, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-admin-actions-cell {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ui-detail-label {
+    font-size: 0.75rem;
+  }
+  
+  .ui-detail-value {
+    font-size: 0.9375rem;
+  }
+  
+  .ui-details-grid {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+}

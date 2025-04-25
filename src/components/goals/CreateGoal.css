@@ -1,0 +1,235 @@
+/* Create Goal Container */
+.ui-create-goal-container {
+  width: 100%;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* Form Header */
+.ui-goal-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-3, 1.5rem);
+}
+
+.ui-goal-form-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.25rem);
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-close-button {
+  padding: 0;
+}
+
+/* Form Layout */
+.ui-goal-creation-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3, 1.5rem);
+}
+
+.ui-form-section {
+  background-color: rgba(34, 34, 34, 0.6);
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: var(--spacing-2, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 1rem);
+}
+
+.ui-form-group {
+  margin-bottom: var(--spacing-2, 1rem);
+}
+
+.ui-form-label {
+  display: block;
+  margin-bottom: var(--spacing-1, 0.5rem);
+  font-weight: 500;
+  color: #aaa;
+}
+
+/* Goal Type Buttons */
+.ui-goal-type-buttons {
+  display: flex;
+  gap: var(--spacing-2, 1rem);
+  margin-bottom: var(--spacing-2, 1rem);
+}
+
+.ui-type-button {
+  flex: 1;
+}
+
+.ui-button-icon {
+  margin-right: var(--spacing-1, 0.5rem);
+  font-size: 1.1em;
+}
+
+/* Form Controls */
+.ui-form-select,
+.ui-form-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  background-color: #333;
+  border: 1px solid #444;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  color: var(--color-text, #e0e0e0);
+  font-size: 0.9375rem;
+}
+
+.ui-form-select:focus,
+.ui-form-input:focus {
+  outline: none;
+  border-color: var(--color-orange, #ff9800);
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.25);
+}
+
+.ui-form-row {
+  display: flex;
+  gap: var(--spacing-2, 1rem);
+}
+
+.ui-flex-grow {
+  flex: 1;
+}
+
+/* Loading Indicator */
+.ui-loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-2, 1rem) 0;
+}
+
+.ui-loading-spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid rgba(255, 152, 0, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--color-orange, #ff9800);
+  animation: ui-spin 1s linear infinite;
+  margin-bottom: var(--spacing-1, 0.5rem);
+}
+
+.ui-loading-text {
+  color: #aaa;
+  font-size: 0.875rem;
+}
+
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Current Stats Card */
+.ui-current-stats {
+  margin-top: var(--spacing-2, 1rem);
+}
+
+.ui-stats-label {
+  font-size: 0.875rem;
+  color: #aaa;
+  margin-bottom: var(--spacing-1, 0.5rem);
+}
+
+.ui-stats-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* Option Cards */
+.ui-option-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-2, 1rem);
+}
+
+.ui-option-card {
+  cursor: pointer;
+  height: 100%;
+  transition: all var(--transition-normal, 0.3s);
+}
+
+.ui-option-card.ui-selected {
+  border: 1px solid var(--color-orange, #ff9800);
+}
+
+.ui-option-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-2, 1rem);
+}
+
+.ui-option-card-icon {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-1, 0.5rem);
+  color: var(--color-orange, #ff9800);
+  height: 2rem;
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 152, 0, 0.1);
+  border-radius: 50%;
+}
+
+.ui-option-card-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-option-card-description {
+  font-size: 0.8rem;
+  color: #aaa;
+  display: block;
+}
+
+/* Form Actions */
+.ui-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2, 1rem);
+  margin-top: var(--spacing-1, 0.5rem);
+}
+
+/* Error Message */
+.ui-message {
+  padding: var(--spacing-2, 1rem);
+  margin-bottom: var(--spacing-3, 1.5rem);
+  border-radius: var(--border-radius-md, 0.5rem);
+}
+
+.ui-message-error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #ff6b6b;
+  border-left: 0.25rem solid var(--color-danger, #dc3545);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .ui-form-row {
+    flex-direction: column;
+  }
+  
+  .ui-option-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-goal-type-buttons {
+    flex-direction: column;
+  }
+  
+  .ui-form-actions {
+    flex-direction: column;
+  }
+  
+  .ui-form-actions button {
+    width: 100%;
+  }
+}

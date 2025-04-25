@@ -1,0 +1,91 @@
+/* Import variables */
+@import './variables.css';
+
+/* Base Styles */
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+code {
+  font-family: var(--font-family-code);
+}
+
+/* Typography scale */
+h1 {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--spacing-3);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-2);
+}
+
+h3 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-2);
+}
+
+h4 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-1);
+}
+
+p, ul, ol {
+  margin-bottom: var(--spacing-2);
+}
+
+/* Utility Classes */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-error {
+  color: var(--color-danger);
+}
+
+/* Spacing utilities */
+.mb-1 { margin-bottom: var(--spacing-1); }
+.mb-2 { margin-bottom: var(--spacing-2); }
+.mb-3 { margin-bottom: var(--spacing-3); }
+.mb-4 { margin-bottom: var(--spacing-4); }
+
+.mt-1 { margin-top: var(--spacing-1); }
+.mt-2 { margin-top: var(--spacing-2); }
+.mt-3 { margin-top: var(--spacing-3); }
+.mt-4 { margin-top: var(--spacing-4); }
+
+.p-1 { padding: var(--spacing-1); }
+.p-2 { padding: var(--spacing-2); }
+.p-3 { padding: var(--spacing-3); }
+.p-4 { padding: var(--spacing-4); }
+
+/* Button Styles */
+button {
+  background: var(--color-primary);
+  color: var(--color-white, #fff);
+  border: none;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-normal) ease;
+  font-size: var(--font-size-md);
+}
+
+button:hover {
+  background: var(--color-primary-hover);
+}
+
+button:disabled {
+  background: var(--color-disabled);
+  cursor: not-allowed;
+}

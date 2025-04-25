@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from "../../supabaseClient";
 import { fetchWomMetrics, fetchPlayerStats } from "../../utils/womApi";
-import { FaLock, FaGlobe, FaArrowUp, FaTrophy } from "react-icons/fa";
+import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes } from "react-icons/fa";
 import { titleize } from '../../utils/stringUtils';
+
+// Import UI components
+import Button from "../ui/Button";
+import FormInput from "../ui/FormInput";
+import Card from "../ui/Card";
+import "./CreateGoal.css";
 
 export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) {
   const [goalType, setGoalType] = useState("skill");
@@ -57,7 +63,7 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
     if (selectedMetric && player.wom_id) {
       fetchStats();
     }
-  }, [selectedMetric, player.wom_id, fetchStats]); // Add fetchStats to dependencies
+  }, [selectedMetric, player.wom_id, fetchStats]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,48 +140,61 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   };
 
   return (
-    <div className="create-goal-container compact">
-      <div className="goal-form-header">
+    <div className="ui-create-goal-container">
+      <div className="ui-goal-form-header">
         <h3>New Goal for {titleize(player.name)}</h3>
+        <Button 
+          variant="text" 
+          size="sm" 
+          onClick={onCancel}
+          icon={<FaTimes />}
+          className="ui-close-button"
+        />
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="ui-message ui-message-error">
+          <span>{error}</span>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="goal-creation-form">
+      <form onSubmit={handleSubmit} className="ui-goal-creation-form">
         {/* Section 1: Goal Type & Metric Selection */}
-        <div className="form-section">
-          <div className="form-group">
-            <div className="goal-type-buttons">
-              <button
+        <div className="ui-form-section">
+          <div className="ui-form-group">
+            <div className="ui-goal-type-buttons">
+              <Button
                 type="button"
-                className={`type-button ${
-                  goalType === "skill" ? "active" : ""
-                }`}
+                variant={goalType === "skill" ? "primary" : "secondary"}
                 onClick={() => setGoalType("skill")}
+                className="ui-type-button"
               >
-                <span className="button-icon">📊</span> Skill
-              </button>
-              <button
+                <span className="ui-button-icon">📊</span> Skill
+              </Button>
+              <Button
                 type="button"
-                className={`type-button ${goalType === "boss" ? "active" : ""}`}
+                variant={goalType === "boss" ? "primary" : "secondary"}
                 onClick={() => setGoalType("boss")}
+                className="ui-type-button"
               >
-                <span className="button-icon">👹</span> Boss
-              </button>
+                <span className="ui-button-icon">👹</span> Boss
+              </Button>
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="ui-form-group">
             {loadingMetrics ? (
-              <div className="loading-indicator">Loading options...</div>
+              <div className="ui-loading-indicator">
+                <div className="ui-loading-spinner"></div>
+                <div className="ui-loading-text">Loading options...</div>
+              </div>
             ) : (
               <select
                 value={selectedMetric}
                 onChange={(e) => setSelectedMetric(e.target.value)}
                 required
                 disabled={loadingMetrics}
-                className="form-select"
-                placeholder={`Select ${goalType}`}
+                className="ui-form-select"
               >
                 <option value="">-- Select {goalType} --</option>
                 {metrics.map((metric) => (
@@ -188,71 +207,79 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
           </div>
 
           {currentStats && (
-            <div className="current-stats">
-              <div className="stats-label">
-                Current {goalType === "skill" ? "XP" : "Kills"}
-              </div>
-              <div className="stats-value">
-                {goalType === "skill"
-                  ? (currentStats.experience !== undefined
-                      ? currentStats.experience
-                      : 0
-                    ).toLocaleString()
-                  : (currentStats.kills !== undefined
-                      ? currentStats.kills
-                      : 0
-                    ).toLocaleString()}
-              </div>
-            </div>
+            <Card variant="dark" className="ui-current-stats">
+              <Card.Body>
+                <div className="ui-stats-label">
+                  Current {goalType === "skill" ? "XP" : "Kills"}
+                </div>
+                <div className="ui-stats-value">
+                  {goalType === "skill"
+                    ? (currentStats.experience !== undefined
+                        ? currentStats.experience
+                        : 0
+                      ).toLocaleString()
+                    : (currentStats.kills !== undefined
+                        ? currentStats.kills
+                        : 0
+                      ).toLocaleString()}
+                </div>
+              </Card.Body>
+            </Card>
           )}
         </div>
 
-        {/* Card-style Target Mode Selection */}
-        <div className="form-group">
-          <div className="option-cards">
-            <button
-              type="button"
-              className={`option-card ${
-                targetMode === "gain" ? "selected" : ""
-              }`}
+        {/* Target Mode Selection */}
+        <div className="ui-form-group">
+          <label className="ui-form-label">Target Type</label>
+          <div className="ui-option-cards">
+            <Card 
+              className={`ui-option-card ${targetMode === "gain" ? "ui-selected" : ""}`}
               onClick={() => setTargetMode("gain")}
+              variant={targetMode === "gain" ? "primary" : "dark"}
+              clickable
             >
-              <div className="option-card-icon">
-                <FaArrowUp />
-              </div>
-              <div className="option-card-content">
-                <span className="option-card-title">Gain Amount</span>
-                <span className="option-card-description">
-                  Add to current {goalType === "skill" ? "XP" : "kills"}
-                </span>
-              </div>
-            </button>
+              <Card.Body className="ui-option-card-body">
+                <div className="ui-option-card-icon">
+                  <FaArrowUp />
+                </div>
+                <div className="ui-option-card-content">
+                  <span className="ui-option-card-title">Gain Amount</span>
+                  <span className="ui-option-card-description">
+                    Add to current {goalType === "skill" ? "XP" : "kills"}
+                  </span>
+                </div>
+              </Card.Body>
+            </Card>
 
-            <button
-              type="button"
-              className={`option-card ${
-                targetMode === "total" ? "selected" : ""
-              }`}
+            <Card
+              className={`ui-option-card ${targetMode === "total" ? "ui-selected" : ""}`}
               onClick={() => setTargetMode("total")}
+              variant={targetMode === "total" ? "primary" : "dark"}
+              clickable
             >
-              <div className="option-card-icon">
-                <FaTrophy />
-              </div>
-              <div className="option-card-content">
-                <span className="option-card-title">Total Goal</span>
-                <span className="option-card-description">
-                  Set exact target {goalType === "skill" ? "XP" : "kills"}
-                </span>
-              </div>
-            </button>
+              <Card.Body className="ui-option-card-body">
+                <div className="ui-option-card-icon">
+                  <FaTrophy />
+                </div>
+                <div className="ui-option-card-content">
+                  <span className="ui-option-card-title">Total Goal</span>
+                  <span className="ui-option-card-description">
+                    Set exact target {goalType === "skill" ? "XP" : "kills"}
+                  </span>
+                </div>
+              </Card.Body>
+            </Card>
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group flex-grow">
+        <div className="ui-form-row">
+          <div className="ui-form-group ui-flex-grow">
+            <label className="ui-form-label">
+              {targetMode === "total" ? "Target Value" : "Amount to Gain"}
+            </label>
             <input
               type="number"
-              className="form-input"
+              className="ui-form-input"
               min={
                 targetMode === "total"
                   ? currentStats
@@ -264,79 +291,83 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               }
               value={targetValue}
               onChange={(e) => setTargetValue(e.target.value)}
-              placeholder={
-                targetMode === "total" ? "Target value" : "Amount to gain"
-              }
               required
             />
           </div>
 
-          <div className="form-group flex-grow">
+          <div className="ui-form-group ui-flex-grow">
+            <label className="ui-form-label">Target Date (Optional)</label>
             <input
               type="date"
-              className="form-input"
+              className="ui-form-input"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              placeholder="Target date (optional)"
             />
           </div>
         </div>
 
-        {/* Card-style Privacy Selection */}
-        <div className="form-group">
-          <div className="option-cards privacy-cards">
-            <button
-              type="button"
-              className={`option-card ${!isPublic ? "selected" : ""}`}
+        {/* Privacy Selection */}
+        <div className="ui-form-group">
+          <label className="ui-form-label">Goal Privacy</label>
+          <div className="ui-option-cards ui-privacy-cards">
+            <Card
+              className={`ui-option-card ${!isPublic ? "ui-selected" : ""}`}
               onClick={() => setIsPublic(false)}
+              variant={!isPublic ? "primary" : "dark"}
+              clickable
             >
-              <div className="option-card-icon">
-                <FaLock />
-              </div>
-              <div className="option-card-content">
-                <span className="option-card-title">Private</span>
-                <span className="option-card-description">
-                  Only visible to you
-                </span>
-              </div>
-            </button>
+              <Card.Body className="ui-option-card-body">
+                <div className="ui-option-card-icon">
+                  <FaLock />
+                </div>
+                <div className="ui-option-card-content">
+                  <span className="ui-option-card-title">Private</span>
+                  <span className="ui-option-card-description">
+                    Only visible to you
+                  </span>
+                </div>
+              </Card.Body>
+            </Card>
 
-            <button
-              type="button"
-              className={`option-card ${isPublic ? "selected" : ""}`}
+            <Card
+              className={`ui-option-card ${isPublic ? "ui-selected" : ""}`}
               onClick={() => setIsPublic(true)}
+              variant={isPublic ? "primary" : "dark"}
+              clickable
             >
-              <div className="option-card-icon">
-                <FaGlobe />
-              </div>
-              <div className="option-card-content">
-                <span className="option-card-title">Public</span>
-                <span className="option-card-description">
-                  Visible to other players
-                </span>
-              </div>
-            </button>
+              <Card.Body className="ui-option-card-body">
+                <div className="ui-option-card-icon">
+                  <FaGlobe />
+                </div>
+                <div className="ui-option-card-content">
+                  <span className="ui-option-card-title">Public</span>
+                  <span className="ui-option-card-description">
+                    Visible to other players
+                  </span>
+                </div>
+              </Card.Body>
+            </Card>
           </div>
         </div>
 
         {/* Form Actions */}
-        <div className="form-actions">
-          <button
+        <div className="ui-form-actions">
+          <Button
             type="button"
-            className="cancel-button"
+            variant="secondary"
             onClick={onCancel}
             disabled={loading}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="submit-button"
+            variant="primary"
             disabled={loading || !selectedMetric || !targetValue}
           >
             {loading ? "Creating..." : "Create Goal"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import "./AdminLogin.css";
+import "./Login.css";
 
 export default function ForgotPassword() {
   const [username, setUsername] = useState("");

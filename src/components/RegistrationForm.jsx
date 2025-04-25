@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Card from "./ui/Card";
+import Button from "./ui/Button";
+import FormInput from "./ui/FormInput";
+import { FaUserPlus, FaLock, FaExclamationTriangle } from "react-icons/fa";
 import "./RegistrationForm.css";
 
 export default function RegistrationForm() {
@@ -8,21 +12,25 @@ export default function RegistrationForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsProcessing(true);
   
     // Validate inputs
     if (password !== confirmPassword) {
       setError("Passwords don't match");
+      setIsProcessing(false);
       return;
     }
   
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
+      setIsProcessing(false);
       return;
     }
   
@@ -33,7 +41,7 @@ export default function RegistrationForm() {
   
       if (result && result.success) {
         console.log("Registration successful, redirecting...");
-        navigate("/profile");  // Make sure this executes
+        navigate("/profile");
       } else {
         console.error("Registration failed:", result?.error);
         setError(result?.error || "Registration failed");
@@ -41,52 +49,79 @@ export default function RegistrationForm() {
     } catch (err) {
       console.error("Registration exception:", err);
       setError("Connection failed: " + (err.message || "Unknown error"));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   return (
-    <div className="register-container">
-      <h2>Create an Account</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter a username"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Confirm Password:</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm password"
-            required
-          />
-        </div>
-        {error && <div className="error-message">{error}</div>}
-        <button type="submit" className="register-button">
-          Register
-        </button>
+    <div className="ui-auth-container">
+      <Card variant="dark" className="ui-auth-card">
+        <Card.Header>
+          <h2 className="ui-auth-title">
+            <FaUserPlus className="ui-auth-icon" /> Create an Account
+          </h2>
+        </Card.Header>
+        
+        <Card.Body>
+          {error && (
+            <div className="ui-message ui-message-error">
+              <FaExclamationTriangle className="ui-message-icon" />
+              <span>{error}</span>
+            </div>
+          )}
 
-        <div className="login-link">
-          Already have an account? <Link to="/login">Login here</Link>
-        </div>
-      </form>
+          <form onSubmit={handleSubmit} className="ui-auth-form">
+            <FormInput
+              id="username"
+              label="Username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter a username"
+              required
+              disabled={isProcessing}
+            />
+            
+            <FormInput
+              id="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              required
+              disabled={isProcessing}
+            />
+            
+            <FormInput
+              id="confirm-password"
+              label="Confirm Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              required
+              disabled={isProcessing}
+            />
+            
+            <div className="ui-form-actions">
+              <Button 
+                type="submit" 
+                variant="primary"
+                disabled={isProcessing}
+                icon={<FaUserPlus />}
+              >
+                {isProcessing ? "Registering..." : "Register"}
+              </Button>
+            </div>
+          </form>
+          
+          <div className="ui-auth-redirect">
+            Already have an account? <Link to="/login" className="ui-auth-link">Login here</Link>
+          </div>
+        </Card.Body>
+      </Card>
     </div>
   );
 }

@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import './EventManagement.css';
+import { FaEdit, FaTrash, FaCalendarPlus, FaSync, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
+
+// Import UI components
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Modal from './ui/Modal';
+import EmptyState from './ui/EmptyState';
+import DataTable from './ui/DataTable';
+import Badge from './ui/Badge';
+
 import EventEditor from './EventEditor';
 import WomSyncButton from './WomSyncButton';
-import { FaEdit, FaTrash, FaCalendarPlus, FaSync } from 'react-icons/fa';
+
+import './EventManagement.css';
 
 export default function EventManagement() {
   const [events, setEvents] = useState([]);
@@ -26,8 +36,6 @@ export default function EventManagement() {
         .order('start_date', { ascending: false });
       
       if (error) throw error;
-      
-      console.log("Events data:", data); // Debug log
       setEvents(data || []);
     } catch (err) {
       console.error('Error fetching events:', err);
@@ -118,220 +126,266 @@ export default function EventManagement() {
     return toTitleCase(event.type || "Custom");
   };
 
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'Active':
+        return <Badge variant="success">{status}</Badge>;
+      case 'Upcoming':
+        return <Badge variant="info">{status}</Badge>;
+      case 'Completed':
+        return <Badge variant="secondary">{status}</Badge>;
+      default:
+        return <Badge variant="warning">{status}</Badge>;
+    }
+  };
+
+  // Define columns for the events table
+  const eventColumns = [
+    {
+      header: 'Event Name',
+      accessor: 'name',
+      render: (event) => {
+        return (
+          <div className="ui-event-name">
+            {event.name}
+            {event.is_wom && <span className="ui-event-tag">WOM</span>}
+          </div>
+        );
+      }
+    },
+    {
+      header: 'Type',
+      accessor: 'type',
+      render: (event) => formatEventType(event)
+    },
+    {
+      header: 'Start Date',
+      accessor: 'start_date',
+      render: (event) => formatDate(event.start_date)
+    },
+    {
+      header: 'End Date',
+      accessor: 'end_date',
+      render: (event) => formatDate(event.end_date)
+    },
+    {
+      header: 'Status',
+      render: (event) => getStatusBadge(getEventStatus(event))
+    },
+    {
+      header: 'Actions',
+      render: (event) => (
+        <div className="ui-event-actions">
+          {!event.is_wom && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<FaEdit />}
+                onClick={() => handleEditEvent(event)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<FaTrash />}
+                onClick={() => handleDeleteClick(event)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+          {event.is_wom && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <a 
+                href={`https://wiseoldman.net/competitions/${event.wom_id}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  background: 'rgba(23, 162, 184, 0.15)', 
+                  color: '#17a2b8', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  padding: '4px 8px', 
+                  fontSize: '0.85rem', 
+                  cursor: 'pointer',
+                  textDecoration: 'none'
+                }}
+                title="View in Wise Old Man"
+              >
+                <FaEdit style={{ marginRight: '4px' }} /> Edit in WOM
+              </a>
+            </div>
+          )}
+        </div>
+      )
+    }
+  ];
+
   if (loading && events.length === 0) {
-    return <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">Loading events data...</div>
-    </div>;
+    return (
+      <div className="ui-loading-container">
+        <div className="ui-loading-spinner"></div>
+        <div className="ui-loading-text">Loading events data...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="event-management">
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {deleteConfirm && (
-        <div className="delete-confirm-modal">
-          <div className="delete-confirm-content">
-            <h4>Confirm Deletion</h4>
-            <p>
-              Are you sure you want to delete the event{" "}
-              <strong>{deleteConfirm.name}</strong>?
-            </p>
-            <p className="warning">This action cannot be undone.</p>
-
-            <div className="button-group">
-              <button className="btn btn-danger" onClick={handleDeleteEvent}>
-                Delete Event
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setDeleteConfirm(null)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+    <div className="ui-event-management">
+      {error && (
+        <div className="ui-message ui-message-error">
+          <FaExclamationTriangle className="ui-message-icon" />
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="event-tools">
-        <div className="event-actions">
-          <button
-            className="create-event-btn"
-            onClick={() => {
-              setIsCreatingEvent(!isCreatingEvent);
-              setEditingEvent(null);
-            }}
-            disabled={editingEvent !== null}
-          >
-            <FaCalendarPlus className="btn-icon" />
-            {isCreatingEvent ? "Cancel" : "Create Event"}
-          </button>
+      <Modal 
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        title="Confirm Deletion"
+      >
+        <div className="ui-delete-confirm">
+          <p>
+            Are you sure you want to delete the event{" "}
+            <strong>{deleteConfirm?.name}</strong>?
+          </p>
+          <p className="ui-delete-warning">This action cannot be undone.</p>
+
+          <Modal.Footer>
+            <Button
+              variant="danger"
+              onClick={handleDeleteEvent}
+              icon={<FaTrash />}
+            >
+              Delete Event
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteConfirm(null)}
+            >
+              Cancel
+            </Button>
+          </Modal.Footer>
         </div>
-      </div>
+      </Modal>
+
+      <Card className="ui-event-tools" variant="dark">
+        <Card.Body>
+          <div className="ui-event-actions">
+            <Button
+              variant="primary"
+              onClick={() => {
+                setIsCreatingEvent(!isCreatingEvent);
+                setEditingEvent(null);
+              }}
+              disabled={editingEvent !== null}
+              icon={<FaCalendarPlus />}
+            >
+              {isCreatingEvent ? "Cancel" : "Create Event"}
+            </Button>
+            <Button 
+              variant="secondary"
+              onClick={fetchEvents}
+              icon={<FaSync />}
+            >
+              Refresh
+            </Button>
+          </div>
+        </Card.Body>
+      </Card>
 
       {isCreatingEvent && (
-        <div className="event-editor-container">
-          <EventEditor
-            onSave={handleEventSave}
-            onCancel={() => setIsCreatingEvent(false)}
-          />
-        </div>
+        <Card className="ui-event-editor-container" variant="dark">
+          <Card.Body>
+            <EventEditor
+              onSave={handleEventSave}
+              onCancel={() => setIsCreatingEvent(false)}
+            />
+          </Card.Body>
+        </Card>
       )}
 
       {editingEvent && (
-        <div className="event-editor-container">
-          <EventEditor
-            event={editingEvent}
-            onSave={handleEventSave}
-            onCancel={handleCancelEdit}
-            isEditing={true}
-          />
-        </div>
+        <Card className="ui-event-editor-container" variant="dark">
+          <Card.Body>
+            <EventEditor
+              event={editingEvent}
+              onSave={handleEventSave}
+              onCancel={handleCancelEdit}
+              isEditing={true}
+            />
+          </Card.Body>
+        </Card>
       )}
 
-      <div className="events-table-container">
-        <div className="table-header">
-          <h3>Event Calendar</h3>
-          <div className="table-actions">
-            <button className="refresh-btn" onClick={fetchEvents}>
-              <FaSync className="btn-icon" /> Refresh
-            </button>
-          </div>
-        </div>
+      <Card className="ui-events-table-container" variant="dark">
+        <Card.Header className="ui-events-table-header">
+          <h3 className="ui-section-title">
+            <FaCalendarAlt className="ui-icon-left" /> Event Calendar
+          </h3>
+        </Card.Header>
+        
+        <Card.Body>
+          {events.length === 0 ? (
+            <EmptyState
+              title="No Events Found"
+              description="Create a new event or sync with Wise Old Man."
+              icon={<FaCalendarAlt className="ui-empty-state-icon" />}
+              action={
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setIsCreatingEvent(true);
+                    setEditingEvent(null);
+                  }}
+                  icon={<FaCalendarPlus />}
+                >
+                  Create Event
+                </Button>
+              }
+            />
+          ) : (
+            <DataTable
+              columns={eventColumns}
+              data={events}
+              keyField="id"
+              emptyMessage="No events found"
+              className="ui-events-table"
+            />
+          )}
+        </Card.Body>
+      </Card>
 
-        {events.length === 0 ? (
-          <div className="empty-state">
-            <p>
-              No events found. Create a new event or sync with Wise Old Man.
-            </p>
+      <Card className="ui-event-sync-section" variant="dark">
+        <Card.Header>
+          <h3 className="ui-section-title">
+            <FaSync className="ui-icon-left" /> Data Synchronization
+          </h3>
+        </Card.Header>
+        
+        <Card.Body>
+          <p className="ui-section-description">
+            Import competitions and events from Wise Old Man
+          </p>
+          
+          <div className="ui-sync-button-container">
+            <WomSyncButton
+              type="events"
+              buttonText="Sync WOM Competitions"
+              onSyncComplete={fetchEvents}
+            />
           </div>
-        ) : (
-          <div style={{ overflowX: 'auto', width: '100%' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #333' }}>
-              <thead>
-                <tr>
-                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
-                    Event Name
-                  </th>
-                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
-                    Type
-                  </th>
-                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
-                    Start Date
-                  </th>
-                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
-                    End Date
-                  </th>
-                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
-                    Status
-                  </th>
-                  <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #444', backgroundColor: '#2a2a2a', color: '#ddd' }}>
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((event) => {
-                  const status = getEventStatus(event);
-                  return (
-                    <tr key={event.id} style={{ backgroundColor: event.is_wom ? 'rgba(0, 123, 255, 0.05)' : 'rgba(40, 167, 69, 0.05)' }}>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#f4f4f8' }}>
-                        {toTitleCase(event.name)}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#f4f4f8' }}>
-                        {formatEventType(event)}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#ddd' }}>
-                        {formatDate(event.start_date)}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #333', color: '#ddd' }}>
-                        {formatDate(event.end_date)}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #333' }}>
-                        <span style={{ 
-                          padding: '4px 8px', 
-                          borderRadius: '12px', 
-                          fontSize: '0.8rem',
-                          backgroundColor: status === 'Active' ? 'rgba(40, 167, 69, 0.2)' : 
-                                          status === 'Upcoming' ? 'rgba(0, 123, 255, 0.2)' : 
-                                          'rgba(108, 117, 125, 0.2)',
-                          color: status === 'Active' ? '#28a745' : 
-                                 status === 'Upcoming' ? '#007bff' : 
-                                 '#6c757d'
-                        }}>
-                          {status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #333' }}>
-                        {!event.is_wom ? (
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button 
-                              onClick={() => handleEditEvent(event)}
-                              style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer' }}
-                              title="Edit event"
-                            >
-                              <FaEdit />
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteClick(event)}
-                              style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer' }}
-                              title="Delete event"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <a 
-                              href={`https://wiseoldman.net/competitions/${event.wom_id}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              style={{ 
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
-                                background: 'rgba(23, 162, 184, 0.15)', 
-                                color: '#17a2b8', 
-                                border: 'none', 
-                                borderRadius: '4px', 
-                                padding: '4px 8px', 
-                                fontSize: '0.85rem', 
-                                cursor: 'pointer',
-                                textDecoration: 'none'
-                              }}
-                              title="View in Wise Old Man"
-                            >
-                              <FaEdit style={{ marginRight: '4px' }} /> Edit in WOM
-                            </a>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="event-sync-section">
-        <div className="event-sync-header">
-          <h3>Data Synchronization</h3>
-        </div>
-        <div className="event-sync-content">
-          <p>Import competitions and events from Wise Old Man</p>
-          <WomSyncButton
-            type="events"
-            buttonText="Sync WOM Competitions"
-            onSyncComplete={fetchEvents}
-          />
-          <p className="event-sync-note">
+          
+          <p className="ui-sync-note">
             Sync will import all WOM competitions your clan is participating in.
             These events are read-only and cannot be edited.
           </p>
-        </div>
-      </div>
+        </Card.Body>
+      </Card>
     </div>
   );
 }

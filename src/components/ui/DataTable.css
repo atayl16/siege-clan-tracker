@@ -1,0 +1,68 @@
+.ui-data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--border-radius-md, 0.5rem);
+  background-color: #222;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24));
+}
+
+.ui-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-data-table th,
+.ui-data-table td {
+  padding: var(--spacing-1, 0.5rem) var(--spacing-2, 1rem);
+  border-bottom: 1px solid #444;
+}
+
+.ui-data-table thead tr {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.ui-data-table th {
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+  text-transform: uppercase;
+  font-size: var(--font-size-sm, 0.875rem);
+  letter-spacing: 0.5px;
+}
+
+.ui-data-table tbody tr {
+  transition: background-color var(--transition-fast, 0.2s);
+}
+
+.ui-data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.ui-data-table tbody tr.selected-row {
+  background-color: rgba(52, 152, 219, 0.15); /* Primary color with opacity */
+  border-left: 3px solid var(--color-primary, #3498db);
+}
+
+/* Empty, loading, and error states */
+.ui-data-empty,
+.ui-data-loading,
+.ui-data-error {
+  padding: var(--spacing-3, 1.5rem);
+  text-align: center;
+  color: #777;
+  font-style: italic;
+}
+
+.ui-data-error {
+  color: var(--color-danger, #dc3545);
+}
+
+@media (max-width: 768px) {
+  .ui-data-table th,
+  .ui-data-table td {
+    padding: var(--spacing-1, 0.5rem);
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+}

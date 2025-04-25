@@ -8,34 +8,47 @@ import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
 import { FaUser, FaFlag, FaClock, FaCog } from "react-icons/fa";
 import { titleize } from "../utils/stringUtils";
+
+// Import UI components
+import Card from "../components/ui/Card";
+import CardGrid from "../components/ui/CardGrid";
+import Button from "../components/ui/Button";
+import Badge from "../components/ui/Badge";
+import Tabs from "../components/ui/Tabs";
+import EmptyState from "../components/ui/EmptyState";
+import StatGroup from "../components/ui/StatGroup";
+
 import "./ProfilePage.css";
 
-// Add this new component inside the same file, before the main component
+// Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
   return (
-    <div className="character-goal-card">
-      <div className="character-goal-header">
-        <div className="character-goal-name">{claim.members.name}</div>
-        <div className="character-goal-stats">
-          <div className="mini-stat">
-            <span className="mini-stat-value">{claim.members.current_lvl || 3}</span>
-            <span className="mini-stat-label">Combat</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-stat-value">{claim.members.ehb || 0}</span>
-            <span className="mini-stat-label">EHB</span>
-          </div>
-        </div>
-      </div>
+    <Card variant="default" hover className="ui-character-card">
+      <Card.Header className="ui-character-card-header">
+        <div className="ui-character-name">{claim.members.name}</div>
+        <Badge variant="primary" pill>
+          Goals
+        </Badge>
+      </Card.Header>
 
-      <div className="character-goal-content">
-        <GoalsList
-          player={claim.members}
-          userId={user.id}
-          onClose={() => {}}
-        />
-      </div>
-    </div>
+      <Card.Body>
+        <StatGroup className="ui-character-stats">
+          <StatGroup.Stat
+            label="Combat Level"
+            value={claim.members.current_lvl || 3}
+          />
+          <StatGroup.Stat label="EHB" value={claim.members.ehb || 0} />
+        </StatGroup>
+
+        <div className="ui-character-goal-content">
+          <GoalsList
+            player={claim.members}
+            userId={user.id}
+            onClose={() => {}}
+          />
+        </div>
+      </Card.Body>
+    </Card>
   );
 }
 
@@ -100,7 +113,7 @@ export default function ProfilePage() {
   }, [user, fetchUserRequests]);
 
   // Handle showing goals
-  const handleShowGoals = (player) => {
+  const handleShowGoals = () => {
     setActiveTab("goals");
   };
 
@@ -126,9 +139,9 @@ export default function ProfilePage() {
       <div className="profile-not-logged-in">
         <h2>Please Log In</h2>
         <p>You need to be logged in to view your profile.</p>
-        <div className="auth-links">
-          <Link to="/login" className="btn btn-primary">Log In</Link>
-          <Link to="/register" className="btn btn-secondary">Register</Link>
+        <div className="profile-auth-links">
+          <Link to="/login" className="btn-primary">Log In</Link>
+          <Link to="/register" className="btn-secondary">Register</Link>
         </div>
       </div>
     );
@@ -145,160 +158,117 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="profile-tabs">
-        <button
-          className={`tab-button ${activeTab === "characters" ? "active" : ""}`}
-          onClick={() => setActiveTab("characters")}
-        >
-          <FaUser /> <span>Characters</span>
-        </button>
-        <button
-          className={`tab-button ${activeTab === "goals" ? "active" : ""}`}
-          onClick={() => setActiveTab("goals")}
-        >
-          <FaFlag /> <span>Goals</span>
-        </button>
-        <button
-          className={`tab-button ${activeTab === "requests" ? "active" : ""}`}
-          onClick={() => setActiveTab("requests")}
-          data-count={userRequests.length}
-        >
-          <FaClock /> <span>Requests</span>
-          {userRequests.length > 0 && (
-            <span className="badge">{userRequests.length}</span>
-          )}
-        </button>
-        <button
-          className={`tab-button ${activeTab === "account" ? "active" : ""}`}
-          onClick={() => setActiveTab("account")}
-        >
-          <FaCog /> <span>Account</span>
-        </button>
-      </div>
+      <Tabs activeTab={activeTab} onChange={setActiveTab} className="profile-tabs">
+        <Tabs.Tab tabId="characters" label="Characters" icon={<FaUser />}>
+          <div className="tab-header">
+            <h2>Your Characters</h2>
+            <Button 
+              variant="secondary" 
+              onClick={() => setActiveTab("requests")}
+            >
+              Claim New Character
+            </Button>
+          </div>
 
-      <div className="tab-content">
-        {/* Characters Tab */}
-        {activeTab === "characters" && (
-          <div className="tab-pane">
-            <div className="tab-header">
-              <h2>Your Characters</h2>
-              <button
-                className="action-button"
-                onClick={() => setActiveTab("requests")}
-              >
-                Claim New Character
-              </button>
-            </div>
+          {userClaims.length === 0 ? (
+            <EmptyState
+              title="No Characters Yet"
+              description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
+            />
+          ) : (
+            <CardGrid>
+              {userClaims.map((claim) => (
+                <Card key={`claim-${claim.id}`} hover className="ui-character-card">
+                  <Card.Header className="ui-character-card-header">
+                    <div className="ui-character-name">{claim.members.name}</div>
+                    <Badge variant="success" pill>Claimed</Badge>
+                  </Card.Header>
 
-            {userClaims.length === 0 ? (
-              <div className="empty-state">
-                <h3>No Characters Yet</h3>
-                <p>
-                  You haven't claimed any characters yet. Click "Claim New
-                  Character" to get started.
-                </p>
-              </div>
-            ) : (
-              <div className="character-list">
-                {userClaims.map((claim) => (
-                  <div className="character-card" key={`claim-${claim.id}`}>
-                    <div className="character-info">
-                      <div className="character-name">{claim.members.name}</div>
-                      <div className="character-badge">Claimed</div>
-                    </div>
-
-                    <div className="character-stats">
-                      <div className="stat">
-                        <div className="stat-value">
-                          {claim.members.current_lvl || 3}
-                        </div>
-                        <div className="stat-label">Combat Level</div>
-                      </div>
-                      <div className="stat">
-                        <div className="stat-value">
-                          {claim.members.ehb || 0}
-                        </div>
-                        <div className="stat-label">EHB</div>
-                      </div>
-                      <div className="stat">
-                        <div className="stat-value">
-                          {claim.members.siege_score || 0}
-                        </div>
-                        <div className="stat-label">Siege Score</div>
-                      </div>
-                    </div>
+                  <Card.Body>
+                    <StatGroup className="ui-character-stats">
+                      <StatGroup.Stat 
+                        label="Combat Level" 
+                        value={claim.members.current_lvl || 3}
+                      />
+                      <StatGroup.Stat 
+                        label="EHB" 
+                        value={claim.members.ehb || 0}
+                      />
+                      <StatGroup.Stat 
+                        label="Siege Score" 
+                        value={claim.members.siege_score || 0}
+                      />
+                    </StatGroup>
 
                     <PlayerGoalSummary
                       playerId={claim.members.wom_id}
                       userId={user.id}
                     />
+                  </Card.Body>
 
-                    <div className="character-actions">
-                      <button
-                        className="action-button primary"
-                        onClick={() => handleShowGoals(claim.members)}
-                      >
-                        Manage Goals
-                      </button>
-                      <div className="claim-date">
-                        Claimed on{" "}
-                        {new Date(claim.claimed_at).toLocaleDateString()}
-                      </div>
+                  <Card.Footer className="ui-character-card-footer">
+                    <Button
+                      variant="primary"
+                      onClick={handleShowGoals}
+                    >
+                      Manage Goals
+                    </Button>
+                    <div className="ui-claim-date">
+                      Claimed on{" "}
+                      {new Date(claim.claimed_at).toLocaleDateString()}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  </Card.Footer>
+                </Card>
+              ))}
+            </CardGrid>
+          )}
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="goals" label="Goals" icon={<FaFlag />}>
+          <div className="tab-header">
+            <h2>Character Goals</h2>
           </div>
-        )}
+      
+          {userClaims.length === 0 ? (
+            <EmptyState
+              title="No Characters to Track"
+              description="You need to claim a character before setting goals."
+            />
+          ) : (
+            <CardGrid>
+              {userClaims.map((claim) => (
+                <CharacterGoalCard 
+                  key={`goal-card-${claim.id}`}
+                  claim={claim}
+                  user={user}
+                />
+              ))}
+            </CardGrid>
+          )}
+        </Tabs.Tab>
 
-        {/* Goals Tab - UPDATED */}
-        {activeTab === "goals" && (
-          <div className="tab-pane">
-            <div className="tab-header">
-              <h2>Character Goals</h2>
-            </div>
-        
-            {userClaims.length === 0 ? (
-              <div className="empty-state">
-                <h3>No Characters to Track</h3>
-                <p>You need to claim a character before setting goals.</p>
-              </div>
-            ) : (
-              <div className="character-goals-list">
-                {userClaims.map((claim) => (
-                  <CharacterGoalCard 
-                    key={`goal-card-${claim.id}`}
-                    claim={claim}
-                    user={user}
-                  />
-                ))}
-              </div>
-            )}
+        <Tabs.Tab 
+          tabId="requests" 
+          label="Requests" 
+          icon={<FaClock />}
+          badge={userRequests.length > 0 ? userRequests.length : null}
+        >
+          <div className="tab-header">
+            <h2>Character Claims</h2>
           </div>
-        )}
 
-        {/* Requests Tab */}
-        {activeTab === "requests" && (
-          <div className="tab-pane">
-            <div className="tab-header">
-              <h2>Character Claims</h2>
-            </div>
-
-            <div className="claim-player-section">
-              <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
-            </div>
+          <div className="claim-player-section">
+            <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
           </div>
-        )}
+        </Tabs.Tab>
 
-        {/* Account Tab */}
-        {activeTab === "account" && (
-          <div className="tab-pane">
-            <div className="tab-header">
-              <h2>Account Management</h2>
-            </div>
+        <Tabs.Tab tabId="account" label="Account" icon={<FaCog />}>
+          <div className="tab-header">
+            <h2>Account Management</h2>
+          </div>
 
-            <div className="account-details">
+          <Card>
+            <Card.Body>
               <div className="account-field">
                 <label>Username</label>
                 <div className="field-value">{user.username}</div>
@@ -325,14 +295,14 @@ export default function ProfilePage() {
               </div>
 
               <div className="account-actions">
-                <button className="action-button secondary" disabled>
+                <Button variant="secondary" disabled>
                   Change Password (Coming Soon)
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
+            </Card.Body>
+          </Card>
+        </Tabs.Tab>
+      </Tabs>
     </div>
   );
 }

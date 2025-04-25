@@ -98,7 +98,7 @@ export const AdminIcon = ({ title }) => {
       }}
       role="img" 
       aria-label={`${title} icon`}
-      title={title} // Add title attribute for tooltip
+      title={title}
     >
       {emojiMap[normalizedTitle]}
     </span>

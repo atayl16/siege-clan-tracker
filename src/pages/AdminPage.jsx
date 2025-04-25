@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import AdminMemberTable from "../components/AdminMemberTable";
+import { supabase } from "../supabaseClient";
+import { memberNeedsRankUpdate } from "../utils/rankUtils";
+
+// Components
+import AdminMemberTable from "../components/admin/AdminMemberTable";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
@@ -9,17 +13,36 @@ import RunewatchAlerts from "../components/RunewatchAlerts";
 import GenerateClaimCode from "../components/GenerateClaimCode";
 import ClaimRequestManager from "../components/ClaimRequestManager";
 import ClaimRequestsPreview from "../components/ClaimRequestsPreview";
-import AdminUserManager from "../components/AdminUserManager";
-import AdminResetPassword from "../components/AdminResetPassword";
-import { FaDownload, FaEraser, FaSearch } from "react-icons/fa";
-import { supabase } from "../supabaseClient";
-import {
-  memberNeedsRankUpdate
-} from "../utils/rankUtils";
+import AdminUserManager from "../components/admin/AdminUserManager";
+import AdminResetPassword from "../components/admin/AdminResetPassword";
+
+// UI Components
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import Modal from "../components/ui/Modal";
+import StatGroup from "../components/ui/StatGroup";
+import Tabs from "../components/ui/Tabs";
+import SearchInput from "../components/ui/SearchInput";
+import EmptyState from "../components/ui/EmptyState";
+
+// Icons
+import { 
+  FaDownload, 
+  FaEraser, 
+  FaCheck, 
+  FaBell, 
+  FaUsers, 
+  FaCalendarAlt, 
+  FaUserCog, 
+  FaSync, 
+  FaKey, 
+  FaExclamationTriangle 
+} from "react-icons/fa";
+
 import "./AdminPage.css";
 
 export default function AdminPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
@@ -98,16 +121,6 @@ export default function AdminPage() {
     fetchMembers();
     fetchAlertsCount();
     fetchPendingClaimsCount();
-    
-    // Focus search input when switching to members tab
-    if (activeTab === "members" && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    fetchMembers();
-    fetchAlertsCount();
     
     // Focus search input when switching to members tab
     if (activeTab === "members" && searchInputRef.current) {
@@ -337,59 +350,22 @@ export default function AdminPage() {
     }
   };
 
-  // Notification component
-  const Notification = ({ notification, onDismiss }) => {
-    if (!notification) return null;
-    
-    const typeClass = notification.type === 'success' ? 'notification-success' : 'notification-error';
-    
+  if (!isAuthenticated || !isAdmin()) {
     return (
-      <div className={`notification ${typeClass}`}>
-        <span>{notification.message}</span>
-        <button 
-          className="notification-close"
-          onClick={onDismiss}
-        >
-          ×
-        </button>
-      </div>
-    );
-  };
-
-  // Edit modal
-  const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null;
-    
-    // Prevent clicks inside the modal from closing it
-    const handleModalClick = (e) => {
-      e.stopPropagation();
-    };
-    
-    return (
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-container" onClick={handleModalClick}>
-          <div className="modal-header">
-            <h2 className="modal-title">{title}</h2>
-            <button className="modal-close" onClick={onClose}>×</button>
-          </div>
-          <div className="modal-content">
-            {children}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="admin-auth-error">
-        <div className="auth-error-icon">🔒</div>
-        <h2>Access Restricted</h2>
-        <p>You must be logged in as an administrator to view this page.</p>
-        <button className="auth-login-button" onClick={() => window.location.href = '/login'}>
-          Log In
-        </button>
-      </div>
+      <EmptyState
+        title="Access Restricted"
+        description="You must be logged in as an administrator to view this page."
+        icon={<FaExclamationTriangle size={32} />}
+        action={
+          <Button
+            variant="primary"
+            onClick={() => window.location.href = '/login'}
+          >
+            Log In
+          </Button>
+        }
+        className="admin-auth-error"
+      />
     );
   }
   
@@ -398,36 +374,42 @@ export default function AdminPage() {
       <div className="dashboard-header">
         <h1>Clan Administration</h1>
         <div className="admin-actions">
-          <button
-            className="primary-button add-member-button"
+          <Button
+            variant="primary"
             onClick={() => {
               setSelectedMember(null);
               setIsAddingMember(true);
             }}
+            icon="+"
           >
-            <span className="button-icon">+</span> Add New Member
-          </button>
+            Add New Member
+          </Button>
 
           {alertsCount > 0 && (
-            <button
-              className="alert-button"
+            <Button
+              variant="danger"
               onClick={() => setActiveTab("alerts")}
+              icon={<FaBell />}
             >
-              <span className="alert-icon">🔔</span>
               {alertsCount} Rank Alert{alertsCount !== 1 ? "s" : ""}
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {notification && (
-        <Notification
-          notification={notification}
-          onDismiss={() => setNotification(null)}
-        />
+        <div className={`ui-notification ${notification.type === 'success' ? 'ui-notification-success' : 'ui-notification-error'}`}>
+          <span>{notification.message}</span>
+          <button 
+            className="ui-notification-close"
+            onClick={() => setNotification(null)}
+          >
+            ×
+          </button>
+        </div>
       )}
 
-      {/* Modal for adding/editing members */}
+      {/* Member Editor Modal */}
       <Modal
         isOpen={selectedMember !== null || isAddingMember}
         onClose={() => {
@@ -435,6 +417,7 @@ export default function AdminPage() {
           setIsAddingMember(false);
         }}
         title={isAddingMember ? "Add New Member" : "Edit Member"}
+        size="large"
       >
         <MemberEditor
           member={isAddingMember ? null : selectedMember}
@@ -456,7 +439,7 @@ export default function AdminPage() {
         title="Reset All Siege Scores"
       >
         <div className="reset-confirmation">
-          <div className="alert alert-danger">
+          <div className="ui-message ui-message-error">
             <strong>Warning!</strong> This action will set all members' siege
             scores to 0. This cannot be undone.
           </div>
@@ -466,89 +449,49 @@ export default function AdminPage() {
             before resetting.
           </p>
 
-          <div className="form-group">
+          <div className="ui-form-group">
             <label>
               Type <strong>RESET ALL SCORES</strong> to confirm:
             </label>
             <input
               type="text"
-              className="form-control"
+              className="ui-form-input"
               value={resetConfirmText}
               onChange={(e) => setResetConfirmText(e.target.value)}
               placeholder="RESET ALL SCORES"
             />
           </div>
 
-          <div className="button-group">
-            <button
-              className="btn btn-danger"
+          <Modal.Footer>
+            <Button
+              variant="danger"
               onClick={handleResetScores}
               disabled={resetConfirmText !== "RESET ALL SCORES"}
             >
               Reset All Scores
-            </button>
+            </Button>
 
-            <button
-              className="btn btn-secondary"
+            <Button
+              variant="secondary"
               onClick={() => {
                 setShowResetConfirm(false);
                 setResetConfirmText("");
               }}
             >
               Cancel
-            </button>
-          </div>
+            </Button>
+          </Modal.Footer>
         </div>
       </Modal>
 
-      {/* Admin tab navigation */}
-      <div className="admin-tabs">
-        <button
-          className={`admin-tab ${activeTab === "alerts" ? "active" : ""}`}
-          onClick={() => setActiveTab("alerts")}
+      {/* Admin Tabs - FIXED IMPLEMENTATION */}
+      <Tabs activeTab={activeTab} onChange={setActiveTab} className="admin-tabs">
+        <Tabs.Tab 
+          tabId="alerts" 
+          label="Alerts" 
+          icon={<FaBell />} 
+          badge={alertsCount > 0 ? alertsCount : null}
         >
-          <span className="tab-icon">🔔</span> Alerts
-          {alertsCount > 0 && (
-            <span className="alert-badge">{alertsCount}</span>
-          )}
-        </button>
-
-        <button
-          className={`admin-tab ${activeTab === "members" ? "active" : ""}`}
-          onClick={() => setActiveTab("members")}
-        >
-          <span className="tab-icon">👥</span> Members
-        </button>
-
-        <button
-          className={`admin-tab ${activeTab === "events" ? "active" : ""}`}
-          onClick={() => setActiveTab("events")}
-        >
-          <span className="tab-icon">📅</span> Events
-        </button>
-
-        <button
-          className={`admin-tab ${activeTab === "users" ? "active" : ""}`}
-          onClick={() => setActiveTab("users")}
-        >
-          <span className="tab-icon">👤</span> Users
-          {pendingClaimsCount > 0 && (
-            <span className="alert-badge">{pendingClaimsCount}</span>
-          )}
-        </button>
-
-        <button
-          className={`admin-tab ${activeTab === "sync" ? "active" : ""}`}
-          onClick={() => setActiveTab("sync")}
-        >
-          <span className="tab-icon">↻</span> Sync
-        </button>
-      </div>
-
-      {/* Tab content */}
-      <div className="admin-content">
-        {/* Alerts Tab */}
-        {activeTab === "alerts" && (
           <div className="tab-content alerts-content">
             <div className="content-header">
               <h2>Action Items Dashboard</h2>
@@ -556,16 +499,18 @@ export default function AdminPage() {
             </div>
 
             <div className="alerts-container">
-              {/* Top row with Rank Updates and Pending Claims side-by-side */}
-              <div className="alert-section rank-updates">
-                <h3>
-                  <span className="alert-icon">🔔</span>
-                  Rank Updates
-                  {alertsCount > 0 && (
-                    <span className="count-badge">{alertsCount}</span>
-                  )}
-                </h3>
-                <div className="alert-section-content">
+              {/* Rank Updates */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header>
+                  <h3>
+                    <FaBell className="alert-icon" />
+                    Rank Updates
+                    {alertsCount > 0 && (
+                      <span className="count-badge">{alertsCount}</span>
+                    )}
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
                   <RankAlerts
                     onRankUpdate={() => {
                       fetchMembers();
@@ -573,18 +518,21 @@ export default function AdminPage() {
                     }}
                     previewMode={true}
                   />
-                </div>
-              </div>
+                </Card.Body>
+              </Card>
 
-              <div className="alert-section pending-claims">
-                <h3>
-                  <span className="alert-icon">🔑</span>
-                  Pending Player Claims
-                  {pendingClaimsCount > 0 && (
-                    <span className="count-badge">{pendingClaimsCount}</span>
-                  )}
-                </h3>
-                <div className="alert-section-content">
+              {/* Pending Claims */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header>
+                  <h3>
+                    <FaKey className="alert-icon" />
+                    Pending Player Claims
+                    {pendingClaimsCount > 0 && (
+                      <span className="count-badge">{pendingClaimsCount}</span>
+                    )}
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
                   {pendingClaimsCount > 0 ? (
                     <ClaimRequestsPreview
                       count={pendingClaimsCount}
@@ -595,87 +543,69 @@ export default function AdminPage() {
                       onRequestProcessed={fetchPendingClaimsCount}
                     />
                   ) : (
-                    <div className="no-alerts">No pending claim requests</div>
+                    <div className="ui-no-alerts">
+                      <FaCheck className="ui-success-icon" />
+                      <span>No pending claim requests</span>
+                    </div>
                   )}
-                </div>
-              </div>
+                </Card.Body>
+              </Card>
 
-              {/* Bottom row with Runewatch Alerts taking full width */}
-              <div className="alert-section runewatch-alerts full-width">
-                <h3>
-                  <span className="alert-icon">⚠️</span> Runewatch Alerts
-                </h3>
-                <div className="alert-section-content">
+              {/* Runewatch Alerts */}
+              <Card className="alert-section full-width" variant="dark">
+                <Card.Header>
+                  <h3>
+                    <FaExclamationTriangle className="alert-icon" /> Runewatch Alerts
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
                   <RunewatchAlerts previewMode={true} />
-                </div>
-              </div>
+                </Card.Body>
+              </Card>
             </div>
           </div>
-        )}
+        </Tabs.Tab>
 
-        {/* Members Tab */}
-        {activeTab === "members" && (
+        <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
           <div className="tab-content members-content">
             <div className="content-header">
               <h2>Member Management</h2>
 
               <div className="admin-toolbar">
-                <div className="search-container">
-                  <div className="search-input-wrapper">
-                    <FaSearch className="search-icon" />
-                    <input
-                      type="text"
-                      placeholder="Search members by name, WOM name, or role..."
-                      className="search-input"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      ref={searchInputRef}
-                    />
-                    {searchTerm && (
-                      <button
-                        className="clear-search"
-                        onClick={() => setSearchTerm("")}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <SearchInput
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onClear={() => setSearchTerm("")}
+                  placeholder="Search members by name, WOM name, or role..."
+                  ref={searchInputRef}
+                  className="search-container"
+                />
               </div>
             </div>
 
             {loading ? (
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <div className="loading-text">Loading members data...</div>
+              <div className="ui-loading-container">
+                <div className="ui-loading-spinner"></div>
+                <div className="ui-loading-text">Loading members data...</div>
               </div>
             ) : error ? (
-              <div className="error-container">
-                <div className="error-icon">⚠️</div>
-                <div className="error-message">{error}</div>
+              <div className="ui-error-container">
+                <FaExclamationTriangle className="ui-error-icon" />
+                <div className="ui-error-message">{error}</div>
               </div>
             ) : (
               <>
                 <div className="stats-and-table">
-                  <div className="stats-panel">
-                    <div className="stat-item">
-                      <div className="stat-label">Total Members</div>
-                      <div className="stat-value">{members.length}</div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-label">Total Siege Points</div>
-                      <div className="stat-value">
-                        {members.reduce(
-                          (sum, m) => sum + (parseInt(m.siege_score) || 0),
-                          0
-                        )}
-                      </div>
-                    </div>
-                    <div className="stat-item">
-                      <div className="stat-label">Search Results</div>
-                      <div className="stat-value">{filteredMembers.length}</div>
-                    </div>
-                  </div>
+                  <StatGroup className="stats-panel">
+                    <StatGroup.Stat
+                      label="Total Members"
+                      value={members.length}
+                    />
+                    <StatGroup.Stat
+                      label="Search Results"
+                      value={filteredMembers.length}
+                    />
+                  </StatGroup>
 
                   <AdminMemberTable
                     members={filteredMembers}
@@ -688,25 +618,27 @@ export default function AdminPage() {
                   />
                 </div>
 
-                {/* Move Export/Reset buttons to a footer */}
+                {/* Admin Footer */}
                 <div className="admin-footer">
                   <h3>Administration Actions</h3>
                   <div className="admin-footer-actions">
-                    <button
-                      className="admin-action-btn export-btn"
+                    <Button
+                      variant="success"
                       onClick={exportToCSV}
-                      title="Export to CSV"
+                      icon={<FaDownload />}
+                      className="export-btn"
                     >
-                      <FaDownload /> Export Members to CSV
-                    </button>
+                      Export Members to CSV
+                    </Button>
 
-                    <button
-                      className="admin-action-btn reset-btn"
+                    <Button
+                      variant="danger"
                       onClick={() => setShowResetConfirm(true)}
-                      title="Reset all siege scores"
+                      icon={<FaEraser />}
+                      className="reset-btn"
                     >
-                      <FaEraser /> Reset All Siege Scores
-                    </button>
+                      Reset All Siege Scores
+                    </Button>
                   </div>
                   <p className="admin-footer-note">
                     Note: These actions are typically performed once per year
@@ -716,10 +648,9 @@ export default function AdminPage() {
               </>
             )}
           </div>
-        )}
+        </Tabs.Tab>
 
-        {/* Events Tab */}
-        {activeTab === "events" && (
+        <Tabs.Tab tabId="events" label="Events" icon={<FaCalendarAlt />}>
           <div className="tab-content events-content">
             <div className="content-header">
               <h2>Event Management</h2>
@@ -728,149 +659,136 @@ export default function AdminPage() {
               <EventManagement />
             </div>
           </div>
-        )}
+        </Tabs.Tab>
 
-        {/* User Management Tab */}
-        {activeTab === "users" && (
+        <Tabs.Tab 
+          tabId="users" 
+          label="Users" 
+          icon={<FaUserCog />} 
+          badge={pendingClaimsCount > 0 ? pendingClaimsCount : null}
+        >
           <div className="tab-content users-content">
             <div className="content-header">
               <h2>User Management</h2>
             </div>
 
             <div className="users-management-container">
-              <div className="users-tabs">
-                <button
-                  className={`users-tab ${
-                    userSubTab === "requests" ? "active" : ""
-                  }`}
-                  onClick={() => setUserSubTab("requests")}
-                >
-                  Claim Requests
-                </button>
-                <button
-                  className={`users-tab ${
-                    userSubTab === "codes" ? "active" : ""
-                  }`}
-                  onClick={() => setUserSubTab("codes")}
-                >
-                  Claim Codes
-                </button>
-                <button
-                  className={`users-tab ${
-                    userSubTab === "admins" ? "active" : ""
-                  }`}
-                  onClick={() => setUserSubTab("admins")}
-                >
-                  Admin Users
-                </button>
-                <button
-                  className={`users-tab ${
-                    userSubTab === "passwords" ? "active" : ""
-                  }`}
-                  onClick={() => setUserSubTab("passwords")}
-                >
-                  Reset Passwords
-                </button>
-              </div>
-              
-              {userSubTab === "requests" && (
-                <div className="action-card">
-                  <ClaimRequestManager />
-                </div>
-              )}
-              
-              {userSubTab === "codes" && (
-                <div className="action-card">
-                  <GenerateClaimCode />
-                </div>
-              )}
-              
-              {userSubTab === "admins" && (
-                <div className="action-card">
-                  <AdminUserManager />
-                </div>
-              )}
-              
-              {userSubTab === "passwords" && (
-                <div className="action-card">
-                  <AdminResetPassword />
-                </div>
-              )}
+              <Tabs activeTab={userSubTab} onChange={setUserSubTab} className="users-tabs">
+                <Tabs.Tab tabId="requests" label="Claim Requests">
+                  <Card className="action-card" variant="dark">
+                    <Card.Body>
+                      <ClaimRequestManager />
+                    </Card.Body>
+                  </Card>
+                </Tabs.Tab>
+                
+                <Tabs.Tab tabId="codes" label="Claim Codes">
+                  <Card className="action-card" variant="dark">
+                    <Card.Body>
+                      <GenerateClaimCode />
+                    </Card.Body>
+                  </Card>
+                </Tabs.Tab>
+                
+                <Tabs.Tab tabId="admins" label="Admin Users">
+                  <Card className="action-card" variant="dark">
+                    <Card.Body>
+                      <AdminUserManager />
+                    </Card.Body>
+                  </Card>
+                </Tabs.Tab>
+                
+                <Tabs.Tab tabId="passwords" label="Reset Passwords">
+                  <Card className="action-card" variant="dark">
+                    <Card.Body>
+                      <AdminResetPassword />
+                    </Card.Body>
+                  </Card>
+                </Tabs.Tab>
+              </Tabs>
             </div>
           </div>
-        )}
+        </Tabs.Tab>
 
-        {/* Sync Tab */}
-        {activeTab === "sync" && (
+        <Tabs.Tab tabId="sync" label="Sync" icon={<FaSync />}>
           <div className="tab-content sync-content">
             <div className="content-header">
               <h2>Data Synchronization</h2>
-              <h3> Only for emergencies!</h3>
+              <h3>Only for emergencies!</h3>
             </div>
             <div className="sync-container">
               <div className="sync-cards">
-                <div className="sync-card">
-                  <h3>Member Data Sync</h3>
-                  <p>Update member stats, levels, and EHB from Wise Old Man</p>
-                  <WomSyncButton
-                    type="members"
-                    buttonText="Sync Members"
-                    onSyncComplete={fetchMembers}
-                  />
-                </div>
+                <Card className="sync-card" variant="dark">
+                  <Card.Header>
+                    <h3>Member Data Sync</h3>
+                  </Card.Header>
+                  <Card.Body>
+                    <p>Update member stats, levels, and EHB from Wise Old Man</p>
+                    <WomSyncButton
+                      type="members"
+                      buttonText="Sync Members"
+                      onSyncComplete={fetchMembers}
+                    />
+                  </Card.Body>
+                </Card>
 
-                <div className="sync-card">
-                  <h3>Event & Competition Sync</h3>
-                  <p>Import WOM competitions and sync event participation</p>
-                  <WomSyncButton
-                    type="events"
-                    buttonText="Sync WOM Competitions"
-                    onSyncComplete={() => {
-                      // Refresh any event data if needed
-                      if (typeof window !== "undefined") {
-                        const eventTab = document.querySelector(
-                          ".admin-tab:nth-child(2)"
-                        );
-                        if (eventTab) {
-                          // Flash the events tab to indicate new data
-                          eventTab.classList.add("flash-highlight");
-                          setTimeout(() => {
-                            eventTab.classList.remove("flash-highlight");
-                          }, 1000);
+                <Card className="sync-card" variant="dark">
+                  <Card.Header>
+                    <h3>Event Sync</h3>
+                  </Card.Header>
+                  <Card.Body>
+                    <p>Import WOM competitions and sync event participation</p>
+                    <WomSyncButton
+                      type="events"
+                      buttonText="Sync WOM Competitions"
+                      onSyncComplete={() => {
+                        // Refresh any event data if needed
+                        if (typeof window !== "undefined") {
+                          const eventTab = document.querySelector(
+                            ".admin-tab:nth-child(2)"
+                          );
+                          if (eventTab) {
+                            // Flash the events tab to indicate new data
+                            eventTab.classList.add("flash-highlight");
+                            setTimeout(() => {
+                              eventTab.classList.remove("flash-highlight");
+                            }, 1000);
+                          }
                         }
-                      }
-                    }}
-                  />
-                </div>
+                      }}
+                    />
+                  </Card.Body>
+                </Card>
               </div>
 
-              <div className="sync-info">
-                <h4>About Synchronization</h4>
-                <p>
-                  Regular data synchronization keeps your clan tracker up to
-                  date with the latest information from Wise Old Man:
-                </p>
-                <ul className="sync-info-list">
-                  <li>
-                    <strong>Member Data Sync:</strong> Updates XP, levels, boss
-                    kills, and EHB for all clan members
-                  </li>
-                  <li>
-                    <strong>Event & Competition Sync:</strong> Imports official
-                    WOM competitions and updates participation data
-                  </li>
-                </ul>
-                <p className="note">
-                  Synchronization is done automatically, but if you need to
-                  update it sooner than the daily tasks, you can do so here. WOM
-                  competitions will appear in the Events tab.
-                </p>
-              </div>
+              <Card className="sync-info" variant="dark">
+                <Card.Body>
+                  <h4>About Synchronization</h4>
+                  <p>
+                    Regular data synchronization keeps your clan tracker up to
+                    date with the latest information from Wise Old Man:
+                  </p>
+                  <ul className="sync-info-list">
+                    <li>
+                      <strong>Member Data Sync:</strong> Updates XP, levels, boss
+                      kills, and EHB for all clan members
+                    </li>
+                    <li>
+                      <strong>Event Sync:</strong> Imports official
+                      WOM competitions and updates participation data
+                    </li>
+                  </ul>
+                  <p className="note">
+                    Synchronization is done automatically, but if you need to
+                    update it sooner than the daily tasks, you can do so here. WOM
+                    competitions will appear in the Events tab.
+                  </p>
+                </Card.Body>
+              </Card>
             </div>
           </div>
-        )}
-      </div>
+        </Tabs.Tab>
+      </Tabs>
     </div>
   );
 }
-

@@ -9,7 +9,7 @@ import {
 import { AuthProvider } from "./context/AuthContext";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import RegistrationForm from "./components/RegistrationForm";
-import AdminLogin from "./components/AdminLogin";
+import Login from "./components/Login";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
 import WelcomePage from "./pages/WelcomePage";
@@ -18,7 +18,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./components/ForgotPassword";
 import SeasonalFavicon from "./utils/seasonalIcons";
-import "./App.css";
+import "./styles/App.css";
 
 function App() {
   // Create a wrapper component to check the current route
@@ -33,7 +33,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/members" element={<MembersPage />} />
-        <Route path="/login" element={<AdminLogin />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegistrationForm />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<ProfilePage />} />

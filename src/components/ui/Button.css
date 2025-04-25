@@ -1,0 +1,128 @@
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
+}
+
+/* Button sizes */
+.ui-button-sm {
+  padding: var(--spacing-1) var(--spacing-1);
+  font-size: var(--font-size-sm);
+}
+
+.ui-button-md {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-md);
+}
+
+.ui-button-lg {
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-lg);
+}
+
+/* Button variants - using your app's color scheme */
+.ui-button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white, #fff);
+}
+
+.ui-button-primary:hover:not(.ui-button-disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.ui-button-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-white, #fff);
+}
+
+.ui-button-secondary:hover:not(.ui-button-disabled) {
+  background-color: #5a6268;
+}
+
+.ui-button-danger {
+  background-color: var(--color-danger);
+  color: var(--color-white, #fff);
+}
+
+.ui-button-danger:hover:not(.ui-button-disabled) {
+  background-color: #c82333;
+}
+
+.ui-button-warning {
+  background-color: var(--color-warning);
+  color: #212529;
+}
+
+.ui-button-warning:hover:not(.ui-button-disabled) {
+  background-color: #e0a800;
+}
+
+.ui-button-orange {
+  background-color: var(--color-orange);
+  color: var(--color-white, #fff);
+}
+
+.ui-button-orange:hover:not(.ui-button-disabled) {
+  background-color: #e68a00;
+}
+
+.ui-button-outline {
+  background-color: transparent;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-text);
+}
+
+.ui-button-outline:hover:not(.ui-button-disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Square button */
+.ui-button-square {
+  aspect-ratio: 1/1;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-button-square.ui-button-sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.ui-button-square.ui-button-md {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.ui-button-square.ui-button-lg {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Icon styling */
+.ui-button-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-button-icon-left {
+  margin-right: var(--spacing-1);
+}
+
+.ui-button-icon-right {
+  margin-left: var(--spacing-1);
+}
+
+/* Disabled state */
+.ui-button-disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}

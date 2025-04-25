@@ -1,10 +1,25 @@
+/* Base navbar styling */
 .navbar {
-  padding: 0.5rem 1rem;
+  padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   background-color: #111 !important;
   border-bottom: 3px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Brand styling */
 .navbar-brand {
   display: flex;
   align-items: center;
@@ -12,22 +27,29 @@
   font-size: 1.4rem;
   color: #fff;
   text-decoration: none;
-  margin-right: 2rem;
+  z-index: 1001;
 }
 
-.navbar-brand img {
+.navbar-logo {
   margin-right: 0.75rem;
   transition: transform 0.2s;
 }
 
-.navbar-brand:hover img {
+.navbar-brand:hover .navbar-logo {
   transform: scale(1.05);
 }
 
+.brand-name {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+/* Main navigation links */
 .navbar-links {
   display: flex;
   align-items: center;
-  margin-left: auto;
   gap: 1.5rem;
 }
 
@@ -39,6 +61,7 @@
   padding: 0.5rem 0.25rem;
   position: relative;
   transition: color 0.2s;
+  white-space: nowrap;
 }
 
 .navbar-links a:hover,
@@ -65,6 +88,27 @@
   transform-origin: bottom left;
 }
 
+/* Hamburger toggle button */
+.navbar-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.6rem;
+  z-index: 1001;
+}
+
+.navbar-toggle span {
+  display: block;
+  width: 25px;
+  height: 3px;
+  margin: 5px 0;
+  background-color: white;
+  border-radius: 3px;
+  transition: all 0.3s;
+}
+
+/* Special button styles */
 .logout-button {
   background: none;
   border: 1px solid #d9534f;
@@ -81,47 +125,107 @@
   color: white;
 }
 
-/* Responsive adjustments */
+/* Special styling for profile & admin links */
+.profile-link:before {
+  content: '👤';
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.admin-link:before {
+  content: '⚙️';
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.navbar-auth-links {
+  display: flex;
+  align-items: center; /* Add this to align with parent */
+  gap: 1.5rem;
+  height: 100%; /* Ensure full height */
+}
+
+/* Mobile AND tablet styles - now apply to everything below 992px */
 @media (max-width: 991px) {
+  .navbar-container {
+    padding: 0.5rem 1rem;
+  }
+  
+  .brand-name {
+    font-size: 1.2rem;
+  }
+  
+  .navbar-toggle {
+    display: block;
+  }
+  
   .navbar-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 70%;
+    max-width: 300px;
+    height: 100vh;
+    background-color: #111;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    width: 100%;
+    justify-content: flex-start;
+    padding: 5rem 2rem 2rem;
+    transition: right 0.3s ease;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
   }
-
+  
+  .navbar-links.active {
+    right: 0;
+  }
+  
   .navbar-links a {
     width: 100%;
-    padding: 0.5rem 0;
+    padding: 1rem 0;
+    font-size: 1.1rem;
+  }
+  
+  .navbar-links a:after {
+    display: none;
+  }
+  
+  .navbar-auth-links {
+    flex-direction: column;
+    width: 100%;
+    gap: 1rem;
+    align-items: flex-start; /* Changed for mobile */
   }
   
   .logout-button {
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     width: 100%;
-    padding: 0.5rem;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  
+  /* Animated hamburger toggle */
+  .navbar-toggle.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+  
+  .navbar-toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .navbar-toggle.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
   }
 }
 
-/* Special styling for navbar items */
-.navbar-links a[href="/profile"] {
-  display: flex;
-  align-items: center;
-}
-
-.navbar-links a[href="/profile"]:before {
-  content: '👤';
-  margin-right: 0.25rem;
-  font-size: 1.1rem;
-}
-
-.navbar-links a[href="/admin"] {
-  display: flex;
-  align-items: center;
-}
-
-.navbar-links a[href="/admin"]:before {
-  content: '⚙️';
-  margin-right: 0.25rem;
-  font-size: 1.1rem;
+/* Small phone optimizations */
+@media (max-width: 576px) {
+  .navbar-links {
+    width: 85%;
+    padding: 4.5rem 1.5rem 2rem;
+  }
+  
+  .brand-name {
+    font-size: 1.1rem;
+  }
 }

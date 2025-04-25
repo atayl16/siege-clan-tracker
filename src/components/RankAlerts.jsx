@@ -8,6 +8,14 @@ import {
 } from "../utils/rankUtils";
 import { titleize } from "../utils/stringUtils";
 import { supabase } from "../supabaseClient";
+import { FaSync, FaExchangeAlt, FaCheck, FaExclamationTriangle } from "react-icons/fa";
+
+// Import UI components
+import Card from "./ui/Card";
+import Button from "./ui/Button";
+import Badge from "./ui/Badge";
+import EmptyState from "./ui/EmptyState";
+
 import "./RankAlerts.css";
 
 export default function RankAlerts({ previewMode = false, onRankUpdate }) {
@@ -42,8 +50,6 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
     }
 
     // Medium priority: more than one rank difference
-    // This would need more complex logic to determine rank distance
-    // For now, we'll just assign a medium priority to all other mismatches
     return 2;
   };
 
@@ -125,13 +131,13 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
 
       // Show a brief success toast
       const successToast = document.createElement("div");
-      successToast.className = "rank-update-toast";
+      successToast.className = "ui-rank-update-toast";
       successToast.textContent = `Updated ${member.name} to ${member.calculated_rank}`;
       document.body.appendChild(successToast);
 
       // Remove the toast after 2 seconds
       setTimeout(() => {
-        successToast.classList.add("toast-fade-out");
+        successToast.classList.add("ui-toast-fade-out");
         setTimeout(() => {
           document.body.removeChild(successToast);
         }, 300);
@@ -147,22 +153,45 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
     fetchMembers();
   };
 
-  if (loading)
-    return <div className="alerts-loading">Loading rank alerts...</div>;
-  if (error) return <div className="alerts-error">Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="ui-loading-container ui-rank-alerts-loading">
+        <div className="ui-loading-spinner"></div>
+        <div className="ui-loading-text">Loading rank alerts...</div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="ui-message ui-message-error ui-rank-alerts-error">
+        <FaExclamationTriangle className="ui-message-icon" />
+        <span>{error}</span>
+      </div>
+    );
+  }
   
   // In preview mode with no alerts, show a shorter message
   if (alerts.length === 0) {
     if (previewMode) {
-      return <div className="alerts-empty">No rank updates required.</div>;
+      return (
+        <div className="ui-no-alerts">
+          <FaCheck className="ui-success-icon" />
+          <span>No rank updates required</span>
+        </div>
+      );
     } else {
       return (
-        <div className="alerts-empty">
-          <p>No rank updates required at this time.</p>
-          <button onClick={handleRefresh} className="refresh-button">
-            Refresh Data
-          </button>
-        </div>
+        <EmptyState
+          title="No Rank Updates Required"
+          description="All members currently have the correct rank."
+          icon={<FaCheck className="ui-empty-state-icon" />}
+          action={
+            <Button variant="secondary" size="sm" onClick={handleRefresh} icon={<FaSync />}>
+              Refresh Data
+            </Button>
+          }
+        />
       );
     }
   }
@@ -172,79 +201,89 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
   const hasMoreAlerts = previewMode && alerts.length > 3;
 
   return (
-    <div className="rank-alerts">
-      <div className="rank-alerts__header">
-        <h4 className="rank-alerts__title">Members Needing Rank Updates</h4>
+    <Card variant="dark" className="ui-rank-alerts-container">
+      <Card.Header className="ui-rank-alerts-header">
+        <h3 className="ui-rank-alerts-title">
+          Members Needing Rank Updates
+          <Badge variant="warning" pill className="ui-alerts-count">
+            {alerts.length}
+          </Badge>
+        </h3>
+        
         {!previewMode && (
-          <button onClick={handleRefresh} className="refresh-button">
-            Refresh
-          </button>
-        )}
-      </div>
-      
-      <div className="rank-alerts__count">
-        {alerts.length} {alerts.length === 1 ? "member" : "members"} need
-        updates
-      </div>
-
-      <ul className="rank-alerts__list">
-        {displayedAlerts.map((member) => {
-          const priority = getRankUpdatePriority(member);
-
-          return (
-            <li
-              key={member.wom_id}
-              className={`rank-alert priority-${priority}`}
-            >
-              <div className="rank-alert__header">
-                <span className="rank-alert__name">{member.name}</span>
-                <button
-                  className="rank-alert__update-btn"
-                  onClick={() => handleUpdateRank(member)}
-                >
-                  Update
-                </button>
-              </div>
-
-              <div className="rank-alert__details">
-                <div className="rank-alert__current">
-                  Current rank:{" "}
-                  <span className="rank-value">{titleize(member.womrole)}</span>
-                </div>
-                <div className="rank-alert__recommended">
-                  Should be:{" "}
-                  <span className="rank-value">{member.calculated_rank}</span>
-                </div>
-
-                {/* Show relevant stats based on whether they're a skiller or fighter */}
-                {member.calculated_rank &&
-                SKILLER_RANK_NAMES.includes(member.calculated_rank) ? (
-                  <div className="rank-alert__stats">
-                    XP: {safeFormat(member.current_xp - member.first_xp)}
-                  </div>
-                ) : (
-                  <div className="rank-alert__stats">
-                    EHB: {safeFormat(member.ehb)}
-                  </div>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      
-      {hasMoreAlerts && previewMode && (
-        <div className="view-all-link">
-          <button
-            className="view-all-button"
-            onClick={() => {
-              document.querySelector('button[data-tab="alerts"]')?.click();
-            }}
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={handleRefresh} 
+            icon={<FaSync />}
           >
-            View all {alerts.length} alerts
-          </button>
-        </div>
-      )}
-    </div>
+            Refresh
+          </Button>
+        )}
+      </Card.Header>
+      
+      <Card.Body>
+        <ul className="ui-reported-members-list">
+          {displayedAlerts.map((member) => {
+            const priority = getRankUpdatePriority(member);
+            
+            return (
+              <li
+                key={member.wom_id}
+                className={`ui-reported-member-item ui-priority-${priority}`}
+              >
+                <div className="ui-member-info">
+                  <div className="ui-reported-member-name">{member.name}</div>
+                  <div className="ui-rank-details">
+                    <div className="ui-current-rank">
+                      Current: <strong>{titleize(member.womrole)}</strong>
+                    </div>
+                    <div className="ui-recommended-rank">
+                      Should be: <strong>{member.calculated_rank}</strong>
+                    </div>
+                    
+                    {/* Show relevant stats based on whether they're a skiller or fighter */}
+                    {member.calculated_rank &&
+                    SKILLER_RANK_NAMES.includes(member.calculated_rank) ? (
+                      <div className="ui-member-stats">
+                        XP: <strong>{safeFormat(member.current_xp - member.first_xp)}</strong>
+                      </div>
+                    ) : (
+                      <div className="ui-member-stats">
+                        EHB: <strong>{safeFormat(member.ehb)}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleUpdateRank(member)}
+                  icon={<FaExchangeAlt />}
+                >
+                  Update Rank
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+        
+        {hasMoreAlerts && previewMode && (
+          <div className="ui-view-all-container">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="ui-view-all-button"
+              onClick={() => {
+                document.querySelector('button[data-tab="alerts"]')?.click();
+              }}
+            >
+              View all {alerts.length} alerts
+            </Button>
+          </div>
+        )}
+      </Card.Body>
+    </Card>
   );
 }

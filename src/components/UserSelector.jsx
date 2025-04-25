@@ -1,19 +1,54 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
-import "./UserSelector.css";
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import DataSelector from './ui/DataSelector';
+import Badge from './ui/Badge';
+import './UserSelector.css';
 
 export default function UserSelector({
   onUserSelect,
   selectedUserId = null,
   disabled = false,
-  viewMode = "table", // 'table' or 'dropdown'
-  excludeAdmins = false, // This prop was already defined correctly
+  viewMode = 'table',
+  excludeAdmins = false,
 }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState([]);
+
+  // Define columns for the table view
+  const columns = [
+    {
+      header: 'Username',
+      accessor: 'username',
+    },
+    {
+      header: 'Created At',
+      accessor: 'created_at',
+      render: (user) => new Date(user.created_at).toLocaleDateString(),
+    },
+    {
+      header: 'Status',
+      accessor: 'is_admin',
+      render: (user) => (
+        <Badge variant={user.is_admin ? 'orange' : 'secondary'} pill>
+          {user.is_admin ? 'Admin' : 'User'}
+        </Badge>
+      ),
+    },
+    {
+      header: 'Actions',
+      render: (user) => (
+        <button
+          className="select-user-btn"
+          onClick={() => onUserSelect(user)}
+          disabled={disabled}
+        >
+          Select
+        </button>
+      ),
+    },
+  ];
 
   // Fetch users when the component mounts or when excludeAdmins changes
   useEffect(() => {
@@ -21,142 +56,47 @@ export default function UserSelector({
       try {
         setLoading(true);
         let query = supabase
-          .from("users")
-          .select("id, username, created_at, is_admin")
-          .order("username", { ascending: true });
+          .from('users')
+          .select('id, username, created_at, is_admin')
+          .order('username', { ascending: true });
 
         // Add filter for excluding admins if needed
         if (excludeAdmins) {
-          query = query.eq("is_admin", false);
+          query = query.eq('is_admin', false);
         }
 
         const { data, error } = await query;
 
         if (error) throw error;
         setUsers(data || []);
-        setFilteredUsers(data || []);
       } catch (err) {
-        console.error("Error fetching users:", err);
-        setError("Failed to load users");
+        console.error('Error fetching users:', err);
+        setError('Failed to load users');
       } finally {
         setLoading(false);
       }
     }
 
     fetchUsers();
-  }, [excludeAdmins]); // Dependency array is correct
+  }, [excludeAdmins]);
 
-  // Filter users based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(users);
-      return;
-    }
-
-    const lowercaseSearch = searchTerm.toLowerCase();
-    const filtered = users.filter(
-      (user) =>
-        user.username.toLowerCase().includes(lowercaseSearch)
-    );
-
-    setFilteredUsers(filtered);
-  }, [searchTerm, users]);
-
-  if (loading) return <div className="loading-indicator">Loading users...</div>;
-  if (error) return <div className="error-message">{error}</div>;
-
-  // Render dropdown view
-  if (viewMode === "dropdown") {
-    return (
-      <div className="form-group">
-        <label>Select User:</label>
-        <select
-          value={selectedUserId || ""}
-          onChange={(e) => {
-            const selectedUser = users.find((u) => u.id === e.target.value);
-            if (selectedUser) onUserSelect(selectedUser);
-          }}
-          disabled={disabled}
-          className="user-select"
-          required
-        >
-          <option value="">Select a user</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.username} {user.is_admin ? "(Admin)" : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  // Render table view
   return (
-    <div className="user-selector">
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search users by username"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-          disabled={disabled}
-        />
-        {searchTerm && (
-          <button
-            className="clear-search"
-            onClick={() => setSearchTerm("")}
-            disabled={disabled}
-          >
-            ×
-          </button>
-        )}
-      </div>
-
-      <div className="users-table-container">
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Created At</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr
-                key={user.id}
-                className={`${user.is_admin ? "admin-user" : ""} ${
-                  user.id === selectedUserId ? "selected-user" : ""
-                }`}
-              >
-                <td>{user.username}</td>
-                <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                <td>
-                  <span
-                    className={`user-status-badge ${
-                      user.is_admin ? "admin" : "regular"
-                    }`}
-                  >
-                    {user.is_admin ? "Admin" : "User"}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="select-user-btn"
-                    onClick={() => onUserSelect(user)}
-                    disabled={disabled}
-                  >
-                    Select
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataSelector
+      data={users}
+      columns={columns}
+      onSelect={onUserSelect}
+      selectedId={selectedUserId}
+      keyField="id"
+      searchFields={['username']}
+      searchPlaceholder="Search users by username"
+      viewMode={viewMode}
+      labelField="username"
+      valueField="id"
+      loading={loading}
+      error={error}
+      disabled={disabled}
+      emptyMessage="No users found"
+      className="user-selector"
+    />
   );
 }

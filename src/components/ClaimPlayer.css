@@ -1,390 +1,195 @@
-.claim-player-container {
-  background-color: #222;
-  border-radius: 8px;
+.ui-claim-player-container {
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.claim-tabs {
-  display: flex;
-  background-color: #333;
-  border-bottom: 1px solid #444;
+.ui-claim-tab-content {
+  padding: 1.5625rem; /* 25px */
+  color: var(--color-text, #e0e0e0);
 }
 
-.claim-tab {
-  flex: 1;
-  padding: 15px;
-  background: none;
-  border: none;
-  font-weight: 600;
-  color: #ccc;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-}
-
-.claim-tab:hover {
-  color: #ff9800;
-}
-
-.claim-tab.active {
-  color: #ff9800;
-  background-color: #222;
-  box-shadow: inset 0 -3px 0 #ff9800;
-}
-
-.notification-message {
-  padding: 15px;
-  margin: 15px;
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.notification-message.success {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-  border-left: 4px solid #28a745;
-}
-
-.notification-message.error {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-  border-left: 4px solid #dc3545;
-}
-
-.error-message {
-  padding: 15px;
-  margin: 15px;
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-  border-radius: 8px;
-  border-left: 4px solid #dc3545;
-}
-
-.claim-code-tab,
-.claim-request-tab {
-  padding: 25px;
-  color: #e0e0e0;
-}
-
-.claim-code-tab h2,
-.claim-request-tab h2 {
-  margin-bottom: 20px;
-  color: #ff9800;
+.ui-claim-heading {
+  margin-bottom: 1.25rem; /* 20px */
+  color: var(--color-orange, #ff9800);
   font-size: 1.4rem;
   position: relative;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
+  padding-bottom: 0.9375rem; /* 15px */
+  border-bottom: 0.0625rem solid #444; /* 1px */
 }
 
-.claim-code-tab h2::before,
-.claim-request-tab h2::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 25px;
-  background-color: #ff9800;
-  margin-right: 15px;
-  border-radius: 4px;
-}
-
-.claim-code-tab p,
-.claim-request-tab p {
-  margin-bottom: 20px;
+.ui-claim-description {
+  margin-bottom: 1.25rem; /* 20px */
   color: #aaa;
 }
 
-.form-group {
-  margin-bottom: 20px;
+/* Notification and Error Messages */
+.ui-notification-message {
+  display: flex;
+  align-items: center;
+  padding: 0.9375rem; /* 15px */
+  margin: 0 0 0.9375rem 0; /* 0 0 15px 0 */
+  border-radius: 0.5rem; /* 8px */
+  font-weight: 500;
 }
 
-.form-group label {
+.ui-notification-icon {
+  margin-right: 0.625rem; /* 10px */
+  font-size: 1.125rem; /* 18px */
+  flex-shrink: 0;
+}
+
+.ui-notification-success {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border-left: 0.25rem solid #28a745; /* 4px */
+}
+
+.ui-notification-error {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-left: 0.25rem solid #dc3545; /* 4px */
+}
+
+.ui-error-message {
+  display: flex;
+  align-items: center;
+  padding: 0.9375rem; /* 15px */
+  margin: 0 0 0.9375rem 0; /* 0 0 15px 0 */
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-radius: 0.5rem; /* 8px */
+  border-left: 0.25rem solid #dc3545; /* 4px */
+}
+
+.ui-error-icon {
+  margin-right: 0.625rem; /* 10px */
+  font-size: 1.125rem; /* 18px */
+  flex-shrink: 0;
+}
+
+/* Form Styling */
+.ui-claim-form {
+  margin-bottom: 1.875rem; /* 30px */
+}
+
+.ui-form-group {
+  margin-bottom: 1.25rem; /* 20px */
+}
+
+.ui-form-label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem; /* 8px */
   font-weight: 500;
   color: #ccc;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.ui-form-input,
+.ui-form-select,
+.ui-form-textarea {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 0.75rem 0.9375rem; /* 12px 15px */
+  border: 0.0625rem solid #444; /* 1px */
+  border-radius: 0.5rem; /* 8px */
+  font-size: 1rem; /* 16px */
   transition: all 0.2s;
   background-color: #333;
-  color: #e0e0e0;
+  color: var(--color-text, #e0e0e0);
+  font-family: inherit;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.ui-form-input:focus,
+.ui-form-select:focus,
+.ui-form-textarea:focus {
   outline: none;
-  border-color: #ff9800;
-  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.25);
+  border-color: var(--color-orange, #ff9800);
+  box-shadow: 0 0 0 0.1875rem rgba(255, 152, 0, 0.25); /* 3px */
 }
 
-.loading-indicator {
-  padding: 15px;
+.ui-loading-indicator {
+  padding: 0.9375rem; /* 15px */
   color: #aaa;
   font-style: italic;
   text-align: center;
   background-color: #333;
-  border-radius: 8px;
+  border-radius: 0.5rem; /* 8px */
 }
 
-.info-message {
-  padding: 15px;
+.ui-info-message {
+  padding: 0.9375rem; /* 15px */
   background-color: #333;
   color: #aaa;
-  border-radius: 8px;
-  margin-top: 8px;
+  border-radius: 0.5rem; /* 8px */
+  margin-top: 0.5rem; /* 8px */
   text-align: center;
-  border-left: 4px solid #555;
+  border-left: 0.25rem solid #555; /* 4px */
 }
 
-.claim-button {
-  padding: 12px 24px;
-  background-color: #ff9800;
-  color: #1a1a1a;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.3s;
+/* Information Card */
+.ui-info-card {
+  margin-top: 1.875rem; /* 30px */
 }
 
-.claim-button:hover:not(:disabled) {
-  background-color: #e67e00;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
-}
-
-.claim-button:disabled {
-  background-color: #5a4421;
-  cursor: not-allowed;
-}
-
-.claim-info {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #333;
-  border-radius: 8px;
-  border-left: 4px solid #ff9800;
-}
-
-.claim-info h3 {
-  margin-bottom: 15px;
-  color: #ff9800;
+.ui-info-heading {
+  margin-bottom: 0.9375rem; /* 15px */
+  color: var(--color-orange, #ff9800);
   font-size: 1.2rem;
 }
 
-.claim-info p {
-  margin-bottom: 15px;
+.ui-info-list {
+  padding-left: 1.25rem; /* 20px */
   color: #aaa;
 }
 
-.claim-info ol {
-  padding-left: 20px;
-  color: #aaa;
+.ui-info-list li {
+  margin-bottom: 0.625rem; /* 10px */
 }
 
-.claim-info ol li {
-  margin-bottom: 10px;
-}
-
-@media (max-width: 768px) {
-  .claim-code-tab,
-  .claim-request-tab {
-    padding: 20px 15px;
-  }
-  
-  .claim-button {
-    padding: 10px 20px;
-  }
-}
-
-/* My Requests Tab Styling */
-.my-requests-tab {
-  padding: 25px;
-  color: #e0e0e0;
-}
-
-.my-requests-tab h2 {
-  margin-bottom: 20px;
-  color: #ff9800;
-  font-size: 1.4rem;
-  position: relative;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
-}
-
-.my-requests-tab h2::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 25px;
-  background-color: #ff9800;
-  margin-right: 15px;
-  border-radius: 4px;
-}
-
-.no-requests {
-  text-align: center;
-  padding: 30px 20px;
-  background-color: #333;
-  border-radius: 8px;
-  color: #aaa;
-}
-
-.secondary-button {
-  background-color: #444;
-  color: #e0e0e0;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  margin-top: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.secondary-button:hover {
-  background-color: #555;
-  transform: translateY(-2px);
-}
-
-.requests-list {
+/* Request Cards */
+.ui-requests-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.9375rem; /* 15px */
 }
 
-.request-card {
+.ui-request-card {
   background-color: #333;
-  border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.request-header {
+.ui-request-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #444;
 }
 
-.request-header h3 {
-  margin: 0;
-  color: #e0e0e0;
-  font-size: 1.2rem;
-}
-
-.status-badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
+.ui-request-title {
   font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--color-text, #e0e0e0);
 }
 
-.status-badge.approved {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-}
-
-.status-badge.denied {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-}
-
-.status-badge.pending {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.request-details {
-  font-size: 14px;
+.ui-request-details {
+  font-size: 0.875rem; /* 14px */
   color: #ccc;
 }
 
-.request-details p {
-  margin: 8px 0;
+.ui-request-details p {
+  margin: 0.5rem 0; /* 8px 0 */
 }
 
-.admin-notes {
-  margin-top: 12px;
-  padding: 10px;
-  background-color: #2a2a2a;
-  border-radius: 6px;
-  border-left: 3px solid #ff9800;
-}
-
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .my-requests-tab {
-    padding: 20px 15px;
+  .ui-claim-tab-content {
+    padding: 1.25rem 0.9375rem; /* 20px 15px */
   }
   
-  .request-header {
+  .ui-claim-button {
+    padding: 0.625rem 1.25rem; /* 10px 20px */
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-request-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 0.625rem; /* 10px */
   }
-  
-  .status-badge {
-    align-self: flex-start;
-  }
-}
-
-.request-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px; /* Add proper spacing between name and badge */
-}
-
-.request-name {
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-right: auto; /* Push the badge to the right */
-}
-
-.request-badge {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  flex-shrink: 0; /* Prevent badge from shrinking */
-  display: inline-flex; /* Better alignment */
-  align-items: center;
-  justify-content: center;
-}
-
-/* Fix the same alignment issue in the request header (for My Requests tab) */
-.request-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #444;
-  gap: 15px; /* Add proper spacing between name and badge */
-}
-
-.request-header h3 {
-  margin: 0;
-  color: #e0e0e0;
-  font-size: 1.2rem;
-  margin-right: auto; /* Push the badge to the right */
-}
-
-.my-request-rsn {
-  margin: 0;
-  color: #e0e0e0;
-  font-size: 1.2rem;
 }

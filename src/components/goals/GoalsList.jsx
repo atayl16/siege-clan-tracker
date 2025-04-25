@@ -5,6 +5,13 @@ import CreateGoal from "./CreateGoal";
 import { refreshPlayerData } from "../../utils/womApi";
 import { updatePlayerGoals } from "../../services/goalProgressService";
 import { titleize } from "../../utils/stringUtils";
+import { FaSync, FaPlus, FaTimes, FaTrash } from "react-icons/fa";
+
+// Import UI components
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import Badge from "../ui/Badge";
+import EmptyState from "../ui/EmptyState";
 import "./Goals.css";
 
 export default function GoalsList({ player, userId, onClose }) {
@@ -53,16 +60,10 @@ export default function GoalsList({ player, userId, onClose }) {
     }
   }, [player.wom_id, userId]);
 
-  // This effect runs only once to log mounting info
-  useEffect(() => {
-    console.log("GoalsList mounted with player:", player);
-    console.log("userId:", userId);
-  }, [player, userId]); // Add player and userId to dependencies
-
   // Fetch goals when dependencies change
   useEffect(() => {
     fetchGoals();
-  }, [fetchGoals]); // Use fetchGoals instead of direct dependencies
+  }, [fetchGoals]);
 
   const handleDeleteGoal = async (goalId) => {
     if (!window.confirm("Are you sure you want to delete this goal?")) return;
@@ -78,7 +79,7 @@ export default function GoalsList({ player, userId, onClose }) {
       setGoals(goals.filter((goal) => goal.id !== goalId));
     } catch (err) {
       console.error("Error deleting goal:", err);
-      alert("Failed to delete goal");
+      setError("Failed to delete goal. Please try again.");
     }
   };
 
@@ -129,96 +130,156 @@ export default function GoalsList({ player, userId, onClose }) {
     }
   };
 
+  const getGoalTypeVariant = (goalType) => {
+    switch(goalType.toLowerCase()) {
+      case 'skill':
+        return 'primary';
+      case 'boss':
+        return 'danger';
+      case 'activity':
+        return 'success';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
-    <div className="goals-container">
-      <div className="goals-header">
+    <div className="ui-goals-container">
+      <div className="ui-goals-header">
         <h2>Goals for {titleize(player.name)}</h2>
-        <button className="close-button" onClick={onClose}>
-          &times;
-        </button>
+        {onClose && (
+          <Button 
+            variant="text" 
+            className="ui-close-button" 
+            onClick={onClose}
+            icon={<FaTimes />}
+          />
+        )}
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="ui-message ui-message-error">
+          <span>{error}</span>
+        </div>
+      )}
+      
       {syncSuccess && (
-        <div className="success-message">Progress updated successfully!</div>
+        <div className="ui-message ui-message-success">
+          <span>Progress updated successfully!</span>
+        </div>
       )}
 
-      <div className="goals-actions">
-        <button
-          className="sync-progress-button"
+      <div className="ui-goals-actions">
+        <Button
+          variant="secondary"
           onClick={handleSyncProgress}
           disabled={syncing}
+          className="ui-sync-button"
+          icon={<FaSync className={syncing ? "ui-spinner" : ""} />}
         >
-          {syncing ? (
-            <>
-              <span className="spinner"></span> Updating...
-            </>
-          ) : (
-            <>
-              <span className="sync-icon">↻</span> Sync Progress
-            </>
-          )}
-        </button>
+          {syncing ? "Updating..." : "Sync Progress"}
+        </Button>
 
-        <button className="add-goal-button" onClick={handleAddGoal}>
-          <span className="button-icon">+</span> Add New Goal
-        </button>
+        <Button
+          variant="primary"
+          onClick={handleAddGoal}
+          className="ui-add-goal-button"
+          icon={<FaPlus />}
+        >
+          Add New Goal
+        </Button>
       </div>
 
       {showAddGoal && (
-        <CreateGoal
-          player={player}
-          userId={userId}
-          onGoalCreated={handleGoalCreated}
-          onCancel={() => setShowAddGoal(false)}
-        />
+        <Card className="ui-create-goal-card">
+          <Card.Body>
+            <CreateGoal
+              player={player}
+              userId={userId}
+              onGoalCreated={handleGoalCreated}
+              onCancel={() => setShowAddGoal(false)}
+            />
+          </Card.Body>
+        </Card>
       )}
 
       {loading ? (
-        <div className="loading-indicator">Loading goals...</div>
-      ) : goals.length === 0 ? (
-        <div className="no-goals">
-          <p>You haven't set any goals for {titleize(player.name)} yet.</p>
-          <p>Click "Add New Goal" to get started!</p>
+        <div className="ui-loading-container">
+          <div className="ui-loading-spinner"></div>
+          <div className="ui-loading-text">Loading goals...</div>
         </div>
+      ) : goals.length === 0 ? (
+        <EmptyState
+          title="No Goals Set"
+          description={`You haven't set any goals for ${titleize(player.name)} yet. Click "Add New Goal" to get started!`}
+          icon={<FaPlus className="ui-empty-state-icon" />}
+        />
       ) : (
-        <div className="goals-list">
+        <div className="ui-goals-grid">
           {goals.map((goal) => (
-            <div
+            <Card 
               key={goal.id}
-              className={`goal-card ${goal.completed ? "completed" : ""}`}
+              className={`ui-goal-card ${goal.completed ? "ui-goal-completed" : ""}`}
+              variant={goal.completed ? "dark" : "default"}
             >
-              <div className="goal-header">
-                <h3>{titleize(goal.metric)}</h3>
-                <div className="goal-type">{goal.goal_type}</div>
-              </div>
-
-              <GoalProgress goal={goal} />
-
-              <div className="goal-details">
-                <div>Target: {goal.target_value.toLocaleString()}</div>
-                {goal.target_date && (
-                  <div>
-                    Deadline: {new Date(goal.target_date).toLocaleDateString()}
-                  </div>
-                )}
+              <Card.Header className="ui-goal-header">
+                <h3 className="ui-goal-metric">{titleize(goal.metric)}</h3>
+                <Badge 
+                  variant={getGoalTypeVariant(goal.goal_type)}
+                  className="ui-goal-type-badge"
+                >
+                  {goal.goal_type}
+                </Badge>
                 {goal.completed && (
-                  <div className="completion-date">
-                    Completed on:{" "}
-                    {new Date(goal.completed_date).toLocaleDateString()}
-                  </div>
+                  <Badge 
+                    variant="success" 
+                    className="ui-goal-completed-badge"
+                  >
+                    Completed
+                  </Badge>
                 )}
-              </div>
+              </Card.Header>
 
-              <div className="goal-actions">
-                <button
-                  className="delete-goal"
+              <Card.Body>
+                <GoalProgress goal={goal} />
+
+                <div className="ui-goal-details">
+                  <div className="ui-goal-target">
+                    <span className="ui-detail-label">Target:</span> 
+                    <span className="ui-detail-value">{goal.target_value.toLocaleString()}</span>
+                  </div>
+                  
+                  {goal.target_date && (
+                    <div className="ui-goal-deadline">
+                      <span className="ui-detail-label">Deadline:</span>
+                      <span className="ui-detail-value">
+                        {new Date(goal.target_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {goal.completed && (
+                    <div className="ui-goal-completion">
+                      <span className="ui-detail-label">Completed on:</span>
+                      <span className="ui-detail-value">
+                        {new Date(goal.completed_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Card.Body>
+
+              <Card.Footer>
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={() => handleDeleteGoal(goal.id)}
+                  icon={<FaTrash />}
                 >
                   Delete Goal
-                </button>
-              </div>
-            </div>
+                </Button>
+              </Card.Footer>
+            </Card>
           ))}
         </div>
       )}

@@ -1,87 +1,171 @@
-/* Add to WomSyncButton.css */
-/* Sync Features Container */
-.sync-features {
-  margin: 0.9375rem 0; /* 15px */
-  text-align: center;
+/* Container for the WOM sync component */
+.ui-wom-sync-container {
+  background-color: #2a2a2a;
+  border-radius: var(--border-radius-md, 0.5rem);
+  margin-bottom: 1.25rem; /* 20px */
 }
 
-.sync-features p {
-  margin: 0.5rem 0; /* 8px */
-  color: #ddd;
-  font-size: 0.9375rem;
-}
-
-/* Sync Button Styling */
-.wom-sync-button {
-  display: inline-flex;
+/* Header styling */
+.ui-wom-sync-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background-color: #333;
-  color: #f8f8f8;
-  border: 0.0625rem solid #444; /* 1px */
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  flex-wrap: wrap;
+  gap: 0.9375rem; /* 15px */
 }
 
-.wom-sync-button:hover {
-  background-color: #444;
-  border-color: #555;
+.ui-wom-sync-title h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem; /* 10px */
+  margin: 0;
+  color: var(--color-orange, #ff9800);
+  font-size: 1.25rem; /* 20px */
 }
 
-.wom-sync-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* Actions section */
+.ui-wom-sync-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem; /* 20px */
+  flex-wrap: wrap;
 }
 
-.sync-icon {
-  font-size: 1rem;
+/* Last sync time */
+.ui-last-sync-time {
+  font-size: 0.875rem; /* 14px */
+  color: #aaa;
 }
 
-.sync-label {
-  font-weight: 500;
+/* Sync info section */
+.ui-wom-sync-info {
+  margin-top: 0.9375rem; /* 15px */
 }
 
-/* Sync Status Indicators */
-.sync-status {
-  margin-top: 0.625rem; /* 10px */
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  text-align: center;
+.ui-sync-features {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 1.25rem; /* 12px 20px */
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin: 0.625rem 0; /* 10px 0 */
+  border-left: 3px solid var(--color-orange, #ff9800);
 }
 
-.sync-status.success {
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
-  border: 0.0625rem solid rgba(40, 167, 69, 0.2);
+.ui-sync-features li {
+  margin-bottom: 0.5rem; /* 8px */
+  color: #e0e0e0;
 }
 
-.sync-status.error {
-  background-color: rgba(220, 53, 69, 0.1);
+.ui-sync-features li:last-child {
+  margin-bottom: 0;
+}
+
+.ui-sync-note {
+  font-size: 0.9375rem; /* 15px */
+  color: #aaa;
+  margin-top: 0.9375rem; /* 15px */
+  font-style: italic;
+}
+
+/* Development mode notice */
+.ui-dev-mode-notice {
+  margin-top: 1.25rem; /* 20px */
+  padding: 0.9375rem; /* 15px */
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  border-left: 3px solid #17a2b8;
+}
+
+.ui-dev-mode-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  color: #17a2b8;
+  margin-bottom: 0.5rem; /* 8px */
+}
+
+.ui-force-production-section {
+  margin-top: 0.9375rem; /* 15px */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem; /* 12px */
+}
+
+.ui-force-production-warning {
+  font-size: 0.875rem; /* 14px */
   color: #dc3545;
-  border: 0.0625rem solid rgba(220, 53, 69, 0.2);
+  font-style: italic;
 }
 
-.sync-status.loading {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: #ff9800;
-  border: 0.0625rem solid rgba(255, 152, 0, 0.2);
+/* Spinning animation */
+.ui-icon-spin {
+  animation: ui-spin 1s linear infinite;
+}
+
+@keyframes ui-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Message styling */
+.ui-message {
+  padding: 0.9375rem; /* 15px */
+  margin-bottom: 0.9375rem; /* 15px */
+  border-radius: var(--border-radius-sm, 0.25rem);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem; /* 10px */
+}
+
+.ui-message-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  border-left: 4px solid #28a745;
+  color: #75e090;
+}
+
+.ui-message-error {
+  background-color: rgba(220, 53, 69, 0.1);
+  border-left: 4px solid #dc3545;
+  color: #ff6b6b;
+}
+
+.ui-message-info {
+  background-color: rgba(23, 162, 184, 0.1);
+  border-left: 4px solid #17a2b8;
+  color: #17a2b8;
+}
+
+.ui-message-icon {
+  margin-top: 0.125rem; /* 2px */
+  flex-shrink: 0;
 }
 
 /* Responsive adjustments */
+@media (max-width: 768px) {
+  .ui-wom-sync-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .ui-wom-sync-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .ui-force-production-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 576px) {
-  .sync-features {
-    margin: 0.75rem 0;
+  .ui-wom-sync-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
   
-  .sync-features p {
-    font-size: 0.875rem;
-  }
-  
-  .wom-sync-button {
-    padding: 0.5rem 0.75rem;
+  .ui-last-sync-time {
+    text-align: center;
+    width: 100%;
   }
 }

@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { FaKey, FaCheckCircle, FaExclamationTriangle, FaCopy } from "react-icons/fa";
+
+// Import UI components
+import Card from "./ui/Card";
+import Button from "./ui/Button";
+import SelectDropdown from "./ui/SelectDropdown";
+import FormInput from "./ui/FormInput";
+
 import "./GenerateClaimCode.css";
 
 export default function GenerateClaimCode() {
@@ -120,66 +128,111 @@ export default function GenerateClaimCode() {
     }
   };
 
+  const copyToClipboard = () => {
+    if (generatedCode) {
+      navigator.clipboard.writeText(generatedCode)
+        .then(() => {
+          setSuccess("Code copied to clipboard!");
+        })
+        .catch(err => {
+          console.error("Failed to copy code:", err);
+        });
+    }
+  };
+
   return (
-    <div>
-      <h2>Generate Player Claim Code</h2>
-      
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
-      
-      {generatedCode && (
-        <div className="code-result">
-          <h3>Generated Code:</h3>
-          <div className="code-display">{generatedCode}</div>
-          <p className="code-instructions">
-            Share this code with the player to claim their account.
-            {expiryDays > 0 && ` This code will expire in ${expiryDays} days.`}
-          </p>
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Select Player:</label>
-          <select
-            value={selectedMember}
-            onChange={(e) => setSelectedMember(e.target.value)}
-            disabled={loadingMembers || loading}
-            required
-          >
-            <option value="">-- Select a player --</option>
-            {members.map(member => (
-              <option key={member.wom_id} value={member.wom_id}>
-                {member.name}
-              </option>
-            ))}
-          </select>
-          {loadingMembers && <div className="loading-indicator">Loading members...</div>}
-          {!loadingMembers && members.length === 0 && (
-            <div className="info-message">All players have been claimed</div>
+    <div className="ui-generate-claim-code">
+      <Card variant="dark">
+        <Card.Header>
+          <h2 className="ui-section-title">
+            <FaKey className="ui-icon-left" /> Generate Player Claim Code
+          </h2>
+        </Card.Header>
+        
+        <Card.Body>
+          {error && (
+            <div className="ui-message ui-message-error">
+              <FaExclamationTriangle className="ui-message-icon" />
+              <span>{error}</span>
+            </div>
           )}
-        </div>
-        
-        <div className="form-group">
-          <label>Expiry (days):</label>
-          <input
-            type="number"
-            min="0"
-            value={expiryDays}
-            onChange={(e) => setExpiryDays(parseInt(e.target.value))}
-            disabled={loading}
-          />
-          <span className="hint">Set to 0 for no expiry</span>
-        </div>
-        
-        <button
-          type="submit"
-          className="generate-button"
-          disabled={loading || loadingMembers || members.length === 0}
-        >
-          {loading ? "Generating..." : "Generate Claim Code"}
-        </button>
-      </form>
+          
+          {success && (
+            <div className="ui-message ui-message-success">
+              <FaCheckCircle className="ui-message-icon" />
+              <span>{success}</span>
+            </div>
+          )}
+          
+          {generatedCode && (
+            <div className="ui-code-result">
+              <h3 className="ui-code-title">Generated Code:</h3>
+              <div className="ui-code-display">
+                <span>{generatedCode}</span>
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="ui-copy-button" 
+                  onClick={copyToClipboard}
+                  icon={<FaCopy />}
+                  title="Copy to clipboard"
+                />
+              </div>
+              <p className="ui-code-instructions">
+                Share this code with the player to claim their account.
+                {expiryDays > 0 && ` This code will expire in ${expiryDays} days.`}
+              </p>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="ui-claim-code-form">
+            <div className="ui-form-group">
+              <label className="ui-form-label">Select Player:</label>
+              <SelectDropdown
+                value={selectedMember}
+                onChange={(e) => setSelectedMember(e.target.value)}
+                options={members.map(member => ({
+                  value: member.wom_id,
+                  label: member.name
+                }))}
+                placeholder="-- Select a player --"
+                disabled={loadingMembers || loading}
+                required
+              />
+              {loadingMembers && (
+                <div className="ui-loading-text">Loading members...</div>
+              )}
+              {!loadingMembers && members.length === 0 && (
+                <div className="ui-info-message">All players have been claimed</div>
+              )}
+            </div>
+            
+            <div className="ui-form-group">
+              <FormInput
+                id="expiryDays"
+                label="Expiry (days):"
+                type="number"
+                min="0"
+                value={expiryDays}
+                onChange={(e) => setExpiryDays(parseInt(e.target.value))}
+                disabled={loading}
+              />
+              <span className="ui-field-help">Set to 0 for no expiry</span>
+            </div>
+            
+            <div className="ui-form-actions">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading || loadingMembers || members.length === 0}
+                icon={<FaKey />}
+              >
+                {loading ? "Generating..." : "Generate Claim Code"}
+              </Button>
+            </div>
+          </form>
+        </Card.Body>
+      </Card>
     </div>
   );
 }

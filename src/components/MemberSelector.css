@@ -1,0 +1,23 @@
+.member-selector {
+  width: 100%;
+}
+
+.select-member-btn {
+  background-color: var(--color-primary, #3498db);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  padding: 0.25rem 0.75rem;
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 0.2s);
+}
+
+.select-member-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover, #2980b9);
+}
+
+.select-member-btn:disabled {
+  background-color: var(--color-disabled, #bdc3c7);
+  cursor: not-allowed;
+}

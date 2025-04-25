@@ -1,49 +1,48 @@
-.runewatch-alerts-container {
+/* Base container */
+.ui-runewatch-alerts {
   background-color: #2a2a2a;
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius-md, 0.5rem);
   padding: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.runewatch-header {
+/* Header section */
+.ui-runewatch-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
 }
 
-.runewatch-header h4 {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Icon animation */
+.ui-icon-spin {
+  animation: ui-spin 1s linear infinite;
 }
 
-.icon-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
+@keyframes ui-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.no-alerts-message {
+/* Empty state styling */
+.ui-no-alerts {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  border-radius: 0.25rem;
+  border-radius: var(--border-radius-sm, 0.25rem);
   background-color: rgba(40, 167, 69, 0.1);
+  color: #75e090;
 }
 
-.reported-members-list {
+/* Member list styling */
+.ui-reported-members-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0.5rem 0 0 0;
 }
 
-.reported-member-item {
+.ui-reported-member-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -51,156 +50,80 @@
   border-bottom: 1px solid #444;
 }
 
-.reported-member-item:last-child {
+.ui-reported-member-item:last-child {
   border-bottom: none;
 }
 
-.reported-member-name {
+.ui-reported-member-name {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+/* Whitelist modal */
+.ui-whitelist-modal {
+  padding: 0.5rem 0;
+}
+
+.ui-form-textarea {
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.75rem;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  color: #e0e0e0;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+
+.ui-form-textarea:focus {
+  outline: none;
+  border-color: var(--color-orange, #ff9800);
+  box-shadow: 0 0 0 0.1875rem rgba(255, 152, 0, 0.25);
+}
+
+/* Icons */
+.ui-success-icon {
+  color: #28a745;
+}
+
+.ui-warning-icon {
+  color: #ffc107;
+}
+
+/* Loading state */
+.ui-runewatch-loading {
+  padding: 2rem 1rem;
+}
+
+/* Preview mode styles */
+.ui-runewatch-preview {
+  padding: 1rem;
+}
+
+.ui-preview-alerts {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: rgba(255, 193, 7, 0.1);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  color: #ffc107;
   font-weight: 500;
 }
 
-/* Whitelist Modal */
-.whitelist-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.whitelist-modal {
-  background-color: #333;
-  border-radius: 0.5rem;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
-}
-
-.whitelist-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid #444;
-}
-
-.whitelist-modal-header h5 {
-  margin: 0;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: #ccc;
-  cursor: pointer;
-}
-
-.close-button:hover {
-  color: white;
-}
-
-.whitelist-modal-body {
-  padding: 1rem;
-}
-
-.whitelist-modal-body textarea {
-  margin-top: 0.5rem;
-  min-height: 100px;
-  background-color: #444;
-  color: #fff;
-  border: 1px solid #555;
-}
-
-.whitelist-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-top: 1px solid #444;
-}
-
-/* Toast notifications */
-.runewatch-toast,
-.whitelist-success-toast {
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  background-color: #333;
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 0.25rem;
-  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  animation: toast-in 0.3s ease-in-out;
-}
-
-.whitelist-success-toast {
-  background-color: #28a745;
-}
-
-.toast-fade-out {
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-}
-
-@keyframes toast-in {
-  from { transform: translateY(1rem); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.runewatch-loading {
-  padding: 1rem;
-  text-align: center;
-  color: #ccc;
-}
-
-.runewatch-alerts {
-  background-color: #333;
-  border-radius: 8px;
-}
-
-.alert-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.runewatch-alert {
-  background-color: #383838;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-left: 4px solid #dc3545;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.runewatch-alert:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.alert-player {
-  font-weight: 600;
-  color: #dc3545;
-  font-size: 1.1rem;
-  margin-bottom: 5px;
-}
-
-.alert-details {
-  color: #bbb;
-  font-size: 0.9rem;
-}
-
-.alerts-empty {
-  padding: 20px;
-  text-align: center;
-  color: #888;
-  font-style: italic;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ui-reported-member-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 0.75rem;
+  }
+  
+  .ui-reported-member-name {
+    margin-bottom: 0.5rem;
+  }
 }

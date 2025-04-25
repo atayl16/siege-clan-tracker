@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
+import { FaCheck, FaTimes, FaInfoCircle, FaUser, FaGamepad } from "react-icons/fa";
+
+// Import UI components
+import Card from "./ui/Card";
+import Button from "./ui/Button";
+import Badge from "./ui/Badge";
+import Modal from "./ui/Modal";
+import EmptyState from "./ui/EmptyState";
+
 import "./ClaimRequestManager.css";
 
 export default function ClaimRequestManager() {
@@ -179,211 +188,266 @@ export default function ClaimRequestManager() {
     setShowNotesModal(false);
   };
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "approved":
+        return (
+          <Badge variant="success" icon={<FaCheck />}>
+            Approved
+          </Badge>
+        );
+      case "denied":
+        return (
+          <Badge variant="danger" icon={<FaTimes />}>
+            Denied
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="warning" icon={<FaInfoCircle />}>
+            Pending
+          </Badge>
+        );
+    }
+  };
+
   return (
-    <div>
-      <h2>Player Claim Requests</h2>
-
-      <div className="filter-bar">
-        <button
-          className={`filter-button ${filter === "pending" ? "active" : ""}`}
-          onClick={() => setFilter("pending")}
-        >
-          Pending
-        </button>
-        <button
-          className={`filter-button ${filter === "approved" ? "active" : ""}`}
-          onClick={() => setFilter("approved")}
-        >
-          Approved
-        </button>
-        <button
-          className={`filter-button ${filter === "denied" ? "active" : ""}`}
-          onClick={() => setFilter("denied")}
-        >
-          Denied
-        </button>
-        <button
-          className={`filter-button ${filter === "all" ? "active" : ""}`}
-          onClick={() => setFilter("all")}
-        >
-          All
-        </button>
-      </div>
-
-      {error && <div className="error-message">{error}</div>}
-      {successMessage && (
-        <div className="success-message">{successMessage}</div>
-      )}
-
-      {loading ? (
-        <div className="loading">Loading requests...</div>
-      ) : requests.length === 0 ? (
-        <div className="no-requests-message">
-          No {filter !== "all" ? filter : ""} claim requests found.
+    <Card className="ui-claim-requests-manager">
+      <Card.Header>
+        <h2 className="ui-manager-title">Player Claim Requests</h2>
+      </Card.Header>
+      <Card.Body>
+        <div className="ui-filter-bar">
+          <Button
+            variant={filter === "pending" ? "primary" : "default"}
+            onClick={() => setFilter("pending")}
+            className="ui-filter-button"
+          >
+            Pending
+          </Button>
+          <Button
+            variant={filter === "approved" ? "primary" : "default"}
+            onClick={() => setFilter("approved")}
+            className="ui-filter-button"
+          >
+            Approved
+          </Button>
+          <Button
+            variant={filter === "denied" ? "primary" : "default"}
+            onClick={() => setFilter("denied")}
+            className="ui-filter-button"
+          >
+            Denied
+          </Button>
+          <Button
+            variant={filter === "all" ? "primary" : "default"}
+            onClick={() => setFilter("all")}
+            className="ui-filter-button"
+          >
+            All
+          </Button>
         </div>
-      ) : (
-        <div className="requests-table-container">
-          <table className="requests-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>OSRS Name</th>
-                <th>Request Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => (
-                <tr key={request.id} className={`status-${request.status}`}>
-                  <td>{request.user?.username || "Unknown User"}</td>
-                  <td>{request.rsn}</td>
-                  <td>{new Date(request.created_at).toLocaleDateString()}</td>
-                  <td>
-                    <span className={`status-badge ${request.status}`}>
-                      {request.status.charAt(0).toUpperCase() +
-                        request.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="actions-cell">
-                    {request.status === "pending" ? (
-                      <>
-                        <button
-                          className="action-button approve"
-                          onClick={() => openActionModal(request, "approved")}
-                          disabled={processingId === request.id}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="action-button deny"
-                          onClick={() => openActionModal(request, "denied")}
-                          disabled={processingId === request.id}
-                        >
-                          Deny
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        className="action-button details"
-                        onClick={() => {
-                          setCurrentRequest(request);
-                          setAdminNotes(request.admin_notes || "");
-                          setShowNotesModal(true);
-                          setCurrentAction("view");
-                        }}
-                      >
-                        Details
-                      </button>
-                    )}
-                  </td>
+
+        {error && (
+          <div className="ui-error-message">
+            <FaTimes className="ui-error-icon" /> {error}
+          </div>
+        )}
+        
+        {successMessage && (
+          <div className="ui-success-message">
+            <FaCheck className="ui-success-icon" /> {successMessage}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="ui-loading-indicator">
+            <div className="ui-loading-spinner"></div>
+            <div className="ui-loading-text">Loading requests...</div>
+          </div>
+        ) : requests.length === 0 ? (
+          <EmptyState
+            title="No Requests Found"
+            description={`No ${filter !== "all" ? filter : ""} claim requests found.`}
+            icon={<FaGamepad size={24} />}
+          />
+        ) : (
+          <div className="ui-requests-table-container">
+            <table className="ui-requests-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>OSRS Name</th>
+                  <th>Request Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {showNotesModal && (
-        <div className="modal-overlay">
-          <div className="modal-container">
-            <div className="modal-header">
-              <h3>
-                {currentAction === "view"
-                  ? "Request Details"
-                  : currentAction === "approved"
-                  ? "Approve Request"
-                  : "Deny Request"}
-              </h3>
-              <button
-                className="close-button"
-                onClick={() => setShowNotesModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-content">
-              {currentRequest && (
-                <>
-                  <div className="request-info">
-                    <p>
-                      <strong>User:</strong>{" "}
-                      {currentRequest.user?.username || "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Player Name:</strong> {currentRequest.rsn}
-                    </p>
-                    <p>
-                      <strong>Date Requested:</strong>{" "}
-                      {new Date(currentRequest.created_at).toLocaleDateString()}
-                    </p>
-                    {currentRequest.message && (
-                      <div className="user-message">
-                        <p>
-                          <strong>User's Message:</strong>
-                        </p>
-                        <p>{currentRequest.message}</p>
+              </thead>
+              <tbody>
+                {requests.map((request) => (
+                  <tr key={request.id} className={`ui-request-row ui-status-${request.status}`}>
+                    <td className="ui-request-user">
+                      <div className="ui-user-info">
+                        <FaUser className="ui-user-icon" />
+                        <span>{request.user?.username || "Unknown User"}</span>
                       </div>
-                    )}
-                    {currentAction === "view" && currentRequest.admin_notes && (
-                      <div className="admin-notes-display">
-                        <p>
-                          <strong>Admin Notes:</strong>
-                        </p>
-                        <p>{currentRequest.admin_notes}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {currentAction !== "view" && (
-                    <>
-                      <div className="form-group">
-                        <label>Admin Notes (optional):</label>
-                        <textarea
-                          value={adminNotes}
-                          onChange={(e) => setAdminNotes(e.target.value)}
-                          placeholder="Add notes about your decision (visible to user)"
-                          rows={3}
-                        />
-                      </div>
-
-                      <div className="modal-actions">
-                        <button
-                          className={`confirm-button ${
-                            currentAction === "approved" ? "approve" : "deny"
-                          }`}
-                          onClick={confirmAction}
+                    </td>
+                    <td className="ui-request-player">{request.rsn}</td>
+                    <td className="ui-request-date">
+                      {new Date(request.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="ui-request-status">
+                      {getStatusBadge(request.status)}
+                    </td>
+                    <td className="ui-actions-cell">
+                      {request.status === "pending" ? (
+                        <>
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => openActionModal(request, "approved")}
+                            disabled={processingId === request.id}
+                            className="ui-action-button"
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => openActionModal(request, "denied")}
+                            disabled={processingId === request.id}
+                            className="ui-action-button"
+                          >
+                            Deny
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="info"
+                          size="sm"
+                          onClick={() => {
+                            setCurrentRequest(request);
+                            setAdminNotes(request.admin_notes || "");
+                            setShowNotesModal(true);
+                            setCurrentAction("view");
+                          }}
+                          className="ui-action-button"
                         >
-                          {currentAction === "approved"
-                            ? "Approve Request"
-                            : "Deny Request"}
-                        </button>
-                        <button
-                          className="cancel-button"
-                          onClick={() => setShowNotesModal(false)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {currentAction === "view" && (
-                    <div className="modal-actions">
-                      <button
-                        className="cancel-button"
-                        onClick={() => setShowNotesModal(false)}
-                      >
-                        Close
-                      </button>
+                          Details
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        
+        {showNotesModal && (
+          <div className="ui-modal-overlay">
+            <div className="ui-modal-container">
+              <div className="ui-modal-header">
+                <h3 className="ui-modal-title">
+                  {currentAction === "view"
+                    ? "Request Details"
+                    : currentAction === "approved"
+                    ? "Approve Request"
+                    : "Deny Request"}
+                </h3>
+                <button
+                  className="ui-modal-close"
+                  onClick={() => setShowNotesModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="ui-modal-content">
+                {currentRequest && (
+                  <>
+                    <div className="ui-request-info">
+                      <p>
+                        <strong>User:</strong>{" "}
+                        {currentRequest.user?.username || "Unknown"}
+                      </p>
+                      <p>
+                        <strong>Player Name:</strong> {currentRequest.rsn}
+                      </p>
+                      <p>
+                        <strong>Date Requested:</strong>{" "}
+                        {new Date(currentRequest.created_at).toLocaleDateString()}
+                      </p>
+                      {currentRequest.message && (
+                        <div className="ui-user-message">
+                          <p>
+                            <strong>User's Message:</strong>
+                          </p>
+                          <p>{currentRequest.message}</p>
+                        </div>
+                      )}
+                      {currentAction === "view" && currentRequest.admin_notes && (
+                        <div className="ui-admin-notes-display">
+                          <p>
+                            <strong>Admin Notes:</strong>
+                          </p>
+                          <p>{currentRequest.admin_notes}</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </>
-              )}
+
+                    {currentAction !== "view" && (
+                      <>
+                        <div className="ui-form-group">
+                          <label className="ui-form-label">Admin Notes (optional):</label>
+                          <textarea
+                            className="ui-form-textarea"
+                            value={adminNotes}
+                            onChange={(e) => setAdminNotes(e.target.value)}
+                            placeholder="Add notes about your decision (visible to user)"
+                            rows={3}
+                          />
+                        </div>
+
+                        <div className="ui-modal-actions">
+                          <Button
+                            variant={currentAction === "approved" ? "success" : "danger"}
+                            onClick={confirmAction}
+                            className="ui-confirm-button"
+                          >
+                            {currentAction === "approved"
+                              ? "Approve Request"
+                              : "Deny Request"}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setShowNotesModal(false)}
+                            className="ui-cancel-button"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {currentAction === "view" && (
+                      <div className="ui-modal-actions">
+                        <Button
+                          variant="secondary"
+                          onClick={() => setShowNotesModal(false)}
+                          className="ui-close-button"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </Card.Body>
+    </Card>
   );
 }

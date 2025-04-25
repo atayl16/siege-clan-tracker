@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../supabaseClient";
+import { FaCheck, FaTimes, FaClock, FaInfoCircle } from "react-icons/fa";
+
+// Import UI components
+import Card from "./ui/Card";
+import Button from "./ui/Button";
+import Tabs from "./ui/Tabs";
+import FormInput from "./ui/FormInput";
+import Badge from "./ui/Badge";
+import EmptyState from "./ui/EmptyState";
+
 import "./ClaimPlayer.css";
 
 export default function ClaimPlayer({ onRequestSubmitted }) {
@@ -222,9 +232,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
       // Switch to code tab after successful submission
       setActiveTab("code");
-
-      // No need to fetch user requests, since we're not showing "My Requests" tab anymore
-      // and the parent component will handle refreshing data
     } catch (err) {
       console.error("Error requesting claim:", err);
       setError(`Failed to submit request: ${err.message}`);
@@ -236,188 +243,214 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   const getStatusBadge = (status) => {
     switch (status) {
       case "approved":
-        return <span className="status-badge approved">Approved</span>;
+        return <Badge variant="success" icon={<FaCheck />}>Approved</Badge>;
       case "denied":
-        return <span className="status-badge denied">Denied</span>;
+        return <Badge variant="danger" icon={<FaTimes />}>Denied</Badge>;
       default:
-        return <span className="status-badge pending">Pending</span>;
+        return <Badge variant="warning" icon={<FaClock />}>Pending</Badge>;
     }
   };
 
   return (
-    <div className="claim-player-container">
-      <div className="claim-tabs">
-        <button
-          className={`claim-tab ${activeTab === "code" ? "active" : ""}`}
-          onClick={() => setActiveTab("code")}
-        >
-          Use a Claim Code
-        </button>
-        <button
-          className={`claim-tab ${activeTab === "request" ? "active" : ""}`}
-          onClick={() => setActiveTab("request")}
-        >
-          Search Members
-        </button>
-        <button
-          className={`claim-tab ${activeTab === "my-requests" ? "active" : ""}`}
-          onClick={() => setActiveTab("my-requests")}
-        >
-          View My Requests
-        </button>
-      </div>
+    <Card className="ui-claim-player-container">
+      <Tabs activeTab={activeTab} onChange={setActiveTab} className="ui-claim-tabs">
+        <Tabs.Tab tabId="code" label="Use a Claim Code">
+          <div className="ui-claim-tab-content">
+            <h2 className="ui-claim-heading">Claim Your OSRS Account</h2>
+            <p className="ui-claim-description">
+              Enter the claim code provided by admin to connect your account with your in-game
+              character.
+            </p>
 
-      {notification && (
-        <div className={`notification-message ${notification.type}`}>
-          {notification.message}
-        </div>
-      )}
-      {error && <div className="error-message">{error}</div>}
+            {notification && (
+              <div className={`ui-notification-message ui-notification-${notification.type}`}>
+                {notification.type === "success" ? <FaCheck className="ui-notification-icon" /> : <FaInfoCircle className="ui-notification-icon" />}
+                {notification.message}
+              </div>
+            )}
+            
+            {error && (
+              <div className="ui-error-message">
+                <FaTimes className="ui-error-icon" />
+                {error}
+              </div>
+            )}
 
-      {activeTab === "code" && (
-        <div className="claim-code-tab">
-          <h2>Claim Your OSRS Account</h2>
-          <p>
-            Enter the claim code provided by admin to connect your account with your in-game
-            character.
-          </p>
-
-          <form onSubmit={handleClaim}>
-            <div className="form-group">
-              <label>Claim Code:</label>
-              <input
-                type="text"
-                value={claimCode}
-                onChange={(e) => setClaimCode(e.target.value)}
-                placeholder="Enter your claim code"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <button type="submit" className="claim-button" disabled={loading}>
-              {loading ? "Processing..." : "Claim Player"}
-            </button>
-          </form>
-
-          <div className="claim-info">
-            <h3>How to get a claim code</h3>
-            <ol>
-              <li>Contact a clan admin in Discord</li>
-              <li>Verify your in-game name</li>
-              <li>Receive your unique claim code</li>
-              <li>Enter the code above to link your account</li>
-            </ol>
-          </div>
-        </div>
-      )}
-
-      {activeTab === "request" && (
-        <div className="claim-request-tab">
-          <h2>Search for your OSRS Account</h2>
-          <p>Select your character from the list to request access.</p>
-
-          <form onSubmit={handleRequestClaim}>
-            <div className="form-group">
-              <label>Select Your Character:</label>
-              {loadingMembers ? (
-                <div className="loading-indicator">
-                  Loading available players...
-                </div>
-              ) : (
-                <select
-                  value={selectedMember}
-                  onChange={(e) => setSelectedMember(e.target.value)}
-                  disabled={loading}
+            <form onSubmit={handleClaim} className="ui-claim-form">
+              <div className="ui-form-group">
+                <label className="ui-form-label">Claim Code:</label>
+                <input
+                  className="ui-form-input"
+                  type="text"
+                  value={claimCode}
+                  onChange={(e) => setClaimCode(e.target.value)}
+                  placeholder="Enter your claim code"
                   required
-                >
-                  <option value="">-- Select your character --</option>
-                  {availableMembers.map((member) => (
-                    <option key={member.wom_id} value={member.wom_id}>
-                      {member.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {availableMembers.length === 0 && !loadingMembers && (
-                <div className="info-message">
-                  All players have been claimed
-                </div>
-              )}
-            </div>
+                  disabled={loading}
+                />
+              </div>
 
-            <div className="form-group">
-              <label>Message (optional):</label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Add any details that might help verify your identity"
+              <Button 
+                type="submit"
+                variant="primary"
+                className="ui-claim-button"
                 disabled={loading}
-                rows={3}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="claim-button"
-              disabled={loading || !selectedMember}
-            >
-              {loading ? "Submitting..." : "Submit Request"}
-            </button>
-          </form>
-
-          <div className="claim-info">
-            <h3>What happens next?</h3>
-            <p>After submitting your request:</p>
-            <ol>
-              <li>An admin will review your request</li>
-              <li>They may verify your identity in Discord</li>
-              <li>Once approved, you'll gain access to your player profile</li>
-              <li>You can check the status in the "My Requests" tab</li>
-            </ol>
-          </div>
-        </div>
-      )}
-
-      {activeTab === "my-requests" && (
-        <div className="my-requests-tab">
-          <h2>My Claim Requests</h2>
-
-          {userRequests.length === 0 ? (
-            <div className="no-requests">
-              <p>You haven't submitted any player claim requests yet.</p>
-              <button
-                className="secondary-button"
-                onClick={() => setActiveTab("request")}
+                fullWidth
               >
-                Request a Player
-              </button>
-            </div>
-          ) : (
-            <div className="requests-list">
-              {userRequests.map((request) => (
-                <div className="request-card" key={request.id}>
-                  <div className="request-header">
-                    <div className="my-request-rsn">{request.rsn}</div>
-                    {getStatusBadge(request.status)}
+                {loading ? "Processing..." : "Claim Player"}
+              </Button>
+            </form>
+
+            <Card variant="dark" className="ui-info-card">
+              <Card.Body>
+                <h3 className="ui-info-heading">How to get a claim code</h3>
+                <ol className="ui-info-list">
+                  <li>Contact a clan admin in Discord</li>
+                  <li>Verify your in-game name</li>
+                  <li>Receive your unique claim code</li>
+                  <li>Enter the code above to link your account</li>
+                </ol>
+              </Card.Body>
+            </Card>
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="request" label="Search Members">
+          <div className="ui-claim-tab-content">
+            <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
+            <p className="ui-claim-description">Select your character from the list to request access.</p>
+
+            {notification && (
+              <div className={`ui-notification-message ui-notification-${notification.type}`}>
+                {notification.type === "success" ? <FaCheck className="ui-notification-icon" /> : <FaInfoCircle className="ui-notification-icon" />}
+                {notification.message}
+              </div>
+            )}
+            
+            {error && (
+              <div className="ui-error-message">
+                <FaTimes className="ui-error-icon" />
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleRequestClaim} className="ui-claim-form">
+              <div className="ui-form-group">
+                <label className="ui-form-label">Select Your Character:</label>
+                {loadingMembers ? (
+                  <div className="ui-loading-indicator">
+                    Loading available players...
                   </div>
-                  <div className="request-details">
-                    <p>
-                      <strong>Requested:</strong>{" "}
-                      {new Date(request.created_at).toLocaleDateString()}
-                    </p>
-                    {request.message && (
-                      <p>
-                        <strong>Your message:</strong> {request.message}
-                      </p>
-                    )}
+                ) : (
+                  <select
+                    className="ui-form-select"
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                    disabled={loading}
+                    required
+                  >
+                    <option value="">-- Select your character --</option>
+                    {availableMembers.map((member) => (
+                      <option key={member.wom_id} value={member.wom_id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {availableMembers.length === 0 && !loadingMembers && (
+                  <div className="ui-info-message">
+                    All players have been claimed
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+                )}
+              </div>
+
+              <div className="ui-form-group">
+                <label className="ui-form-label">Message (optional):</label>
+                <textarea
+                  className="ui-form-textarea"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Add any details that might help verify your identity"
+                  disabled={loading}
+                  rows={3}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                className="ui-claim-button"
+                disabled={loading || !selectedMember}
+                fullWidth
+              >
+                {loading ? "Submitting..." : "Submit Request"}
+              </Button>
+            </form>
+
+            <Card variant="dark" className="ui-info-card">
+              <Card.Body>
+                <h3 className="ui-info-heading">What happens next?</h3>
+                <p>After submitting your request:</p>
+                <ol className="ui-info-list">
+                  <li>An admin will review your request</li>
+                  <li>They may verify your identity in Discord</li>
+                  <li>Once approved, you'll gain access to your player profile</li>
+                  <li>You can check the status in the "My Requests" tab</li>
+                </ol>
+              </Card.Body>
+            </Card>
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab 
+          tabId="my-requests" 
+          label="View My Requests"
+          badge={userRequests.length > 0 ? userRequests.length : null}
+        >
+          <div className="ui-claim-tab-content">
+            <h2 className="ui-claim-heading">My Claim Requests</h2>
+
+            {userRequests.length === 0 ? (
+              <EmptyState
+                title="No Requests Yet"
+                description="You haven't submitted any player claim requests yet"
+                action={
+                  <Button 
+                    variant="secondary"
+                    onClick={() => setActiveTab("request")}
+                  >
+                    Request a Player
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="ui-requests-list">
+                {userRequests.map((request) => (
+                  <Card key={request.id} className="ui-request-card">
+                    <Card.Header className="ui-request-header">
+                      <div className="ui-request-title">{request.rsn}</div>
+                      {getStatusBadge(request.status)}
+                    </Card.Header>
+                    <Card.Body>
+                      <div className="ui-request-details">
+                        <p>
+                          <strong>Requested:</strong>{" "}
+                          {new Date(request.created_at).toLocaleDateString()}
+                        </p>
+                        {request.message && (
+                          <p>
+                            <strong>Your message:</strong> {request.message}
+                          </p>
+                        )}
+                      </div>
+                    </Card.Body>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </Tabs.Tab>
+      </Tabs>
+    </Card>
   );
 }

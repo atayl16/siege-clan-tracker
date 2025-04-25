@@ -1,6 +1,8 @@
 import React from 'react';
+import './GoalProgress.css';
 
 export default function GoalProgress({ goal }) {
+  // Calculate progress percentage
   const progress = Math.min(
     Math.floor(((goal.current_value - goal.start_value) / (goal.target_value - goal.start_value)) * 100),
     100
@@ -29,39 +31,45 @@ export default function GoalProgress({ goal }) {
   }
 
   return (
-    <div className="goal-progress">
-      <div className="progress-header">
-        <span>Progress: {progress}%</span>
-        {status === 'ahead' && <span className="status ahead">Ahead of schedule</span>}
-        {status === 'behind' && <span className="status behind">Behind schedule</span>}
-        {status === 'completed' && <span className="status completed">Completed!</span>}
+    <div className="ui-goal-progress">
+      <div className="ui-progress-header">
+        <span className="ui-progress-percent">Progress: {progress}%</span>
+        {status === 'ahead' && (
+          <span className="ui-status ui-status-ahead">Ahead of schedule</span>
+        )}
+        {status === 'behind' && (
+          <span className="ui-status ui-status-behind">Behind schedule</span>
+        )}
+        {status === 'completed' && (
+          <span className="ui-status ui-status-completed">Completed!</span>
+        )}
       </div>
       
-      <div className="goal-progress-container">
+      <div className="ui-progress-container">
         <div 
-          className={`goal-progress-bar ${status}`} 
+          className={`ui-progress-bar ui-status-${status}`} 
           style={{ width: `${progress}%` }}
         />
         
         {expectedProgress !== null && !goal.completed && (
           <div 
-            className="expected-progress-marker" 
+            className="ui-expected-marker" 
             style={{ left: `${expectedProgress}%` }} 
             title={`Expected progress: ${expectedProgress}%`}
           />
         )}
       </div>
       
-      <div className="progress-values">
-        <span>
+      <div className="ui-progress-values">
+        <span className="ui-current-value">
           Current: {goal.current_value.toLocaleString()} 
           {goal.start_value > 0 && (
-            <span className="gained">
+            <span className="ui-gained-value">
               (+{(goal.current_value - goal.start_value).toLocaleString()})
             </span>
           )}
         </span>
-        <span className="target-value">
+        <span className="ui-target-value">
           Target: {goal.target_value.toLocaleString()}
         </span>
       </div>

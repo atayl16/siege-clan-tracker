@@ -1,0 +1,30 @@
+.ui-empty-state {
+  text-align: center;
+  padding: 3.75rem 1.25rem; /* 60px 20px */
+  background-color: #333;
+  border-radius: 0.625rem; /* 10px */
+  color: #aaa;
+}
+
+.ui-empty-state-icon {
+  font-size: 2.5rem;
+  color: var(--color-gray-500, #adb5bd);
+  margin-bottom: 1.25rem; /* 20px */
+}
+
+.ui-empty-state-title {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 0.9375rem; /* 15px */
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-empty-state-description {
+  font-size: 1rem;
+  max-width: 31.25rem; /* 500px */
+  margin: 0 auto 1.5625rem auto; /* 0 auto 25px auto */
+}
+
+.ui-empty-state-action {
+  margin-top: 1.25rem; /* 20px */
+}

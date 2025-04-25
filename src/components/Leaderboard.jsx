@@ -23,25 +23,25 @@ export default function SiegeLeaderboard({
 
   if (compact) {
     return (
-      <div className={`siege-leaderboard-compact ${className}`}>
+      <div className={`ui-leaderboard-compact ${className}`}>
         {leaderboardData.length === 0 ? (
-          <p className="empty-message">No players with siege scores</p>
+          <div className="ui-empty-message">No players with siege scores</div>
         ) : (
           leaderboardData.map((player, index) => (
-            <div key={player.wom_id || index} className="mini-player">
-              <span className={`rank-badge rank-${index + 1}`}>
+            <div key={player.wom_id || index} className="ui-mini-player">
+              <span className={`ui-rank-badge ui-rank-${index + 1}`}>
                 {index === 0 ? (
-                  <FaCrown className="gold-icon" />
+                  <FaCrown className="ui-gold-icon" />
                 ) : index === 1 ? (
-                  <FaMedal className="silver-icon" />
+                  <FaMedal className="ui-silver-icon" />
                 ) : index === 2 ? (
-                  <FaMedal className="bronze-icon" />
+                  <FaMedal className="ui-bronze-icon" />
                 ) : (
                   index + 1
                 )}
               </span>
-              <span className="player-name">{titleize(player.name) || titleize(player.wom_name) || "Unknown"}</span>
-              <span className="player-score">{player.siege_score.toLocaleString()} pts</span>
+              <span className="ui-player-name">{titleize(player.name) || titleize(player.wom_name) || "Unknown"}</span>
+              <span className="ui-player-score">{player.siege_score.toLocaleString()} pts</span>
             </div>
           ))
         )}
@@ -50,43 +50,45 @@ export default function SiegeLeaderboard({
   }
 
   return (
-    <div className={`siege-leaderboard ${className}`}>
-      {showTitle && <h2>Siege Score Leaderboard</h2>}
+    <div className={`ui-leaderboard ${className}`}>
+      {showTitle && <h2 className="ui-leaderboard-title">Siege Score Leaderboard</h2>}
       
-      <table className="table table-dark table-striped table-hover">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {leaderboardData.length === 0 ? (
+      <div className="ui-table-container">
+        <table className="ui-table">
+          <thead>
             <tr>
-              <td colSpan="3" className="text-center">No players with siege scores found</td>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>Score</th>
             </tr>
-          ) : (
-            leaderboardData.map((player, index) => (
-              <tr key={player.wom_id || index} className={index < 3 ? `top-${index + 1}` : ""}>
-                <td>
-                  {index === 0 ? (
-                    <FaCrown className="gold-icon" title="1st Place" />
-                  ) : index === 1 ? (
-                    <FaMedal className="silver-icon" title="2nd Place" />
-                  ) : index === 2 ? (
-                    <FaMedal className="bronze-icon" title="3rd Place" />
-                  ) : (
-                    index + 1
-                  )}
-                </td>
-                <td>{titleize(player.name) || titleize(player.wom_name) || "Unknown"}</td>
-                <td>{player.siege_score.toLocaleString()}</td>
+          </thead>
+          <tbody>
+            {leaderboardData.length === 0 ? (
+              <tr>
+                <td colSpan="3" className="ui-empty-cell">No players with siege scores found</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              leaderboardData.map((player, index) => (
+                <tr key={player.wom_id || index} className={index < 3 ? `ui-top-${index + 1}` : ""}>
+                  <td>
+                    {index === 0 ? (
+                      <FaCrown className="ui-gold-icon" title="1st Place" />
+                    ) : index === 1 ? (
+                      <FaMedal className="ui-silver-icon" title="2nd Place" />
+                    ) : index === 2 ? (
+                      <FaMedal className="ui-bronze-icon" title="3rd Place" />
+                    ) : (
+                      index + 1
+                    )}
+                  </td>
+                  <td>{titleize(player.name) || titleize(player.wom_name) || "Unknown"}</td>
+                  <td className="ui-player-score">{player.siege_score.toLocaleString()}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

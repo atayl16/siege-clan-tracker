@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import Badge from "./ui/Badge";
+import EmptyState from "./ui/EmptyState";
+import { FaCheckCircle, FaTimesCircle, FaUser, FaCalendarAlt, FaExclamationTriangle, FaCheck, FaTimes, FaUserPlus } from "react-icons/fa";
+
 import "./ClaimRequestsPreview.css";
 
 export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestProcessed }) {
@@ -164,59 +170,110 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
   };
 
   if (loading) {
-    return <div className="loading-preview">Loading recent requests...</div>;
+    return (
+      <div className="ui-loading-container ui-claim-preview-loading">
+        <div className="ui-loading-spinner"></div>
+        <div className="ui-loading-text">Loading recent requests...</div>
+      </div>
+    );
+  }
+
+  if (recentRequests.length === 0) {
+    return (
+      <EmptyState
+        title="No Character Claims"
+        description="There are no pending character claim requests."
+        icon={<FaUserPlus className="ui-empty-state-icon" />}
+        action={
+          <Button variant="secondary" size="sm" onClick={() => fetchRecentRequests()}>
+            Refresh
+          </Button>
+        }
+      />
+    );
   }
 
   return (
-    <div className="claim-requests-preview">
-      {actionResult && (
-        <div className={`action-result ${actionResult.type}`}>
-          {actionResult.message}
-        </div>
-      )}
+    <Card variant="dark" className="ui-claim-requests-container">
+      <Card.Header className="ui-claim-requests-header">
+        <h3 className="ui-claim-requests-title">
+          Pending Character Claims
+          <Badge variant="warning" pill className="ui-alerts-count">
+            {count || recentRequests.length}
+          </Badge>
+        </h3>
+      </Card.Header>
       
-      {recentRequests.length > 0 ? (
-        <>
-          <ul className="preview-list">
-            {recentRequests.map(request => (
-              <li key={request.id} className="preview-item">
-                <div className="preview-content">
-                  <span className="preview-player">{request.rsn}</span>
-                  <div className="preview-details">
-                    <span>Requested by <span className="preview-user">{request.username}</span></span>
-                    <span className="preview-date">{new Date(request.created_at).toLocaleDateString()}</span>
+      <Card.Body>
+        {actionResult && (
+          <div className={`ui-message ${actionResult.type === 'success' ? 'ui-message-success' : 'ui-message-error'}`}>
+            {actionResult.type === 'success' ? (
+              <FaCheckCircle className="ui-message-icon" />
+            ) : (
+              <FaExclamationTriangle className="ui-message-icon" />
+            )}
+            <span>{actionResult.message}</span>
+          </div>
+        )}
+        
+        <ul className="ui-reported-members-list">
+          {recentRequests.map(request => (
+            <li key={request.id} className="ui-reported-member-item">
+              <div className="ui-member-info">
+                <div className="ui-reported-member-name">{request.rsn}</div>
+                <div className="ui-request-details">
+                  <div className="ui-request-user">
+                    <FaUser className="ui-icon-left" />
+                    Requested by: <strong>{request.username}</strong>
                   </div>
+                  <div className="ui-request-date">
+                    <FaCalendarAlt className="ui-icon-left" />
+                    {new Date(request.created_at).toLocaleDateString()}
+                  </div>
+                  
                   {request.message && (
-                    <div className="preview-message">"{request.message}"</div>
+                    <div className="ui-request-message">"{request.message}"</div>
                   )}
                 </div>
-                <div className="preview-actions">
-                  <button 
-                    className="action-button approve" 
-                    onClick={() => handleApprove(request)}
-                    disabled={actionLoading === request.id}
-                  >
-                    {actionLoading === request.id ? '...' : '✓'}
-                  </button>
-                  <button 
-                    className="action-button deny" 
-                    onClick={() => handleDeny(request)}
-                    disabled={actionLoading === request.id}
-                  >
-                    {actionLoading === request.id ? '...' : '✕'}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          
-          <button className="view-all-button" onClick={onViewAllClick}>
-            {count > 3 ? `View All ${count} Requests` : 'Manage Requests'}
-          </button>
-        </>
-      ) : (
-        <div className="no-requests">No pending requests found</div>
-      )}
-    </div>
+              </div>
+              
+              <div className="ui-request-actions">
+                <Button
+                  variant="success" 
+                  size="sm"
+                  icon={<FaCheck />}
+                  onClick={() => handleApprove(request)}
+                  disabled={actionLoading === request.id}
+                >
+                  {actionLoading === request.id ? 'Processing...' : 'Approve'}
+                </Button>
+                <Button
+                  variant="danger" 
+                  size="sm"
+                  icon={<FaTimes />}
+                  onClick={() => handleDeny(request)}
+                  disabled={actionLoading === request.id}
+                >
+                  {actionLoading === request.id ? 'Processing...' : 'Deny'}
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        
+        {count > 3 && (
+          <div className="ui-view-all-container">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onViewAllClick}
+              className="ui-view-all-button"
+            >
+              View all {count} requests
+            </Button>
+          </div>
+        )}
+      </Card.Body>
+    </Card>
   );
 }

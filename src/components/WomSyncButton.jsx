@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import { FaSync, FaCheckCircle, FaExclamationTriangle, FaServer, FaCode } from 'react-icons/fa';
+
 import "./WomSyncButton.css";
 
 // Get environment variables at build time
@@ -281,101 +285,105 @@ export default function WomSyncButton({
   const getFeaturesList = () => {
     if (type === "members") {
       return (
-        <div className="sync-features">
-          <p>Request WOM to update all member stats</p>
-          <p>Import latest XP and EHB values</p>
-          <p>Update member information in the database</p>
-        </div>
+        <ul className="ui-sync-features">
+          <li>Request WOM to update all member stats</li>
+          <li>Import latest XP and EHB values</li>
+          <li>Update member information in the database</li>
+        </ul>
       );
     } else {
       return (
-        <div className="sync-features">
-          <p>Fetch all WOM competitions for the clan</p>
-          <p>Create or update events in the database</p>
-          <p>Process results for completed competitions</p>
-        </div>
+        <ul className="ui-sync-features">
+          <li>Fetch all WOM competitions for the clan</li>
+          <li>Create or update events in the database</li>
+          <li>Process results for completed competitions</li>
+        </ul>
       );
-    }
-  };
-
-  // Get appropriate note based on type
-  const getNote = () => {
-    if (type === "members") {
-      return "This process may take several minutes depending on the number of members.";
-    } else {
-      return "Competitions will appear as Events in the Events section.";
-    }
-  };
-
-  // Get appropriate dev mode text based on type
-  const getDevModeText = () => {
-    if (type === "members") {
-      return "Using simulated sync for local development.";
-    } else {
-      return "Using real WOM API but only updating 5 competitions.";
     }
   };
 
   return (
-    <div className="wom-sync">
-      <div className="wom-sync-header">
-        <button
-          className={`wom-sync-button ${isSyncing ? "syncing" : ""}`}
-          onClick={handleSync}
-          disabled={isSyncing}
-        >
-          {isSyncing ? (
-            <>
-              <span className="spinner"></span>
-              Syncing...
-            </>
-          ) : (
-            <>
-              <span className="sync-icon">↻</span>
-              {displayButtonText}
-            </>
+    <Card variant="dark" className="ui-wom-sync-container">
+      <Card.Header className="ui-wom-sync-header">
+        <div className="ui-wom-sync-title">
+          <h3>
+            <FaSync className="ui-icon-left" />
+            {type === "members" ? "WOM Member Sync" : "WOM Event Sync"}
+          </h3>
+        </div>
+        
+        <div className="ui-wom-sync-actions">
+          <Button
+            variant="primary"
+            onClick={handleSync}
+            disabled={isSyncing}
+            icon={<FaSync className={isSyncing ? "ui-icon-spin" : ""} />}
+          >
+            {isSyncing ? "Syncing..." : displayButtonText}
+          </Button>
+          
+          {lastSyncTime && (
+            <div className="ui-last-sync-time">
+              Last sync: {lastSyncTime.toLocaleTimeString()}{" "}
+              {lastSyncTime.toLocaleDateString()}
+            </div>
           )}
-        </button>
+        </div>
+      </Card.Header>
 
-        {lastSyncTime && (
-          <div className="last-sync-time">
-            Last sync: {lastSyncTime.toLocaleTimeString()}{" "}
-            {lastSyncTime.toLocaleDateString()}
+      <Card.Body>
+        {syncStatus && (
+          <div className={`ui-message ${syncStatus.type === 'success' ? 'ui-message-success' : syncStatus.type === 'error' ? 'ui-message-error' : 'ui-message-info'}`}>
+            {syncStatus.type === 'success' ? (
+              <FaCheckCircle className="ui-message-icon" />
+            ) : syncStatus.type === 'error' ? (
+              <FaExclamationTriangle className="ui-message-icon" />
+            ) : (
+              <FaSync className="ui-message-icon ui-icon-spin" />
+            )}
+            <span>{syncStatus.message}</span>
           </div>
         )}
-      </div>
 
-      {syncStatus && (
-        <div className={`sync-status sync-status-${syncStatus.type}`}>
-          {syncStatus.message}
+        <div className="ui-wom-sync-info">
+          <p><strong>Clicking the Sync button will:</strong></p>
+          {getFeaturesList()}
+          <p className="ui-sync-note">
+            <strong>Note:</strong> {type === "members" 
+              ? "This process may take several minutes depending on the number of members."
+              : "Competitions will appear as Events in the Events section."
+            }
+          </p>
         </div>
-      )}
-
-      <div className="wom-sync-info">
-        <p>Clicking the Sync button will:</p>
-        {getFeaturesList()}
-        <p className="note">
-          Note: {getNote()}
-        </p>
 
         {process.env.NODE_ENV === "development" && (
-          <div className="dev-mode-notice">
-            <strong>Development Mode:</strong> {getDevModeText()}
-            <div className="force-production-section">
-              <button
-                className="force-production-button"
+          <div className="ui-dev-mode-notice">
+            <div className="ui-dev-mode-header">
+              <FaCode className="ui-icon-left" /> 
+              <strong>Development Mode:</strong>
+            </div>
+            <p>
+              {type === "members"
+                ? "Using simulated sync for local development."
+                : "Using real WOM API but only updating 5 competitions."}
+            </p>
+            <div className="ui-force-production-section">
+              <Button
+                variant="warning"
+                size="sm"
                 onClick={() => setForceProduction(true)}
                 disabled={forceProduction || isSyncing}
+                icon={<FaServer />}
               >
                 Force {type === "members" ? "Real" : "Full"} Sync
-              </button>
-              <span className="force-production-warning">
+              </Button>
+              <span className="ui-force-production-warning">
                 Will attempt to call Netlify function
               </span>
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </Card.Body>
+    </Card>
   );
 }

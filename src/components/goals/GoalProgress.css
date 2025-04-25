@@ -1,0 +1,129 @@
+.ui-goal-progress {
+  width: 100%;
+  margin-bottom: var(--spacing-2, 1rem);
+}
+
+.ui-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-1, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.ui-progress-percent {
+  font-weight: 500;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-status {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm, 0.25rem);
+}
+
+.ui-status-ahead {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #75e090;
+}
+
+.ui-status-behind {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffca7a;
+}
+
+.ui-status-completed {
+  background-color: rgba(52, 152, 219, 0.1);
+  color: #7fc5ed;
+}
+
+.ui-progress-container {
+  height: 0.5rem;
+  background-color: #333;
+  border-radius: 1rem;
+  margin-bottom: 0.625rem;
+  position: relative;
+  overflow: visible;
+}
+
+.ui-progress-bar {
+  height: 100%;
+  border-radius: 1rem;
+  transition: width 0.5s ease-in-out;
+}
+
+/* Progress bar colors based on status */
+.ui-progress-bar.ui-status-ahead {
+  background-color: var(--color-success, #28a745);
+}
+
+.ui-progress-bar.ui-status-behind {
+  background-color: var(--color-warning, #ffc107);
+}
+
+.ui-progress-bar.ui-status-completed {
+  background-color: var(--color-primary, #3498db);
+}
+
+.ui-progress-bar:not(.ui-status-ahead):not(.ui-status-behind):not(.ui-status-completed) {
+  background-color: var(--color-orange, #ff9800);
+}
+
+/* Expected progress marker */
+.ui-expected-marker {
+  position: absolute;
+  top: -0.5rem;
+  width: 0.125rem;
+  height: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.7);
+  transform: translateX(-50%);
+}
+
+.ui-expected-marker::after {
+  content: '';
+  position: absolute;
+  top: -0.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+.ui-progress-values {
+  display: flex;
+  justify-content: space-between;
+  color: #aaa;
+  font-size: 0.875rem;
+}
+
+.ui-gained-value {
+  color: var(--color-success, #28a745);
+  margin-left: 0.25rem;
+}
+
+.ui-target-value {
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .ui-progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .ui-status {
+    margin-top: 0.25rem;
+  }
+  
+  .ui-progress-values {
+    flex-direction: column;
+  }
+  
+  .ui-target-value {
+    margin-top: 0.25rem;
+  }
+}

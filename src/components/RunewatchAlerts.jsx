@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { FaExclamationTriangle, FaCheck, FaSync } from 'react-icons/fa';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import Modal from './ui/Modal';
+import Badge from './ui/Badge';
+import { FaExclamationTriangle, FaCheck, FaSync, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import './RunewatchAlerts.css';
 
-export default function RunewatchAlerts() {
+export default function RunewatchAlerts({ previewMode = false }) {
   const [reportedMembers, setReportedMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkingRunewatch, setCheckingRunewatch] = useState(false);
   const [error, setError] = useState(null);
   const [whitelistReason, setWhitelistReason] = useState('');
   const [memberToWhitelist, setMemberToWhitelist] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchReportedMembers();
@@ -37,6 +42,7 @@ export default function RunewatchAlerts() {
   const checkRunewatch = async () => {
     try {
       setCheckingRunewatch(true);
+      setError(null);
       const response = await fetch('/.netlify/functions/runewatch-check');
       
       if (!response.ok) {
@@ -45,23 +51,23 @@ export default function RunewatchAlerts() {
       
       const result = await response.json();
       
-      // Show result in a toast notification
-      const toast = document.createElement('div');
-      toast.className = 'runewatch-toast';
-      toast.innerHTML = `
-        <div class="runewatch-toast-content">
-          <strong>RuneWatch Check Complete</strong>
-          <p>${result.matchedMembers.length} reported members found</p>
-          ${result.newlyReportedMembers.length > 0 ? 
-            `<p>Newly reported: ${result.newlyReportedMembers.join(', ')}</p>` : 
-            ''}
-        </div>
-      `;
-      document.body.appendChild(toast);
+      // Show notification using state instead of direct DOM manipulation
+      setNotification({
+        type: 'success',
+        message: (
+          <>
+            <strong>RuneWatch Check Complete</strong>
+            <p>{result.matchedMembers.length} reported members found</p>
+            {result.newlyReportedMembers.length > 0 && (
+              <p>Newly reported: {result.newlyReportedMembers.join(', ')}</p>
+            )}
+          </>
+        )
+      });
       
+      // Auto-dismiss notification after 5 seconds
       setTimeout(() => {
-        toast.classList.add('toast-fade-out');
-        setTimeout(() => document.body.removeChild(toast), 300);
+        setNotification(null);
       }, 5000);
       
       // Refresh the members list
@@ -93,20 +99,20 @@ export default function RunewatchAlerts() {
       // Remove from the list
       setReportedMembers(reportedMembers.filter(m => m.wom_id !== memberToWhitelist.wom_id));
       
+      // Show success notification
+      setNotification({
+        type: 'success',
+        message: `${memberToWhitelist.name || memberToWhitelist.wom_name} has been whitelisted`
+      });
+      
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      
       // Reset state
       setMemberToWhitelist(null);
       setWhitelistReason('');
-      
-      // Show success message
-      const toast = document.createElement('div');
-      toast.className = 'whitelist-success-toast';
-      toast.textContent = `${memberToWhitelist.name} has been whitelisted`;
-      document.body.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.classList.add('toast-fade-out');
-        setTimeout(() => document.body.removeChild(toast), 300);
-      }, 3000);
       
     } catch (err) {
       console.error('Error whitelisting member:', err);
@@ -115,104 +121,139 @@ export default function RunewatchAlerts() {
   };
 
   if (loading) {
-    return <div className="runewatch-loading">Loading reported members...</div>;
+    return (
+      <div className="ui-loading-container ui-runewatch-loading">
+        <div className="ui-loading-spinner"></div>
+        <div className="ui-loading-text">Loading reported members...</div>
+      </div>
+    );
+  }
+
+  // For preview mode, show a simplified version with just the alert count
+  if (previewMode) {
+    return (
+      <div className="ui-runewatch-preview">
+        {reportedMembers.length === 0 ? (
+          <div className="ui-no-alerts">
+            <FaCheck className="ui-success-icon" /> No reported clan members found
+          </div>
+        ) : (
+          <div className="ui-preview-alerts">
+            <FaExclamationTriangle className="ui-warning-icon" />
+            <span>{reportedMembers.length} member{reportedMembers.length !== 1 ? 's' : ''} reported on RuneWatch</span>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
-    <div className="runewatch-alerts-container">
-      <div className="runewatch-header">
-        <h4>
-          <FaExclamationTriangle className="text-warning" /> RuneWatch Alerts
-        </h4>
-        <button 
-          className="btn btn-sm btn-outline-primary" 
+    <div className="ui-runewatch-alerts">
+      <div className="ui-runewatch-header">
+        <Button 
+          variant="secondary"
           onClick={checkRunewatch}
           disabled={checkingRunewatch}
+          icon={<FaSync className={checkingRunewatch ? "ui-icon-spin" : ""} />}
         >
-          {checkingRunewatch ? (
-            <>
-              <FaSync className="icon-spin" /> Checking...
-            </>
-          ) : (
-            <>
-              <FaSync /> Check RuneWatch
-            </>
-          )}
-        </button>
+          {checkingRunewatch ? "Checking..." : "Check RuneWatch"}
+        </Button>
       </div>
       
       {error && (
-        <div className="alert alert-danger">{error}</div>
+        <div className="ui-message ui-message-error">
+          <FaExclamationTriangle className="ui-message-icon" />
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {notification && (
+        <div className={`ui-message ${notification.type === 'success' ? 'ui-message-success' : 'ui-message-error'}`}>
+          {notification.type === 'success' ? (
+            <FaCheck className="ui-message-icon" />
+          ) : (
+            <FaExclamationTriangle className="ui-message-icon" />
+          )}
+          <span>{notification.message}</span>
+        </div>
       )}
       
       {reportedMembers.length === 0 ? (
-        <div className="no-alerts-message">
-          <FaCheck className="text-success" /> No reported clan members found
+        <div className="ui-no-alerts">
+          <FaCheck className="ui-success-icon" /> No reported clan members found
         </div>
       ) : (
-        <>
-          <div className="alert alert-warning">
-            <strong>Warning:</strong> The following clan members have been reported on RuneWatch
-          </div>
-          
-          <ul className="reported-members-list">
-            {reportedMembers.map(member => (
-              <li key={member.wom_id} className="reported-member-item">
-                <div className="reported-member-name">
-                  {member.name || member.wom_name}
-                </div>
-                <button 
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={() => setMemberToWhitelist(member)}
-                >
-                  Whitelist
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
+        <Card variant="dark" className="ui-reported-members-card">
+          <Card.Header>
+            <h3 className="ui-card-title">
+              <FaExclamationTriangle className="ui-warning-icon" />
+              Reported Clan Members
+            </h3>
+          </Card.Header>
+          <Card.Body>
+            <div className="ui-message ui-message-warning">
+              <FaExclamationTriangle className="ui-message-icon" />
+              <span>The following clan members have been reported on RuneWatch</span>
+            </div>
+            
+            <ul className="ui-reported-members-list">
+              {reportedMembers.map(member => (
+                <li key={member.wom_id} className="ui-reported-member-item">
+                  <div className="ui-reported-member-name">
+                    {member.name || member.wom_name}
+                  </div>
+                  <Button 
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setMemberToWhitelist(member)}
+                    icon={<FaShieldAlt />}
+                  >
+                    Whitelist
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Card.Body>
+        </Card>
       )}
       
       {/* Whitelist Modal */}
-      {memberToWhitelist && (
-        <div className="whitelist-modal-backdrop">
-          <div className="whitelist-modal">
-            <div className="whitelist-modal-header">
-              <h5>Whitelist {memberToWhitelist.name}</h5>
-              <button 
-                className="close-button"
-                onClick={() => setMemberToWhitelist(null)}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="whitelist-modal-body">
-              <label htmlFor="whitelist-reason">Reason for whitelisting:</label>
-              <textarea
-                id="whitelist-reason"
-                className="form-control"
-                placeholder="e.g., Case was closed, False positive, etc."
-                value={whitelistReason}
-                onChange={(e) => setWhitelistReason(e.target.value)}
-              />
-            </div>
-            <div className="whitelist-modal-footer">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setMemberToWhitelist(null)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={handleWhitelist}
-              >
-                Whitelist Player
-              </button>
-            </div>
+      <Modal 
+        isOpen={memberToWhitelist !== null}
+        onClose={() => setMemberToWhitelist(null)}
+        title={`Whitelist ${memberToWhitelist?.name || memberToWhitelist?.wom_name || 'Player'}`}
+      >
+        <div className="ui-whitelist-modal">
+          <div className="ui-form-group">
+            <label htmlFor="whitelist-reason">Reason for whitelisting:</label>
+            <textarea
+              id="whitelist-reason"
+              className="ui-form-textarea"
+              placeholder="e.g., Case was closed, False positive, etc."
+              value={whitelistReason}
+              onChange={(e) => setWhitelistReason(e.target.value)}
+            />
           </div>
+
+          <Modal.Footer>
+            <Button 
+              variant="primary"
+              onClick={handleWhitelist}
+              icon={<FaShieldAlt />}
+            >
+              Whitelist Player
+            </Button>
+            
+            <Button 
+              variant="secondary"
+              onClick={() => setMemberToWhitelist(null)}
+              icon={<FaTimes />}
+            >
+              Cancel
+            </Button>
+          </Modal.Footer>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

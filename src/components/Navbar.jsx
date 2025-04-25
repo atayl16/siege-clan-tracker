@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getSeasonalIcon } from "../utils/seasonalIcons";
@@ -7,25 +7,55 @@ import "./Navbar.css";
 export default function Navbar() {
   const location = useLocation();
   const { isAdmin, logout, isLoggedIn } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Close mobile menu when changing routes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+  
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const navbar = document.getElementById('navbar-links');
+      const hamburger = document.getElementById('navbar-toggle');
+      if (isOpen && navbar && !navbar.contains(event.target) && !hamburger.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   return (
-    <nav
-      className="navbar navbar-dark navbar-expand-lg sticky-top"
-      style={{ backgroundColor: "black" }}
-    >
-      <div className="container-fluid">
+    <nav className="navbar" style={{ backgroundColor: "black" }}>
+      <div className="navbar-container">
         <Link className="navbar-brand" to="/members">
           <img
             src={getSeasonalIcon()}
             alt="Siege Logo"
             width="50"
             height="50"
-            className="d-inline-block align-text-top me-2"
+            className="navbar-logo"
           />
-          Siege Clan
+          <span className="brand-name">Siege Clan</span>
         </Link>
 
-        <div className="navbar-links">
+        <button 
+          id="navbar-toggle"
+          className={`navbar-toggle ${isOpen ? 'active' : ''}`} 
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle navigation"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div id="navbar-links" className={`navbar-links ${isOpen ? 'active' : ''}`}>
           <Link to="/" className={location.pathname === "/" ? "active" : ""}>
             Home
           </Link>
@@ -42,7 +72,7 @@ export default function Navbar() {
             <>
               <Link
                 to="/profile"
-                className={location.pathname === "/profile" ? "active" : ""}
+                className={`profile-link ${location.pathname === "/profile" ? "active" : ""}`}
               >
                 My Profile
               </Link>
@@ -50,7 +80,7 @@ export default function Navbar() {
               {isAdmin() && (
                 <Link
                   to="/admin"
-                  className={location.pathname === "/admin" ? "active" : ""}
+                  className={`admin-link ${location.pathname === "/admin" ? "active" : ""}`}
                 >
                   Admin
                 </Link>
@@ -61,7 +91,7 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <>
+            <div className="navbar-auth-links">
               <Link
                 to="/login"
                 className={location.pathname === "/login" ? "active" : ""}
@@ -75,7 +105,7 @@ export default function Navbar() {
               >
                 Register
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>

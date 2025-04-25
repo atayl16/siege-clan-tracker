@@ -1,951 +1,160 @@
-/* Enhanced Create Goal Component Styles */
-.create-goal-container {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.goal-form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
-}
-
-.goal-form-header h3 {
-  margin: 0;
-  color: #ff9800;
-  font-size: 1.4rem;
-}
-
-.goal-for-player {
-  color: #aaa;
-  font-style: italic;
-}
-
-.form-section {
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid #444;
-}
-
-.section-title {
-  font-size: 1rem;
-  color: #ff9800;
-  margin-bottom: 15px;
-  font-weight: 600;
-  position: relative;
-  margin-top: -10px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 10px;
-  font-weight: 500;
-  color: #ddd;
-}
-
-.optional-text {
-  font-size: 0.85em;
-  color: #999;
-  font-weight: normal;
-}
-
-.form-select, .form-input {
-  width: 100%;
-  padding: 12px 15px;
-  background-color: #222;
-  border: 1px solid #444;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 1rem;
-}
-
-.form-select:focus, .form-input:focus {
-  border-color: #ff9800;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.25);
-}
-
-.goal-type-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 5px;
-}
-
-.type-button {
-  padding: 12px;
-  border: 1px solid #555;
-  background-color: #222;
-  color: #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.button-icon {
-  font-size: 1.2rem;
-}
-
-.type-button.active {
-  background-color: #ff9800;
-  color: #222;
-  border-color: #ff9800;
-  font-weight: 600;
-}
-
-.current-stats {
-  background-color: #222;
-  padding: 15px;
-  border-radius: 6px;
-  margin-top: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 4px solid #ff9800;
-}
-
-.stats-value {
-  font-weight: 600;
-  color: #ff9800;
-  font-size: 1.1rem;
-}
-
-.target-mode-selector, .visibility-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.radio-label {
-  display: flex;
-  align-items: flex-start;
-  cursor: pointer;
-  padding: 12px 15px;
-  background-color: #222;
-  border-radius: 6px;
-  border: 1px solid #444;
-  transition: all 0.2s;
-}
-
-.radio-label:hover {
-  background-color: #2a2a2a;
-}
-
-.radio-label input[type="radio"] {
-  margin-right: 12px;
-  margin-top: 3px;
-  accent-color: #ff9800;
-  min-width: 16px;
-  height: 16px;
-}
-
-.radio-text {
-  font-weight: 500;
-  color: #ddd;
-  display: block;
-}
-
-.radio-description {
-  display: block;
-  font-size: 0.85rem;
-  color: #999;
-  margin-top: 3px;
-}
-
-.visibility-icon {
-  margin-right: 6px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin-top: 25px;
-}
-
-.cancel-button, .submit-button {
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 120px;
-}
-
-.cancel-button {
-  background-color: transparent;
-  color: #ccc;
-  border: 1px solid #555;
-}
-
-.cancel-button:hover:not(:disabled) {
-  background-color: #444;
-  color: #fff;
-}
-
-.submit-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-}
-
-.submit-button:hover:not(:disabled) {
-  background-color: #218838;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
-}
-
-.submit-button:disabled, .cancel-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* Responsive fixes */
-@media (max-width: 576px) {
-  .create-goal-container {
-    padding: 15px;
-  }
-  
-  .form-section {
-    padding: 15px;
-  }
-  
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-  
-  .cancel-button, .submit-button {
-    width: 100%;
-  }
-}
-
-.create-goal-container {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.goal-form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
-}
-
-.goal-form-header h3 {
-  margin: 0;
-  color: #ff9800;
-  font-size: 1.4rem;
-}
-
-.goal-for-player {
-  color: #aaa;
-  font-style: italic;
-}
-
-.form-section {
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid #444;
-}
-
-.section-title {
-  font-size: 1rem;
-  color: #ff9800;
-  margin-bottom: 15px;
-  font-weight: 600;
-  position: relative;
-  margin-top: -10px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 10px;
-  font-weight: 500;
-  color: #ddd;
-}
-
-.optional-text {
-  font-size: 0.85em;
-  color: #999;
-  font-weight: normal;
-}
-
-.form-select, .form-input {
-  width: 100%;
-  padding: 12px 15px;
-  background-color: #222;
-  border: 1px solid #444;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 1rem;
-}
-
-.form-select:focus, .form-input:focus {
-  border-color: #ff9800;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.25);
-}
-
-.goal-type-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 5px;
-}
-
-.type-button {
-  padding: 12px;
-  border: 1px solid #555;
-  background-color: #222;
-  color: #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.button-icon {
-  font-size: 1.2rem;
-}
-
-.type-button.active {
-  background-color: #ff9800;
-  color: #222;
-  border-color: #ff9800;
-  font-weight: 600;
-}
-
-.current-stats {
-  background-color: #222;
-  padding: 15px;
-  border-radius: 6px;
-  margin-top: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 4px solid #ff9800;
-}
-
-.stats-value {
-  font-weight: 600;
-  color: #ff9800;
-  font-size: 1.1rem;
-}
-
-.target-mode-selector, .visibility-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.radio-label {
-  display: flex;
-  align-items: flex-start;
-  cursor: pointer;
-  padding: 12px 15px;
-  background-color: #222;
-  border-radius: 6px;
-  border: 1px solid #444;
-  transition: all 0.2s;
-}
-
-.radio-label:hover {
-  background-color: #2a2a2a;
-}
-
-.radio-label input[type="radio"] {
-  margin-right: 12px;
-  margin-top: 3px;
-  accent-color: #ff9800;
-  min-width: 16px;
-  height: 16px;
-}
-
-.radio-text {
-  font-weight: 500;
-  color: #ddd;
-  display: block;
-}
-
-.radio-description {
-  display: block;
-  font-size: 0.85rem;
-  color: #999;
-  margin-top: 3px;
-}
-
-.visibility-icon {
-  margin-right: 6px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin-top: 25px;
-}
-
-.cancel-button, .submit-button {
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 120px;
-}
-
-.cancel-button {
-  background-color: transparent;
-  color: #ccc;
-  border: 1px solid #555;
-}
-
-.cancel-button:hover:not(:disabled) {
-  background-color: #444;
-  color: #fff;
-}
-
-.submit-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-}
-
-.submit-button:hover:not(:disabled) {
-  background-color: #218838;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
-}
-
-.submit-button:disabled, .cancel-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* Responsive fixes */
-@media (max-width: 576px) {
-  .create-goal-container {
-    padding: 15px;
-  }
-  
-  .form-section {
-    padding: 15px;
-  }
-  
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-  
-  .cancel-button, .submit-button {
-    width: 100%;
-  }
-}
-
-/* Compact create goal container */
-.create-goal-container.compact {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Row layout for form groups */
-.form-row {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.flex-grow {
-  flex-grow: 1;
-  min-width: 0;
-}
-
-/* Card-style options */
-.option-cards {
-  display: flex;
-  gap: 15px;
-  width: 100%;
-  margin-bottom: 15px;
-}
-
-.option-card {
-  flex: 1;
-  min-height: 80px;
-  background-color: #222;
-  border: 2px solid #444;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 12px;
-  text-align: left;
-  display: flex;
-  align-items: center;
+/* Goals container */
+.ui-goals-container {
+  color: var(--color-text, #e0e0e0);
   width: 100%;
 }
 
-.option-card:hover {
-  background-color: #2a2a2a;
-  transform: translateY(-2px);
-}
-
-.option-card.selected {
-  background-color: rgba(255, 152, 0, 0.1);
-  border-color: #ff9800;
-  box-shadow: 0 0 0 1px rgba(255, 152, 0, 0.2);
-}
-
-.option-card-icon {
-  font-size: 1.2rem;
-  margin-right: 12px;
-  color: #ff9800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.option-card-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.option-card-title {
-  font-weight: 600;
-  color: #ddd;
-  font-size: 1.05rem;
-}
-
-.option-card-description {
-  color: #999;
-  font-size: 0.85rem;
-  margin-top: 4px;
-}
-
-/* Privacy cards specific styling */
-.privacy-cards .option-card {
-  min-height: 70px;
-}
-
-/* Hide labels where they're not needed */
-.compact .form-label {
-  display: none;
-}
-
-.compact .form-input,
-.compact .form-select {
-  padding: 14px;
-  font-size: 1rem;
-}
-
-.compact .form-input::placeholder {
-  color: #777;
-}
-
-/* Remove extra section dividers to make it more compact */
-.compact .form-section {
-  padding: 15px;
-  margin-bottom: 15px;
-  background-color: transparent;
-  border: none;
-}
-
-.compact .goal-form-header {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  text-align: center;
-}
-
-.compact .goal-form-header h3 {
-  margin: 0;
-  color: #ff9800;
-  font-size: 1.3rem;
-}
-
-/* Make it responsive */
-@media (max-width: 576px) {
-  .form-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .option-card-icon {
-    font-size: 1rem;
-    margin-right: 8px;
-  }
-  
-  .option-card-title {
-    font-size: 0.95rem;
-  }
-  
-  .option-card-description {
-    font-size: 0.8rem;
-  }
-}
-/* === Goals List Styling === */
-/* Add these styles at the end of your Goals.css file */
-
-/* Main Goals Container */
-.goals-container {
-  background-color: #333;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Goals Header */
-.goals-header {
+/* Goals header */
+.ui-goals-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #444;
+  margin-bottom: var(--spacing-3, 1.5rem);
 }
 
-.goals-header h2 {
+.ui-goals-header h2 {
   margin: 0;
-  color: #ff9800;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--font-size-xl, 1.5rem);
+  color: var(--color-orange, #ff9800);
 }
 
-.close-button {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: color 0.2s;
+.ui-close-button {
+  padding: 0;
 }
 
-.close-button:hover {
-  color: #ff9800;
-}
-
-/* Goals Action Buttons */
-.goals-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.sync-progress-button, .add-goal-button {
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
+/* Message styles */
+.ui-message {
+  padding: var(--spacing-2, 1rem);
+  margin-bottom: var(--spacing-3, 1.5rem);
+  border-radius: var(--border-radius-md, 0.5rem);
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.2s;
 }
 
-.sync-progress-button {
-  background-color: #444;
-  color: white;
-  border: none;
+.ui-message-error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #ff6b6b;
+  border-left: 0.25rem solid var(--color-danger, #dc3545);
 }
 
-.sync-progress-button:hover:not(:disabled) {
-  background-color: #555;
-  transform: translateY(-2px);
-}
-
-.add-goal-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-}
-
-.add-goal-button:hover:not(:disabled) {
-  background-color: #218838;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
-}
-
-.sync-icon, .button-icon {
-  font-size: 1.1rem;
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Goals List */
-.goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.goal-card {
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s;
-}
-
-.goal-card:hover {
-  transform: translateY(-2px);
-}
-
-.goal-card.completed {
+.ui-message-success {
   background-color: rgba(40, 167, 69, 0.1);
-  border-left: 4px solid #28a745;
+  color: #75e090;
+  border-left: 0.25rem solid var(--color-success, #28a745);
 }
 
-.goal-header {
+/* Action buttons */
+.ui-goals-actions {
   display: flex;
   justify-content: space-between;
+  margin-bottom: var(--spacing-3, 1.5rem);
+  gap: var(--spacing-2, 1rem);
+}
+
+.ui-sync-button,
+.ui-add-goal-button {
+  flex: 1;
+}
+
+/* Spinner animation for sync */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ui-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Loading state */
+.ui-loading-container {
+  text-align: center;
+  padding: var(--spacing-4, 2rem) 0;
+}
+
+.ui-loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0.1875rem solid rgba(255,152,0,0.3);
+  border-radius: 50%;
+  border-top-color: var(--color-orange, #ff9800);
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-2, 1rem);
+}
+
+.ui-loading-text {
+  color: #aaa;
+}
+
+/* Create goal card */
+.ui-create-goal-card {
+  margin-bottom: var(--spacing-3, 1.5rem);
+}
+
+/* Goals grid */
+.ui-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18.75rem, 1fr));
+  gap: var(--spacing-3, 1.5rem);
+}
+
+/* Goal card */
+.ui-goal-card {
+  transition: all var(--transition-normal, 0.3s);
+}
+
+.ui-goal-completed {
+  opacity: 0.8;
+}
+
+.ui-goal-header {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #444;
+  gap: var(--spacing-1, 0.5rem);
 }
 
-.goal-header h3 {
+.ui-goal-metric {
   margin: 0;
-  font-size: 1.2rem;
-  color: #e0e0e0;
+  font-size: var(--font-size-lg, 1.25rem);
+  flex: 1;
 }
 
-.goal-type {
-  font-size: 0.8rem;
-  color: #999;
-  background-color: #333;
-  padding: 3px 8px;
-  border-radius: 12px;
+.ui-goal-type-badge {
   text-transform: capitalize;
 }
 
-/* Goal Progress Bar */
-.goal-progress {
-  margin: 15px 0;
-}
-
-.progress-header {
+/* Goal details */
+.ui-goal-details {
+  margin-top: var(--spacing-2, 1rem);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: var(--spacing-1, 0.5rem);
 }
 
-.status {
-  font-size: 0.8rem;
+.ui-detail-label {
   font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.status.ahead {
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
-}
-
-.status.behind {
-  background-color: rgba(255, 193, 7, 0.1);
-  color: #ffc107;
-}
-
-.status.completed {
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
-}
-
-.goal-progress-container {
-  width: 100%;
-  height: 10px;
-  background-color: #444;
-  border-radius: 5px;
-  position: relative;
-}
-
-.goal-progress-bar {
-  height: 100%;
-  background-color: #ff9800;
-  border-radius: 5px;
-  transition: width 0.5s;
-}
-
-.goal-progress-bar.ahead {
-  background-color: #28a745;
-}
-
-.goal-progress-bar.behind {
-  background-color: #ffc107;
-}
-
-.goal-progress-bar.completed {
-  background-color: #28a745;
-}
-
-.expected-progress-marker {
-  position: absolute;
-  top: -5px;
-  width: 4px;
-  height: 20px;
-  background-color: rgba(255, 255, 255, 0.8);
-  transform: translateX(-2px);
-}
-
-.progress-values {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
   color: #aaa;
-  margin-top: 8px;
+  margin-right: var(--spacing-1, 0.5rem);
 }
 
-.gained {
-  color: #28a745;
-  font-size: 0.85rem;
-  margin-left: 5px;
-}
-
-.target-value {
-  color: #ff9800;
+.ui-detail-value {
   font-weight: 500;
 }
 
-/* Goal Details and Actions */
-.goal-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-top: 15px;
-  font-size: 0.9rem;
-  color: #aaa;
+/* Empty state icon */
+.ui-empty-state-icon {
+  font-size: var(--font-size-2xl, 1.75rem);
+  color: var(--color-orange, #ff9800);
 }
 
-.completion-date {
-  color: #28a745;
-  font-weight: 500;
-}
-
-.goal-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #444;
-}
-
-.delete-goal {
-  background-color: transparent;
-  color: #dc3545;
-  border: 1px solid #dc3545;
-  padding: 8px 15px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.delete-goal:hover {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-/* State Messages */
-.loading-indicator {
-  padding: 30px;
-  text-align: center;
-  color: #aaa;
-  background-color: #2a2a2a;
-  border-radius: 8px;
-}
-
-.no-goals {
-  text-align: center;
-  padding: 40px 20px;
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  color: #aaa;
-}
-
-.error-message {
-  padding: 15px;
-  margin-bottom: 20px;
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
-  border-radius: 8px;
-  border-left: 4px solid #dc3545;
-}
-
-.success-message {
-  padding: 15px;
-  margin-bottom: 20px;
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
-  border-radius: 8px;
-  border-left: 4px solid #28a745;
-}
-
-/* Make responsive */
+/* Media queries */
 @media (max-width: 768px) {
-  .goals-actions {
+  .ui-goals-actions {
     flex-direction: column;
   }
   
-  .sync-progress-button, .add-goal-button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .goal-details {
-    flex-direction: column;
-    gap: 8px;
+  .ui-goals-grid {
+    grid-template-columns: 1fr;
   }
 }

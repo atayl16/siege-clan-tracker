@@ -1,0 +1,167 @@
+/* Admin User Manager Component Styling */
+.ui-admin-user-manager {
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-section {
+  margin-bottom: var(--spacing-4, 2rem);
+}
+
+.ui-section-title {
+  font-size: var(--font-size-xl, 1.5rem);
+  color: var(--color-orange, #ff9800);
+  margin-top: 0;
+  margin-bottom: var(--spacing-2, 1rem);
+  display: flex;
+  align-items: center;
+}
+
+.ui-section-subtitle {
+  font-size: var(--font-size-lg, 1.25rem);
+  color: var(--color-orange, #ff9800);
+  margin-bottom: var(--spacing-2, 1rem);
+  padding-bottom: var(--spacing-1, 0.5rem);
+  border-bottom: 1px solid var(--color-dark-border, #444);
+  display: flex;
+  align-items: center;
+}
+
+.ui-section-description {
+  color: #aaa;
+  margin-bottom: var(--spacing-2, 1rem);
+  font-size: var(--font-size-md, 1rem);
+}
+
+.ui-icon-left {
+  margin-right: var(--spacing-1, 0.5rem);
+  font-size: 1.1em;
+}
+
+/* Message styling */
+.ui-message {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-2, 1rem);
+  margin-bottom: var(--spacing-3, 1.5rem);
+  border-radius: var(--border-radius-md, 0.5rem);
+  font-weight: 500;
+}
+
+.ui-message-icon {
+  margin-right: var(--spacing-1, 0.5rem);
+  font-size: 1.25em;
+  flex-shrink: 0;
+}
+
+.ui-message-error {
+  background-color: rgba(220, 53, 69, 0.15);
+  color: #ff6b6b;
+  border-left: 4px solid var(--color-danger, #dc3545);
+}
+
+.ui-message-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+  border-left: 4px solid var(--color-warning, #ffc107);
+}
+
+.ui-message-success {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border-left: 4px solid var(--color-success, #28a745);
+}
+
+/* Loading indicator */
+.ui-loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3, 1.5rem);
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-md, 0.5rem);
+  color: #aaa;
+  font-style: italic;
+}
+
+/* User selection actions */
+.ui-user-actions {
+  margin-top: var(--spacing-3, 1.5rem);
+}
+
+.ui-selected-user-card {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.ui-selected-user-title {
+  margin-top: 0;
+  margin-bottom: var(--spacing-2, 1rem);
+  font-size: var(--font-size-md, 1rem);
+  color: var(--color-text, #e0e0e0);
+  font-weight: 600;
+}
+
+/* Form styling */
+.ui-form-group {
+  margin-bottom: var(--spacing-3, 1.5rem);
+}
+
+.ui-form-label {
+  display: block;
+  margin-bottom: var(--spacing-1, 0.5rem);
+  color: #ccc;
+  font-weight: 500;
+}
+
+.ui-form-input {
+  width: 100%;
+  padding: var(--spacing-1, 0.5rem) var(--spacing-2, 1rem);
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  color: var(--color-text, #e0e0e0);
+  font-size: var(--font-size-md, 1rem);
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.ui-form-input:focus {
+  outline: none;
+  border-color: var(--color-orange, #ff9800);
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.25);
+}
+
+.ui-field-help {
+  margin-top: var(--spacing-1, 0.5rem);
+  color: #888;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-style: italic;
+}
+
+.ui-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-3, 1.5rem);
+}
+
+/* Admin users table enhancements */
+.ui-admin-users-table {
+  margin-bottom: var(--spacing-3, 1.5rem);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ui-form-actions {
+    flex-direction: column;
+  }
+  
+  .ui-form-actions button {
+    width: 100%;
+    margin-bottom: var(--spacing-1, 0.5rem);
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-section-title,
+  .ui-section-subtitle {
+    font-size: var(--font-size-lg, 1.25rem);
+  }
+}
