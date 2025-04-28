@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { FaEdit, FaTrash, FaCalendarPlus, FaSync, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { useEvents, useData } from '../context/DataContext';
+import { FaEdit, FaTrash, FaCalendarPlus, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
 
 // Import UI components
 import Card from './ui/Card';
@@ -9,51 +9,57 @@ import Modal from './ui/Modal';
 import EmptyState from './ui/EmptyState';
 import DataTable from './ui/DataTable';
 import Badge from './ui/Badge';
-
 import EventEditor from './EventEditor';
-import WomSyncButton from './WomSyncButton';
-
 import './EventManagement.css';
 
 export default function EventManagement() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const { fetchers } = useData();
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  // Use the context hook instead of direct Supabase queries
+  const { 
+    events, 
+    loading, 
+    error: fetchError, 
+    refreshEvents 
+  } = useEvents();
 
-  const fetchEvents = async () => {
+  const handleEventSave = async (savedEvent) => {
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('start_date', { ascending: false });
-      
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (err) {
-      console.error('Error fetching events:', err);
-      setError('Failed to load events data');
-    } finally {
-      setLoading(false);
-    }
-  };
+      setActionError(null);
 
-  const handleEventSave = (savedEvent) => {
-    if (editingEvent) {
-      setEvents(events.map(event => 
-        event.id === savedEvent.id ? savedEvent : event
-      ));
-      setEditingEvent(null);
-    } else {
-      setEvents([savedEvent, ...events]);
-      setIsCreatingEvent(false);
+      if (editingEvent) {
+        // Use context method for update
+        await fetchers.supabase.updateEvent(savedEvent);
+        setEditingEvent(null);
+      } else {
+        // Create new event - remove any ID and non-database fields
+        const { id, _tempId, ...eventData } = savedEvent;
+
+        // Extract only the fields that exist in the database schema
+        const eventToInsert = {
+          name: eventData.name,
+          type: eventData.type,
+          start_date: eventData.start_date,
+          end_date: eventData.end_date,
+          is_wom: eventData.is_wom || false,
+          description: eventData.description || "",
+          status: eventData.status || "upcoming",
+        };
+
+        // Use context method for create
+        await fetchers.supabase.createEvent(eventToInsert);
+        setIsCreatingEvent(false);
+      }
+
+      // Refresh events data
+      refreshEvents();
+    } catch (err) {
+      console.error("Error saving event:", err);
+      setActionError(`Failed to save event: ${err.message}`);
     }
   };
 
@@ -72,20 +78,20 @@ export default function EventManagement() {
 
   const handleDeleteEvent = async () => {
     if (!deleteConfirm) return;
-    
+
     try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', deleteConfirm.id);
-        
-      if (error) throw error;
-      
-      setEvents(events.filter(event => event.id !== deleteConfirm.id));
+      setActionError(null);
+
+      // Use context method for delete
+      await fetchers.supabase.deleteEvent(deleteConfirm.id);
+
       setDeleteConfirm(null);
+
+      // Refresh events data
+      refreshEvents();
     } catch (err) {
-      console.error('Error deleting event:', err);
-      setError(`Failed to delete event: ${err.message}`);
+      console.error("Error deleting event:", err);
+      setActionError(`Failed to delete event: ${err.message}`);
     }
   };
 
@@ -225,7 +231,7 @@ export default function EventManagement() {
     }
   ];
 
-  if (loading && events.length === 0) {
+  if (loading && (!events || events.length === 0)) {
     return (
       <div className="ui-loading-container">
         <div className="ui-loading-spinner"></div>
@@ -236,14 +242,14 @@ export default function EventManagement() {
 
   return (
     <div className="ui-event-management">
-      {error && (
+      {(fetchError || actionError) && (
         <div className="ui-message ui-message-error">
           <FaExclamationTriangle className="ui-message-icon" />
-          <span>{error}</span>
+          <span>{actionError || fetchError.message || String(fetchError)}</span>
         </div>
       )}
 
-      <Modal 
+      <Modal
         isOpen={deleteConfirm !== null}
         onClose={() => setDeleteConfirm(null)}
         title="Confirm Deletion"
@@ -263,40 +269,12 @@ export default function EventManagement() {
             >
               Delete Event
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setDeleteConfirm(null)}
-            >
+            <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>
           </Modal.Footer>
         </div>
       </Modal>
-
-      <Card className="ui-event-tools" variant="dark">
-        <Card.Body>
-          <div className="ui-event-actions">
-            <Button
-              variant="primary"
-              onClick={() => {
-                setIsCreatingEvent(!isCreatingEvent);
-                setEditingEvent(null);
-              }}
-              disabled={editingEvent !== null}
-              icon={<FaCalendarPlus />}
-            >
-              {isCreatingEvent ? "Cancel" : "Create Event"}
-            </Button>
-            <Button 
-              variant="secondary"
-              onClick={fetchEvents}
-              icon={<FaSync />}
-            >
-              Refresh
-            </Button>
-          </div>
-        </Card.Body>
-      </Card>
 
       {isCreatingEvent && (
         <Card className="ui-event-editor-container" variant="dark">
@@ -327,10 +305,23 @@ export default function EventManagement() {
           <h3 className="ui-section-title">
             <FaCalendarAlt className="ui-icon-left" /> Event Calendar
           </h3>
+          <div className="ui-event-actions">
+            <Button
+              variant="primary"
+              onClick={() => {
+                setIsCreatingEvent(!isCreatingEvent);
+                setEditingEvent(null);
+              }}
+              disabled={editingEvent !== null}
+              icon={<FaCalendarPlus />}
+            >
+              {isCreatingEvent ? "Cancel" : "Create Event"}
+            </Button>
+          </div>
         </Card.Header>
-        
+
         <Card.Body>
-          {events.length === 0 ? (
+          {!events || events.length === 0 ? (
             <EmptyState
               title="No Events Found"
               description="Create a new event or sync with Wise Old Man."
@@ -351,39 +342,12 @@ export default function EventManagement() {
           ) : (
             <DataTable
               columns={eventColumns}
-              data={events}
+              data={events || []}
               keyField="id"
               emptyMessage="No events found"
               className="ui-events-table"
             />
           )}
-        </Card.Body>
-      </Card>
-
-      <Card className="ui-event-sync-section" variant="dark">
-        <Card.Header>
-          <h3 className="ui-section-title">
-            <FaSync className="ui-icon-left" /> Data Synchronization
-          </h3>
-        </Card.Header>
-        
-        <Card.Body>
-          <p className="ui-section-description">
-            Import competitions and events from Wise Old Man
-          </p>
-          
-          <div className="ui-sync-button-container">
-            <WomSyncButton
-              type="events"
-              buttonText="Sync WOM Competitions"
-              onSyncComplete={fetchEvents}
-            />
-          </div>
-          
-          <p className="ui-sync-note">
-            Sync will import all WOM competitions your clan is participating in.
-            These events are read-only and cannot be edited.
-          </p>
         </Card.Body>
       </Card>
     </div>

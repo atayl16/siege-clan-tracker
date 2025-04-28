@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../supabaseClient";
+import { useUserClaimRequests, useAvailableMembers, useData } from "../context/DataContext";
 import { FaCheck, FaTimes, FaClock, FaInfoCircle } from "react-icons/fa";
 
 // Import UI components
 import Card from "./ui/Card";
 import Button from "./ui/Button";
 import Tabs from "./ui/Tabs";
-import FormInput from "./ui/FormInput";
 import Badge from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 
 import "./ClaimPlayer.css";
 
 export default function ClaimPlayer({ onRequestSubmitted }) {
+  // Local state for form inputs and UI
   const [claimCode, setClaimCode] = useState("");
   const [selectedMember, setSelectedMember] = useState("");
   const [message, setMessage] = useState("");
@@ -21,116 +21,34 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("code");
-  const [userRequests, setUserRequests] = useState([]);
-  const [availableMembers, setAvailableMembers] = useState([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
+
   const { user, claimPlayer } = useAuth();
-
-  const fetchUserRequests = useCallback(async () => {
-    if (!user) return;
+  const { fetchers } = useData(); // Add this for DataContext
   
-    try {
-      // Step 1: Fetch basic request data without joins
-      const { data, error } = await supabase
-        .from("claim_requests")
-        .select("*")  // Use simple select without joins
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+  // Get data from context hooks
+  const { 
+    requests: userRequests, 
+    loading: requestsLoading, 
+    error: requestsError,
+    refreshRequests 
+  } = useUserClaimRequests(user?.id);
   
-      if (error) throw error;
-      
-      // Step 2: If we have data, fetch the related member info separately
-      if (data && data.length > 0) {
-        const womIds = data.filter(req => req.wom_id).map(req => req.wom_id);
-        
-        if (womIds.length > 0) {
-          const { data: membersData, error: membersError } = await supabase
-            .from('members')
-            .select('wom_id, name')
-            .in('wom_id', womIds);
-          
-          if (!membersError) {
-            // Create a lookup map for member data
-            const memberMap = {};
-            membersData.forEach(member => {
-              memberMap[member.wom_id] = member;
-            });
-            
-            // Attach member data to each request
-            const enhancedData = data.map(req => ({
-              ...req,
-              member: req.wom_id ? memberMap[req.wom_id] : null
-            }));
-            
-            setUserRequests(enhancedData);
-            return;
-          }
-        }
-      }
-      
-      // If we don't have member data or there was an error, just use the basic request data
-      setUserRequests(data || []);
-    } catch (err) {
-      console.error("Error fetching user requests:", err);
-    }
-  }, [user]);
+  const {
+    members: availableMembers,
+    loading: membersLoading,
+    error: membersError,
+    refreshAvailableMembers
+  } = useAvailableMembers();
 
+  // Get fresh data when switching tabs
   useEffect(() => {
-    if (user) {
-      fetchUserRequests();
+    if (activeTab === "request" && user) {
+      refreshAvailableMembers();
     }
-  }, [user, fetchUserRequests]);
-
-  useEffect(() => {
-    if (activeTab === "request") {
-      fetchAvailableMembers();
+    if (activeTab === "my-requests" && user) {
+      refreshRequests();
     }
-  }, [activeTab]);
-
-  const fetchAvailableMembers = async () => {
-    try {
-      setLoadingMembers(true);
-  
-      // Get all members
-      const { data: allMembers, error: membersError } = await supabase
-        .from("members")
-        .select("wom_id, name")
-        .order("name");
-  
-      if (membersError) throw membersError;
-  
-      // Get already claimed players
-      const { data: claimedPlayers, error: claimsError } = await supabase
-        .from("player_claims")
-        .select("wom_id");
-  
-      if (claimsError) throw claimsError;
-  
-      // Get pending claim requests
-      const { data: pendingRequests, error: pendingError } = await supabase
-        .from("claim_requests")
-        .select("wom_id")
-        .eq("status", "pending");
-  
-      if (pendingError) throw pendingError;
-  
-      // Create sets of claimed and pending request IDs
-      const claimedIds = new Set(claimedPlayers.map((p) => p.wom_id));
-      const pendingIds = new Set(pendingRequests.map((p) => p.wom_id));
-  
-      // Filter out both claimed players and those with pending requests
-      const available = allMembers.filter(
-        (m) => !claimedIds.has(m.wom_id) && !pendingIds.has(m.wom_id)
-      );
-  
-      setAvailableMembers(available);
-    } catch (err) {
-      console.error("Error fetching available members:", err);
-      setError("Failed to load available members");
-    } finally {
-      setLoadingMembers(false);
-    }
-  };
+  }, [activeTab, user, refreshAvailableMembers, refreshRequests]);
 
   const handleClaim = async (e) => {
     e.preventDefault();
@@ -153,6 +71,10 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           message: result.message,
         });
         setClaimCode(""); // Clear the input on success
+        
+        // Refresh data after a successful claim
+        refreshAvailableMembers();
+        refreshRequests();
       } else {
         setError(result.error);
       }
@@ -165,76 +87,28 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
   const handleRequestClaim = async (e) => {
     e.preventDefault();
-
+    
     if (!user) {
       setError("You must be logged in to request a player claim");
       return;
     }
-
-    if (!selectedMember) {
-      setError("Please select a player");
-      return;
-    }
-
+  
     setLoading(true);
-    setError(null);
-    setNotification(null);
-
     try {
-      // Find selected member details
-      const memberObj = availableMembers.find(
-        (m) => m.wom_id.toString() === selectedMember.toString()
-      );
-      if (!memberObj) {
-        throw new Error("Selected player not found");
-      }
-
-      // Check for existing requests for this player
-      const { data: existingRequests, error: requestsError } = await supabase
-        .from("claim_requests")
-        .select("id, status")
-        .eq("wom_id", selectedMember)
-        .eq("status", "pending");
-
-      if (requestsError) throw requestsError;
-
-      if (existingRequests && existingRequests.length > 0) {
-        setError("A request for this player is already pending");
-        setLoading(false);
-        return;
-      }
-
-      // Create the claim request
-      const { error: insertError } = await supabase
-        .from("claim_requests")
-        .insert([
-          {
-            user_id: user.id,
-            wom_id: selectedMember,
-            rsn: memberObj.name,
-            message: message.trim() || null,
-          },
-        ]);
-
-      if (insertError) throw insertError;
-
-      setNotification({
-        type: "success",
-        message: "Your claim request has been submitted for review",
+      // Use the context method instead of direct insert
+      await fetchers.supabase.createClaimRequest({
+        user_id: user.id,
+        wom_id: parseInt(selectedMember, 10),
+        rsn: memberObj.name,
+        message: message.trim() || null,
+        status: "pending",
       });
-      setSelectedMember("");
-      setMessage("");
-
-      // Call the parent component's callback to refresh request data
-      if (onRequestSubmitted) {
-        onRequestSubmitted();
-      }
-
-      // Switch to code tab after successful submission
-      setActiveTab("code");
+      
+      setNotification("Your claim request has been submitted");
+      refreshRequests();
     } catch (err) {
-      console.error("Error requesting claim:", err);
-      setError(`Failed to submit request: ${err.message}`);
+      console.error("Error creating claim request:", err);
+      setError(`Request failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -253,22 +127,32 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
   return (
     <Card className="ui-claim-player-container">
-      <Tabs activeTab={activeTab} onChange={setActiveTab} className="ui-claim-tabs">
+      <Tabs
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        className="ui-claim-tabs"
+      >
         <Tabs.Tab tabId="code" label="Use a Claim Code">
           <div className="ui-claim-tab-content">
             <h2 className="ui-claim-heading">Claim Your OSRS Account</h2>
             <p className="ui-claim-description">
-              Enter the claim code provided by admin to connect your account with your in-game
-              character.
+              Enter the claim code provided by admin to connect your account
+              with your in-game character.
             </p>
 
             {notification && (
-              <div className={`ui-notification-message ui-notification-${notification.type}`}>
-                {notification.type === "success" ? <FaCheck className="ui-notification-icon" /> : <FaInfoCircle className="ui-notification-icon" />}
+              <div
+                className={`ui-notification-message ui-notification-${notification.type}`}
+              >
+                {notification.type === "success" ? (
+                  <FaCheck className="ui-notification-icon" />
+                ) : (
+                  <FaInfoCircle className="ui-notification-icon" />
+                )}
                 {notification.message}
               </div>
             )}
-            
+
             {error && (
               <div className="ui-error-message">
                 <FaTimes className="ui-error-icon" />
@@ -290,7 +174,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                 />
               </div>
 
-              <Button 
+              <Button
                 type="submit"
                 variant="primary"
                 className="ui-claim-button"
@@ -318,15 +202,23 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
         <Tabs.Tab tabId="request" label="Search Members">
           <div className="ui-claim-tab-content">
             <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
-            <p className="ui-claim-description">Select your character from the list to request access.</p>
+            <p className="ui-claim-description">
+              Select your character from the list to request access.
+            </p>
 
             {notification && (
-              <div className={`ui-notification-message ui-notification-${notification.type}`}>
-                {notification.type === "success" ? <FaCheck className="ui-notification-icon" /> : <FaInfoCircle className="ui-notification-icon" />}
+              <div
+                className={`ui-notification-message ui-notification-${notification.type}`}
+              >
+                {notification.type === "success" ? (
+                  <FaCheck className="ui-notification-icon" />
+                ) : (
+                  <FaInfoCircle className="ui-notification-icon" />
+                )}
                 {notification.message}
               </div>
             )}
-            
+
             {error && (
               <div className="ui-error-message">
                 <FaTimes className="ui-error-icon" />
@@ -334,12 +226,22 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
               </div>
             )}
 
+            {membersError && (
+              <div className="ui-error-message">
+                <FaTimes className="ui-error-icon" />
+                Error loading members: {membersError.message || membersError}
+              </div>
+            )}
+
             <form onSubmit={handleRequestClaim} className="ui-claim-form">
               <div className="ui-form-group">
                 <label className="ui-form-label">Select Your Character:</label>
-                {loadingMembers ? (
+                {membersLoading ? (
                   <div className="ui-loading-indicator">
-                    Loading available players...
+                    <div className="ui-loading-spinner"></div>
+                    <div className="ui-loading-text">
+                      Loading available players...
+                    </div>
                   </div>
                 ) : (
                   <select
@@ -350,14 +252,14 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                     required
                   >
                     <option value="">-- Select your character --</option>
-                    {availableMembers.map((member) => (
+                    {availableMembers?.map((member) => (
                       <option key={member.wom_id} value={member.wom_id}>
                         {member.name}
                       </option>
                     ))}
                   </select>
                 )}
-                {availableMembers.length === 0 && !loadingMembers && (
+                {availableMembers?.length === 0 && !membersLoading && (
                   <div className="ui-info-message">
                     All players have been claimed
                   </div>
@@ -394,7 +296,9 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                 <ol className="ui-info-list">
                   <li>An admin will review your request</li>
                   <li>They may verify your identity in Discord</li>
-                  <li>Once approved, you'll gain access to your player profile</li>
+                  <li>
+                    Once approved, you'll gain access to your player profile
+                  </li>
                   <li>You can check the status in the "My Requests" tab</li>
                 </ol>
               </Card.Body>
@@ -402,20 +306,30 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab 
-          tabId="my-requests" 
+        <Tabs.Tab
+          tabId="my-requests"
           label="View My Requests"
-          badge={userRequests.length > 0 ? userRequests.length : null}
         >
           <div className="ui-claim-tab-content">
             <h2 className="ui-claim-heading">My Claim Requests</h2>
+            {requestsError && (
+              <div className="ui-error-message">
+                <FaTimes className="ui-error-icon" />
+                Error loading requests: {requestsError.message || requestsError}
+              </div>
+            )}
 
-            {userRequests.length === 0 ? (
+            {requestsLoading ? (
+              <div className="ui-loading-indicator">
+                <div className="ui-loading-spinner"></div>
+                <div className="ui-loading-text">Loading your requests...</div>
+              </div>
+            ) : userRequests?.length === 0 ? (
               <EmptyState
                 title="No Requests Yet"
                 description="You haven't submitted any player claim requests yet"
                 action={
-                  <Button 
+                  <Button
                     variant="secondary"
                     onClick={() => setActiveTab("request")}
                   >
@@ -442,6 +356,13 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                             <strong>Your message:</strong> {request.message}
                           </p>
                         )}
+                        {request.admin_notes &&
+                          request.status !== "pending" && (
+                            <p>
+                              <strong>Admin notes:</strong>{" "}
+                              {request.admin_notes}
+                            </p>
+                          )}
                       </div>
                     </Card.Body>
                   </Card>

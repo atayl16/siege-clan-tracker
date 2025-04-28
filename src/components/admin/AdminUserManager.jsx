@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useUsers } from '../../context/DataContext';
 import UserSelector from '../UserSelector';
-import { supabase } from '../../supabaseClient';
 import { FaUserShield, FaUser, FaCheckCircle, FaExclamationTriangle, FaKey } from 'react-icons/fa';
 
 // Import UI components
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Badge from '../ui/Badge';
 import EmptyState from '../ui/EmptyState';
 import DataTable from '../ui/DataTable';
 
@@ -15,40 +14,19 @@ import './AdminUserManager.css';
 
 export default function AdminUserManager() {
   const [selectedUser, setSelectedUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [adminUsers, setAdminUsers] = useState([]);
-  const [loadingAdmins, setLoadingAdmins] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState(null);
   const [supabaseUUID, setSupabaseUUID] = useState('');
   const { toggleAdminStatus, linkUserToSupabaseAuth } = useAuth();
-
-  // Fetch all admin users when the component loads
-  useEffect(() => {
-    async function fetchAdminUsers() {
-      try {
-        setLoadingAdmins(true);
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, username, created_at, is_admin')
-          .eq('is_admin', true)
-          .order('username', { ascending: true });
-
-        if (error) throw error;
-        setAdminUsers(data || []);
-      } catch (err) {
-        console.error('Error fetching admin users:', err);
-        setMessage({
-          type: 'error',
-          text: 'Failed to load admin users'
-        });
-      } finally {
-        setLoadingAdmins(false);
-      }
-    }
-
-    fetchAdminUsers();
-  }, []);
-
+  
+  // Get all users from the context
+  const { users, loading: usersLoading, error: usersError, refreshUsers } = useUsers();
+  
+  // Filter admin users from the users data
+  const adminUsers = useMemo(() => {
+    return users?.filter(user => user.is_admin) || [];
+  }, [users]);
+  
   const handleUserSelect = (user) => {
     setSelectedUser(user);
     setSupabaseUUID(''); // Reset UUID field when selecting a new user
@@ -57,7 +35,7 @@ export default function AdminUserManager() {
 
   const handleToggleAdmin = async (userId, makeAdmin, username) => {
     try {
-      setLoading(true);
+      setProcessing(true);
       const result = await toggleAdminStatus(userId, makeAdmin);
       
       if (result.success) {
@@ -96,24 +74,8 @@ export default function AdminUserManager() {
           });
         }
         
-        // Update the admin users list
-        if (makeAdmin) {
-          // Find the full user data and add to admins list
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, username, created_at')
-            .eq('id', userId)
-            .single();
-            
-          if (userData) {
-            setAdminUsers(prev => [...prev, userData].sort((a, b) => 
-              a.username.localeCompare(b.username)
-            ));
-          }
-        } else {
-          // Remove from admin list
-          setAdminUsers(prev => prev.filter(user => user.id !== userId));
-        }
+        // Refresh users data to reflect the changes
+        refreshUsers();
         
         // Update selected user if it's the same one
         if (selectedUser && selectedUser.id === userId) {
@@ -138,7 +100,7 @@ export default function AdminUserManager() {
         text: 'An error occurred while updating admin status'
       });
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
   };
 
@@ -160,7 +122,7 @@ export default function AdminUserManager() {
           variant="danger"
           size="sm"
           onClick={() => handleToggleAdmin(user.id, false, user.username)}
-          disabled={loading}
+          disabled={processing}
           icon={<FaUser />}
         >
           Remove Admin
@@ -173,9 +135,11 @@ export default function AdminUserManager() {
     <div className="ui-admin-user-manager">
       <Card variant="dark">
         <Card.Header>
-          <h2 className="ui-section-title">
-            <FaUserShield className="ui-icon-left" /> Admin User Management
-          </h2>
+          <div className="ui-header-with-actions">
+            <h2 className="ui-section-title">
+              <FaUserShield className="ui-icon-left" /> Admin User Management
+            </h2>
+          </div>
         </Card.Header>
         
         <Card.Body>
@@ -192,13 +156,23 @@ export default function AdminUserManager() {
             </div>
           )}
           
+          {usersError && (
+            <div className="ui-message ui-message-error">
+              <FaExclamationTriangle className="ui-message-icon" />
+              <span>Error loading users: {usersError.message || usersError}</span>
+            </div>
+          )}
+          
           <div className="ui-section">
             <h3 className="ui-section-subtitle">
               <FaUserShield className="ui-icon-left" /> Current Admin Users
             </h3>
             
-            {loadingAdmins ? (
-              <div className="ui-loading-indicator">Loading admin users...</div>
+            {usersLoading ? (
+              <div className="ui-loading-indicator">
+                <div className="ui-loading-spinner"></div>
+                <div className="ui-loading-text">Loading admin users...</div>
+              </div>
             ) : adminUsers.length === 0 ? (
               <EmptyState 
                 title="No Admin Users" 
@@ -227,7 +201,7 @@ export default function AdminUserManager() {
             <UserSelector
               onUserSelect={handleUserSelect}
               selectedUserId={selectedUser?.id}
-              disabled={loading}
+              disabled={processing}
               viewMode="table"
               excludeAdmins={true}
             />
@@ -250,7 +224,7 @@ export default function AdminUserManager() {
                         value={supabaseUUID}
                         onChange={e => setSupabaseUUID(e.target.value)}
                         placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                        disabled={loading}
+                        disabled={processing}
                         className="ui-form-input"
                       />
                       <p className="ui-field-help">
@@ -263,10 +237,10 @@ export default function AdminUserManager() {
                       <Button 
                         variant="primary"
                         onClick={() => handleToggleAdmin(selectedUser.id, true, selectedUser.username)}
-                        disabled={loading}
+                        disabled={processing}
                         icon={<FaUserShield />}
                       >
-                        {loading ? 'Processing...' : 'Grant Admin Status'}
+                        {processing ? 'Processing...' : 'Grant Admin Status'}
                       </Button>
                     </div>
                   </Card.Body>

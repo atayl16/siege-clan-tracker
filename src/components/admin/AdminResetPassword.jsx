@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useUsers } from "../../context/DataContext";
 import { supabase } from "../../supabaseClient";
 import { sha256 } from "crypto-hash"; 
 import UserSelector from "../UserSelector";
@@ -16,15 +17,21 @@ export default function AdminResetPassword() {
   const [message, setMessage] = useState("");
   const { user, isAuthenticated } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [actionError, setActionError] = useState(null);
+  
+  // Get users data and refresh function from context
+  const { refreshUsers } = useUsers();
 
   const handleUserSelect = (user) => {
     setSelectedUser(user);
     setMessage(""); // Clear any previous messages
+    setActionError(null); // Clear any action errors
   };
 
   const handleReset = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
+    setActionError(null);
 
     if (!selectedUser) {
       setMessage("Please select a user");
@@ -51,17 +58,34 @@ export default function AdminResetPassword() {
       if (error) throw error;
 
       setMessage("Password has been reset successfully");
+      
+      // Refresh users data to ensure we have the latest
+      refreshUsers();
+      
       // Clear the form
       setSelectedUser(null);
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error("Password reset error:", error);
+      setActionError(error);
       setMessage(`Error: ${error.message || "Failed to reset password"}`);
     } finally {
       setIsProcessing(false);
     }
   };
+
+  // Error boundary component
+  if (actionError && actionError.code === "FATAL") {
+    return (
+      <div className="ui-error-state">
+        <FaExclamationTriangle size={32} />
+        <h3>Critical Error Resetting Password</h3>
+        <p>{actionError.message}</p>
+        <Button onClick={() => setActionError(null)}>Dismiss</Button>
+      </div>
+    );
+  }
 
   // Check both isAuthenticated and user?.is_admin
   if (!isAuthenticated || !user?.is_admin) {
@@ -97,9 +121,11 @@ export default function AdminResetPassword() {
           )}
 
           <div className="ui-section">
-            <h3 className="ui-section-title">
-              <FaUser className="ui-icon-left" /> Step 1: Select a User
-            </h3>
+            <div className="ui-section-header">
+              <h3 className="ui-section-title">
+                <FaUser className="ui-icon-left" /> Step 1: Select a User
+              </h3>
+            </div>
             <p className="ui-section-description">
               Search for a user below and select the one whose password you need to reset.
             </p>

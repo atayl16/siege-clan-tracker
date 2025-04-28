@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+import { useMembers, useData } from "../context/DataContext";
 import DatePicker from "react-datepicker";
 import { FaSave, FaTimes, FaExclamationTriangle } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
@@ -26,11 +26,13 @@ export default function MemberEditor({ member, onSave, onCancel }) {
     first_xp: 0,
     first_lvl: 0,
     siege_score: 0,
-    created_at: new Date(),
+    join_date: new Date(),
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const { fetchers } = useData();  
+  const { refreshMembers } = useMembers();
   
   // Initialize form data when member prop changes
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         first_xp: member.first_xp || 0,
         first_lvl: member.first_lvl || 0,
         siege_score: member.siege_score || 0,
-        created_at: member.created_at ? new Date(member.created_at) : new Date(),
+        join_date: member.join_date ? new Date(member.join_date) : new Date(),
       });
     } else {
       // Reset form for new member
@@ -61,7 +63,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         first_xp: 0,
         first_lvl: 0,
         siege_score: 0,
-        created_at: new Date(),
+        join_date: new Date(),
       });
     }
   }, [member]);
@@ -77,7 +79,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
   const handleDateChange = (date) => {
     setFormData(prev => ({
       ...prev,
-      created_at: date
+      join_date: date
     }));
   };
   
@@ -85,28 +87,27 @@ export default function MemberEditor({ member, onSave, onCancel }) {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Prepare data for submission
       const memberData = {
         ...formData,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
-      
-      // Use the database function instead of direct upsert
-      const { data, error } = await supabase
-        .rpc('admin_upsert_member', { 
-          member_data: memberData 
-        });
-      
-      if (error) throw error;
-      
+
+      // Use DataContext instead of direct Supabase call
+      const result = await fetchers.supabase.updateMember(memberData);
+
+      // Refresh the members data in the SWR cache
+      refreshMembers();
+
       // Call the onSave callback with the updated data
-      onSave(data || memberData);
-      
+      onSave(result || memberData);
     } catch (err) {
       console.error("Error saving member:", err);
-      setError("Failed to save member: " + (err.message || JSON.stringify(err)));
+      setError(
+        "Failed to save member: " + (err.message || JSON.stringify(err))
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -186,11 +187,11 @@ export default function MemberEditor({ member, onSave, onCancel }) {
           </div>
           <div className="ui-form-col">
             <div className="ui-form-group">
-              <label className="ui-form-label" htmlFor="created_at">Join Date:</label>
+              <label className="ui-form-label" htmlFor="join_date">Join Date:</label>
               <div className="ui-date-picker-wrapper">
                 <DatePicker
-                  id="created_at"
-                  selected={formData.created_at}
+                  id="join_date"
+                  selected={formData.join_date}
                   onChange={handleDateChange}
                   className="ui-form-input"
                   dateFormat="yyyy-MM-dd"

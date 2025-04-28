@@ -5,6 +5,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { ClanIcon, GemIcon, AdminIcon } from "./RankIcons";
+import { useWomGroup } from "../context/DataContext"; // Updated hook name
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -126,6 +127,9 @@ export default function MemberTable({
   onRowClick,
   onDeleteClick,
 }) {
+  // Access WOM data using the updated context hook
+  const { groupData, loading: womLoading } = useWomGroup();
+  
   // Add state to track screen width
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -138,12 +142,47 @@ export default function MemberTable({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+  
+  // Enhanced member data with WOM data
+  const enhancedMembers = React.useMemo(() => {
+    if (!members || !groupData?.memberships) return members;
+    
+    // Create a map of WOM members by ID for fast lookups
+    const womMembersMap = {};
+    groupData.memberships.forEach(membership => {
+      if (membership.player?.id) {
+        womMembersMap[membership.player.id] = {
+          ...membership.player,
+          role: membership.role
+        };
+      }
+    });
+    
+    // Enhance local members with fresh WOM data
+    return members.map(member => {
+      const womMember = member.wom_id ? womMembersMap[member.wom_id] : null;
+      
+      if (womMember) {
+        // Use the most recent data from WOM if available
+        return {
+          ...member,
+          // Only update these fields if you want the latest WOM data to override your DB
+          current_xp: womMember.latestSnapshot?.data?.skills?.overall?.experience || member.current_xp,
+          current_lvl: womMember.latestSnapshot?.data?.skills?.overall?.level || member.current_lvl,
+          womrole: womMember.role || member.womrole,
+          ehb: womMember.ehb || member.ehb,
+          // Add any other fields you want to use from WOM
+        };
+      }
+      return member;
+    });
+  }, [members, groupData]);
 
   const sortedMembers = React.useMemo(() => {
     // First filter members to remove hidden ones (when not in admin view)
     const visibleMembers = isAdmin 
-      ? members || []
-      : (members || []).filter(member => !member.hidden);
+      ? enhancedMembers || []
+      : (enhancedMembers || []).filter(member => !member.hidden);
     
     // Then sort the visible members
     return [...visibleMembers].sort((a, b) => {
@@ -184,7 +223,7 @@ export default function MemberTable({
   
       return bClanXpGained - aClanXpGained;
     });
-  }, [members, isAdmin]);
+  }, [enhancedMembers, isAdmin]);
 
   // Define base columns that are shown in both public and admin views
   const baseColumns = React.useMemo(() => {
@@ -292,7 +331,7 @@ export default function MemberTable({
         accessorKey: "join_date",
         header: "Joined",
         cell: ({ row }) => {
-          const joinDate = row.original.created_at
+          const joinDate = row.original.join_date
             ? new Date(row.original.join_date).toLocaleDateString(undefined, {
               year: 'numeric',
               month: 'long',
@@ -403,6 +442,11 @@ export default function MemberTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // Show loading state when fetching WOM data
+  if (womLoading && members.length > 0) {
+    return <div className="ui-loading-state">Refreshing member data from Wise Old Man...</div>;
+  }
 
   if (!members || members.length === 0) {
     return <div className="ui-empty-state">No members found.</div>;

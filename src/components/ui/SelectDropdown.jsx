@@ -31,7 +31,6 @@ const SelectDropdown = ({
           </option>
         ))}
       </select>
-      <div className="ui-select-arrow"></div>
     </div>
   );
 };

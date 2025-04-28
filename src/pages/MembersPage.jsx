@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import MemberTable from "../components/MemberTable";
 import Leaderboard from "../components/Leaderboard";
 import EventsTable from "../components/EventsTable";
 import ClanRanks from "../components/ClanRanks";
+import { useMembers, useEvents } from "../context/DataContext"; // Import from context
 import {
   FaSearch,
   FaTrophy,
@@ -21,9 +22,6 @@ import {
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Tabs from "../components/ui/Tabs";
-import FormInput from "../components/ui/FormInput";
-import EmptyState from "../components/ui/EmptyState";
-import Badge from "../components/ui/Badge";
 import StatGroup from "../components/ui/StatGroup";
 
 import "./MembersPage.css";
@@ -33,11 +31,11 @@ export default function MembersPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // Get data from context instead of local state
+  const { members, loading: membersLoading, error: membersError, refreshMembers } = useMembers();
+  const { events, loading: eventsLoading, error: eventsError, refreshEvents } = useEvents();
+  
   // Initialize state from URL parameters
-  const [members, setMembers] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [activeTab, setActiveTab] = useState(
     location.hash ? location.hash.substring(1) : "members"
@@ -51,16 +49,23 @@ export default function MembersPage() {
   const [eventsSearchTerm, setEventsSearchTerm] = useState('');
   const [eventsFilterType, setEventsFilterType] = useState('all');
   
+  // Create a single loading state for the UI
+  const isLoading = membersLoading || (eventsLoaded && eventsLoading);
+  
+  // Create a combined error state
+  const error = membersError || (eventsLoaded && eventsError);
+  
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
-    if (!searchTerm) return members;
+    if (!members || !searchTerm) return members || [];
     return members.filter(member => 
-      member.name.toLowerCase().includes(searchTerm.toLowerCase())
+      member.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [members, searchTerm]);
   
   // Filter events based on search term and filter type
   const filteredEvents = useMemo(() => {
+    if (!events) return [];
     return events.filter(event => {
       const matchesSearch = event.name?.toLowerCase().includes(eventsSearchTerm.toLowerCase());
       
@@ -83,7 +88,6 @@ export default function MembersPage() {
     });
   }, [events, eventsSearchTerm, eventsFilterType]);
   
-
   // Update URL when tab changes and trigger lazy loading
   const handleTabChange = (tabKey) => {
     setActiveTab(tabKey);
@@ -92,12 +96,12 @@ export default function MembersPage() {
     // Lazy load data when tab is first accessed
     if (tabKey === "events" && !eventsLoaded) {
       setEventsLoaded(true);
-      // You could optionally fetch events data here if not already loaded
+      // Events data is already loaded via the context
     }
     
     if (tabKey === "leaderboard" && !leaderboardLoaded) {
       setLeaderboardLoaded(true);
-      // You could optionally fetch leaderboard data here if not already loaded
+      // Leaderboard data is derived from members which is already loaded
     }
   };
 
@@ -116,51 +120,17 @@ export default function MembersPage() {
     }
   };
   
-  // Initial data fetch - only load members initially, then preload events count
-  useEffect(() => {
-    setLoading(true);
-    
-    fetch("/api/members")
-      .then(res => {
-        if (!res.ok) throw new Error(`Failed to fetch members: ${res.status}`);
-        return res.json();
-      })
-      .then(membersData => {
-        setMembers(membersData);
-        setLoading(false);
-        
-        // Preload events data in the background after members load
-        // This ensures we have the count available for the navigation badge
-        setEventsLoaded(true);
-      })
-      .catch(err => {
-        console.error("Error fetching data:", err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-  
-  // Lazy load events when needed
-  useEffect(() => {
-    if (eventsLoaded && events.length === 0) {
-      fetch("/api/events")
-        .then(res => {
-          if (!res.ok) throw new Error(`Failed to fetch events: ${res.status}`);
-          return res.json();
-        })
-        .then(eventsData => {
-          setEvents(eventsData);
-        })
-        .catch(err => {
-          console.error("Error fetching events:", err);
-          // Maybe show a specific error for events
-        });
+  // Handle refresh of data
+  const handleRefreshData = () => {
+    refreshMembers();
+    if (eventsLoaded) {
+      refreshEvents();
     }
-  }, [eventsLoaded, events.length]);
+  };
 
   return (
     <div className="ui-siege-dashboard">
-      {loading && (
+      {isLoading && (
         <div className="ui-loading-container">
           <div className="ui-loading-spinner"></div>
           <div className="ui-loading-text">Loading clan data...</div>
@@ -174,8 +144,8 @@ export default function MembersPage() {
           </div>
           <div className="ui-error-message">
             <h3>Error Loading Data</h3>
-            <p>{error}</p>
-            <Button onClick={() => window.location.reload()} variant="danger">
+            <p>{error.message || "Failed to load data"}</p>
+            <Button onClick={handleRefreshData} variant="danger">
               Try Again
             </Button>
           </div>
@@ -192,32 +162,34 @@ export default function MembersPage() {
           tabId="members"
           label="Members"
           icon={<FaUsers />}
-          badge={members.length}
+          badge={members?.length || 0}
         >
           <div className="ui-content-header">
             <h2>Clan Members</h2>
-            <div className="ui-search-container">
-              <div className="ui-search-input-wrapper">
-                <FaSearch className="ui-search-icon" />
-                <input
-                  type="text"
-                  className="ui-search-input"
-                  placeholder="Search members..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                {searchTerm && (
-                  <button
-                    className="ui-clear-search"
-                    onClick={() => {
-                      setSearchTerm("");
-                      searchParams.delete("search");
-                      setSearchParams(searchParams);
-                    }}
-                  >
-                    <FaTimes />
-                  </button>
-                )}
+            <div className="ui-actions-container">
+              <div className="ui-search-container">
+                <div className="ui-search-input-wrapper">
+                  <FaSearch className="ui-search-icon" />
+                  <input
+                    type="text"
+                    className="ui-search-input"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                  {searchTerm && (
+                    <button
+                      className="ui-clear-search"
+                      onClick={() => {
+                        setSearchTerm("");
+                        searchParams.delete("search");
+                        setSearchParams(searchParams);
+                      }}
+                    >
+                      <FaTimes />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -231,14 +203,15 @@ export default function MembersPage() {
             <h2>Clan Overview</h2>
           </div>
 
-
           <div className="ui-section-container">
           <h3 className="ui-section-title">Clan Stats</h3>
           <StatGroup className="ui-stats-group">
-            <StatGroup.Stat label="Members" value={members.length} />
+            <StatGroup.Stat label="Members" value={members?.length || 0} />
             <StatGroup.Stat
               label="Total XP"
               value={(() => {
+                if (!members || members.length === 0) return "0";
+                
                 const xpInMillions = Math.floor(
                   members.reduce(
                     (sum, m) => sum + (parseInt(m.current_xp) || 0),
@@ -253,12 +226,16 @@ export default function MembersPage() {
             />
             <StatGroup.Stat
               label="Avg. Level"
-              value={Math.floor(
-                members.reduce(
-                  (sum, m) => sum + (parseInt(m.current_lvl) || 0),
-                  0
-                ) / Math.max(1, members.length)
-              )}
+              value={(() => {
+                if (!members || members.length === 0) return "0";
+                
+                return Math.floor(
+                  members.reduce(
+                    (sum, m) => sum + (parseInt(m.current_lvl) || 0),
+                    0
+                  ) / Math.max(1, members.length)
+                );
+              })()}
             />
             </StatGroup>
             
@@ -304,9 +281,9 @@ export default function MembersPage() {
                 <Card.Header>Events</Card.Header>
                 <Card.Body>
                   <EventsTable
-                    events={events}
-                    activeLimit={3}
-                    upcomingLimit={3}
+                    events={events || []}
+                    activeLimit={10}
+                    upcomingLimit={10}
                     completedLimit={2}
                     hideHeaders={true}
                   />
@@ -315,7 +292,7 @@ export default function MembersPage() {
               <Card className="ui-overview-card" variant="dark">
                 <Card.Header>Top Players</Card.Header>
                 <Card.Body>
-                  <Leaderboard members={members} limit={3} compact={true} />
+                  <Leaderboard members={members || []} limit={3} compact={true} />
                 </Card.Body>
               </Card>
             </div>
@@ -326,7 +303,7 @@ export default function MembersPage() {
           tabId="events"
           label="Events"
           icon={<FaCalendarAlt />}
-          badge={events.length}
+          badge={events?.length || 0}
         >
           <div className="ui-content-header">
             <h2>Clan Events</h2>
@@ -366,6 +343,7 @@ export default function MembersPage() {
             <StatGroup.Stat
               label="Active"
               value={
+                !events ? 0 : 
                 events.filter(
                   (e) =>
                     new Date(e.start_date) <= new Date() &&
@@ -376,12 +354,14 @@ export default function MembersPage() {
             <StatGroup.Stat
               label="Upcoming"
               value={
+                !events ? 0 : 
                 events.filter((e) => new Date(e.start_date) > new Date()).length
               }
             />
             <StatGroup.Stat
               label="Completed"
               value={
+                !events ? 0 : 
                 events.filter((e) => new Date(e.end_date) < new Date()).length
               }
             />
@@ -390,9 +370,10 @@ export default function MembersPage() {
           <div className="ui-section-container">
             <EventsTable
               events={filteredEvents}
-              activeLimit={showAllEvents ? null : 3}
-              upcomingLimit={showAllEvents ? null : 5}
+              activeLimit={showAllEvents ? null : 10}
+              upcomingLimit={showAllEvents ? null : 6}
               completedLimit={showAllEvents ? null : 5}
+              loading={eventsLoading}
             />
           </div>
 
@@ -412,14 +393,15 @@ export default function MembersPage() {
           </div>
           <div className="ui-section-container">
             <Leaderboard
-              members={members}
+              members={members || []}
               showTitle={false}
               limit={showFullLeaderboard ? null : 10}
+              loading={membersLoading}
             />
 
             {/* Toggle button */}
-            {members.filter((m) => (parseInt(m.siege_score) || 0) > 0).length >
-              10 && (
+            {members && 
+              members.filter((m) => (parseInt(m.siege_score) || 0) > 0).length > 10 && (
               <div className="ui-button-center">
                 <Button
                   variant="secondary"

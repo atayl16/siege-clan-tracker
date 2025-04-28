@@ -1,38 +1,46 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
+import { FaSearch, FaTimes } from 'react-icons/fa';
 import './SearchInput.css';
 
-const SearchInput = ({
+// Use forwardRef to allow the component to receive a ref
+const SearchInput = forwardRef(({
   value,
   onChange,
-  placeholder = 'Search...',
   onClear,
-  disabled = false,
-  className = '',
-  ...props
-}) => {
+  placeholder = "Search...",
+  className = "",
+  disabled = false
+}, ref) => {
   return (
-    <div className={`ui-search-input ${className}`}>
-      <input
-        type="text"
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        {...props}
-      />
-      {value && (
-        <button
-          className="ui-search-clear"
-          onClick={onClear}
+    <div className={`ui-search-container ${className}`}>
+      <div className="ui-search-input-wrapper">
+        <FaSearch className="ui-search-icon" />
+        <input
+          ref={ref} // Pass the ref to the input element
+          type="text"
+          className="ui-search-input"
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
           disabled={disabled}
-          type="button"
-          aria-label="Clear search"
-        >
-          ×
-        </button>
-      )}
+        />
+        {value && (
+          <button
+            type="button"
+            className="ui-search-clear-button"
+            onClick={onClear}
+            disabled={disabled}
+            aria-label="Clear search"
+          >
+            <FaTimes className="ui-search-clear-icon" />
+          </button>
+        )}
+      </div>
     </div>
   );
-};
+});
+
+// Add a display name for better debugging
+SearchInput.displayName = 'SearchInput';
 
 export default SearchInput;

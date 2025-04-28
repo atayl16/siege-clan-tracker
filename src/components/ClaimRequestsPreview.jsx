@@ -1,129 +1,74 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+import { useData, useClaimRequests } from "../context/DataContext";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
 import Badge from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
-import { FaCheckCircle, FaTimesCircle, FaUser, FaCalendarAlt, FaExclamationTriangle, FaCheck, FaTimes, FaUserPlus } from "react-icons/fa";
+import { FaCheckCircle, FaUser, FaCalendarAlt, FaExclamationTriangle, FaCheck, FaTimes, FaUserPlus, FaSync } from "react-icons/fa";
 
 import "./ClaimRequestsPreview.css";
 
 export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestProcessed }) {
-  const [recentRequests, setRecentRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [actionResult, setActionResult] = useState(null);
-
-  useEffect(() => {
-    fetchRecentRequests();
-  }, [count]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   
-  const fetchRecentRequests = async () => {
-    try {
-      setLoading(true);
-      // Fetch 3 most recent pending claim requests
-      const { data, error } = await supabase
-        .from("claim_requests")
-        .select("id, rsn, wom_id, created_at, user_id, message")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      if (error) throw error;
+  // Use the context hook to get pending requests
+  const { 
+    requests: allRequests, 
+    loading,
+    error,
+    refreshRequests
+  } = useClaimRequests({ status: "pending" });
+  
+  // Ensure we only display truly pending requests by double-checking status
+  useEffect(() => {
+    if (allRequests && Array.isArray(allRequests)) {
+      // Filter to ensure only pending items are included
+      const strictlyPendingRequests = allRequests.filter(
+        req => String(req.status).toLowerCase().trim() === 'pending'
+      );
       
-      // Fetch usernames for these requests
-      if (data.length > 0) {
-        const userIds = [...new Set(data.map(req => req.user_id))];
-        
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id, username')
-          .in('id', userIds);
-          
-        if (!userError && userData) {
-          const userMap = {};
-          userData.forEach(user => {
-            userMap[user.id] = user.username;
-          });
-          
-          const enhancedData = data.map(req => ({
-            ...req,
-            username: userMap[req.user_id] || "Unknown"
-          }));
-          
-          setRecentRequests(enhancedData);
-        } else {
-          setRecentRequests(data);
-        }
-      } else {
-        setRecentRequests([]);
-      }
-    } catch (err) {
-      console.error("Error fetching claim requests:", err);
-    } finally {
-      setLoading(false);
+      // Take only the 3 most recent pending requests
+      setPendingRequests(strictlyPendingRequests.slice(0, 3));
     }
-  };
+  }, [allRequests]);
 
+  const { fetchers } = useData();
+  
   const handleApprove = async (request) => {
     setActionLoading(request.id);
     setActionResult(null);
     
     try {
-      // Step 1: Check if player is already claimed
-      const { data: existingClaims, error: claimsError } = await supabase
-        .from('player_claims')
-        .select('*')
-        .eq('wom_id', request.wom_id);
-        
-      if (claimsError) throw claimsError;
+      await fetchers.supabase.processRequest(
+        request.id, 
+        "approved", 
+        "Approved via admin dashboard", 
+        request.user_id, 
+        request.wom_id
+      );
       
-      if (existingClaims && existingClaims.length > 0) {
-        setActionResult({
-          type: 'error',
-          message: 'Player has already been claimed'
-        });
-        return;
-      }
-      
-      // Step 2: Create a claim record
-      const { error: claimError } = await supabase
-        .from('player_claims')
-        .insert([{
-          user_id: request.user_id,
-          wom_id: request.wom_id,
-        }]);
-        
-      if (claimError) throw claimError;
-      
-      // Step 3: Update the request status
-      const { error: updateError } = await supabase
-        .from('claim_requests')
-        .update({ 
-          status: 'approved',
-          admin_notes: 'Approved'
-        })
-        .eq('id', request.id);
-        
-      if (updateError) throw updateError;
-      
-      // Success
       setActionResult({
         type: 'success',
         message: `Approved claim for ${request.rsn}`
       });
       
-      // Remove from local list and notify parent
-      setRecentRequests(prev => prev.filter(req => req.id !== request.id));
+      // Remove from local state immediately
+      setPendingRequests(current => current.filter(req => req.id !== request.id));
+      
+      // Refresh data with SWR
+      refreshRequests();
+      
+      // Notify parent
       if (onRequestProcessed) {
         onRequestProcessed();
       }
-      
     } catch (err) {
       console.error("Error approving request:", err);
       setActionResult({
         type: 'error',
-        message: `Failed to approve: ${err.message}`
+        message: `Error: ${err.message}`
       });
     } finally {
       setActionLoading(null);
@@ -135,29 +80,32 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
     setActionResult(null);
     
     try {
-      // Update the request status
-      const { error: updateError } = await supabase
-        .from('claim_requests')
-        .update({ 
-          status: 'denied',
-          admin_notes: 'Denied'
-        })
-        .eq('id', request.id);
-        
-      if (updateError) throw updateError;
+      // Use the context method instead of direct Supabase call
+      await fetchers.supabase.processRequest(
+        request.id, 
+        "denied", 
+        "Denied", 
+        request.user_id, 
+        request.wom_id
+      );
       
-      // Success
       setActionResult({
         type: 'success',
         message: `Denied claim for ${request.rsn}`
       });
       
-      // Remove from local list and notify parent
-      setRecentRequests(prev => prev.filter(req => req.id !== request.id));
+      // Remove from local state immediately
+      setPendingRequests(current => 
+        current.filter(req => req.id !== request.id)
+      );
+      
+      // Refresh data with SWR
+      refreshRequests();
+      
+      // Notify parent
       if (onRequestProcessed) {
         onRequestProcessed();
       }
-      
     } catch (err) {
       console.error("Error denying request:", err);
       setActionResult({
@@ -178,14 +126,28 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
     );
   }
 
-  if (recentRequests.length === 0) {
+  if (error) {
+    return (
+      <div className="ui-error-message">
+        <FaExclamationTriangle className="ui-error-icon" />
+        Error loading claim requests: {error.message || String(error)}
+      </div>
+    );
+  }
+
+  if (pendingRequests.length === 0) {
     return (
       <EmptyState
         title="No Character Claims"
         description="There are no pending character claim requests."
         icon={<FaUserPlus className="ui-empty-state-icon" />}
         action={
-          <Button variant="secondary" size="sm" onClick={() => fetchRecentRequests()}>
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={refreshRequests} 
+            icon={<FaSync />}
+          >
             Refresh
           </Button>
         }
@@ -193,15 +155,22 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
     );
   }
 
+  // Count of strictly pending requests for display
+  const pendingCount = allRequests?.filter(
+    req => String(req.status).toLowerCase().trim() === 'pending'
+  ).length || 0;
+
   return (
     <Card variant="dark" className="ui-claim-requests-container">
       <Card.Header className="ui-claim-requests-header">
-        <h3 className="ui-claim-requests-title">
-          Pending Character Claims
-          <Badge variant="warning" pill className="ui-alerts-count">
-            {count || recentRequests.length}
-          </Badge>
-        </h3>
+        <div className="ui-header-with-actions">
+          <h3 className="ui-claim-requests-title">
+            Pending Character Claims
+            <Badge variant="warning" pill className="ui-alerts-count">
+              {pendingCount}
+            </Badge>
+          </h3>
+        </div>
       </Card.Header>
       
       <Card.Body>
@@ -217,7 +186,7 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
         )}
         
         <ul className="ui-reported-members-list">
-          {recentRequests.map(request => (
+          {pendingRequests.map(request => (
             <li key={request.id} className="ui-reported-member-item">
               <div className="ui-member-info">
                 <div className="ui-reported-member-name">{request.rsn}</div>
@@ -261,7 +230,7 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
           ))}
         </ul>
         
-        {count > 3 && (
+        {pendingCount > 3 && (
           <div className="ui-view-all-container">
             <Button
               variant="secondary"
@@ -269,7 +238,7 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
               onClick={onViewAllClick}
               className="ui-view-all-button"
             >
-              View all {count} requests
+              View all {pendingCount} requests
             </Button>
           </div>
         )}

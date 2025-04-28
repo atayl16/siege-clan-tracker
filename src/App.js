@@ -7,6 +7,7 @@ import {
   useLocation
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { DataProvider } from "./context/DataContext";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import RegistrationForm from "./components/RegistrationForm";
 import Login from "./components/Login";
@@ -92,11 +93,13 @@ const AppContent = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AuthProvider>
+      <DataProvider>
+        <AuthProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AuthProvider>
+      </DataProvider>
     </QueryClientProvider>
   );
 }

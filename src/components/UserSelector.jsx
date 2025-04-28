@@ -1,6 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { useUsers } from "../context/DataContext";
 import DataSelector from './ui/DataSelector';
 import Badge from './ui/Badge';
 import './UserSelector.css';
@@ -12,9 +11,10 @@ export default function UserSelector({
   viewMode = 'table',
   excludeAdmins = false,
 }) {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Use the context hook for all data fetching with our new DataContext
+  const { users, loading, error } = useUsers({
+    excludeAdmins,
+  });
 
   // Define columns for the table view
   const columns = [
@@ -49,54 +49,26 @@ export default function UserSelector({
       ),
     },
   ];
-
-  // Fetch users when the component mounts or when excludeAdmins changes
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        setLoading(true);
-        let query = supabase
-          .from('users')
-          .select('id, username, created_at, is_admin')
-          .order('username', { ascending: true });
-
-        // Add filter for excluding admins if needed
-        if (excludeAdmins) {
-          query = query.eq('is_admin', false);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (err) {
-        console.error('Error fetching users:', err);
-        setError('Failed to load users');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchUsers();
-  }, [excludeAdmins]);
-
+  
   return (
-    <DataSelector
-      data={users}
-      columns={columns}
-      onSelect={onUserSelect}
-      selectedId={selectedUserId}
-      keyField="id"
-      searchFields={['username']}
-      searchPlaceholder="Search users by username"
-      viewMode={viewMode}
-      labelField="username"
-      valueField="id"
-      loading={loading}
-      error={error}
-      disabled={disabled}
-      emptyMessage="No users found"
-      className="user-selector"
-    />
+    <div className="user-selector-container">      
+      <DataSelector
+        data={users}
+        columns={columns}
+        onSelect={onUserSelect}
+        selectedId={selectedUserId}
+        keyField="id"
+        searchFields={['username']}
+        searchPlaceholder="Search users by username"
+        viewMode={viewMode}
+        labelField="username"
+        valueField="id"
+        loading={loading}
+        error={error}
+        disabled={disabled}
+        emptyMessage="No users found"
+        className="user-selector"
+      />
+    </div>
   );
 }

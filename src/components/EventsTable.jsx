@@ -1,13 +1,52 @@
 import React, { useMemo } from 'react';
+import { useWomCompetitions, useEvents } from '../context/DataContext';
 import "./EventsTable.css";
 
 export default function EventsTable({ 
-  events, 
   activeLimit = null, 
   upcomingLimit = null, 
   completedLimit = null,
-  hideHeaders = false
+  hideHeaders = false,
+  includeWomCompetitions = true
 }) {
+  // Get competitions data from context
+  const { competitions, loading: womLoading } = useWomCompetitions();
+  
+  // Get events data from context
+  const { events, loading: eventsLoading } = useEvents();
+  
+  // Combine local events with WOM competitions
+  const combinedEvents = useMemo(() => {
+    if (!includeWomCompetitions || !competitions) return events || [];
+    
+    // Create a set of WOM IDs that are already in the database
+    const existingWomIds = new Set();
+    (events || []).forEach(event => {
+      if (event.wom_id) {
+        existingWomIds.add(event.wom_id.toString());
+      }
+    });
+    
+    // Convert WOM competitions to match our event format
+    // but only include those not already in our database
+    const uniqueWomEvents = competitions
+      .filter(comp => !existingWomIds.has(comp.id.toString()))
+      .map(comp => ({
+        id: `wom-${comp.id}`,
+        name: comp.title,
+        type: comp.metric,
+        start_date: comp.startsAt,
+        end_date: comp.endsAt,
+        is_wom: true,
+        wom_id: comp.id
+        // Additional mapping as needed
+      }));
+    
+    return [...(events || []), ...uniqueWomEvents];
+  }, [events, competitions, includeWomCompetitions]);
+  
+  // Rest of your component remains the same...
+
   // Process and categorize events
   const { activeEvents, upcomingEvents, recentCompletedEvents } = useMemo(() => {
     const now = new Date();
@@ -15,7 +54,7 @@ export default function EventsTable({
     const upcoming = [];
     const completed = [];
 
-    events.forEach(event => {
+    combinedEvents.forEach(event => {
       const startDate = event.start_date ? new Date(event.start_date) : null;
       const endDate = event.end_date ? new Date(event.end_date) : null;
       
@@ -49,7 +88,7 @@ export default function EventsTable({
       upcomingEvents: limitedUpcoming,
       recentCompletedEvents: limitedCompleted,
     };
-  }, [events, activeLimit, upcomingLimit, completedLimit]);
+  }, [combinedEvents, activeLimit, upcomingLimit, completedLimit]);
 
   // Format the date consistently (handles UTC correctly)
   const formatDate = (dateString) => {
@@ -92,7 +131,12 @@ export default function EventsTable({
     }
   };
 
-  if (events.length === 0) {
+  // Show loading state when fetching WOM data
+  if (womLoading || eventsLoading) {
+    return <div className="events-loading">Loading events...</div>;
+  }
+
+  if (combinedEvents.length === 0) {
     return (
       <div className="ui-empty-message">
         <p>No events found</p>
@@ -123,9 +167,11 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {activeEvents.map((event) => (
-                  <tr key={event.id} className="ui-event-row ui-event-active">
+                  <tr key={event.id} className={`ui-event-row ui-event-active ${event.is_wom ? 'ui-event-wom' : ''}`}>
                     <td>
-                      <strong className="ui-event-name">{event.name}</strong>
+                      <strong className="ui-event-name">
+                        {event.name}
+                      </strong>
                     </td>
                     <td className="ui-event-date">
                       {formatDate(event.end_date)} at {formatTime(event.end_date)}
@@ -159,9 +205,11 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {upcomingEvents.map((event) => (
-                  <tr key={event.id} className="ui-event-row ui-event-upcoming">
+                  <tr key={event.id} className={`ui-event-row ui-event-upcoming ${event.is_wom ? 'ui-event-wom' : ''}`}>
                     <td>
-                      <strong className="ui-event-name">{event.name}</strong>
+                      <strong className="ui-event-name">
+                        {event.name}
+                      </strong>
                     </td>
                     <td className="ui-event-date">
                       {formatDate(event.start_date)} at {formatTime(event.start_date)}
@@ -195,9 +243,11 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {recentCompletedEvents.map((event) => (
-                  <tr key={event.id} className="ui-event-row ui-event-completed">
+                  <tr key={event.id} className={`ui-event-row ui-event-completed ${event.is_wom ? 'ui-event-wom' : ''}`}>
                     <td>
-                      <strong className="ui-event-name">{event.name}</strong>
+                      <strong className="ui-event-name">
+                        {event.name}
+                      </strong>
                     </td>
                     <td className="ui-event-date">{formatDate(event.end_date)}</td>
                     <td>

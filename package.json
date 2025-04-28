@@ -28,6 +28,7 @@
     "react-router-dom": "^6.23.1",
     "react-scripts": "5.0.1",
     "sql.js": "^1.13.0",
+    "swr": "^2.3.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

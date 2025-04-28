@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useEvents } from '../context/DataContext';
 import { supabase } from '../supabaseClient';
 import { FaCalendar, FaClock, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 // Import UI components
 import Button from './ui/Button';
-import Card from './ui/Card';
-import FormInput from './ui/FormInput';
-
 import './EventEditor.css';
 
 export default function EventEditor({
@@ -26,6 +24,9 @@ export default function EventEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [userTimezone, setUserTimezone] = useState("");
+  
+  // Get refreshEvents function from context
+  const { refreshEvents } = useEvents();
 
   // Detect user's timezone on component mount
   useEffect(() => {
@@ -51,8 +52,8 @@ export default function EventEditor({
     // Set default times in state
     setEventData((prev) => ({
       ...prev,
-      start_date: startTime,
-      end_date: endTime,
+      start_date: prev.start_date || startTime,
+      end_date: prev.end_date || endTime,
     }));
   }, []);
 
@@ -101,6 +102,7 @@ export default function EventEditor({
 
     try {
       setSaving(true);
+      setError(null);
 
       // Ensure times are aligned to 15-minute intervals before saving
       const startDate = roundDateToInterval(
@@ -110,46 +112,59 @@ export default function EventEditor({
         new Date(eventData.end_date)
       ).toISOString();
 
+      let savedEvent;
+
       if (isEditing) {
         // Update existing event
+        const updatedEvent = {
+          ...eventData,
+          id: event.id,
+          start_date: startDate,
+          end_date: endDate
+        };
+
         const { data, error: updateError } = await supabase
           .from("events")
           .update({
-            name: eventData.name,
-            type: eventData.type,
+            name: updatedEvent.name,
+            type: updatedEvent.type,
             start_date: startDate,
             end_date: endDate,
-            description: eventData.description,
+            description: updatedEvent.description,
           })
-          .eq("id", event.id) // Update where id matches
+          .eq("id", event.id)
           .select();
 
         if (updateError) throw updateError;
-
-        // Call the parent component's onSave function with the updated event
-        onSave(data[0]);
+        
+        savedEvent = data[0];
       } else {
-        // Insert new event
+        // Create new event - remove any ID to let database auto-generate it
+        const newEvent = {
+          name: eventData.name,
+          type: eventData.type,
+          start_date: startDate,
+          end_date: endDate,
+          is_wom: false, // Custom events are never WOM events
+          description: eventData.description,
+          status: "upcoming",
+        };
+
         const { data, error: insertError } = await supabase
           .from("events")
-          .insert([
-            {
-              name: eventData.name,
-              type: eventData.type,
-              start_date: startDate,
-              end_date: endDate,
-              is_wom: false, // Custom events are never WOM events
-              description: eventData.description,
-              status: "upcoming",
-            },
-          ])
+          .insert([newEvent])
           .select();
 
         if (insertError) throw insertError;
-
-        // Call the parent component's onSave function with the saved event
-        onSave(data[0]);
+        
+        savedEvent = data[0];
       }
+
+      // Refresh the events data in context
+      refreshEvents();
+      
+      // Call the parent component's onSave function with the saved event
+      onSave(savedEvent);
     } catch (err) {
       console.error(`Error ${isEditing ? "updating" : "saving"} event:`, err);
       setError(

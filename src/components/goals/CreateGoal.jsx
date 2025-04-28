@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from "../../supabaseClient";
-import { fetchWomMetrics, fetchPlayerStats } from "../../utils/womApi";
+import React, { useState, useEffect } from 'react';
+import { usePlayerMetrics, usePlayerStats, useGoals } from "../../context/DataContext";
 import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes } from "react-icons/fa";
 import { titleize } from '../../utils/stringUtils';
 
@@ -11,59 +10,30 @@ import Card from "../ui/Card";
 import "./CreateGoal.css";
 
 export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) {
+  // Form state
   const [goalType, setGoalType] = useState("skill");
-  const [metrics, setMetrics] = useState([]);
   const [selectedMetric, setSelectedMetric] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [targetDate, setTargetDate] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loadingMetrics, setLoadingMetrics] = useState(true);
-  const [currentStats, setCurrentStats] = useState(null);
   const [error, setError] = useState(null);
   const [targetMode, setTargetMode] = useState("gain");
   const [isPublic, setIsPublic] = useState(false);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const stats = await fetchPlayerStats(
-        player.wom_id,
-        goalType,
-        selectedMetric
-      );
-      setCurrentStats(stats);
-      setTargetValue("");
-    } catch (err) {
-      console.error("Error fetching player stats:", err);
-      setCurrentStats(goalType === "skill" ? { experience: 0 } : { kills: 0 });
-      setTargetValue("");
-    }
-  }, [player.wom_id, goalType, selectedMetric]);
+  // Use context hooks instead of direct API calls
+  const { metrics, loading: loadingMetrics } = usePlayerMetrics(goalType);
+  const { stats: currentStats, loading: loadingStats } = usePlayerStats(
+    player.wom_id, 
+    goalType, 
+    selectedMetric
+  );
+  const { createGoal, loading: submitting } = useGoals();
 
-  // Fetch metrics (skills, bosses) from WOM API
+  // Set initial selected metric when metrics load
   useEffect(() => {
-    const loadMetrics = async () => {
-      try {
-        setLoadingMetrics(true);
-        const metricsData = await fetchWomMetrics(goalType);
-        setMetrics(metricsData);
-        setSelectedMetric(metricsData[0]?.metric || "");
-      } catch (err) {
-        console.error("Error loading metrics:", err);
-        setError("Failed to load metrics");
-      } finally {
-        setLoadingMetrics(false);
-      }
-    };
-
-    loadMetrics();
-  }, [goalType]);
-
-  // Fetch current stats when metric changes
-  useEffect(() => {
-    if (selectedMetric && player.wom_id) {
-      fetchStats();
+    if (metrics?.length > 0 && !selectedMetric) {
+      setSelectedMetric(metrics[0]?.metric || "");
     }
-  }, [selectedMetric, player.wom_id, fetchStats]);
+  }, [metrics, selectedMetric]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,7 +77,6 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
@@ -123,19 +92,13 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
         public: isPublic,
       };
 
-      const { data, error } = await supabase
-        .from("user_goals")
-        .insert([goalData])
-        .select();
-
-      if (error) throw error;
-
-      onGoalCreated(data[0]);
+      const newGoal = await createGoal(goalData);
+      if (newGoal) {
+        onGoalCreated(newGoal);
+      }
     } catch (err) {
       console.error("Error creating goal:", err);
       setError("Failed to create goal. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -197,7 +160,7 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
                 className="ui-form-select"
               >
                 <option value="">-- Select {goalType} --</option>
-                {metrics.map((metric) => (
+                {metrics?.map((metric) => (
                   <option key={metric.metric} value={metric.metric}>
                     {metric.name}
                   </option>
@@ -357,16 +320,16 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
             type="button"
             variant="secondary"
             onClick={onCancel}
-            disabled={loading}
+            disabled={submitting}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             variant="primary"
-            disabled={loading || !selectedMetric || !targetValue}
+            disabled={submitting || !selectedMetric || !targetValue || loadingStats}
           >
-            {loading ? "Creating..." : "Create Goal"}
+            {submitting ? "Creating..." : "Create Goal"}
           </Button>
         </div>
       </form>

@@ -23,6 +23,10 @@ export function AuthProvider({ children }) {
   // Load user session on initial render
   useEffect(() => {
     const checkSession = async () => {
+      // Try to restore session from storage
+      await supabase.auth.getSession();
+
+      // Then proceed with your existing code...
       if (localStorage.getItem("userId")) {
         try {
           const userId = localStorage.getItem("userId");
@@ -61,7 +65,7 @@ export function AuthProvider({ children }) {
       // Hash the provided credentials
       const usernameHash = await sha256(username.trim().toLowerCase());
       const passwordHash = await sha256(password);
-
+  
       // Try admin login first
       if (
         usernameHash === ADMIN_EMAIL_HASH &&
@@ -69,37 +73,57 @@ export function AuthProvider({ children }) {
       ) {
         localStorage.setItem("adminAuth", "true");
         setIsAuthenticated(true);
+        
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: "admin@siege-clan-tracker.com",
+          password: password
+        });
+        
+        if (authError) {
+          console.warn("Admin auth session creation failed:", authError);
+        }
+        
         return { success: true, isAdmin: true };
       }
-
+  
       // If not hardcoded admin, try regular user login
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("username", username.trim().toLowerCase())
         .single();
-
+  
       if (error) {
         return { error: "Invalid credentials" };
       }
-
+  
       // Verify password
       const inputPasswordHash = await sha256(password);
       if (data.password_hash === inputPasswordHash) {
+        // CRITICAL: Create a proper Supabase session
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: `${username.trim().toLowerCase()}@example.com`,
+          password: password
+        });
+        
+        if (authError) {
+          console.warn("Supabase auth error, trying to create session:", authError);
+        }
+        
         localStorage.setItem("userId", data.id);
         localStorage.setItem("user", JSON.stringify(data));
         setUser(data);
-
+  
         // If user has admin privileges, set isAuthenticated to true
         if (data.is_admin) {
           setIsAuthenticated(true);
           localStorage.setItem("adminAuth", "true");
         }
-
+  
         fetchUserClaims(data.id);
         return { success: true, isAdmin: data.is_admin || false };
       }
-
+  
       return { error: "Invalid credentials" };
     } catch (error) {
       console.error("Authentication error:", error);
@@ -159,8 +183,6 @@ export function AuthProvider({ children }) {
       return { error: "Failed to update admin status: " + error.message };
     }
   };
-  
-  // Make sure this function is included in your exported context
   
   // Link a user to a specific Supabase Auth ID (for admin users)
   const linkUserToSupabaseAuth = async (userId, supabaseAuthId) => {
@@ -294,79 +316,46 @@ export function AuthProvider({ children }) {
         return { error: authError.message || "Registration failed" };
       }
   
-      // Hash password - use a different method to ensure it works
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      // Hash password
+      const passwordHash = await sha256(password);
       
-      console.log("Generated hash:", passwordHash);
-  
-      // Try RPC call instead of direct insert to bypass RLS issues
-      const { error: rpcError } = await supabase.rpc('create_user', {
-        user_id: authData.user.id,
-        user_name: username.trim().toLowerCase(),
-        user_password_hash: passwordHash,
-        is_user_admin: false
-      });
-  
-      if (rpcError) {
-        console.error("RPC error:", rpcError);
+      // Create user record
+      const { error } = await supabase
+        .from("users")
+        .insert([
+          {
+            id: authData.user.id,
+            username: username.trim().toLowerCase(),
+            password_hash: passwordHash,
+            is_admin: false,
+          },
+        ])
+        .select();
         
-        // Fallback to direct insert if RPC fails
-        const { error } = await supabase
-          .from("users")
-          .insert([
-            {
-              id: authData.user.id,
-              username: username.trim().toLowerCase(),
-              password_hash: passwordHash,
-              is_admin: false,
-            },
-          ])
-          .select();
-          
-        if (error) {
-          console.error("Insert error:", error);
-          return { error: error.message || "Registration failed" };
-        }
-        
-        // After successful direct insert:
-        const created_at = new Date().toISOString();
-        
-        localStorage.setItem("userId", authData.user.id);
-        localStorage.setItem("user", JSON.stringify({
-          id: authData.user.id,
-          username: username.trim().toLowerCase(),
-          is_admin: false,
-          created_at: created_at
-        }));
-        setUser({
-          id: authData.user.id,
-          username: username.trim().toLowerCase(),
-          is_admin: false,
-          created_at: created_at
-        });
-        
-        return { success: true };
+      if (error) {
+        console.error("User record creation error:", error);
+        return { error: "Failed to create user record" };
       }
       
-      // After successful RPC call - need to add created_at here too!
+      // Set created_at timestamp
       const created_at = new Date().toISOString();
       
+      // Store user in local storage and state
       localStorage.setItem("userId", authData.user.id);
       localStorage.setItem("user", JSON.stringify({
         id: authData.user.id,
         username: username.trim().toLowerCase(),
         is_admin: false,
-        created_at: created_at  // Add this line
+        created_at: created_at,
+        join_date: created_at,
       }));
+      
       setUser({
         id: authData.user.id,
         username: username.trim().toLowerCase(),
         is_admin: false,
-        created_at: created_at  // Add this line
+        created_at: created_at,
+        join_date: created_at,
       });
   
       return { success: true };

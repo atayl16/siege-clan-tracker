@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
-import { supabase } from "../../supabaseClient";
+import { useMembers, useWomGroup, useData } from "../../context/DataContext";
 import { 
   FaEdit, FaTrash, FaPlus, FaExchangeAlt, 
-  FaExclamationTriangle, FaEye, FaEyeSlash, FaChevronDown, FaChevronUp 
+  FaExclamationTriangle, FaEye, FaEyeSlash, FaChevronDown, FaChevronUp
 } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
 
@@ -13,12 +13,55 @@ import Card from "../ui/Card";
 import "./AdminMemberTable.css";
 
 export default function AdminMemberTable({
-  members,
   onEditClick,
   onDeleteClick,
   onRefresh,
 }) {
+  const { fetchers } = useData();
   const [expandedRow, setExpandedRow] = useState(null);
+  const [refreshing, setRefreshing] = useState(null);
+
+  // Get WOM data from context
+  const { groupData, loading: womLoading } = useWomGroup();
+
+  // Get members data from context
+  const { members } = useMembers();
+
+  // Enhanced member data with WOM data
+  const enhancedMembers = useMemo(() => {
+    if (!members || !groupData?.memberships) return members;
+
+    // Create a map of WOM members by ID for fast lookups
+    const womMembersMap = {};
+    groupData.memberships.forEach((membership) => {
+      if (membership.player?.id) {
+        womMembersMap[membership.player.id] = {
+          ...membership.player,
+          role: membership.role,
+        };
+      }
+    });
+
+    // Enhance local members with fresh WOM data
+    return members.map((member) => {
+      const womMember = member.wom_id ? womMembersMap[member.wom_id] : null;
+
+      if (womMember) {
+        return {
+          ...member,
+          current_xp:
+            womMember.latestSnapshot?.data?.skills?.overall?.experience ||
+            member.current_xp,
+          current_lvl:
+            womMember.latestSnapshot?.data?.skills?.overall?.level ||
+            member.current_lvl,
+          womrole: womMember.role || member.womrole,
+          ehb: womMember.ehb || member.ehb,
+        };
+      }
+      return member;
+    });
+  }, [members, groupData]);
 
   // Calculate the correct role for a member based on their stats
   const calculateCorrectRole = (member) => {
@@ -91,20 +134,21 @@ export default function AdminMemberTable({
   // Handle adding +2 to siege score
   const handleAddPoints = async (member) => {
     try {
+      setRefreshing(`score-${member.wom_id}`);
       const newScore = (parseInt(member.siege_score) || 0) + 2;
 
-      const { error } = await supabase
-        .from("members")
-        .update({ siege_score: newScore })
-        .eq("wom_id", member.wom_id);
-
-      if (error) throw error;
+      await fetchers.supabase.updateMember({
+        wom_id: member.wom_id,
+        siege_score: newScore,
+      });
 
       // Refresh the members list after update
       onRefresh && onRefresh();
     } catch (err) {
       console.error("Error updating siege score:", err);
       alert("Failed to update siege score");
+    } finally {
+      setRefreshing(null);
     }
   };
 
@@ -163,13 +207,15 @@ export default function AdminMemberTable({
         else newRankType = "opal";
       }
 
-      if (window.confirm(`Change ${member.name}'s rank type to ${newRankType}?`)) {
-        const { error } = await supabase
-          .from("members")
-          .update({ womrole: newRankType })
-          .eq("wom_id", member.wom_id);
+      if (
+        window.confirm(`Change ${member.name}'s rank type to ${newRankType}?`)
+      ) {
+        setRefreshing(`rank-${member.wom_id}`);
 
-        if (error) throw error;
+        await fetchers.supabase.updateMember({
+          wom_id: member.wom_id,
+          womrole: newRankType,
+        });
 
         // Refresh the members list after update
         onRefresh && onRefresh();
@@ -183,12 +229,12 @@ export default function AdminMemberTable({
   // Handle updating to the correct role
   const handleUpdateToCorrectRole = async (member, correctRole) => {
     try {
-      const { error } = await supabase
-        .from("members")
-        .update({ womrole: correctRole })
-        .eq("wom_id", member.wom_id);
+      setRefreshing(`fix-${member.wom_id}`);
 
-      if (error) throw error;
+      await fetchers.supabase.updateMember({
+        wom_id: member.wom_id,
+        womrole: correctRole,
+      });
 
       // Show a brief success message
       const successToast = document.createElement("div");
@@ -209,94 +255,145 @@ export default function AdminMemberTable({
     } catch (err) {
       console.error("Error updating rank:", err);
       alert("Failed to update rank");
+    } finally {
+      setRefreshing(null);
     }
   };
 
   const handleToggleVisibility = async (member) => {
     try {
+      setRefreshing(`visibility-${member.wom_id}`);
+
       // If we're unhiding a member, we need to refresh their WOM data
       if (member.hidden) {
-        if (window.confirm(`Unhide ${member.name} and refresh their WOM data?`)) {
-          // You'll need to implement or call a function to fetch fresh WOM data
-          await refreshMemberWomData(member.wom_id);
+        if (
+          window.confirm(`Unhide ${member.name} and refresh their WOM data?`)
+        ) {
+          // Use the latest WOM data from context
+          const womMember = groupData?.memberships?.find(
+            (m) => m.player?.id === member.wom_id
+          )?.player;
+
+          if (womMember) {
+            // Update with latest WOM data
+            await updateMemberWithWomData(member.wom_id, womMember);
+          }
         } else {
+          setRefreshing(null);
           return; // User cancelled
         }
       }
-  
-      // Toggle the hidden status
-      const { error } = await supabase
-        .from("members")
-        .update({ hidden: !member.hidden })
-        .eq("wom_id", member.wom_id);
-  
-      if (error) throw error;
-  
+
+      // Toggle the hidden status using fetchers
+      await fetchers.supabase.updateMember({
+        wom_id: member.wom_id,
+        hidden: !member.hidden,
+      });
+
       // Refresh the members list after update
       onRefresh && onRefresh();
     } catch (err) {
       console.error("Error toggling member visibility:", err);
       alert("Failed to update member visibility");
+    } finally {
+      setRefreshing(null);
     }
   };
-  
-  // Sort members to put incorrect ranks at the top and hidden members at the bottom
-  const sortedMembers = useMemo(() => {
-    if (!members || members.length === 0) return [];
-    
-    return [...members].sort((a, b) => {
-      // First prioritize hidden status - push hidden members to bottom
-      if (a.hidden && !b.hidden) return 1;
-      if (!a.hidden && b.hidden) return -1;
-      
-      // For non-hidden members (or comparing two hidden members), prioritize incorrect roles
-      const aStatus = calculateCorrectRole(a);
-      const bStatus = calculateCorrectRole(b);
-      
-      // If one has incorrect role and the other doesn't, prioritize the incorrect one
-      if (!aStatus.hasCorrectRole && bStatus.hasCorrectRole) return -1;
-      if (aStatus.hasCorrectRole && !bStatus.hasCorrectRole) return 1;
-      
-      // If both have same hidden status and same role correctness, sort alphabetically
-      return (a.name || "").localeCompare(b.name || "");
-    });
-  }, [members]);
-  
-  const refreshMemberWomData = async (womId) => {
+
+  // New function that uses WomData context data
+  const updateMemberWithWomData = async (womId, womData) => {
     try {
-      // Fetch latest data from WOM API
-      const response = await fetch(`https://api.wiseoldman.net/v2/players/${womId}`);
-      const womData = await response.json();
-      
-      if (!womData || womData.error) {
-        throw new Error(womData.error || "Failed to fetch WOM data");
-      }
-      
       // Extract the relevant data
       const updatedData = {
-        first_xp: womData.exp, // Reset first_xp to current value
-        current_xp: womData.exp,
+        wom_id: womId,
+        current_xp:
+          womData.latestSnapshot?.data?.skills?.overall?.experience || 0,
         ehb: womData.ehb || 0,
-        level: womData.level || 0,
-        current_lvl: womData.level || 0,
+        current_lvl: womData.latestSnapshot?.data?.skills?.overall?.level || 0,
         hidden: false,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
-      
-      // Update the member in the database
-      const { error } = await supabase
-        .from("members")
-        .update(updatedData)
-        .eq("wom_id", womId);
-      
-      if (error) throw error;
-      
+
+      // Update the member using the fetchers
+      await fetchers.supabase.updateMember(updatedData);
       return true;
     } catch (error) {
-      console.error("Error refreshing WOM data:", error);
+      console.error("Error updating from WOM data:", error);
       throw error;
     }
   };
+
+  // Fallback function for direct API access
+  const refreshMemberWomData = async (womId) => {
+    try {
+      setRefreshing(`wom-${womId}`);
+
+      // Use context method to fetch WOM player data
+      const womData = await fetchers.wom.player(null, womId);
+
+      if (!womData) {
+        throw new Error("Failed to fetch player data from WOM");
+      }
+
+      // Update the member with fresh WOM data
+      const updatedData = {
+        wom_id: womId,
+        first_xp: womData.exp || 0,
+        current_xp: womData.exp || 0,
+        ehb: womData.ehb || 0,
+        level: womData.level || 0,
+        current_lvl: womData.level || 0,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Use context method to update member
+      await fetchers.supabase.updateMember(updatedData);
+
+      // Refresh local data
+      if (onRefresh) {
+        onRefresh();
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error refreshing member WOM data:", error);
+      throw error;
+    } finally {
+      setRefreshing(null);
+    }
+  };
+
+  // Sort members to put incorrect ranks at the top and hidden members at the bottom
+  const sortedMembers = useMemo(() => {
+    if (!enhancedMembers || enhancedMembers.length === 0) return [];
+
+    return [...enhancedMembers].sort((a, b) => {
+      // First prioritize hidden status - push hidden members to bottom
+      if (a.hidden && !b.hidden) return 1;
+      if (!a.hidden && b.hidden) return -1;
+
+      // For non-hidden members (or comparing two hidden members), prioritize incorrect roles
+      const aStatus = calculateCorrectRole(a);
+      const bStatus = calculateCorrectRole(b);
+
+      // If one has incorrect role and the other doesn't, prioritize the incorrect one
+      if (!aStatus.hasCorrectRole && bStatus.hasCorrectRole) return -1;
+      if (aStatus.hasCorrectRole && !bStatus.hasCorrectRole) return 1;
+
+      // If both have same hidden status and same role correctness, sort alphabetically
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [enhancedMembers]);
+
+  // Show loading state if WOM data is being fetched
+  if (womLoading) {
+    return (
+      <div className="ui-loading-state">
+        <div className="ui-loading-spinner"></div>
+        <p>Refreshing member data from Wise Old Man...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="ui-admin-table-container">
@@ -317,23 +414,40 @@ export default function AdminMemberTable({
             {sortedMembers.map((member) => {
               const roleStatus = calculateCorrectRole(member);
               const isExpanded = expandedRow === member.wom_id;
+              const isRefreshing =
+                refreshing && refreshing.includes(member.wom_id);
 
               const rowClasses = [
                 isExpanded ? "ui-row-expanded" : "",
                 !roleStatus.hasCorrectRole ? "ui-role-mismatch-row" : "",
                 member.not_in_wom ? "ui-not-in-wom-row" : "",
-                member.hidden ? "ui-hidden-member-row" : ""
-              ].filter(Boolean).join(" ");
+                member.hidden ? "ui-hidden-member-row" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
 
               return (
                 <React.Fragment key={member.wom_id || member.id}>
                   <tr
                     className={rowClasses}
-                    onClick={() => setExpandedRow(isExpanded ? null : member.wom_id)}
+                    onClick={() =>
+                      setExpandedRow(isExpanded ? null : member.wom_id)
+                    }
                   >
                     <td className="ui-player-name-cell">
                       <div className="ui-player-name-wrapper">
-                        <span>{member.name || member.wom_name || "Unknown"}</span>
+                        <span>
+                          {member.name || member.wom_name || "Unknown"}
+                        </span>
+                        {member.not_in_wom && (
+                          <Badge
+                            variant="danger"
+                            className="ui-not-in-wom-badge"
+                            title="Not found in WOM"
+                          >
+                            !
+                          </Badge>
+                        )}
                         {isExpanded ? (
                           <FaChevronUp className="ui-expand-icon" />
                         ) : (
@@ -341,12 +455,14 @@ export default function AdminMemberTable({
                         )}
                       </div>
                     </td>
-                    <td className="ui-text-center">{member.siege_score || 0}</td>
+                    <td className="ui-text-center">
+                      {member.siege_score || 0}
+                    </td>
                     <td className="ui-text-center ui-position-relative">
                       {titleize(member.womrole) || "-"}
                       {!roleStatus.hasCorrectRole && (
-                        <Badge 
-                          variant="warning" 
+                        <Badge
+                          variant="warning"
                           className="ui-role-badge"
                           title={`Should be: ${roleStatus.correctRole}`}
                         >
@@ -363,11 +479,14 @@ export default function AdminMemberTable({
                     </td>
                     <td className="ui-text-center">
                       {member.join_date
-                        ? new Date(member.join_date).toLocaleDateString(undefined, {
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric'
-                          })
+                        ? new Date(member.join_date).toLocaleDateString(
+                            undefined,
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )
                         : "-"}
                     </td>
                     <td>
@@ -378,11 +497,19 @@ export default function AdminMemberTable({
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUpdateToCorrectRole(member, roleStatus.correctRole);
+                              handleUpdateToCorrectRole(
+                                member,
+                                roleStatus.correctRole
+                              );
                             }}
                             title={`Update to correct role: ${roleStatus.correctRole}`}
+                            disabled={refreshing === `fix-${member.wom_id}`}
                           >
-                            Fix Rank
+                            {refreshing === `fix-${member.wom_id}` ? (
+                              <div className="ui-button-spinner"></div>
+                            ) : (
+                              "Fix Rank"
+                            )}
                           </Button>
                         )}
                         <Button
@@ -393,8 +520,15 @@ export default function AdminMemberTable({
                             handleAddPoints(member);
                           }}
                           title="+2 Siege Score"
+                          disabled={refreshing === `score-${member.wom_id}`}
                         >
-                          <FaPlus /> 2
+                          {refreshing === `score-${member.wom_id}` ? (
+                            <div className="ui-button-spinner"></div>
+                          ) : (
+                            <>
+                              <FaPlus /> 2
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="primary"
@@ -404,8 +538,13 @@ export default function AdminMemberTable({
                             handleToggleRankType(member);
                           }}
                           title="Switch fighter/skiller rank"
+                          disabled={refreshing === `rank-${member.wom_id}`}
                         >
-                          <FaExchangeAlt />
+                          {refreshing === `rank-${member.wom_id}` ? (
+                            <div className="ui-button-spinner"></div>
+                          ) : (
+                            <FaExchangeAlt />
+                          )}
                         </Button>
                         <Button
                           variant="warning"
@@ -425,9 +564,20 @@ export default function AdminMemberTable({
                             e.stopPropagation();
                             handleToggleVisibility(member);
                           }}
-                          title={member.hidden ? "Unhide member" : "Hide member"}
+                          title={
+                            member.hidden ? "Unhide member" : "Hide member"
+                          }
+                          disabled={
+                            refreshing === `visibility-${member.wom_id}`
+                          }
                         >
-                          {member.hidden ? <FaEye /> : <FaEyeSlash />}
+                          {refreshing === `visibility-${member.wom_id}` ? (
+                            <div className="ui-button-spinner"></div>
+                          ) : member.hidden ? (
+                            <FaEye />
+                          ) : (
+                            <FaEyeSlash />
+                          )}
                         </Button>
                         <Button
                           variant="danger"
@@ -451,45 +601,84 @@ export default function AdminMemberTable({
                             <div className="ui-details-grid">
                               {!roleStatus.hasCorrectRole && (
                                 <div className="ui-detail-item ui-role-mismatch-alert">
-                                  <span className="ui-detail-label">Role Mismatch:</span>
+                                  <span className="ui-detail-label">
+                                    Role Mismatch:
+                                  </span>
                                   <span className="ui-detail-value">
-                                    Current: <strong>{titleize(member.womrole)}</strong> →
-                                    Should be: <strong>{roleStatus.correctRole}</strong> ({roleStatus.currentType})
+                                    Current:{" "}
+                                    <strong>{titleize(member.womrole)}</strong>{" "}
+                                    → Should be:{" "}
+                                    <strong>{roleStatus.correctRole}</strong> (
+                                    {roleStatus.currentType})
                                   </span>
                                 </div>
                               )}
                               <div className="ui-detail-item">
                                 <span className="ui-detail-label">WOM ID:</span>
-                                <span className="ui-detail-value">{member.wom_id || "-"}</span>
-                              </div>
-                              <div className="ui-detail-item">
-                                <span className="ui-detail-label">WOM Name:</span>
-                                <span className="ui-detail-value">{member.wom_name || "-"}</span>
-                              </div>
-                              <div className="ui-detail-item">
-                                <span className="ui-detail-label">Current Level:</span>
-                                <span className="ui-detail-value">{member.current_lvl || 0}</span>
-                              </div>
-                              <div className="ui-detail-item">
-                                <span className="ui-detail-label">Current XP:</span>
                                 <span className="ui-detail-value">
-                                  {Number(member.current_xp || 0).toLocaleString()}
+                                  {member.wom_id || "-"}
                                 </span>
                               </div>
                               <div className="ui-detail-item">
-                                <span className="ui-detail-label">Initial XP:</span>
+                                <span className="ui-detail-label">
+                                  WOM Name:
+                                </span>
                                 <span className="ui-detail-value">
-                                  {Number(member.first_xp || 0).toLocaleString()}
+                                  {member.wom_name || "-"}
                                 </span>
                               </div>
                               <div className="ui-detail-item">
-                                <span className="ui-detail-label">Updated At:</span>
+                                <span className="ui-detail-label">
+                                  Current Level:
+                                </span>
+                                <span className="ui-detail-value">
+                                  {member.current_lvl || 0}
+                                </span>
+                              </div>
+                              <div className="ui-detail-item">
+                                <span className="ui-detail-label">
+                                  Current XP:
+                                </span>
+                                <span className="ui-detail-value">
+                                  {Number(
+                                    member.current_xp || 0
+                                  ).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="ui-detail-item">
+                                <span className="ui-detail-label">
+                                  Initial XP:
+                                </span>
+                                <span className="ui-detail-value">
+                                  {Number(
+                                    member.first_xp || 0
+                                  ).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="ui-detail-item">
+                                <span className="ui-detail-label">
+                                  Updated At:
+                                </span>
                                 <span className="ui-detail-value">
                                   {member.updated_at
-                                    ? new Date(member.updated_at).toLocaleString()
+                                    ? new Date(
+                                        member.updated_at
+                                      ).toLocaleString()
                                     : "-"}
                                 </span>
                               </div>
+                              {member.not_in_wom && (
+                                <div className="ui-detail-item ui-not-in-wom-alert">
+                                  <span className="ui-detail-label">
+                                    WOM Status:
+                                  </span>
+                                  <span className="ui-detail-value">
+                                    <strong>Not found in WOM data</strong> - The
+                                    player may have changed names or been
+                                    removed from the group.
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </Card.Body>
                         </Card>

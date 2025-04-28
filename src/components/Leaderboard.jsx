@@ -8,7 +8,8 @@ export default function SiegeLeaderboard({
   limit = null, 
   className = "",
   showTitle = false,
-  compact = false
+  compact = false,
+  loading = false
 }) {
   const leaderboardData = useMemo(() => {
     return [...members]
@@ -20,6 +21,16 @@ export default function SiegeLeaderboard({
       .sort((a, b) => b.siege_score - a.siege_score)
       .slice(0, limit || members.length);
   }, [members, limit]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className={`ui-leaderboard ${className} ${compact ? 'ui-leaderboard-compact' : ''}`}>
+        {showTitle && <h2 className="ui-leaderboard-title">Siege Score Leaderboard</h2>}
+        <div className="ui-loading-indicator">Loading leaderboard data...</div>
+      </div>
+    );
+  }
 
   if (compact) {
     return (

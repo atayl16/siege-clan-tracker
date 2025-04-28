@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../../supabaseClient";
+import React, { useState } from "react";
+import { usePlayerGoals } from "../../context/DataContext";
 import GoalProgress from "./GoalProgress";
 import CreateGoal from "./CreateGoal";
 import { refreshPlayerData } from "../../utils/womApi";
@@ -15,68 +15,37 @@ import EmptyState from "../ui/EmptyState";
 import "./Goals.css";
 
 export default function GoalsList({ player, userId, onClose }) {
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  if (!userId) {
+    console.warn(
+      `GoalsList: No userId provided for player ${player?.name} (${player?.wom_id})`
+    );
+  }
+  
+  const { 
+    goals, 
+    loading, 
+    error: apiError, 
+    refreshGoals, 
+    deleteGoal 
+  } = usePlayerGoals(userId, player.wom_id);
+  
   const [error, setError] = useState(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
 
-  // Memoize fetchGoals to use in the dependency array
-  const fetchGoals = useCallback(async () => {
-    try {
-      setLoading(true);
-  
-      // Replace the direct table query with an RPC call to your function
-      const { data, error } = await supabase.rpc(
-        "get_user_goals",
-        {
-          user_id_param: userId
-        }
-      );
-  
-      if (error) throw error;
-      
-      // Filter the results for the current player since the function might return all user goals
-      const playerGoals = data ? data.filter(goal => goal.wom_id === player.wom_id) : [];
-      
-      // Sort the goals as needed
-      const sortedGoals = playerGoals.sort((a, b) => {
-        // First by completion status
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        // Then by goal type
-        if (a.goal_type !== b.goal_type) return a.goal_type.localeCompare(b.goal_type);
-        // Then by metric name
-        return a.metric.localeCompare(b.metric);
-      });
-  
-      setGoals(sortedGoals);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching goals:", err);
-      setError("Failed to load goals. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [player.wom_id, userId]);
-
-  // Fetch goals when dependencies change
-  useEffect(() => {
-    fetchGoals();
-  }, [fetchGoals]);
-
   const handleDeleteGoal = async (goalId) => {
     if (!window.confirm("Are you sure you want to delete this goal?")) return;
 
     try {
-      const { error } = await supabase
-        .from("user_goals")
-        .delete()
-        .eq("id", goalId);
-
-      if (error) throw error;
-
-      setGoals(goals.filter((goal) => goal.id !== goalId));
+      const result = await deleteGoal(goalId);
+      
+      if (!result.success) {
+        throw new Error("Failed to delete goal");
+      }
+      
+      // No need to manually update the goals list - the hook handles it
+      setError(null);
     } catch (err) {
       console.error("Error deleting goal:", err);
       setError("Failed to delete goal. Please try again.");
@@ -88,7 +57,8 @@ export default function GoalsList({ player, userId, onClose }) {
   };
 
   const handleGoalCreated = (newGoal) => {
-    setGoals([newGoal, ...goals]);
+    // Refresh the goals list to include the new goal
+    refreshGoals();
     setShowAddGoal(false);
   };
   
@@ -104,14 +74,13 @@ export default function GoalsList({ player, userId, onClose }) {
       // Check if the refresh was successful
       if (!refreshResult.success) {
         console.warn("Player data refresh failed, continuing with goal updates anyway");
-        // We'll continue anyway since the goals might still update correctly
       }
   
       // Update the goals with the latest data
       const result = await updatePlayerGoals(player.wom_id, userId);
   
       // Refresh goals list with updated data
-      await fetchGoals();
+      refreshGoals();
   
       setSyncSuccess(true);
   
@@ -143,6 +112,9 @@ export default function GoalsList({ player, userId, onClose }) {
     }
   };
 
+  // Use apiError from hook or local error state
+  const displayError = apiError ? `API Error: ${apiError.message}` : error;
+
   return (
     <div className="ui-goals-container">
       <div className="ui-goals-header">
@@ -157,9 +129,9 @@ export default function GoalsList({ player, userId, onClose }) {
         )}
       </div>
 
-      {error && (
+      {displayError && (
         <div className="ui-message ui-message-error">
-          <span>{error}</span>
+          <span>{displayError}</span>
         </div>
       )}
       
@@ -208,7 +180,7 @@ export default function GoalsList({ player, userId, onClose }) {
           <div className="ui-loading-spinner"></div>
           <div className="ui-loading-text">Loading goals...</div>
         </div>
-      ) : goals.length === 0 ? (
+      ) : goals?.length === 0 ? (
         <EmptyState
           title="No Goals Set"
           description={`You haven't set any goals for ${titleize(player.name)} yet. Click "Add New Goal" to get started!`}

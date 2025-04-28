@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../supabaseClient";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
+import { useMembers, useMembersAdmin, useClaimRequests } from "../context/DataContext";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
-import WomSyncButton from "../components/WomSyncButton";
 import RunewatchAlerts from "../components/RunewatchAlerts";
 import GenerateClaimCode from "../components/GenerateClaimCode";
 import ClaimRequestManager from "../components/ClaimRequestManager";
@@ -34,7 +33,6 @@ import {
   FaUsers, 
   FaCalendarAlt, 
   FaUserCog, 
-  FaSync, 
   FaKey, 
   FaExclamationTriangle 
 } from "react-icons/fa";
@@ -44,10 +42,7 @@ import "./AdminPage.css";
 export default function AdminPage() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [selectedMember, setSelectedMember] = useState(null);
-  const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [notification, setNotification] = useState(null);
   const [activeTab, setActiveTab] = useState("alerts");
@@ -56,79 +51,38 @@ export default function AdminPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
   const [userSubTab, setUserSubTab] = useState("requests");
-  const [pendingClaimsCount, setPendingClaimsCount] = useState(0);
   const searchInputRef = useRef(null);
 
-  // Fetch members data when component mounts
-  const fetchMembers = async () => {
-    try {
-      setLoading(true);
-      
-      // Use Supabase to fetch members
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .order('name', { ascending: true });
-      
-      if (error) throw error;
-      
-      setMembers(data || []);
-      setFilteredMembers(data || []);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching members:", err);
-      setError("Failed to load members data");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const fetchAlertsCount = async () => {
-    try {
-      // Fetch members from Supabase, filtering out hidden members at the DB level
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('hidden', false);  // Filter hidden members at the database level
-        
-      if (error) throw error;
-      
-      // Use the memberNeedsRankUpdate utility function for consistency
-      const needsUpdates = data.filter(member => memberNeedsRankUpdate(member));
+  // Use context hooks instead of direct Supabase calls
+  const { 
+    members, 
+    loading: membersLoading, 
+    error: membersError,
+    refreshMembers 
+  } = useMembers();
+
+  const { updateMember, deleteMember } = useMembersAdmin();
+
+  // Get pending claim requests count
+  const { 
+    requests: pendingRequests, 
+    refreshRequests 
+  } = useClaimRequests({ status: "pending" });
+
+  // Calculate and set alerts count whenever members data changes
+  useEffect(() => {
+    if (members) {
+      // Filter visible members and count those needing rank updates
+      const visibleMembers = members.filter(member => !member.hidden);
+      const needsUpdates = visibleMembers.filter(member => memberNeedsRankUpdate(member));
       setAlertsCount(needsUpdates.length);
-    } catch (err) {
-      console.error("Error calculating rank alerts count:", err);
-      setAlertsCount(0);
     }
-  };
+  }, [members]);
   
-  const fetchPendingClaimsCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('claim_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending');
-      
-      if (error) throw error;
-      setPendingClaimsCount(count || 0);
-    } catch (err) {
-      console.error("Error fetching pending claims count:", err);
-      setPendingClaimsCount(0);
-    }
-  };
-  
+  // Filter members based on search term
   useEffect(() => {
-    fetchMembers();
-    fetchAlertsCount();
-    fetchPendingClaimsCount();
+    if (!members) return;
     
-    // Focus search input when switching to members tab
-    if (activeTab === "members" && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [activeTab]);
-  
-  useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredMembers(members);
       return;
@@ -143,6 +97,13 @@ export default function AdminPage() {
     
     setFilteredMembers(filtered);
   }, [searchTerm, members]);
+
+  // Focus search input when switching to members tab
+  useEffect(() => {
+    if (activeTab === "members" && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [activeTab]);
 
   // Handle deleting a member
   const handleDeleteMember = async (member) => {
@@ -161,16 +122,12 @@ export default function AdminPage() {
     }
     
     try {
-      // Use Supabase client to delete
-      const { error } = await supabase
-        .from('members')
-        .delete()
-        .eq('wom_id', member.wom_id);
-        
-      if (error) throw error;
+      // Use deleteMember function from useMembersAdmin hook
+      const result = await deleteMember(member.wom_id);
       
-      // Remove from local state
-      setMembers(prev => prev.filter(m => m.wom_id !== member.wom_id));
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete member");
+      }
       
       // Clear selection if needed
       if (selectedMember?.wom_id === member.wom_id) {
@@ -200,30 +157,36 @@ export default function AdminPage() {
   };
 
   // Handle saving member data
-  const handleSaveMember = (updatedMember) => {
-    // Update the members list
-    if (updatedMember.wom_id) {
-      setMembers(prev => 
-        prev.map(m => m.wom_id === updatedMember.wom_id ? updatedMember : m)
-      );
-    } else {
-      setMembers(prev => [...prev, updatedMember]);
+  const handleSaveMember = async (updatedMember) => {
+    try {
+      // Use updateMember function from useMembersAdmin hook
+      await updateMember(updatedMember);
+      
+      // Clear selection
+      setSelectedMember(null);
+      setIsAddingMember(false);
+      
+      // Show notification
+      setNotification({
+        type: 'success',
+        message: `${updatedMember.name || updatedMember.wom_name} was successfully saved.`,
+        id: Date.now()
+      });
+      
+      // Refresh members data
+      refreshMembers();
+      
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    } catch (err) {
+      console.error("Error saving member:", err);
+      setNotification({
+        type: 'error',
+        message: `Failed to save ${updatedMember.name || updatedMember.wom_name}: ${err.message}`,
+        id: Date.now()
+      });
     }
-    
-    // Clear selection
-    setSelectedMember(null);
-    setIsAddingMember(false);
-    
-    // Show notification
-    setNotification({
-      type: 'success',
-      message: `${updatedMember.name || updatedMember.wom_name} was successfully saved.`,
-      id: Date.now()
-    });
-    
-    setTimeout(() => {
-      setNotification(null);
-    }, 5000);
   };
   
   // Export members to CSV
@@ -299,7 +262,7 @@ export default function AdminPage() {
     }
   };
   
-  // Reset all siege scores
+  // Reset all siege scores using the updateMember function
   const handleResetScores = async () => {
     if (resetConfirmText !== "RESET ALL SCORES") {
       setNotification({
@@ -314,20 +277,19 @@ export default function AdminPage() {
       // First, export current scores for backup
       exportToCSV();
       
-      // Update all members' siege scores to 0
-      const { error } = await supabase
-        .from('members')
-        .update({ siege_score: 0 })
-        .neq('wom_id', 'no-match'); // Update all rows
-        
-      if (error) throw error;
+      // Update each member's siege score to 0
+      const updatePromises = members.map(member => 
+        updateMember({ ...member, siege_score: 0 })
+      );
       
-      // Update local state
-      setMembers(prev => prev.map(m => ({ ...m, siege_score: 0 })));
+      await Promise.all(updatePromises);
       
       // Hide confirmation
       setShowResetConfirm(false);
       setResetConfirmText("");
+      
+      // Refresh members data
+      refreshMembers();
       
       // Show notification
       setNotification({
@@ -484,7 +446,7 @@ export default function AdminPage() {
         </div>
       </Modal>
 
-      {/* Admin Tabs - FIXED IMPLEMENTATION */}
+      {/* Admin Tabs */}
       <Tabs activeTab={activeTab} onChange={setActiveTab} className="admin-tabs">
         <Tabs.Tab 
           tabId="alerts" 
@@ -513,8 +475,7 @@ export default function AdminPage() {
                 <Card.Body className="alert-section-content">
                   <RankAlerts
                     onRankUpdate={() => {
-                      fetchMembers();
-                      fetchAlertsCount();
+                      refreshMembers();
                     }}
                     previewMode={true}
                   />
@@ -527,20 +488,17 @@ export default function AdminPage() {
                   <h3>
                     <FaKey className="alert-icon" />
                     Pending Player Claims
-                    {pendingClaimsCount > 0 && (
-                      <span className="count-badge">{pendingClaimsCount}</span>
-                    )}
                   </h3>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
-                  {pendingClaimsCount > 0 ? (
+                  {pendingRequests?.length > 0 ? (
                     <ClaimRequestsPreview
-                      count={pendingClaimsCount}
+                      count={pendingRequests.length}
                       onViewAllClick={() => {
                         setActiveTab("users");
                         setUserSubTab("requests");
                       }}
-                      onRequestProcessed={fetchPendingClaimsCount}
+                      onRequestProcessed={refreshRequests}
                     />
                   ) : (
                     <div className="ui-no-alerts">
@@ -583,15 +541,15 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {loading ? (
+            {membersLoading ? (
               <div className="ui-loading-container">
                 <div className="ui-loading-spinner"></div>
                 <div className="ui-loading-text">Loading members data...</div>
               </div>
-            ) : error ? (
+            ) : membersError ? (
               <div className="ui-error-container">
                 <FaExclamationTriangle className="ui-error-icon" />
-                <div className="ui-error-message">{error}</div>
+                <div className="ui-error-message">{membersError.message || String(membersError)}</div>
               </div>
             ) : (
               <>
@@ -599,22 +557,22 @@ export default function AdminPage() {
                   <StatGroup className="stats-panel">
                     <StatGroup.Stat
                       label="Total Members"
-                      value={members.length}
+                      value={members?.length || 0}
                     />
                     <StatGroup.Stat
                       label="Search Results"
-                      value={filteredMembers.length}
+                      value={filteredMembers?.length || 0}
                     />
                   </StatGroup>
 
                   <AdminMemberTable
-                    members={filteredMembers}
+                    members={filteredMembers || []}
                     onEditClick={(member) => {
                       setSelectedMember(member);
                       setIsAddingMember(false);
                     }}
                     onDeleteClick={handleDeleteMember}
-                    onRefresh={fetchMembers}
+                    onRefresh={refreshMembers}
                   />
                 </div>
 
@@ -665,7 +623,6 @@ export default function AdminPage() {
           tabId="users" 
           label="Users" 
           icon={<FaUserCog />} 
-          badge={pendingClaimsCount > 0 ? pendingClaimsCount : null}
         >
           <div className="tab-content users-content">
             <div className="content-header">
@@ -706,85 +663,6 @@ export default function AdminPage() {
                   </Card>
                 </Tabs.Tab>
               </Tabs>
-            </div>
-          </div>
-        </Tabs.Tab>
-
-        <Tabs.Tab tabId="sync" label="Sync" icon={<FaSync />}>
-          <div className="tab-content sync-content">
-            <div className="content-header">
-              <h2>Data Synchronization</h2>
-              <h3>Only for emergencies!</h3>
-            </div>
-            <div className="sync-container">
-              <div className="sync-cards">
-                <Card className="sync-card" variant="dark">
-                  <Card.Header>
-                    <h3>Member Data Sync</h3>
-                  </Card.Header>
-                  <Card.Body>
-                    <p>Update member stats, levels, and EHB from Wise Old Man</p>
-                    <WomSyncButton
-                      type="members"
-                      buttonText="Sync Members"
-                      onSyncComplete={fetchMembers}
-                    />
-                  </Card.Body>
-                </Card>
-
-                <Card className="sync-card" variant="dark">
-                  <Card.Header>
-                    <h3>Event Sync</h3>
-                  </Card.Header>
-                  <Card.Body>
-                    <p>Import WOM competitions and sync event participation</p>
-                    <WomSyncButton
-                      type="events"
-                      buttonText="Sync WOM Competitions"
-                      onSyncComplete={() => {
-                        // Refresh any event data if needed
-                        if (typeof window !== "undefined") {
-                          const eventTab = document.querySelector(
-                            ".admin-tab:nth-child(2)"
-                          );
-                          if (eventTab) {
-                            // Flash the events tab to indicate new data
-                            eventTab.classList.add("flash-highlight");
-                            setTimeout(() => {
-                              eventTab.classList.remove("flash-highlight");
-                            }, 1000);
-                          }
-                        }
-                      }}
-                    />
-                  </Card.Body>
-                </Card>
-              </div>
-
-              <Card className="sync-info" variant="dark">
-                <Card.Body>
-                  <h4>About Synchronization</h4>
-                  <p>
-                    Regular data synchronization keeps your clan tracker up to
-                    date with the latest information from Wise Old Man:
-                  </p>
-                  <ul className="sync-info-list">
-                    <li>
-                      <strong>Member Data Sync:</strong> Updates XP, levels, boss
-                      kills, and EHB for all clan members
-                    </li>
-                    <li>
-                      <strong>Event Sync:</strong> Imports official
-                      WOM competitions and updates participation data
-                    </li>
-                  </ul>
-                  <p className="note">
-                    Synchronization is done automatically, but if you need to
-                    update it sooner than the daily tasks, you can do so here. WOM
-                    competitions will appear in the Events tab.
-                  </p>
-                </Card.Body>
-              </Card>
             </div>
           </div>
         </Tabs.Tab>

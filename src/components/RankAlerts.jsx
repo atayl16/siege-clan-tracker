@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   memberNeedsRankUpdate,
   calculateAppropriateRank,
@@ -7,8 +7,8 @@ import {
   FIGHTER_RANK_NAMES,
 } from "../utils/rankUtils";
 import { titleize } from "../utils/stringUtils";
-import { supabase } from "../supabaseClient";
-import { FaSync, FaExchangeAlt, FaCheck, FaExclamationTriangle } from "react-icons/fa";
+import { useMembers, useMembersAdmin } from "../context/DataContext";
+import { FaExchangeAlt, FaCheck, FaExclamationTriangle } from "react-icons/fa";
 
 // Import UI components
 import Card from "./ui/Card";
@@ -20,8 +20,16 @@ import "./RankAlerts.css";
 
 export default function RankAlerts({ previewMode = false, onRankUpdate }) {
   const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  // Use the context hooks instead of direct Supabase queries
+  const { 
+    members, 
+    loading: membersLoading, 
+    error: membersError,
+    refreshMembers 
+  } = useMembers();
+  
+  const { updateMember } = useMembersAdmin();
 
   // Determine the priority of a rank update
   const getRankUpdatePriority = (member) => {
@@ -53,18 +61,14 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
     return 2;
   };
 
-  const fetchMembers = useCallback(async () => {
+  // Process the members data whenever it changes
+  useMemo(() => {
+    if (!members) return;
+    
     try {
-      setLoading(true);
-  
-      const { data, error } = await supabase
-        .from("members")
-        .select("*");  
-      if (error) throw error;
+      // Filter hidden members
+      const visibleMembers = members.filter(member => !member.hidden);
       
-      // Filter hidden members in JavaScript instead
-      const visibleMembers = data.filter(member => !member.hidden);
-  
       // Use the memberNeedsRankUpdate utility function
       const membersNeedingUpdate = visibleMembers
         .filter(member => memberNeedsRankUpdate(member))
@@ -72,54 +76,50 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
           ...member,
           calculated_rank: calculateAppropriateRank(member),
         }));
-  
+      
       // Sort members by priority (highest first) then alphabetically
       const sortedMembers = membersNeedingUpdate.sort((a, b) => {
         const priorityA = getRankUpdatePriority(a);
         const priorityB = getRankUpdatePriority(b);
-  
+      
         if (priorityB !== priorityA) {
           return priorityB - priorityA;
         }
-  
+      
         return (a.name || "").localeCompare(b.name || "");
       });
-  
+      
       setAlerts(sortedMembers);
-      setError(null);
     } catch (err) {
-      console.error("Error fetching members for rank alerts:", err);
-      setError("Failed to load rank alerts");
-    } finally {
-      setLoading(false);
+      console.error("Error processing members for rank alerts:", err);
     }
-  }, []);
+  }, [members]);
 
   useEffect(() => {
-    fetchMembers();
-    
     // Set up an interval to refresh data every few minutes if in preview mode
     let intervalId;
     if (previewMode) {
-      intervalId = setInterval(fetchMembers, 180000); // 3 minutes
+      intervalId = setInterval(refreshMembers, 180000); // 3 minutes
     }
     
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [fetchMembers, previewMode]);
+  }, [previewMode, refreshMembers]);
 
   // Function to handle manual update of a member's rank
   const handleUpdateRank = async (member) => {
     try {
       if (!member.calculated_rank) return;
 
-      const { error } = await supabase
-        .from("members")
-        .update({ womrole: member.calculated_rank.toLowerCase() })
-        .eq("wom_id", member.wom_id);
-
-      if (error) throw error;
+      // Create updated member object with new rank
+      const updatedMember = {
+        ...member,
+        womrole: member.calculated_rank.toLowerCase()
+      };
+      
+      // Use the updateMember function from the context
+      await updateMember(updatedMember);
 
       // Remove the updated member from alerts
       setAlerts(alerts.filter((m) => m.wom_id !== member.wom_id));
@@ -128,6 +128,9 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
       if (onRankUpdate && typeof onRankUpdate === 'function') {
         onRankUpdate();
       }
+
+      // Refresh the members data after update
+      refreshMembers();
 
       // Show a brief success toast
       const successToast = document.createElement("div");
@@ -148,12 +151,8 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
     }
   };
 
-  // Add a refresh button
-  const handleRefresh = () => {
-    fetchMembers();
-  };
-
-  if (loading) {
+  // Loading state
+  if (membersLoading) {
     return (
       <div className="ui-loading-container ui-rank-alerts-loading">
         <div className="ui-loading-spinner"></div>
@@ -162,11 +161,12 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
     );
   }
   
-  if (error) {
+  // Error state
+  if (membersError) {
     return (
       <div className="ui-message ui-message-error ui-rank-alerts-error">
         <FaExclamationTriangle className="ui-message-icon" />
-        <span>{error}</span>
+        <span>Failed to load rank alerts: {membersError.message || String(membersError)}</span>
       </div>
     );
   }
@@ -186,11 +186,6 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
           title="No Rank Updates Required"
           description="All members currently have the correct rank."
           icon={<FaCheck className="ui-empty-state-icon" />}
-          action={
-            <Button variant="secondary" size="sm" onClick={handleRefresh} icon={<FaSync />}>
-              Refresh Data
-            </Button>
-          }
         />
       );
     }
@@ -209,17 +204,6 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
             {alerts.length}
           </Badge>
         </h3>
-        
-        {!previewMode && (
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={handleRefresh} 
-            icon={<FaSync />}
-          >
-            Refresh
-          </Button>
-        )}
       </Card.Header>
       
       <Card.Body>

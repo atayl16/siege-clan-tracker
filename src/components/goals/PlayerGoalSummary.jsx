@@ -1,58 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import React from 'react';
+import { usePlayerGoals } from '../../context/DataContext';
 import GoalProgress from './GoalProgress';
 import './PlayerGoalSummary.css';
 
 export default function PlayerGoalSummary({ playerId, userId }) {
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Move the hook call before any conditional logic
+  const { goals, loading } = usePlayerGoals(userId, playerId);
 
-  useEffect(() => {
-    async function fetchPlayerGoals() {
-      if (!playerId || !userId) return;
-      
-      setLoading(true);
-      try {
-        // Use RPC function to bypass RLS
-        const { data, error } = await supabase.rpc(
-          "get_user_goals",
-          { user_id_param: userId }
-        );
-        
-        if (error) throw error;
-        
-        // Filter goals for this player
-        const playerGoals = data
-          ? data
-              .filter(goal => goal.wom_id === playerId && !goal.completed)
-              .sort((a, b) => b.id - a.id)
-              .slice(0, 3)
-          : [];
-        
-        setGoals(playerGoals);
-      } catch (err) {
-        console.error('Error fetching player goals:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchPlayerGoals();
-  }, [playerId, userId]);
+  if (!playerId || !userId) {
+    return (
+      <div className="inline-goals-empty">
+        {!userId ? "User ID missing" : "No player selected"}
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="inline-goals-loading">Loading goals...</div>;
   }
 
-  if (goals.length === 0) {
+  if (!goals || goals.length === 0) {
     return <div className="inline-goals-empty">No active goals</div>;
   }
+
+  // Get up to 3 uncompleted goals
+  const activeGoals = goals
+    .filter(goal => !goal.completed)
+    .slice(0, 3);
 
   return (
     <div className="inline-goals-container">
       <h4 className="inline-goals-header">Current Goals</h4>
       <div className="inline-goals-list">
-        {goals.map(goal => (
+        {activeGoals.map(goal => (
           <div key={goal.id} className="inline-goal-item">
             <div className="inline-goal-title">
               {goal.metric} ({goal.goal_type})

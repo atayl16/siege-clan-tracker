@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../supabaseClient";
+import { useUserClaimRequests } from "../context/DataContext";
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
@@ -22,28 +22,29 @@ import "./ProfilePage.css";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
+  // Make sure we have a valid user ID before rendering goals
+  if (!user || !user.id) {
+    return (
+      <Card variant="default" hover className="ui-character-card">
+        <Card.Body>
+          <div className="ui-loading-container">
+            <div className="ui-loading-spinner"></div>
+            <div className="ui-loading-text">Loading user data...</div>
+          </div>
+        </Card.Body>
+      </Card>
+    );
+  }
+
   return (
     <Card variant="default" hover className="ui-character-card">
-      <Card.Header className="ui-character-card-header">
-        <div className="ui-character-name">{claim.members.name}</div>
-        <Badge variant="primary" pill>
-          Goals
-        </Badge>
-      </Card.Header>
-
+      {/* Card header */}
       <Card.Body>
-        <StatGroup className="ui-character-stats">
-          <StatGroup.Stat
-            label="Combat Level"
-            value={claim.members.current_lvl || 3}
-          />
-          <StatGroup.Stat label="EHB" value={claim.members.ehb || 0} />
-        </StatGroup>
-
+        {/* Stats group */}
         <div className="ui-character-goal-content">
           <GoalsList
             player={claim.members}
-            userId={user.id}
+            userId={user.id} // Make sure this is always defined
             onClose={() => {}}
           />
         </div>
@@ -54,58 +55,17 @@ function CharacterGoalCard({ claim, user }) {
 
 export default function ProfilePage() {
   const { user, userClaims } = useAuth();
-  const [userRequests, setUserRequests] = useState([]);
   const [activeTab, setActiveTab] = useState("characters");
-    
-  // Memoize the fetchUserRequests function with useCallback
-  const fetchUserRequests = useCallback(async () => {
-    if (!user) return;
   
-    try {
-      // Only fetch pending requests
-      const { data, error } = await supabase
-        .from("claim_requests")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
+  // Replace direct Supabase call with context hook
+  const { 
+    requests: userRequests, 
+    refreshRequests: fetchUserRequests 
+  } = useUserClaimRequests(user?.id);
+
+  // Use the hook's data directly - no need for useState or useEffect
   
-      if (error) throw error;
-      
-      // Fetch the related member info separately
-      if (data && data.length > 0) {
-        const womIds = data.filter(req => req.wom_id).map(req => req.wom_id);
-        
-        if (womIds.length > 0) {
-          const { data: membersData, error: membersError } = await supabase
-            .from('members')
-            .select('wom_id, name')
-            .in('wom_id', womIds);
-          
-          if (!membersError) {
-            const memberMap = {};
-            membersData.forEach(member => {
-              memberMap[member.wom_id] = member;
-            });
-            
-            const enhancedData = data.map(req => ({
-              ...req,
-              member: req.wom_id ? memberMap[req.wom_id] : null
-            }));
-            
-            setUserRequests(enhancedData);
-            return;
-          }
-        }
-      }
-      
-      setUserRequests(data || []);
-    } catch (err) {
-      console.error("Error fetching user requests:", err);
-    }
-  }, [user]);
-  
-  // Fetch user's claim requests when component mounts
+  // Just call fetchUserRequests when needed
   useEffect(() => {
     if (user) {
       fetchUserRequests();
@@ -174,6 +134,7 @@ export default function ProfilePage() {
             <EmptyState
               title="No Characters Yet"
               description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
+              icon={<FaUser />}
             />
           ) : (
             <CardGrid>
@@ -199,11 +160,15 @@ export default function ProfilePage() {
                         value={claim.members.siege_score || 0}
                       />
                     </StatGroup>
-
-                    <PlayerGoalSummary
-                      playerId={claim.members.wom_id}
-                      userId={user.id}
-                    />
+                  
+                    {user && user.id && claim.members && claim.members.wom_id ? (
+                      <PlayerGoalSummary
+                        playerId={claim.members.wom_id}
+                        userId={user.id}
+                      />
+                    ) : (
+                      <div className="inline-goals-loading">Loading user data...</div>
+                    )}
                   </Card.Body>
 
                   <Card.Footer className="ui-character-card-footer">
@@ -228,8 +193,13 @@ export default function ProfilePage() {
           <div className="tab-header">
             <h2>Character Goals</h2>
           </div>
-      
-          {userClaims.length === 0 ? (
+        
+          {!user ? (
+            <div className="ui-loading-container">
+              <div className="ui-loading-spinner"></div>
+              <div className="ui-loading-text">Loading user data...</div>
+            </div>
+          ) : userClaims.length === 0 ? (
             <EmptyState
               title="No Characters to Track"
               description="You need to claim a character before setting goals."
