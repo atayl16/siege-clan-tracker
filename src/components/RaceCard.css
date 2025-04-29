@@ -1,0 +1,104 @@
+.ui-race-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-race-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+}
+
+.ui-race-header-content {
+  flex: 1;
+}
+
+.ui-race-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.ui-race-title:hover {
+  color: var(--primary-color);
+}
+
+.ui-race-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.ui-race-visibility {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ui-public {
+  color: var(--success-color);
+}
+
+.ui-private {
+  color: var(--text-muted);
+}
+
+.ui-race-description {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.ui-race-participants {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ui-race-participant {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ui-participant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ui-participant-name {
+  font-weight: 500;
+}
+
+.ui-participant-metric {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.ui-race-footer {
+  margin-top: 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.ui-race-end-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ui-race-actions {
+  margin-top: auto;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}

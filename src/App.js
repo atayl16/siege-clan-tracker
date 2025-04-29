@@ -15,7 +15,9 @@ import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
 import WelcomePage from "./pages/WelcomePage";
 import ProfilePage from "./pages/ProfilePage";
+import ProgressPage from "./pages/ProgressPage";
 import Navbar from "./components/Navbar";
+import AnniversaryBanner from "./components/AnniversaryBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./components/ForgotPassword";
 import SeasonalFavicon from "./utils/seasonalIcons";
@@ -31,9 +33,11 @@ const AppContent = () => {
     <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
       <SeasonalFavicon />
       {showNavbar && <Navbar />}
+      {<AnniversaryBanner />}
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/members" element={<MembersPage />} />
+        <Route path="/progress" element={<ProgressPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegistrationForm />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

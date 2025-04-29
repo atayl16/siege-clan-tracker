@@ -14,22 +14,31 @@ const fetchers = {
       try {
         // Try edge function first
         const response = await fetch("/api/wom/group");
-        
+
         // Check content type before attempting to parse JSON
-        const contentType = response.headers.get('content-type');
-        if (response.ok && contentType && contentType.includes('application/json')) {
+        const contentType = response.headers.get("content-type");
+        if (
+          response.ok &&
+          contentType &&
+          contentType.includes("application/json")
+        ) {
           return await response.json();
         } else {
-          console.log("Edge function returned non-JSON response, falling back to direct API");
+          console.log(
+            "Edge function returned non-JSON response, falling back to direct API"
+          );
           console.log("Response status:", response.status);
           // For debugging, log the first 100 chars of the response
           const text = await response.text();
           console.log("Response preview:", text.substring(0, 100));
         }
       } catch (err) {
-        console.log("Edge function failed, falling back to direct API:", err.message);
+        console.log(
+          "Edge function failed, falling back to direct API:",
+          err.message
+        );
       }
-  
+
       // Fallback to direct API
       const groupId = process.env.REACT_APP_WOM_GROUP_ID || "2928";
       const response = await fetch(
@@ -39,23 +48,32 @@ const fetchers = {
       if (!response.ok) throw new Error(`WOM API error: ${response.status}`);
       return response.json();
     },
-  
+
     competitions: async () => {
       try {
         // Try edge function first
         const response = await fetch("/api/wom/competitions");
-        
+
         // Check content type before attempting to parse JSON
-        const contentType = response.headers.get('content-type');
-        if (response.ok && contentType && contentType.includes('application/json')) {
+        const contentType = response.headers.get("content-type");
+        if (
+          response.ok &&
+          contentType &&
+          contentType.includes("application/json")
+        ) {
           return await response.json();
         } else {
-          console.log("Edge function returned non-JSON response, falling back to direct API");
+          console.log(
+            "Edge function returned non-JSON response, falling back to direct API"
+          );
         }
       } catch (err) {
-        console.log("Edge function failed, falling back to direct API:", err.message);
+        console.log(
+          "Edge function failed, falling back to direct API:",
+          err.message
+        );
       }
-  
+
       // Fallback to direct API
       const groupId = process.env.REACT_APP_WOM_GROUP_ID || "2928";
       const response = await fetch(
@@ -65,23 +83,32 @@ const fetchers = {
       if (!response.ok) throw new Error(`WOM API error: ${response.status}`);
       return response.json();
     },
-  
+
     player: async (key, playerId) => {
       try {
         // Try edge function first
         const response = await fetch(`/api/wom/player?id=${playerId}`);
-        
+
         // Check content type before attempting to parse JSON
-        const contentType = response.headers.get('content-type');
-        if (response.ok && contentType && contentType.includes('application/json')) {
+        const contentType = response.headers.get("content-type");
+        if (
+          response.ok &&
+          contentType &&
+          contentType.includes("application/json")
+        ) {
           return await response.json();
         } else {
-          console.log("Edge function returned non-JSON response, falling back to direct API");
+          console.log(
+            "Edge function returned non-JSON response, falling back to direct API"
+          );
         }
       } catch (err) {
-        console.log("Edge function failed, falling back to direct API:", err.message);
+        console.log(
+          "Edge function failed, falling back to direct API:",
+          err.message
+        );
       }
-  
+
       // Fallback to direct API
       const response = await fetch(
         `https://api.wiseoldman.net/v2/players/${playerId}`,
@@ -130,76 +157,79 @@ const fetchers = {
       if (error) throw error;
       return data || [];
     },
-    
+
     // Inside the fetchers.supabase section:
     createEvent: async (eventData) => {
       const { data, error } = await supabase
-        .from('events')
+        .from("events")
         .insert([eventData])
         .select();
-      
+
       if (error) throw error;
       return data?.[0];
     },
-    
+
     updateEvent: async (eventData) => {
       const { data, error } = await supabase
-        .from('events')
+        .from("events")
         .update(eventData)
-        .eq('id', eventData.id)
+        .eq("id", eventData.id)
         .select();
-      
+
       if (error) throw error;
       return data?.[0];
     },
-    
+
     deleteEvent: async (eventId) => {
       const { error } = await supabase
-        .from('events')
+        .from("events")
         .delete()
-        .eq('id', eventId);
-      
+        .eq("id", eventId);
+
       if (error) throw error;
       return true;
     },
-    
+
     createClaimRequest: async (requestData) => {
       const { data, error } = await supabase
-        .from('claim_requests')
+        .from("claim_requests")
         .insert([requestData])
         .select();
-      
+
       if (error) throw error;
       return data?.[0];
     },
-    
+
     getUserPendingRequests: async (userId) => {
       if (!userId) return [];
-      
+
       const { data, error } = await supabase
         .from("claim_requests")
         .select("*, members(name,wom_id)")
         .eq("user_id", userId)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     },
-    
+
     refreshPlayerWomData: async (womId) => {
       try {
         // First fetch the data from WOM API
-        const response = await fetch(`https://api.wiseoldman.net/v2/players/${womId}`, {
-          headers: { 'User-Agent': 'Siege-Clan-Tracker/1.0' }
-        });
-        
+        const response = await fetch(
+          `https://api.wiseoldman.net/v2/players/${womId}`,
+          {
+            headers: { "User-Agent": "Siege-Clan-Tracker/1.0" },
+          }
+        );
+
         if (!response.ok) {
           throw new Error(`WOM API error: ${response.status}`);
         }
-        
+
         const womData = await response.json();
-        
+
         // Update the member in the database
         const memberData = {
           wom_id: womId,
@@ -208,13 +238,13 @@ const fetchers = {
           ehb: womData.ehb || 0,
           level: womData.level || 0,
           current_lvl: womData.level || 0,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         };
-        
+
         const { error } = await supabase.rpc("admin_upsert_member", {
-          member_data: memberData
+          member_data: memberData,
         });
-        
+
         if (error) throw error;
         return { success: true, data: womData };
       } catch (error) {
@@ -225,30 +255,32 @@ const fetchers = {
 
     claimRequests: async (key, options = {}) => {
       const { status } = options;
-      
+
       try {
         // Basic query - no fancy filters or complex query
         let query = supabase.from("claim_requests").select("*");
-        
+
         // Only apply filter if specifically requested
-        if (status && status !== 'all' && status !== null) {
+        if (status && status !== "all" && status !== null) {
           query = query.eq("status", status);
         }
-        
+
         // Order by most recent
         query = query.order("created_at", { ascending: false });
-        
+
         // Execute the query
         const { data: requests, error } = await query;
-        
+
         if (error) throw error;
         if (!requests || requests.length === 0) return [];
-    
+
         // Get usernames for each request
-        const userIds = [...new Set(requests
-          .filter(req => req.user_id)
-          .map(req => req.user_id))];
-        
+        const userIds = [
+          ...new Set(
+            requests.filter((req) => req.user_id).map((req) => req.user_id)
+          ),
+        ];
+
         let userMap = {};
         if (userIds.length > 0) {
           // Get usernames in a separate query
@@ -256,7 +288,7 @@ const fetchers = {
             .from("users")
             .select("id, username")
             .in("id", userIds);
-    
+
           if (!usersError && users) {
             userMap = users.reduce((map, user) => {
               map[user.id] = user.username;
@@ -264,39 +296,42 @@ const fetchers = {
             }, {});
           }
         }
-        
+
         // Add usernames to requests
-        return requests.map(request => ({
+        return requests.map((request) => ({
           ...request,
-          username: request.user_id && userMap[request.user_id] 
-            ? userMap[request.user_id] 
-            : "Unknown User"
+          username:
+            request.user_id && userMap[request.user_id]
+              ? userMap[request.user_id]
+              : "Unknown User",
         }));
       } catch (err) {
         console.error("Error in claimRequests fetcher:", err);
         return [];
       }
     },
-    
+
     userClaimRequests: async (key, userId) => {
       if (!userId) {
         console.log("userClaimRequests called with null userId");
         return [];
       }
-    
+
       try {
         console.log("Fetching claim requests for user:", userId);
-        
+
         // Simple query with minimal filter
         const { data, error } = await supabase
           .from("claim_requests")
           .select("*")
           .eq("user_id", userId)
           .order("created_at", { ascending: false });
-    
+
         if (error) throw error;
-        console.log(`Found ${data?.length || 0} claim requests for user ${userId}`);
-        
+        console.log(
+          `Found ${data?.length || 0} claim requests for user ${userId}`
+        );
+
         return data || [];
       } catch (err) {
         console.error("Error in userClaimRequests fetcher:", err);
@@ -567,6 +602,176 @@ const fetchers = {
       },
     },
 
+    publicGoals: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_goals")
+          .select(
+            `
+            id,
+            goal_type,
+            metric,
+            target_value,
+            current_value,
+            start_value,
+            target_date,
+            start_date,
+            completed,
+            completed_date,
+            public,
+            wom_id
+          `
+          )
+          .eq("public", true);
+        if (error) throw error;
+
+        // Format data to include player name
+        return data.map((goal) => ({
+          ...goal,
+          player_name:
+            goal.members?.name || goal.members?.wom_name || "Unknown Player",
+        }));
+      } catch (err) {
+        console.error("Error fetching public goals:", err);
+        return [];
+      }
+    },
+
+    races: {
+      create: async (raceData) => {
+        try {
+          // First create the race record
+          const { data: race, error: raceError } = await supabase
+            .from("races")
+            .insert([
+              {
+                creator_id: raceData.creator_id,
+                title: raceData.title,
+                description: raceData.description,
+                is_public: raceData.is_public,
+                status: "active",
+                end_date: raceData.end_date,
+              },
+            ])
+            .select()
+            .single();
+
+          if (raceError) throw raceError;
+
+          // Then create all participants
+          const participantRecords = raceData.participants.map(
+            (participant) => ({
+              race_id: race.id,
+              wom_id: participant.wom_id,
+              player_name: participant.player_name,
+              metric: participant.metric,
+              target_value: participant.target_value,
+              start_value: 0, // Will be updated by background job
+              current_value: 0, // Will be updated by background job
+            })
+          );
+
+          const { error: participantsError } = await supabase
+            .from("race_participants")
+            .insert(participantRecords);
+
+          if (participantsError) throw participantsError;
+
+          return race;
+        } catch (err) {
+          console.error("Error creating race:", err);
+          throw err;
+        }
+      },
+
+      list: async (userId, options = {}) => {
+        try {
+          const { includeCompleted = false, publicOnly = false } = options;
+
+          let query = supabase
+            .from("races")
+            .select(
+              `
+              id,
+              creator_id,
+              title,
+              description,
+              is_public,
+              status,
+              created_at,
+              end_date,
+              race_participants(*)
+            `
+            )
+            .order("created_at", { ascending: false });
+
+          if (!includeCompleted) {
+            query = query.neq("status", "completed");
+          }
+
+          if (userId && !publicOnly) {
+            // Show user's races + public races
+            query = query.or(`creator_id.eq.${userId},is_public.eq.true`);
+          } else if (publicOnly) {
+            // Show only public races
+            query = query.eq("is_public", true);
+          }
+
+          const { data, error } = await query;
+
+          if (error) throw error;
+          return data || [];
+        } catch (err) {
+          console.error("Error listing races:", err);
+          return [];
+        }
+      },
+
+      get: async (raceId) => {
+        try {
+          const { data, error } = await supabase
+            .from("races")
+            .select(
+              `
+              id,
+              creator_id,
+              title,
+              description,
+              is_public,
+              status,
+              created_at,
+              end_date,
+              race_participants(*)
+            `
+            )
+            .eq("id", raceId)
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (err) {
+          console.error(`Error getting race ${raceId}:`, err);
+          return null;
+        }
+      },
+
+      update: async (raceId, updates) => {
+        try {
+          const { data, error } = await supabase
+            .from("races")
+            .update(updates)
+            .eq("id", raceId)
+            .select();
+
+          if (error) throw error;
+          return data?.[0];
+        } catch (err) {
+          console.error(`Error updating race ${raceId}:`, err);
+          throw err;
+        }
+      },
+    },
+
     availableMembers: async () => {
       try {
         // Get all members
@@ -626,20 +831,90 @@ const fetchers = {
           runewatch_whitelisted_at: new Date().toISOString(),
         })
         .eq("wom_id", womId);
-      
+
       if (error) throw error;
       return true;
     },
-    
+
     deleteMember: async (womId) => {
       const { error } = await supabase
         .from("members")
         .delete()
         .eq("wom_id", womId);
-      
+
       if (error) throw error;
       return true;
     },
+    
+    anniversaries: async () => {
+      try {
+        // Get today's month and day
+        const today = new Date();
+        const month = today.getMonth() + 1; // JavaScript months are 0-indexed
+        const day = today.getDate();
+        
+        const { data, error } = await supabase
+          .from("members")
+          .select("wom_id, name, wom_name, join_date")
+          .not("join_date", "is", null);
+        
+        if (error) throw error;
+        
+        // Filter for members whose anniversary is today
+        const anniversaries = data.filter(member => {
+          const joinDate = new Date(member.join_date);
+          return joinDate.getMonth() + 1 === month && 
+                 joinDate.getDate() === day &&
+                 joinDate.getFullYear() < today.getFullYear(); // Must be at least 1 year
+        }).map(member => {
+          const joinDate = new Date(member.join_date);
+          const years = today.getFullYear() - joinDate.getFullYear();
+          return {
+            ...member,
+            years
+          };
+        });
+        
+        return anniversaries;
+      } catch (err) {
+        console.error("Error fetching anniversaries:", err);
+        return [];
+      }
+    },
+        
+    discord: {
+      sendAnniversary: async (member) => {
+        try {
+          // Check if we're in development mode
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Development mode - simulating Discord send:', member);
+            return { success: true, message: 'Test mode: Simulated Discord send' };
+          }
+          
+          const response = await fetch('/.netlify/functions/discord', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'anniversary',
+              memberId: member.wom_id,
+              memberName: member.name || member.wom_name,
+              years: member.years
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to send to Discord');
+          }
+          
+          return await response.json();
+        } catch (err) {
+          console.error('Discord webhook error:', err);
+          throw err;
+        }
+      }
+    }
   },
 };
 
@@ -991,6 +1266,86 @@ export function useMembersAdmin() {
     error,
     refreshMembers: mutate,
     updateMember,
+  };
+}
+
+export function usePublicGoals() {
+  const { fetchers } = useData();
+  const { data, loading, error } = useSWR(
+    "public-goals",
+    fetchers.supabase.publicGoals
+  );
+
+  return {
+    publicGoals: data || [],
+    loading,
+    error,
+  };
+}
+
+export function useRaces(userId) {
+  const { fetchers } = useData();
+  const [activeRaces, setActiveRaces] = useState([]);
+  const [publicRaces, setPublicRaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchRaces = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get user's races (public and private)
+      if (userId) {
+        const userRaces = await fetchers.supabase.races.list(userId);
+        setActiveRaces(userRaces);
+      }
+
+      // Get public races from other users
+      const allPublicRaces = await fetchers.supabase.races.list(null, {
+        publicOnly: true,
+      });
+      setPublicRaces(allPublicRaces);
+    } catch (err) {
+      console.error("Error fetching races:", err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRaces();
+  }, [userId]);
+
+  return {
+    activeRaces,
+    publicRaces,
+    loading,
+    error,
+    refreshRaces: fetchRaces,
+    createRace: async (data) => {
+      const result = await fetchers.supabase.races.create(data);
+      fetchRaces(); // Refresh races after creating one
+      return result;
+    },
+    getRace: fetchers.supabase.races.get,
+    updateRace: async (raceId, updates) => {
+      const result = await fetchers.supabase.races.update(raceId, updates);
+      fetchRaces(); // Refresh races after update
+      return result;
+    },
+  };
+}
+
+export function useAnniversaries() {
+  const { fetchers } = useData();
+  const { data, error } = useSWR('todays-anniversaries', fetchers.supabase.anniversaries);
+  
+  return {
+    anniversaries: data || [],
+    loading: !error && !data,
+    error
   };
 }
 

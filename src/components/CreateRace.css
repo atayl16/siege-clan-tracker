@@ -1,0 +1,149 @@
+.ui-race-form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ui-race-form-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.ui-section-title {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.ui-participant-card {
+  background-color: var(--bg-card-dark);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ui-participant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ui-participant-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ui-form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ui-form-group {
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.ui-form-group-half {
+  width: calc(50% - 0.5rem);
+}
+
+.ui-form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ui-form-input,
+.ui-form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.ui-form-input:focus,
+.ui-form-textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.ui-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.ui-toggle-container {
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--bg-card-dark);
+  border: 1px solid var(--border-color);
+}
+
+.ui-toggle-button {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  background-color: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.ui-toggle-button.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.ui-toggle-button:not(.active):hover {
+  background-color: var(--bg-hover);
+}
+
+.ui-add-participant-btn {
+  margin-bottom: 1.5rem;
+}
+
+.ui-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.ui-form-error {
+  background-color: var(--danger-bg);
+  color: var(--danger-color);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .ui-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .ui-form-group-half {
+    width: 100%;
+  }
+}

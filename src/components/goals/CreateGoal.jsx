@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usePlayerMetrics, usePlayerStats, useGoals } from "../../context/DataContext";
 import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes } from "react-icons/fa";
 import { titleize } from '../../utils/stringUtils';
+import MetricSelector from '../MetricSelector';
 
 // Import UI components
 import Button from "../ui/Button";
@@ -19,7 +20,6 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   const [isPublic, setIsPublic] = useState(false);
 
   // Use context hooks instead of direct API calls
-  const { metrics, loading: loadingMetrics } = usePlayerMetrics(goalType);
   const { stats: currentStats, loading: loadingStats } = usePlayerStats(
     player.wom_id, 
     goalType, 
@@ -28,11 +28,9 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   const { createGoal, loading: submitting } = useGoals();
 
   // Set initial selected metric when metrics load
-  useEffect(() => {
-    if (metrics?.length > 0 && !selectedMetric) {
-      setSelectedMetric(metrics[0]?.metric || "");
-    }
-  }, [metrics, selectedMetric]);
+  const handleMetricChange = (metric) => {
+    setSelectedMetric(metric);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -133,9 +131,9 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
     <div className="ui-create-goal-container">
       <div className="ui-goal-form-header">
         <h3>New Goal for {titleize(player.name)}</h3>
-        <Button 
-          variant="text" 
-          size="sm" 
+        <Button
+          variant="text"
+          size="sm"
           onClick={onCancel}
           icon={<FaTimes />}
           className="ui-close-button"
@@ -173,27 +171,13 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
           </div>
 
           <div className="ui-form-group">
-            {loadingMetrics ? (
-              <div className="ui-loading-indicator">
-                <div className="ui-loading-spinner"></div>
-                <div className="ui-loading-text">Loading options...</div>
-              </div>
-            ) : (
-              <select
-                value={selectedMetric}
-                onChange={(e) => setSelectedMetric(e.target.value)}
-                required
-                disabled={loadingMetrics}
-                className="ui-form-select"
-              >
-                <option value="">-- Select {goalType} --</option>
-                {metrics?.map((metric) => (
-                  <option key={metric.metric} value={metric.metric}>
-                    {metric.name}
-                  </option>
-                ))}
-              </select>
-            )}
+            <MetricSelector
+              metricType={goalType}
+              selectedMetric={selectedMetric}
+              onMetricChange={handleMetricChange}
+              disabled={false}
+              required={true}
+            />
           </div>
 
           {loadingStats ? (
@@ -222,7 +206,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
             </Card>
           ) : (
             <div className="ui-message ui-message-warning">
-              <span>Could not load stats for {selectedMetric}. Please try a different {goalType}.</span>
+              <span>
+                Could not load stats for {selectedMetric}. Please try a
+                different {goalType}.
+              </span>
             </div>
           )}
         </div>
@@ -231,8 +218,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
         <div className="ui-form-group">
           <label className="ui-form-label">Target Type</label>
           <div className="ui-option-cards">
-            <Card 
-              className={`ui-option-card ${targetMode === "gain" ? "ui-selected" : ""}`}
+            <Card
+              className={`ui-option-card ${
+                targetMode === "gain" ? "ui-selected" : ""
+              }`}
               onClick={() => setTargetMode("gain")}
               variant={targetMode === "gain" ? "primary" : "dark"}
               clickable
@@ -251,7 +240,9 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
             </Card>
 
             <Card
-              className={`ui-option-card ${targetMode === "total" ? "ui-selected" : ""}`}
+              className={`ui-option-card ${
+                targetMode === "total" ? "ui-selected" : ""
+              }`}
               onClick={() => setTargetMode("total")}
               variant={targetMode === "total" ? "primary" : "dark"}
               clickable
@@ -363,7 +354,9 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
           <Button
             type="submit"
             variant="primary"
-            disabled={submitting || !selectedMetric || !targetValue || loadingStats}
+            disabled={
+              submitting || !selectedMetric || !targetValue || loadingStats
+            }
           >
             {submitting ? "Creating..." : "Create Goal"}
           </Button>

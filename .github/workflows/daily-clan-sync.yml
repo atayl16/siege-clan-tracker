@@ -2,8 +2,8 @@ name: Daily Clan Data Sync
 
 on:
   schedule:
-    # Run at 3:00 UTC every day
-    - cron: '0 3 * * *'
+    # Run at 2pm UTC every day
+    - cron: '0 14 * * *'
   workflow_dispatch:
     # Allows manual triggering with job selection
     inputs:
@@ -16,6 +16,7 @@ on:
           - wom-sync
           - wom-events
           - runewatch
+          - anniversaries
         default: 'all'
 
 jobs:

@@ -1,7 +1,7 @@
 import React from "react";
 import { useMembers } from "../context/DataContext";
-import DataSelector from "../ui/DataSelector";
-import Badge from "./Badge";
+import DataSelector from "./ui/DataSelector";
+import Badge from "./ui/Badge";
 import "./MemberSelector.css";
 
 export default function MemberSelector({

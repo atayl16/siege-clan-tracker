@@ -1,0 +1,92 @@
+.ui-progress-container {
+  --progress-height: 8px;
+  width: 100%;
+}
+
+.ui-progress-track {
+  width: 100%;
+  height: var(--progress-height);
+  background-color: var(--bg-accent);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.ui-progress-bar {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.6s ease;
+}
+
+.ui-progress-primary {
+  background-color: var(--primary-color);
+}
+
+.ui-progress-secondary {
+  background-color: var(--secondary-color);
+}
+
+.ui-progress-success {
+  background-color: var(--success-color);
+}
+
+.ui-progress-danger {
+  background-color: var(--danger-color);
+}
+
+.ui-progress-warning {
+  background-color: var(--warning-color);
+}
+
+.ui-progress-info {
+  background-color: var(--info-color);
+}
+
+.ui-progress-animated {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+.ui-progress-label {
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+@keyframes progress-bar-stripes {
+  from {
+    background-position: 1rem 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* For when we need larger progress bars with embedded labels */
+.ui-progress-large {
+  --progress-height: 24px;
+}
+
+.ui-progress-large .ui-progress-label {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-weight: 500;
+  margin-top: 0;
+  height: var(--progress-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
