@@ -3,7 +3,6 @@ import { useData, useClaimRequests } from "../context/DataContext";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
 import Badge from "./ui/Badge";
-import EmptyState from "./ui/EmptyState";
 import { FaCheckCircle, FaUser, FaCalendarAlt, FaExclamationTriangle, FaCheck, FaTimes, FaUserPlus, FaSync } from "react-icons/fa";
 
 import "./ClaimRequestsPreview.css";
@@ -137,21 +136,10 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
 
   if (pendingRequests.length === 0) {
     return (
-      <EmptyState
-        title="No Character Claims"
-        description="There are no pending character claim requests."
-        icon={<FaUserPlus className="ui-empty-state-icon" />}
-        action={
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={refreshRequests} 
-            icon={<FaSync />}
-          >
-            Refresh
-          </Button>
-        }
-      />
+      <div className="ui-no-alerts">
+        <FaCheck className="ui-success-icon" />
+        <span>No pending claim requests</span>
+      </div>
     );
   }
 

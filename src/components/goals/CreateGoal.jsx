@@ -5,7 +5,6 @@ import { titleize } from '../../utils/stringUtils';
 
 // Import UI components
 import Button from "../ui/Button";
-import FormInput from "../ui/FormInput";
 import Card from "../ui/Card";
 import "./CreateGoal.css";
 

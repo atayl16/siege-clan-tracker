@@ -1,27 +1,29 @@
 export default async (_request, _context) => {
+  // Add debug logging
+  console.log("Edge function: wom-group executing");
+  
   // Get WOM Group ID from environment using Deno.env.get() instead of process.env
-  const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID") || '2928'; // Default from your code
+  const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID") || '2928';
+  console.log("WOM_GROUP_ID:", WOM_GROUP_ID);
   
   // Cache for 15 minutes (900 seconds)
   const TTL = 900;
   
   try {
     // Fetch from WOM API
+    console.log("Fetching from WOM API...");
     const womResponse = await fetch(`https://api.wiseoldman.net/v2/groups/${WOM_GROUP_ID}?includeMemberships=true`, {
       headers: { 'User-Agent': 'Siege-Clan-Tracker/1.0' }
     });
     
+    console.log("WOM response status:", womResponse.status);
+    
     if (!womResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: `WOM API Error: ${womResponse.status}` }), 
-        { 
-          status: womResponse.status,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
+      throw new Error(`WOM API returned status: ${womResponse.status}`);
     }
     
     const data = await womResponse.json();
+    console.log("WOM data received successfully");
     
     // Return with caching headers
     return new Response(JSON.stringify(data), {
@@ -33,6 +35,7 @@ export default async (_request, _context) => {
       }
     });
   } catch (error) {
+    console.error("Edge function error:", error);
     return new Response(
       JSON.stringify({ error: `Failed to fetch group data: ${error.message}` }),
       {

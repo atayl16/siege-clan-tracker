@@ -13,6 +13,7 @@ import Card from "../ui/Card";
 import "./AdminMemberTable.css";
 
 export default function AdminMemberTable({
+  members,
   onEditClick,
   onDeleteClick,
   onRefresh,
@@ -23,9 +24,6 @@ export default function AdminMemberTable({
 
   // Get WOM data from context
   const { groupData, loading: womLoading } = useWomGroup();
-
-  // Get members data from context
-  const { members } = useMembers();
 
   // Enhanced member data with WOM data
   const enhancedMembers = useMemo(() => {

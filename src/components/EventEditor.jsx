@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useEvents } from '../context/DataContext';
-import { supabase } from '../supabaseClient';
 import { FaCalendar, FaClock, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 // Import UI components
@@ -28,34 +27,70 @@ export default function EventEditor({
   // Get refreshEvents function from context
   const { refreshEvents } = useEvents();
 
-  // Detect user's timezone on component mount
+  // Fix the useEffect that sets default times
   useEffect(() => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setUserTimezone(timezone);
-
-    // Set default start/end times with 15-minute intervals
-    const now = new Date();
-
-    // Round minutes to next 15-minute interval
-    const mins = now.getMinutes();
-    const roundedMins = Math.ceil(mins / 15) * 15;
-    now.setMinutes(roundedMins, 0, 0);
-
-    // Format for datetime-local input (YYYY-MM-DDThh:mm)
-    const startTime = now.toISOString().slice(0, 16);
-
-    // End time is 2 hours after start time
-    const endTime = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 16);
-
-    // Set default times in state
-    setEventData((prev) => ({
-      ...prev,
-      start_date: prev.start_date || startTime,
-      end_date: prev.end_date || endTime,
-    }));
-  }, []);
+  
+    // Only set default times if no times are already provided
+    if (!event?.start_date && !event?.end_date) {
+      // Create today's date at 8:00 PM local time
+      const today = new Date();
+      today.setHours(20, 0, 0, 0); // 8:00 PM
+  
+      // Create end time 2 hours later (10:00 PM)
+      const endTime = new Date(today);
+      endTime.setHours(22, 0, 0, 0);
+  
+      setEventData(prev => ({
+        ...prev,
+        start_date: today.toISOString(),
+        end_date: endTime.toISOString()
+      }));
+    }
+  }, [event]);
+  
+  // Fix the time display and manipulation functions
+  const getHourFromISOString = (isoString) => {
+    if (!isoString) return 20; // Default to 8:00 PM
+    const date = new Date(isoString);
+    return date.getHours();
+  };
+  
+  const getMinuteFromISOString = (isoString) => {
+    if (!isoString) return 0;
+    const date = new Date(isoString);
+    return date.getMinutes();
+  };
+  
+  const formatTime = (dateString) => {
+    if (!dateString) return "None";
+    try {
+      const date = new Date(dateString);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const period = hours >= 12 ? "PM" : "AM";
+      const hour12 = hours % 12 || 12;
+      return `${hour12}:${minutes.toString().padStart(2, "0")} ${period}`;
+    } catch (err) {
+      console.error("Error formatting time:", err);
+      return "Invalid time";
+    }
+  };
+  
+  // Fix the setTime function
+  const setTime = (fieldName, hour, minute) => {
+    try {
+      const currentDate = new Date(eventData[fieldName] || new Date());
+      currentDate.setHours(hour, minute, 0, 0);
+      setEventData({
+        ...eventData,
+        [fieldName]: currentDate.toISOString()
+      });
+    } catch (err) {
+      console.error("Error in setTime:", err);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -94,16 +129,16 @@ export default function EventEditor({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!eventData.name.trim() || !eventData.start_date || !eventData.end_date) {
       setError("Please fill in all required fields");
       return;
     }
-
+  
     try {
       setSaving(true);
       setError(null);
-
+  
       // Ensure times are aligned to 15-minute intervals before saving
       const startDate = roundDateToInterval(
         new Date(eventData.start_date)
@@ -111,141 +146,43 @@ export default function EventEditor({
       const endDate = roundDateToInterval(
         new Date(eventData.end_date)
       ).toISOString();
-
-      let savedEvent;
-
-      if (isEditing) {
-        // Update existing event
-        const updatedEvent = {
-          ...eventData,
-          id: event.id,
-          start_date: startDate,
-          end_date: endDate
-        };
-
-        const { data, error: updateError } = await supabase
-          .from("events")
-          .update({
-            name: updatedEvent.name,
-            type: updatedEvent.type,
+  
+      // Build the event object but DON'T save it directly from this component
+      const updatedEvent = isEditing
+        ? {
+            ...eventData,
+            id: event.id,
+            start_date: startDate,
+            end_date: endDate
+          }
+        : {
+            name: eventData.name,
+            type: eventData.type,
             start_date: startDate,
             end_date: endDate,
-            description: updatedEvent.description,
-          })
-          .eq("id", event.id)
-          .select();
-
-        if (updateError) throw updateError;
-        
-        savedEvent = data[0];
-      } else {
-        // Create new event - remove any ID to let database auto-generate it
-        const newEvent = {
-          name: eventData.name,
-          type: eventData.type,
-          start_date: startDate,
-          end_date: endDate,
-          is_wom: false, // Custom events are never WOM events
-          description: eventData.description,
-          status: "upcoming",
-        };
-
-        const { data, error: insertError } = await supabase
-          .from("events")
-          .insert([newEvent])
-          .select();
-
-        if (insertError) throw insertError;
-        
-        savedEvent = data[0];
-      }
-
-      // Refresh the events data in context
-      refreshEvents();
+            is_wom: false, // Custom events are never WOM events
+            description: eventData.description,
+            status: "upcoming",
+          };
+  
+      // Pass the event data to the parent WITHOUT saving here
+      onSave(updatedEvent);
       
-      // Call the parent component's onSave function with the saved event
-      onSave(savedEvent);
+      // Don't call refreshEvents() here - let the parent handle any refreshing
     } catch (err) {
-      console.error(`Error ${isEditing ? "updating" : "saving"} event:`, err);
-      setError(
-        `Failed to ${isEditing ? "update" : "save"} event: ${err.message}`
-      );
+      console.error(`Error preparing event:`, err);
+      setError(`Failed to prepare event data: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
-  // Helper function to round a date to the nearest 15-minute interval
   const roundDateToInterval = (date) => {
     const minutes = date.getMinutes();
     const roundedMinutes = Math.round(minutes / 15) * 15;
     const newDate = new Date(date);
     newDate.setMinutes(roundedMinutes, 0, 0);
     return newDate;
-  };
-
-  // Time selector handlers
-  const setTime = (fieldName, hour, minute) => {
-    try {
-      // Get current ISO date string from state
-      const currentDateStr = eventData[fieldName] || new Date().toISOString();
-
-      // Extract just the date part (YYYY-MM-DD)
-      const datePart = currentDateStr.substring(0, 10);
-
-      // Manually construct a new ISO string with the exact hour/minute
-      // This bypasses any timezone conversions
-      const newTimeStr = `${datePart}T${hour
-        .toString()
-        .padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00.000Z`;
-
-      // Update state with the new string
-      setEventData({
-        ...eventData,
-        [fieldName]: newTimeStr,
-      });
-    } catch (err) {
-      console.error("Error in setTime:", err);
-    }
-  };
-
-  // Get hour and minute values directly from ISO string
-  const getHourFromISOString = (isoString) => {
-    if (!isoString) return 12; // Default
-    // For ISO strings that end with Z (UTC), we need to extract the hour directly
-    if (isoString.endsWith("Z")) {
-      return parseInt(isoString.substring(11, 13), 10);
-    }
-    // Otherwise use substring for local time strings
-    return parseInt(isoString.substring(11, 13), 10);
-  };
-
-  const getMinuteFromISOString = (isoString) => {
-    if (!isoString) return 0; // Default
-    // For ISO strings that end with Z (UTC), we need to extract the minute directly
-    if (isoString.endsWith("Z")) {
-      return parseInt(isoString.substring(14, 16), 10);
-    }
-    // Otherwise use substring for local time strings
-    return parseInt(isoString.substring(14, 16), 10);
-  };
-
-  // Format time for display directly from ISO string
-  const formatTime = (dateString) => {
-    if (!dateString) return "None";
-    try {
-      // Extract hours and minutes directly from the ISO string
-      const hours = getHourFromISOString(dateString);
-      const minutes = getMinuteFromISOString(dateString);
-
-      // Format in 12-hour format with AM/PM
-      const period = hours >= 12 ? "PM" : "AM";
-      const hour12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
-      return `${hour12}:${minutes.toString().padStart(2, "0")} ${period}`;
-    } catch (err) {
-      console.error("Error formatting time:", err);
-      return "Invalid time";
-    }
   };
 
   return (
@@ -264,7 +201,9 @@ export default function EventEditor({
 
       <form onSubmit={handleSubmit} className="ui-event-form">
         <div className="ui-form-group">
-          <label htmlFor="event-name" className="ui-form-label">Event Name*</label>
+          <label htmlFor="event-name" className="ui-form-label">
+            Event Name*
+          </label>
           <input
             type="text"
             id="event-name"
@@ -278,7 +217,9 @@ export default function EventEditor({
         </div>
 
         <div className="ui-form-group">
-          <label htmlFor="event-type" className="ui-form-label">Event Type</label>
+          <label htmlFor="event-type" className="ui-form-label">
+            Event Type
+          </label>
           <select
             id="event-type"
             name="type"
@@ -327,7 +268,7 @@ export default function EventEditor({
 
             <div className="ui-form-group">
               <label htmlFor="start-time" className="ui-form-label">
-                <FaClock className="ui-icon-left" /> Start Time* 
+                <FaClock className="ui-icon-left" /> Start Time*
                 <span className="ui-timezone-label">({userTimezone})</span>
               </label>
               <div className="ui-time-picker">
@@ -468,20 +409,21 @@ export default function EventEditor({
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      // Set to 1 hour after start time
-                      const startDate = new Date(
-                        eventData.start_date || new Date()
-                      );
-                      const endDate = new Date(
-                        startDate.getTime() + 1 * 60 * 60 * 1000
-                      );
-                      setEventData({
-                        ...eventData,
-                        end_date: endDate.toISOString().slice(0, 16),
-                      });
+                      // Create a new Date from the start date
+                      const startDate = new Date(eventData.start_date);
+
+                      // Create end time exactly 1 hour after start time
+                      const endDate = new Date(startDate);
+                      endDate.setHours(endDate.getHours() + 2);
+
+                      // Update only the end date
+                      setEventData((prev) => ({
+                        ...prev,
+                        end_date: endDate.toISOString(),
+                      }));
                     }}
                   >
-                    + 1 hour
+                    2-Hour Event
                   </Button>
 
                   <Button
@@ -489,37 +431,21 @@ export default function EventEditor({
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      // Set to 1 week after start time
-                      const startDate = new Date(
-                        eventData.start_date || new Date()
-                      );
-                      const endDate = new Date(
-                        startDate.getTime() + 7 * 24 * 60 * 60 * 1000
-                      );
-                      setEventData({
-                        ...eventData,
-                        end_date: endDate.toISOString().slice(0, 16),
-                      });
-                    }}
-                  >
-                    + 1 week
-                  </Button>
+                      // Create a new Date from the start date
+                      const startDate = new Date(eventData.start_date);
 
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      // Set to 8:00 PM
-                      const date = new Date(eventData.end_date || new Date());
-                      date.setHours(20, 0, 0, 0);
-                      setEventData({
-                        ...eventData,
-                        end_date: date.toISOString().slice(0, 16),
-                      });
+                      // Create a new end date exactly one week later
+                      const endDate = new Date(startDate);
+                      endDate.setDate(endDate.getDate() + 7);
+
+                      // Update only the end date
+                      setEventData((prev) => ({
+                        ...prev,
+                        end_date: endDate.toISOString(),
+                      }));
                     }}
                   >
-                    8:00 PM
+                    1-Week Event
                   </Button>
                 </div>
 
@@ -537,7 +463,9 @@ export default function EventEditor({
         </div>
 
         <div className="ui-form-group">
-          <label htmlFor="description" className="ui-form-label">Description</label>
+          <label htmlFor="description" className="ui-form-label">
+            Description
+          </label>
           <textarea
             id="description"
             name="description"
@@ -550,9 +478,9 @@ export default function EventEditor({
         </div>
 
         <div className="ui-form-actions">
-          <Button 
-            type="submit" 
-            variant="primary" 
+          <Button
+            type="submit"
+            variant="primary"
             disabled={saving}
             icon={<FaCheck />}
           >

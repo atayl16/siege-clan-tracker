@@ -92,6 +92,16 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
       setError("You must be logged in to request a player claim");
       return;
     }
+    
+    // Find the selected member from the availableMembers array
+    const memberObj = availableMembers?.find(member => 
+      member.wom_id === parseInt(selectedMember, 10)
+    );
+    
+    if (!memberObj) {
+      setError("Please select a valid player");
+      return;
+    }
   
     setLoading(true);
     try {
@@ -104,7 +114,12 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
         status: "pending",
       });
       
-      setNotification("Your claim request has been submitted");
+      setNotification({
+        type: "success",
+        message: "Your claim request has been submitted"
+      });
+      setSelectedMember("");
+      setMessage("");
       refreshRequests();
     } catch (err) {
       console.error("Error creating claim request:", err);

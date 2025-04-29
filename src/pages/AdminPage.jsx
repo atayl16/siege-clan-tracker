@@ -81,9 +81,13 @@ export default function AdminPage() {
   
   // Filter members based on search term
   useEffect(() => {
-    if (!members) return;
+    if (!members) {
+      console.log("No members data available yet");
+      return;
+    }
     
     if (!searchTerm.trim()) {
+      console.log(`Setting all ${members.length} members as filteredMembers`);
       setFilteredMembers(members);
       return;
     }
@@ -95,8 +99,16 @@ export default function AdminPage() {
       (member.womrole || "").toLowerCase().includes(lowercaseSearch)
     );
     
+    console.log(`Search term "${searchTerm}" matched ${filtered.length} members`);
     setFilteredMembers(filtered);
   }, [searchTerm, members]);
+  
+  // Make sure filteredMembers is properly initialized when members data is loaded
+  useEffect(() => {
+    if (members && members.length > 0) {
+      setFilteredMembers(members);
+    }
+  }, [members]);
 
   // Focus search input when switching to members tab
   useEffect(() => {
@@ -554,17 +566,6 @@ export default function AdminPage() {
             ) : (
               <>
                 <div className="stats-and-table">
-                  <StatGroup className="stats-panel">
-                    <StatGroup.Stat
-                      label="Total Members"
-                      value={members?.length || 0}
-                    />
-                    <StatGroup.Stat
-                      label="Search Results"
-                      value={filteredMembers?.length || 0}
-                    />
-                  </StatGroup>
-
                   <AdminMemberTable
                     members={filteredMembers || []}
                     onEditClick={(member) => {

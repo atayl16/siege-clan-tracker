@@ -22,25 +22,42 @@ export default async (request, _context) => {
     );
   }
   
+  // Handle conditional requests
+  const ifNoneMatch = request.headers.get('If-None-Match');
+  const etag = `W/"members-${new Date().toISOString().split('T')[0]}"`;
+  
+  if (ifNoneMatch === etag) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        'ETag': etag,
+        'Cache-Control': `public, max-age=${TTL}`,
+        'CDN-Cache-Control': `public, max-age=${TTL}`,
+      }
+    });
+  }
+  
   try {
     // Initialize Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Query members
+    // Get only necessary fields instead of '*'
     const { data, error } = await supabase
       .from('members')
-      .select('*')
+      .select('wom_id, name, wom_name, current_lvl, current_xp, siege_score, active, runewatch_reported, runewatch_whitelisted')
+      .eq('active', true) // Only get active members
       .order('name');
     
     if (error) throw error;
     
-    // Return with caching headers
+    // Return with caching headers and ETag
     return new Response(JSON.stringify(data), {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': `public, max-age=${TTL}`,
         'CDN-Cache-Control': `public, max-age=${TTL}`,
-        'Netlify-Cache-Tag': 'supabase-members'
+        'Netlify-Cache-Tag': 'supabase-members',
+        'ETag': etag
       }
     });
   } catch (error) {

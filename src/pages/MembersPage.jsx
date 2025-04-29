@@ -162,7 +162,6 @@ export default function MembersPage() {
           tabId="members"
           label="Members"
           icon={<FaUsers />}
-          badge={members?.length || 0}
         >
           <div className="ui-content-header">
             <h2>Clan Members</h2>
@@ -274,28 +273,6 @@ export default function MembersPage() {
                 </Card.Body>
               </Card>
             </div>
-
-            <h3 className="ui-section-title">Events & Rankings</h3>
-            <div className="ui-overview-card-row">
-              <Card className="ui-overview-card" variant="dark">
-                <Card.Header>Events</Card.Header>
-                <Card.Body>
-                  <EventsTable
-                    events={events || []}
-                    activeLimit={10}
-                    upcomingLimit={10}
-                    completedLimit={2}
-                    hideHeaders={true}
-                  />
-                </Card.Body>
-              </Card>
-              <Card className="ui-overview-card" variant="dark">
-                <Card.Header>Top Players</Card.Header>
-                <Card.Body>
-                  <Leaderboard members={members || []} limit={3} compact={true} />
-                </Card.Body>
-              </Card>
-            </div>
           </div>
         </Tabs.Tab>
 
@@ -303,7 +280,6 @@ export default function MembersPage() {
           tabId="events"
           label="Events"
           icon={<FaCalendarAlt />}
-          badge={events?.length || 0}
         >
           <div className="ui-content-header">
             <h2>Clan Events</h2>

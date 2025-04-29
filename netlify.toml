@@ -2,6 +2,7 @@
   command = "npm run build"
   publish = "build"
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"  # Explicitly specify edge functions dir
   
 # Redirects for client-side routing and API
 [[redirects]]
@@ -42,3 +43,9 @@
   for = "/admin/*"
   [headers.values]
     Cache-Control = "no-store, max-age=0"
+
+[dev]
+  command = "npm start"
+  targetPort = 3001
+  port = 8888
+  framework = "#custom"

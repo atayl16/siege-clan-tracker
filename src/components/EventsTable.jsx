@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { useWomCompetitions, useEvents } from '../context/DataContext';
+import { useWomCompetitions } from '../context/DataContext';
 import "./EventsTable.css";
 
 export default function EventsTable({ 
+  events = [],
   activeLimit = null, 
   upcomingLimit = null, 
   completedLimit = null,
@@ -11,9 +12,6 @@ export default function EventsTable({
 }) {
   // Get competitions data from context
   const { competitions, loading: womLoading } = useWomCompetitions();
-  
-  // Get events data from context
-  const { events, loading: eventsLoading } = useEvents();
   
   // Combine local events with WOM competitions
   const combinedEvents = useMemo(() => {
@@ -132,7 +130,7 @@ export default function EventsTable({
   };
 
   // Show loading state when fetching WOM data
-  if (womLoading || eventsLoading) {
+  if (womLoading) {
     return <div className="events-loading">Loading events...</div>;
   }
 

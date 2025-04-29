@@ -13,11 +13,22 @@ const fetchers = {
       try {
         // Try edge function first
         const response = await fetch("/api/wom/group");
-        if (response.ok) return response.json();
+        
+        // Check content type before attempting to parse JSON
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          return await response.json();
+        } else {
+          console.log("Edge function returned non-JSON response, falling back to direct API");
+          console.log("Response status:", response.status);
+          // For debugging, log the first 100 chars of the response
+          const text = await response.text();
+          console.log("Response preview:", text.substring(0, 100));
+        }
       } catch (err) {
-        console.log("Edge function failed, falling back to direct API");
+        console.log("Edge function failed, falling back to direct API:", err.message);
       }
-
+  
       // Fallback to direct API
       const groupId = process.env.REACT_APP_WOM_GROUP_ID || "2928";
       const response = await fetch(
@@ -27,16 +38,23 @@ const fetchers = {
       if (!response.ok) throw new Error(`WOM API error: ${response.status}`);
       return response.json();
     },
-
+  
     competitions: async () => {
       try {
         // Try edge function first
         const response = await fetch("/api/wom/competitions");
-        if (response.ok) return response.json();
+        
+        // Check content type before attempting to parse JSON
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          return await response.json();
+        } else {
+          console.log("Edge function returned non-JSON response, falling back to direct API");
+        }
       } catch (err) {
-        console.log("Edge function failed, falling back to direct API");
+        console.log("Edge function failed, falling back to direct API:", err.message);
       }
-
+  
       // Fallback to direct API
       const groupId = process.env.REACT_APP_WOM_GROUP_ID || "2928";
       const response = await fetch(
@@ -46,16 +64,23 @@ const fetchers = {
       if (!response.ok) throw new Error(`WOM API error: ${response.status}`);
       return response.json();
     },
-
+  
     player: async (key, playerId) => {
       try {
         // Try edge function first
         const response = await fetch(`/api/wom/player?id=${playerId}`);
-        if (response.ok) return response.json();
+        
+        // Check content type before attempting to parse JSON
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          return await response.json();
+        } else {
+          console.log("Edge function returned non-JSON response, falling back to direct API");
+        }
       } catch (err) {
-        console.log("Edge function failed, falling back to direct API");
+        console.log("Edge function failed, falling back to direct API:", err.message);
       }
-
+  
       // Fallback to direct API
       const response = await fetch(
         `https://api.wiseoldman.net/v2/players/${playerId}`,
@@ -377,7 +402,8 @@ const fetchers = {
       }
     },
 
-    playerMetrics: async (key, goalType) => {
+    playerMetrics: async (key) => {
+      const goalType = key[1]; // Get the goal type from the key
       // Return available metrics based on goal type
       let metrics = [];
 

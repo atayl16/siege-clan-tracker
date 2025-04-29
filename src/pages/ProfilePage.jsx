@@ -221,7 +221,6 @@ export default function ProfilePage() {
           tabId="requests" 
           label="Requests" 
           icon={<FaClock />}
-          badge={userRequests.length > 0 ? userRequests.length : null}
         >
           <div className="tab-header">
             <h2>Character Claims</h2>
