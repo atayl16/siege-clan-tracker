@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import useSWR, { SWRConfig } from "swr";
 import { supabase } from "../supabaseClient";
+import { fetchPlayerStats } from "../utils/womApi";
 
 // Create the context
 const DataContext = createContext();
@@ -870,21 +871,50 @@ export function usePlayerMetrics(goalType) {
   };
 }
 
-export function usePlayerStats(playerId, goalType, metric) {
-  const { fetchers } = useData();
-  const key = `player-stats-${playerId}-${goalType}-${metric}`;
+export function usePlayerStats(womId, type, metric) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { data, error, mutate } = useSWR(
-    playerId && goalType && metric ? [key, playerId, goalType, metric] : null,
-    fetchers.supabase.playerStats
-  );
+  useEffect(() => {
+    async function fetchStats() {
+      if (!womId || !type || !metric) {
+        setLoading(false);
+        setStats(null);
+        return;
+      }
 
-  return {
-    stats: data,
-    loading: !error && data === undefined && playerId && goalType && metric,
-    error,
-    refreshStats: mutate,
-  };
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log(`Fetching ${type} stats for ${metric}...`);
+        // Fixed: Using "type" instead of undefined "goalType" variable
+        const metricData = await fetchPlayerStats(womId, type, metric);
+        
+        // No need for additional processing - fetchPlayerStats already returns the metric data directly
+        console.log(`Got ${type} stats for ${metric}:`, metricData);
+        
+        if (!metricData || 
+            (type === 'skill' && metricData.experience === 0 && metric !== 'overall') ||
+            (type === 'boss' && metricData.kills === 0)) {
+          console.warn(`No ${type} data found for ${metric}`);
+        }
+        
+        setStats(metricData);
+      } catch (err) {
+        console.error(`Error fetching ${type} stats for ${metric}:`, err);
+        setError(err.message);
+        setStats(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, [womId, type, metric]); // Re-fetch when any of these change
+
+  return { stats, loading, error };
 }
 
 export function useGoals() {

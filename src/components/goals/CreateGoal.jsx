@@ -36,19 +36,41 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!selectedMetric || !targetValue || !currentStats) {
+  
+    if (!selectedMetric || !targetValue) {
       setError("Please fill out all required fields");
       return;
     }
-
+  
+    // Add debug logs to help understand what's happening
+    console.log("Current stats:", currentStats);
+    console.log("Selected metric:", selectedMetric);
+    console.log("Current stats loading:", loadingStats);
+  
+    // Check if currentStats is loaded yet
+    if (loadingStats) {
+      setError("Player statistics are still loading. Please wait a moment and try again.");
+      return;
+    }
+  
+    if (!currentStats) {
+      setError("Unable to load player statistics. Please try again or select a different skill/boss.");
+      return;
+    }
+  
     const targetValueInput = parseInt(targetValue, 10);
     let currentValue, startValue, actualTargetValue;
-
+  
     if (goalType === "skill") {
-      currentValue = currentStats.experience;
-      startValue = currentStats.experience;
-
+      // Safely access experience value with null coalescence
+      currentValue = currentStats.experience || 0;
+      startValue = currentStats.experience || 0;
+  
+      if (currentValue === 0 && selectedMetric) {
+        setError(`Could not find current experience for ${selectedMetric}. Try selecting a different skill.`);
+        return;
+      }
+  
       // Calculate the target value based on mode
       if (targetMode === "total") {
         actualTargetValue = targetValueInput;
@@ -56,9 +78,15 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
         actualTargetValue = currentValue + targetValueInput;
       }
     } else {
-      currentValue = currentStats.kills;
-      startValue = currentStats.kills;
-
+      // Safely access kill count with null coalescence
+      currentValue = currentStats.kills || 0;
+      startValue = currentStats.kills || 0;
+      
+      if (currentValue === 0 && selectedMetric) {
+        setError(`Could not find current kill count for ${selectedMetric}. Try selecting a different boss.`);
+        return;
+      }
+  
       // Calculate the target value based on mode
       if (targetMode === "total") {
         actualTargetValue = targetValueInput;
@@ -66,7 +94,7 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
         actualTargetValue = currentValue + targetValueInput;
       }
     }
-
+  
     // Validation depends on target mode
     if (targetMode === "total" && actualTargetValue <= startValue) {
       setError("Target value must be greater than current value");
@@ -168,7 +196,12 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
             )}
           </div>
 
-          {currentStats && (
+          {loadingStats ? (
+            <div className="ui-loading-indicator">
+              <div className="ui-loading-spinner"></div>
+              <div className="ui-loading-text">Loading player stats...</div>
+            </div>
+          ) : currentStats ? (
             <Card variant="dark" className="ui-current-stats">
               <Card.Body>
                 <div className="ui-stats-label">
@@ -187,6 +220,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
                 </div>
               </Card.Body>
             </Card>
+          ) : (
+            <div className="ui-message ui-message-warning">
+              <span>Could not load stats for {selectedMetric}. Please try a different {goalType}.</span>
+            </div>
           )}
         </div>
 
