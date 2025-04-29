@@ -1,7 +1,63 @@
 import { supabase } from "../supabaseClient";
 import { fetchPlayerStats } from "../utils/womApi";
 
-export async function updatePlayerGoals(womId, userId) {
+// Helper function to extract metric data from player data
+function extractMetricData(playerData, type, metric) {
+  if (!playerData) return null;
+  
+  if (type === 'skill') {
+    // Try various possible data structures
+    if (playerData.latestSnapshot?.data?.skills && playerData.latestSnapshot.data.skills[metric]) {
+      return playerData.latestSnapshot.data.skills[metric];
+    } else if (playerData.data?.skills && playerData.data.skills[metric]) {
+      return playerData.data.skills[metric];
+    } else if (playerData.skills && playerData.skills[metric]) {
+      return playerData.skills[metric];
+    }
+    return { experience: 0, level: 1, rank: 0 };
+  } else if (type === 'boss') {
+    if (playerData.latestSnapshot?.data?.bosses && playerData.latestSnapshot.data.bosses[metric]) {
+      return playerData.latestSnapshot.data.bosses[metric];
+    } else if (playerData.data?.bosses && playerData.data.bosses[metric]) {
+      return playerData.data.bosses[metric];
+    } else if (playerData.bosses && playerData.bosses[metric]) {
+      return playerData.bosses[metric];
+    }
+    return { kills: 0, rank: 0 };
+  }
+  return null;
+}
+
+// Get player statistics via context or directly from API as fallback
+async function getPlayerStat(womId, type, metric, contextFetcher = null) {
+  try {
+    // If we have a context fetcher, try to use it first
+    if (contextFetcher) {
+      try {
+        const playerData = await contextFetcher(`player-${womId}`, womId);
+        const metricData = extractMetricData(playerData, type, metric);
+        
+        if (metricData) {
+          console.log(`Found ${type} data for ${metric} using context:`, metricData);
+          return metricData;
+        }
+      } catch (contextError) {
+        console.warn(`Context fetcher failed for ${womId}, falling back to direct API:`, contextError.message);
+      }
+    }
+    
+    // Fall back to direct API call
+    console.log(`Using direct API call for ${womId}, ${type}, ${metric}`);
+    const metricData = await fetchPlayerStats(womId, type, metric);
+    return metricData;
+  } catch (error) {
+    console.error(`Failed to get player stat for ${type} ${metric}:`, error);
+    // Return default values based on type
+    return type === 'skill' ? { experience: 0, level: 1, rank: 0 } : { kills: 0, rank: 0 };
+  }
+}
+
+export async function updatePlayerGoals(womId, userId, contextFetcher = null) {
   try {
     console.log(`Updating goals for player: ${womId}, user: ${userId}`);
 
@@ -37,11 +93,13 @@ export async function updatePlayerGoals(womId, userId) {
       for (const goal of skillGoals) {
         try {
           // Get the current stat for this metric
-          const playerStat = await fetchPlayerStats(
+          const playerStat = await getPlayerStat(
             womId,
             "skill",
-            goal.metric
+            goal.metric,
+            contextFetcher
           );
+          
           console.log(`Fetched stat for ${goal.metric}:`, playerStat);
 
           if (playerStat && playerStat.experience !== undefined) {
@@ -83,7 +141,13 @@ export async function updatePlayerGoals(womId, userId) {
     if (bossGoals.length > 0) {
       for (const goal of bossGoals) {
         try {
-          const playerStat = await fetchPlayerStats(womId, "boss", goal.metric);
+          const playerStat = await getPlayerStat(
+            womId, 
+            "boss", 
+            goal.metric,
+            contextFetcher
+          );
+          
           console.log(`Fetched stat for ${goal.metric}:`, playerStat);
 
           if (playerStat && playerStat.kills !== undefined) {
@@ -129,3 +193,11 @@ export async function updatePlayerGoals(womId, userId) {
     throw error;
   }
 }
+
+// Usage example:
+// To use with context:
+//   const { fetchers } = useData();
+//   updatePlayerGoals(womId, userId, fetchers.wom.player);
+// 
+// To use without context (direct API call only):
+//   updatePlayerGoals(womId, userId);
