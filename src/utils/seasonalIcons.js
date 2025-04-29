@@ -5,16 +5,17 @@ export const getSeasonalIcon = () => {
 
   if (month === 9) {
     // October
-    return `${process.env.PUBLIC_URL}/icons/siege_pumpkin.png`;
+    return `/icons/siege_pumpkin.png`;
   } else if (month === 11) {
     // December
-    return `${process.env.PUBLIC_URL}/icons/siege_hat_1.png`;
+    return `/icons/siege_hat_1.png`;
   } else {
-    return `${process.env.PUBLIC_URL}/icons/favicon.ico`; // Default favicon path
+    return `/icons/favicon.ico`; // Default favicon path
   }
 };
 
 const SeasonalFavicon = () => {
+  // Rest of component remains unchanged
   useEffect(() => {
     // Update the favicon based on the current month
     const favicon = document.querySelector("link[rel='icon']");
@@ -27,9 +28,8 @@ const SeasonalFavicon = () => {
     if (appleIcon) {
       appleIcon.href = getSeasonalIcon();
     }
-  }, []); // Empty dependency array means this runs once when component mounts
+  }, []);
 
-  // This component doesn't render anything visible
   return null;
 };
 
