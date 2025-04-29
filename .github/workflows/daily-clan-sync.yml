@@ -62,6 +62,16 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
       
+      - name: Run Anniversary Notifications
+        if: ${{ github.event.inputs.job_to_run == 'anniversaries' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        run: node scripts/sync-tasks/clan-anniversaries.js
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ANNIVERSARY_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      
       # Optional summary step to report overall status
       - name: Summary
         run: |
