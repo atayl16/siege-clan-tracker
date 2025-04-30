@@ -84,21 +84,20 @@ async function main() {
 
 async function sendSingleAnniversaryMessage(webhookUrl, member) {
   const message = {
-    embeds: [{
-      title: 'Clan Anniversary!',
-      description: `Congratulations to **${member.name || member.wom_name}** on ${member.years} ${member.years === 1 ? 'year' : 'years'} in the clan today!`,
-      color: 15844367, // Gold color
-      thumbnail: {
-        url: 'https://oldschool.runescape.wiki/images/Party_hat.png?12e2c'
+    embeds: [
+      {
+        title: "🎉 Clan Anniversary! 🎉",
+        description: `Congratulations to **${
+          member.name || member.wom_name
+        }** on ${member.years} ${
+          member.years === 1 ? "year" : "years"
+        } in the clan today!`,
+        color: 15844367, // Gold color
+        thumbnail: {
+          url: "https://oldschool.runescape.wiki/images/Party_hat.png?12e2c",
+        },
       },
-      author: {
-        name: "Clan Celebration",
-        icon_url: 'https://oldschool.runescape.wiki/images/Party_hat.png?12e2c'
-      },
-      footer: {
-        text: `Celebrate with them in-game or give a shoutout here in Discord!`
-      }
-    }]
+    ],
   };
   
   console.log('Sending single anniversary message to Discord...');
