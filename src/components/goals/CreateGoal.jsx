@@ -18,7 +18,8 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   const [error, setError] = useState(null);
   const [targetMode, setTargetMode] = useState("gain");
   const [isPublic, setIsPublic] = useState(false);
-
+  const [hasInteracted, setHasInteracted] = useState(false); // Track if user has interacted with the form
+  
   // Use context hooks instead of direct API calls
   const { stats: currentStats, loading: loadingStats } = usePlayerStats(
     player.wom_id, 
@@ -30,20 +31,24 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   // Set initial selected metric when metrics load
   const handleMetricChange = (metric) => {
     setSelectedMetric(metric);
+    setHasInteracted(true); // User has now interacted with the form
+  };
+
+  // Clear any errors when switching goal types
+  const handleGoalTypeChange = (type) => {
+    setGoalType(type);
+    setSelectedMetric(""); // Reset the metric when changing types
+    setError(null); // Clear any existing errors
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setHasInteracted(true); // User has now definitely interacted with the form
   
     if (!selectedMetric || !targetValue) {
       setError("Please fill out all required fields");
       return;
     }
-  
-    // Add debug logs to help understand what's happening
-    console.log("Current stats:", currentStats);
-    console.log("Selected metric:", selectedMetric);
-    console.log("Current stats loading:", loadingStats);
   
     // Check if currentStats is loaded yet
     if (loadingStats) {
@@ -140,7 +145,8 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
         />
       </div>
 
-      {error && (
+      {/* Only display errors after form interaction */}
+      {error && hasInteracted && (
         <div className="ui-message ui-message-error">
           <span>{error}</span>
         </div>
@@ -154,7 +160,7 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               <Button
                 type="button"
                 variant={goalType === "skill" ? "primary" : "secondary"}
-                onClick={() => setGoalType("skill")}
+                onClick={() => handleGoalTypeChange("skill")}
                 className="ui-type-button"
               >
                 <span className="ui-button-icon">📊</span> Skill
@@ -162,7 +168,7 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               <Button
                 type="button"
                 variant={goalType === "boss" ? "primary" : "secondary"}
-                onClick={() => setGoalType("boss")}
+                onClick={() => handleGoalTypeChange("boss")}
                 className="ui-type-button"
               >
                 <span className="ui-button-icon">👹</span> Boss
@@ -180,37 +186,40 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
             />
           </div>
 
-          {loadingStats ? (
-            <div className="ui-loading-indicator">
-              <div className="ui-loading-spinner"></div>
-              <div className="ui-loading-text">Loading player stats...</div>
-            </div>
-          ) : currentStats ? (
-            <Card variant="dark" className="ui-current-stats">
-              <Card.Body>
-                <div className="ui-stats-label">
-                  Current {goalType === "skill" ? "XP" : "Kills"}
-                </div>
-                <div className="ui-stats-value">
-                  {goalType === "skill"
-                    ? (currentStats.experience !== undefined
-                        ? currentStats.experience
-                        : 0
-                      ).toLocaleString()
-                    : (currentStats.kills !== undefined
-                        ? currentStats.kills
-                        : 0
-                      ).toLocaleString()}
-                </div>
-              </Card.Body>
-            </Card>
-          ) : (
-            <div className="ui-message ui-message-warning">
-              <span>
-                Could not load stats for {selectedMetric}. Please try a
-                different {goalType}.
-              </span>
-            </div>
+          {/* Only show loading indicator or stats after a metric has been selected */}
+          {selectedMetric && (
+            loadingStats ? (
+              <div className="ui-loading-indicator">
+                <div className="ui-loading-spinner"></div>
+                <div className="ui-loading-text">Loading player stats...</div>
+              </div>
+            ) : currentStats ? (
+              <Card variant="dark" className="ui-current-stats">
+                <Card.Body>
+                  <div className="ui-stats-label">
+                    Current {goalType === "skill" ? "XP" : "Kills"}
+                  </div>
+                  <div className="ui-stats-value">
+                    {goalType === "skill"
+                      ? (currentStats.experience !== undefined
+                          ? currentStats.experience
+                          : 0
+                        ).toLocaleString()
+                      : (currentStats.kills !== undefined
+                          ? currentStats.kills
+                          : 0
+                        ).toLocaleString()}
+                  </div>
+                </Card.Body>
+              </Card>
+            ) : hasInteracted ? (
+              <div className="ui-message ui-message-warning">
+                <span>
+                  Could not load stats for {selectedMetric}. Please try a
+                  different {goalType}.
+                </span>
+              </div>
+            ) : null
           )}
         </div>
 
@@ -222,7 +231,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               className={`ui-option-card ${
                 targetMode === "gain" ? "ui-selected" : ""
               }`}
-              onClick={() => setTargetMode("gain")}
+              onClick={() => {
+                setTargetMode("gain");
+                setHasInteracted(true);
+              }}
               variant={targetMode === "gain" ? "primary" : "dark"}
               clickable
             >
@@ -243,7 +255,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               className={`ui-option-card ${
                 targetMode === "total" ? "ui-selected" : ""
               }`}
-              onClick={() => setTargetMode("total")}
+              onClick={() => {
+                setTargetMode("total");
+                setHasInteracted(true);
+              }}
               variant={targetMode === "total" ? "primary" : "dark"}
               clickable
             >
@@ -271,16 +286,17 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               type="number"
               className="ui-form-input"
               min={
-                targetMode === "total"
-                  ? currentStats
-                    ? goalType === "skill"
-                      ? currentStats.experience + 1
-                      : currentStats.kills + 1
-                    : 1
+                targetMode === "total" && currentStats
+                  ? goalType === "skill"
+                    ? (currentStats.experience || 0) + 1
+                    : (currentStats.kills || 0) + 1
                   : 1
               }
               value={targetValue}
-              onChange={(e) => setTargetValue(e.target.value)}
+              onChange={(e) => {
+                setTargetValue(e.target.value);
+                setHasInteracted(true);
+              }}
               required
             />
           </div>
@@ -291,7 +307,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
               type="date"
               className="ui-form-input"
               value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
+              onChange={(e) => {
+                setTargetDate(e.target.value);
+                setHasInteracted(true);
+              }}
               min={new Date().toISOString().split("T")[0]}
             />
           </div>
@@ -303,7 +322,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
           <div className="ui-option-cards ui-privacy-cards">
             <Card
               className={`ui-option-card ${!isPublic ? "ui-selected" : ""}`}
-              onClick={() => setIsPublic(false)}
+              onClick={() => {
+                setIsPublic(false);
+                setHasInteracted(true);
+              }}
               variant={!isPublic ? "primary" : "dark"}
               clickable
             >
@@ -322,7 +344,10 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
 
             <Card
               className={`ui-option-card ${isPublic ? "ui-selected" : ""}`}
-              onClick={() => setIsPublic(true)}
+              onClick={() => {
+                setIsPublic(true);
+                setHasInteracted(true);
+              }}
               variant={isPublic ? "primary" : "dark"}
               clickable
             >
