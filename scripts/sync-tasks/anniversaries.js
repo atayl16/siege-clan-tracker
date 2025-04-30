@@ -2,8 +2,8 @@
  * Clan Anniversary Notifications
  * Sends Discord notifications for clan members celebrating anniversaries today
  */
-const fetch = require('node-fetch');
-const { createClient } = require('@supabase/supabase-js');
+import fetch from 'node-fetch';
+import { createClient } from '@supabase/supabase-js';
 
 async function main() {
   console.log('🎂 Checking for clan anniversaries...');
