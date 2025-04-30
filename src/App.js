@@ -27,7 +27,15 @@ function App() {
   // Create a wrapper component to check the current route
 const AppContent = () => {
   const location = useLocation();
-  const showNavbar = location.pathname !== "/";
+  
+  // More robust check - only hide navbar on welcome page or auth pages
+  const hideNavbarPaths = [
+    "/login", 
+    "/register", 
+    "/forgot-password"
+  ];
+  
+  const showNavbar = !hideNavbarPaths.includes(location.pathname);
 
   return (
     <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
@@ -35,7 +43,7 @@ const AppContent = () => {
       {showNavbar && <Navbar />}
       {<AnniversaryBanner />}
       <Routes>
-        <Route path="/" element={<MembersPage />} />
+        <Route path="/" element={<WelcomePage />} />
         <Route path="/members" element={<MembersPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/login" element={<Login />} />
