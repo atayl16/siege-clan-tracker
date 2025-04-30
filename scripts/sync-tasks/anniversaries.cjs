@@ -129,21 +129,16 @@ async function sendGroupAnniversaryMessage(webhookUrl, members) {
   ).join('\n');
   
   const message = {
-    embeds: [{
-      title: 'Clan Anniversaries Today!',
-      description: `Congratulations to our clan members celebrating anniversaries today:\n\n${membersList}`,
-      color: 15844367, // Gold color
-      thumbnail: {
-        url: 'https://oldschool.runescape.wiki/images/Party_hat.png?12e2c'
+    embeds: [
+      {
+        title: "🎉 Clan Anniversaries Today!🎉 ",
+        description: `Congratulations to our clan members celebrating anniversaries today:\n\n${membersList}`,
+        color: 15844367, // Gold color
+        thumbnail: {
+          url: "https://oldschool.runescape.wiki/images/Party_hat.png?12e2c",
+        },
       },
-      author: {
-        name: "Clan Celebration",
-        icon_url: 'https://oldschool.runescape.wiki/images/Party_hat.png?12e2c'
-      },
-      footer: {
-        text: `Celebrate with them in-game!`
-      }
-    }]
+    ],
   };
   
   console.log('Sending group anniversary message to Discord...');
