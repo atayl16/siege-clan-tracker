@@ -88,7 +88,7 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
         creator_id: userId,
         title,
         description,
-        is_public: isPublic,
+        public: isPublic,
         end_date: endDate || null,
         participants: participants.map((p) => ({
           wom_id: p.playerId,

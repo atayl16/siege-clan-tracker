@@ -606,9 +606,8 @@ const fetchers = {
       try {
         const { data, error } = await supabase
           .from("user_goals")
-          .select(
-            `
-            id,
+          .select(`
+            id, 
             goal_type,
             metric,
             target_value,
@@ -619,18 +618,42 @@ const fetchers = {
             completed,
             completed_date,
             public,
-            wom_id
-          `
-          )
+            wom_id,
+            user_id
+          `)
           .eq("public", true);
+        
         if (error) throw error;
-
-        // Format data to include player name
-        return data.map((goal) => ({
-          ...goal,
-          player_name:
-            goal.members?.name || goal.members?.wom_name || "Unknown Player",
-        }));
+        
+        // If we have goals, get the player names
+        if (data && data.length > 0) {
+          // Get all unique wom_ids
+          const womIds = [...new Set(data.map(goal => goal.wom_id))];
+          
+          // Fetch members in a single query
+          const { data: members, error: membersError } = await supabase
+            .from("members")
+            .select("wom_id, name, wom_name")
+            .in("wom_id", womIds);
+          
+          if (membersError) throw membersError;
+          
+          // Create a lookup map
+          const memberMap = {};
+          members?.forEach(member => {
+            memberMap[member.wom_id] = member;
+          });
+          
+          // Add player names to goals
+          return data.map(goal => ({
+            ...goal,
+            player_name: memberMap[goal.wom_id]?.name || 
+                        memberMap[goal.wom_id]?.wom_name || 
+                        "Unknown Player"
+          }));
+        }
+        
+        return data || [];
       } catch (err) {
         console.error("Error fetching public goals:", err);
         return [];
@@ -648,7 +671,7 @@ const fetchers = {
                 creator_id: raceData.creator_id,
                 title: raceData.title,
                 description: raceData.description,
-                is_public: raceData.is_public,
+                public: raceData.public,
                 status: "active",
                 end_date: raceData.end_date,
               },
@@ -696,7 +719,7 @@ const fetchers = {
               creator_id,
               title,
               description,
-              is_public,
+              public,
               status,
               created_at,
               end_date,
@@ -711,10 +734,10 @@ const fetchers = {
 
           if (userId && !publicOnly) {
             // Show user's races + public races
-            query = query.or(`creator_id.eq.${userId},is_public.eq.true`);
+            query = query.or(`creator_id.eq.${userId},public.eq.true`);
           } else if (publicOnly) {
             // Show only public races
-            query = query.eq("is_public", true);
+            query = query.eq("public", true);
           }
 
           const { data, error } = await query;
@@ -737,7 +760,7 @@ const fetchers = {
               creator_id,
               title,
               description,
-              is_public,
+              public,
               status,
               created_at,
               end_date,

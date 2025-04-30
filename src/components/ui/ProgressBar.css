@@ -9,12 +9,17 @@
   background-color: var(--bg-accent);
   border-radius: 100px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.224); /* Add subtle border */
+  box-sizing: border-box; /* Maintain dimensions with border */
 }
 
+/* Adjust the progress-bar to account for the border */
 .ui-progress-bar {
   height: 100%;
   border-radius: 100px;
   transition: width 0.6s ease;
+  min-width: var(--min-bar-width, 0);
+  margin: -1px; /* Compensate for the border */
 }
 
 .ui-progress-primary {

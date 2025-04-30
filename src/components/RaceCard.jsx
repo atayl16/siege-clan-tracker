@@ -39,7 +39,7 @@ export default function RaceCard({ race, isOwner }) {
             {race.title}
           </Link>
           <div className="ui-race-meta">
-            {race.is_public ? (
+            {race.public ? (
               <span className="ui-race-visibility ui-public">
                 <FaGlobe /> Public
               </span>
@@ -48,37 +48,40 @@ export default function RaceCard({ race, isOwner }) {
                 <FaLock /> Private
               </span>
             )}
-            <span className="ui-race-date">
-              Created {createdAt}
-            </span>
+            <span className="ui-race-date">Created {createdAt}</span>
           </div>
         </div>
       </Card.Header>
-      
+
       <Card.Body>
         {race.description && (
           <p className="ui-race-description">{race.description}</p>
         )}
-        
+
         <div className="ui-race-participants">
-          {sortedParticipants.map(participant => (
-            <div key={participant.id} className="ui-race-participant">
+          {sortedParticipants.map((participant, index) => (
+            <div
+              key={participant.id}
+              className={`ui-race-participant ${index === 0 ? "leader" : ""}`}
+            >
               <div className="ui-participant-header">
-                <span className="ui-participant-name">{participant.player_name}</span>
+                <span className="ui-participant-name">
+                  {participant.player_name}
+                </span>
                 <span className="ui-participant-metric">
-                  {participant.metric.replace(/_/g, ' ')}
+                  {participant.metric.replace(/_/g, " ")}
                 </span>
               </div>
-              
-              <ProgressBar 
-                value={participant.progressPercent} 
+
+              <ProgressBar
+                value={participant.progressPercent}
                 label={`${participant.current_value.toLocaleString()} / ${participant.target_value.toLocaleString()}`}
-                variant={sortedParticipants[0].id === participant.id ? "success" : "primary"}
+                variant={index === 0 ? "success" : "primary"}
               />
             </div>
           ))}
         </div>
-        
+
         {endDate && (
           <div className="ui-race-footer">
             <span className="ui-race-end-date">
@@ -87,7 +90,7 @@ export default function RaceCard({ race, isOwner }) {
           </div>
         )}
       </Card.Body>
-      
+
       {isOwner && (
         <Card.Footer className="ui-race-actions">
           <Link to={`/races/${race.id}/edit`} className="ui-btn ui-btn-text">

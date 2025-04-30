@@ -23,6 +23,10 @@ export default function MemberSelector({
     return members;
   }, [members, filterClaimed]);
 
+  const memberLabelFormatter = (member) => {
+    return `${member.name} (Lvl ${member.current_lvl || "?"})`;
+  };
+
   // Define columns for the table view
   const columns = [
     {
@@ -70,9 +74,9 @@ export default function MemberSelector({
         selectedId={selectedMemberId}
         keyField="wom_id"
         searchFields={["name", "wom_name"]}
-        searchPlaceholder="Search members by name"
+        searchPlaceholder="Search players by name"
         viewMode={viewMode}
-        labelField="name"
+        labelField={viewMode === "dropdown" ? memberLabelFormatter : "name"} // Use custom formatter for dropdown
         valueField="wom_id"
         loading={loading}
         error={error}

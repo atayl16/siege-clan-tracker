@@ -1,20 +1,101 @@
-/* Fix text visibility for dark background */
-.ui-page-container {
-  color: #e0e0e0; /* Light text color that works on dark backgrounds */
+/* Tabs styling for custom implementation */
+.ui-container-content-card {
+  width: 85%;
+  max-width: 87.5rem; /* 1400px */
+  min-width: 20rem; /* 320px */
+  margin: 1.875rem auto; /* 30px auto */
+  padding: 1.25rem; /* 20px */
+  color: var(--color-text, #e0e0e0);
 }
 
-.ui-page-title {
-  color: white;
+.ui-tabs-container {
+  width: 100%;
   margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Keep your existing grid layout */
+.ui-tabs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem;
+}
+
+.ui-tab {
+  background: transparent;
+  color: #a0a0a0;
+  border: none;
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.ui-tab:hover {
+  color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.ui-tab-active {
+  color: #ffffff;
+  border-bottom: 2px solid var(--primary-color, #4a90e2);
+}
+
+.ui-tab-icon {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  opacity: 0.9;
+}
+
+.ui-tab-label {
+  white-space: nowrap;
+}
+
+.ui-tab-badge {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.ui-tab-active .ui-tab-badge {
+  background-color: var(--primary-color, #4a90e2);
+  color: white;
+}
+
+/* Style for locked tab */
+.ui-tab:last-child:not(.ui-tab-active) .ui-tab-icon {
+  opacity: 0.6;
+}
+
+.ui-tab-content {
+  padding: 1.5rem;
+  min-height: 300px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
 .ui-races-grid,
 .ui-goals-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
+}
+
+.ui-race-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .ui-page-actions {
@@ -23,94 +104,30 @@
   margin-bottom: 1.5rem;
 }
 
-.ui-tab-content {
-  padding: 1rem 1.5rem 1.5rem;
-  color: #e0e0e0; /* Light text color */
-}
-
-.ui-content-card {
-  margin-bottom: 2rem;
-}
-
-/* Ensure text in cards is visible */
-.ui-content-card h3,
-.ui-content-card h4,
-.ui-content-card p,
-.ui-content-card span {
-  color: #e0e0e0; /* Light text color */
-}
-
-/* Override any styles that might be setting text to dark colors */
-.ui-race-card,
-.ui-goal-card {
-  color: #e0e0e0 !important;
-}
-
-/* Ensure empty states are visible */
-.ui-empty-state {
-  color: #a0a0a0;
-}
-
-/* Ensure loading message is visible */
-.ui-loading-container {
-  color: #a0a0a0;
-}
-
-/* Sorting and filtering controls */
-.ui-controls {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  gap: 1rem;
-}
-
-.ui-control-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.ui-control-label {
-  font-size: 0.9rem;
-  color: #a0a0a0;
-}
-
-/* Fix dropdown styling to ensure visible text */
-.ui-select-control {
-  padding: 0.5rem;
-  border-radius: 4px;
-  background-color: #2a2a2a; /* Slightly lighter than the background */
-  border: 1px solid #444;
-  color: #e0e0e0; /* Light text */
-  font-size: 0.85rem;
-}
-
-/* Ensure dropdown options are visible */
-select.ui-select-control option {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-}
-
-/* Make sure empty state message is visible */
-.ui-empty-state-message {
-  color: #a0a0a0;
-  text-align: center;
-}
-
 @media (max-width: 768px) {
   .ui-races-grid,
   .ui-goals-grid {
     grid-template-columns: 1fr;
   }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .ui-tabs-nav {
+    padding: 0 0.5rem;
+  }
+  
+  .ui-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
   
   .ui-tab-content {
     padding: 1rem;
-  }
-  
-  .ui-controls {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }

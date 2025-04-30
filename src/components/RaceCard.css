@@ -2,6 +2,16 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  color: #e0e0e0 !important;
+  transition: all 0.2s ease-in-out;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ui-race-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  border-top: 2px solid var(--primary-color);
 }
 
 .ui-race-header {
@@ -59,23 +69,36 @@
 .ui-race-participants {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0;
 }
 
 .ui-race-participant {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.03); /* Very subtle background */
+  margin-bottom: 0.75rem; /* Space between participants */
+  border-left: 3px solid var(--bg-accent); /* Left border indicator */
+  transition: all 0.2s ease;
+}
+
+.ui-race-participant:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  transform: translateX(2px);
 }
 
 .ui-participant-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.25rem;
 }
 
 .ui-participant-name {
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .ui-participant-metric {

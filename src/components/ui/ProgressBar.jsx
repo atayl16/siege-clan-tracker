@@ -13,25 +13,32 @@ export default function ProgressBar({
 }) {
   // Calculate percentage, ensuring it's between 0-100
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
-  
+
   // Determine label to display
-  const displayLabel = label || (showPercentage ? `${Math.round(percentage)}%` : '');
-  
+  const displayLabel =
+    label || (showPercentage ? `${Math.round(percentage)}%` : "");
+
   return (
-    <div className="ui-progress-container" style={{ '--progress-height': height }}>
+    <div
+      className="ui-progress-container"
+      style={{ "--progress-height": height }}
+    >
       <div className="ui-progress-track">
-        <div 
-          className={`ui-progress-bar ui-progress-${variant} ${animated ? 'ui-progress-animated' : ''}`} 
-          style={{ width: `${percentage}%` }}
+        <div
+          className={`ui-progress-bar ui-progress-${variant} ${
+            animated ? "ui-progress-animated" : ""
+          } show-min-width`}
+          style={{
+            width: percentage > 0 ? `${percentage}%` : "2px",
+            opacity: percentage > 0 ? 1 : 0.5, // Reduce opacity when at 0%
+          }}
           role="progressbar"
           aria-valuenow={Math.round(percentage)}
           aria-valuemin="0"
           aria-valuemax="100"
         />
       </div>
-      {displayLabel && (
-        <div className="ui-progress-label">{displayLabel}</div>
-      )}
+      {displayLabel && <div className="ui-progress-label">{displayLabel}</div>}
     </div>
   );
 }

@@ -7,6 +7,7 @@
   margin: 0;
   font-weight: 600;
   font-size: 1.5rem;
+  color: #ffffff;
 }
 
 .ui-section-title {
@@ -14,16 +15,17 @@
   margin-bottom: 1rem;
   font-size: 1.1rem;
   font-weight: 500;
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border-color);
+  color: #f0f0f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.5rem;
 }
 
 .ui-participant-card {
-  background-color: var(--bg-card-dark);
+  background-color: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 1.25rem;
   margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ui-participant-header {
@@ -37,7 +39,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: #e0e0e0;
 }
 
 .ui-form-row {
@@ -60,24 +62,27 @@
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: #c0c0c0;
 }
 
 .ui-form-input,
-.ui-form-textarea {
+.ui-form-textarea,
+.ui-select select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  background-color: var(--bg-input);
-  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ffffff;
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .ui-form-input:focus,
-.ui-form-textarea:focus {
-  border-color: var(--primary-color);
+.ui-form-textarea:focus,
+.ui-select select:focus {
+  border-color: var(--primary-color, #4a90e2);
+  box-shadow: 0 0 0 1px var(--primary-color, #4a90e2);
   outline: none;
 }
 
@@ -90,8 +95,8 @@
   display: flex;
   border-radius: 4px;
   overflow: hidden;
-  background-color: var(--bg-card-dark);
-  border: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ui-toggle-button {
@@ -99,7 +104,7 @@
   padding: 0.65rem 1rem;
   background-color: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #c0c0c0;
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
@@ -109,13 +114,21 @@
   transition: background-color 0.2s, color 0.2s;
 }
 
+.ui-toggle-button svg {
+  color: #c0c0c0; /* Fix icon colors */
+}
+
 .ui-toggle-button.active {
-  background-color: var(--primary-color);
+  background-color: var(--primary-color, #4a90e2);
   color: white;
 }
 
+.ui-toggle-button.active svg {
+  color: white; /* Fix icon colors when active */
+}
+
 .ui-toggle-button:not(.active):hover {
-  background-color: var(--bg-hover);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .ui-add-participant-btn {
@@ -130,11 +143,33 @@
 }
 
 .ui-form-error {
-  background-color: var(--danger-bg);
-  color: var(--danger-color);
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #ff6b6b;
   padding: 0.75rem 1rem;
   border-radius: 4px;
   margin-bottom: 1.25rem;
+  border-left: 3px solid #ff6b6b;
+}
+
+/* Member selector styling improvements */
+.member-selector-container {
+  margin-bottom: 1rem;
+}
+
+.ui-search-input {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.ui-search-icon,
+.ui-search-clear-icon {
+  color: #c0c0c0;
+}
+
+/* Datepicker styling fix */
+input[type="date"] {
+  color-scheme: dark;
 }
 
 @media (max-width: 768px) {

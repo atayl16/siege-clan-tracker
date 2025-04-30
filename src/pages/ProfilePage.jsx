@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useUserClaimRequests } from "../context/DataContext";
+import { useUserClaimRequests, useData, useRaces } from "../context/DataContext";
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
-import { FaUser, FaFlag, FaClock, FaCog } from "react-icons/fa";
+import { FaUser, FaFlag, FaClock, FaCog, FaTrophy } from "react-icons/fa";
 import { titleize } from "../utils/stringUtils";
 
 // Import UI components
@@ -17,6 +17,9 @@ import Badge from "../components/ui/Badge";
 import Tabs from "../components/ui/Tabs";
 import EmptyState from "../components/ui/EmptyState";
 import StatGroup from "../components/ui/StatGroup";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
+import RaceCard from "../components/RaceCard";
+import CreateRace from "../components/CreateRace";
 
 import "./ProfilePage.css";
 
@@ -56,21 +59,47 @@ function CharacterGoalCard({ claim, user }) {
 export default function ProfilePage() {
   const { user, userClaims } = useAuth();
   const [activeTab, setActiveTab] = useState("characters");
-  
-  // Replace direct Supabase call with context hook
-  const { 
-    requests: userRequests, 
-    refreshRequests: fetchUserRequests 
-  } = useUserClaimRequests(user?.id);
+  const { fetchers } = useData();
+  const [showCreateRace, setShowCreateRace] = useState(false);
 
-  // Use the hook's data directly - no need for useState or useEffect
-  
+  // Replace direct Supabase call with context hook
+  const { requests: userRequests, refreshRequests: fetchUserRequests } =
+    useUserClaimRequests(user?.id);
+
+  // Get race data
+  const {
+    activeRaces,
+    loading: racesLoading,
+    refreshRaces,
+  } = useRaces(user?.id);
+
+  // Handle creating a race
+  const handleCreatedRace = () => {
+    setShowCreateRace(false);
+    refreshRaces();
+  };
+
+  // Filter races where this user's characters are participating
+  const userCharacterRaces = activeRaces
+    ? activeRaces.filter((race) => {
+        if (race.creator_id === user?.id) return true;
+
+        // Check if any of user's characters are participants
+        const userCharacterIds = userClaims.map(
+          (claim) => claim.members.wom_id
+        );
+        return race.participants?.some((participant) =>
+          userCharacterIds.includes(participant.player_id)
+        );
+      })
+    : [];
+
   // Just call fetchUserRequests when needed
-  useEffect(() => {
-    if (user) {
-      fetchUserRequests();
-    }
-  }, [user, fetchUserRequests]);
+    useEffect(() => {
+      if (user) {
+        fetchUserRequests();
+      }
+    }, [user, fetchUserRequests]);
 
   // Handle showing goals
   const handleShowGoals = () => {
@@ -86,10 +115,10 @@ export default function ProfilePage() {
             await updatePlayerGoals(claim.members.wom_id, user.id);
           }
         } catch (err) {
-          console.error('Error updating goals:', err);
+          console.error("Error updating goals:", err);
         }
       };
-      
+
       updateGoals();
     }
   }, [user, userClaims]);
@@ -100,12 +129,70 @@ export default function ProfilePage() {
         <h2>Please Log In</h2>
         <p>You need to be logged in to view your profile.</p>
         <div className="profile-auth-links">
-          <Link to="/login" className="btn-primary">Log In</Link>
-          <Link to="/register" className="btn-secondary">Register</Link>
+          <Link to="/login" className="btn-primary">
+            Log In
+          </Link>
+          <Link to="/register" className="btn-secondary">
+            Register
+          </Link>
         </div>
       </div>
     );
   }
+
+  const renderRacesTabContent = () => {
+    if (racesLoading) {
+      return <LoadingIndicator />;
+    }
+
+    if (showCreateRace) {
+      return (
+        <CreateRace
+          userId={user?.id}
+          onCreated={handleCreatedRace}
+          onCancel={() => setShowCreateRace(false)}
+        />
+      );
+    }
+
+    if (!userCharacterRaces || userCharacterRaces.length === 0) {
+      return (
+        <div className="races-empty-container">
+          <EmptyState
+            icon={<FaTrophy />}
+            title="No Races Yet"
+            description="Your characters aren't participating in any races yet."
+            action={
+              <Button variant="primary" onClick={() => setShowCreateRace(true)}>
+                Create a Race
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="tab-header">
+          <h2>Your Race Progress</h2>
+          <Button variant="primary" onClick={() => setShowCreateRace(true)}>
+            Create New Race
+          </Button>
+        </div>
+
+        <div className="ui-races-grid profile-races">
+          {userCharacterRaces.map((race) => (
+            <RaceCard
+              key={race.id}
+              race={race}
+              isOwner={race.creator_id === user?.id}
+            />
+          ))}
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="profile-container">
@@ -118,12 +205,16 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <Tabs activeTab={activeTab} onChange={setActiveTab} className="profile-tabs">
+      <Tabs
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        className="profile-tabs"
+      >
         <Tabs.Tab tabId="characters" label="Characters" icon={<FaUser />}>
           <div className="tab-header">
             <h2>Your Characters</h2>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => setActiveTab("requests")}
             >
               Claim New Character
@@ -139,43 +230,53 @@ export default function ProfilePage() {
           ) : (
             <CardGrid>
               {userClaims.map((claim) => (
-                <Card key={`claim-${claim.id}`} hover className="ui-character-card">
+                <Card
+                  key={`claim-${claim.id}`}
+                  hover
+                  className="ui-character-card"
+                >
                   <Card.Header className="ui-character-card-header">
-                    <div className="ui-character-name">{claim.members.name}</div>
-                    <Badge variant="success" pill>Claimed</Badge>
+                    <div className="ui-character-name">
+                      {claim.members.name}
+                    </div>
+                    <Badge variant="success" pill>
+                      Claimed
+                    </Badge>
                   </Card.Header>
 
                   <Card.Body>
                     <StatGroup className="ui-character-stats">
-                      <StatGroup.Stat 
-                        label="Combat Level" 
+                      <StatGroup.Stat
+                        label="Combat Level"
                         value={claim.members.current_lvl || 3}
                       />
-                      <StatGroup.Stat 
-                        label="EHB" 
+                      <StatGroup.Stat
+                        label="EHB"
                         value={claim.members.ehb || 0}
                       />
-                      <StatGroup.Stat 
-                        label="Siege Score" 
+                      <StatGroup.Stat
+                        label="Siege Score"
                         value={claim.members.siege_score || 0}
                       />
                     </StatGroup>
-                  
-                    {user && user.id && claim.members && claim.members.wom_id ? (
+
+                    {user &&
+                    user.id &&
+                    claim.members &&
+                    claim.members.wom_id ? (
                       <PlayerGoalSummary
                         playerId={claim.members.wom_id}
                         userId={user.id}
                       />
                     ) : (
-                      <div className="inline-goals-loading">Loading user data...</div>
+                      <div className="inline-goals-loading">
+                        Loading user data...
+                      </div>
                     )}
                   </Card.Body>
 
                   <Card.Footer className="ui-character-card-footer">
-                    <Button
-                      variant="primary"
-                      onClick={handleShowGoals}
-                    >
+                    <Button variant="primary" onClick={handleShowGoals}>
                       Manage Goals
                     </Button>
                     <div className="ui-claim-date">
@@ -193,7 +294,7 @@ export default function ProfilePage() {
           <div className="tab-header">
             <h2>Character Goals</h2>
           </div>
-        
+
           {!user ? (
             <div className="ui-loading-container">
               <div className="ui-loading-spinner"></div>
@@ -207,7 +308,7 @@ export default function ProfilePage() {
           ) : (
             <CardGrid>
               {userClaims.map((claim) => (
-                <CharacterGoalCard 
+                <CharacterGoalCard
                   key={`goal-card-${claim.id}`}
                   claim={claim}
                   user={user}
@@ -217,11 +318,11 @@ export default function ProfilePage() {
           )}
         </Tabs.Tab>
 
-        <Tabs.Tab 
-          tabId="requests" 
-          label="Requests" 
-          icon={<FaClock />}
-        >
+        <Tabs.Tab tabId="races" label="Races" icon={<FaTrophy />}>
+          <div className="player-races-section">{renderRacesTabContent()}</div>
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="requests" label="Requests" icon={<FaClock />}>
           <div className="tab-header">
             <h2>Character Claims</h2>
           </div>
@@ -251,16 +352,12 @@ export default function ProfilePage() {
 
               <div className="account-field">
                 <label>Email Address</label>
-                <div className="field-value">
-                  {user.email || "Coming Soon"}
-                </div>
+                <div className="field-value">{user.email || "Coming Soon"}</div>
               </div>
-              
+
               <div className="account-field">
                 <label>Discord Name</label>
-                <div className="field-value">
-                  {"Coming Soon"}
-                </div>
+                <div className="field-value">{"Coming Soon"}</div>
               </div>
 
               <div className="account-actions">
