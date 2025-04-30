@@ -9,8 +9,12 @@ import executiveIcon from "../assets/images/Clan_icon_-_Executive.png";
 import senatorIcon from "../assets/images/Clan_icon_-_Senator.png";
 import monarchIcon from "../assets/images/Clan_icon_-_Monarch.png";
 import tzkalIcon from "../assets/images/Clan_icon_-_TzKal.png";
-
-// Define admin rank titles
+import standardIcon from "../assets/images/ironman/Ironman_chat_badge.png";
+import hardcoreIcon from "../assets/images/ironman/Hardcore_ironman_chat_badge.png"; // Fixed typo
+import ultimateIcon from "../assets/images/ironman/Ultimate_ironman_chat_badge.png";
+import groupIcon from "../assets/images/ironman/Group_ironman_chat_badge.png";
+import hardcoreGroupIcon from "../assets/images/ironman/Hardcore_group_ironman_chat_badge.png";
+import unrankedGroupIcon from "../assets/images/ironman/Unranked_group_ironman_chat_badge.png";// Define admin rank titles
 export const ADMIN_RANKS = ["Owner", "Deputy Owner", "General", "Captain", "PvM Organizer"];
 
 // Helper component for clan icons
@@ -102,5 +106,48 @@ export const AdminIcon = ({ title }) => {
     >
       {emojiMap[normalizedTitle]}
     </span>
+  );
+};
+
+// Ironman Icon Component
+export const IronmanIcon = ({ type, ...props }) => {
+  if (!type) return null;
+
+  const normalizedType = type.toLowerCase().replace(/\s+/g, "_");
+
+  // Use imported images
+  const iconMap = {
+    standard: standardIcon,
+    hardcore: hardcoreIcon,
+    ultimate: ultimateIcon,
+    group: groupIcon,
+    hardcore_group: hardcoreGroupIcon,
+    unranked_group: unrankedGroupIcon,
+  };
+
+  const iconSrc = iconMap[normalizedType];
+  if (!iconSrc) return null;
+
+  const titleMap = {
+    standard: "Ironman",
+    hardcore: "Hardcore Ironman",
+    ultimate: "Ultimate Ironman",
+    group: "Group Ironman",
+    hardcore_group: "Hardcore Group Ironman",
+    unranked_group: "Unranked Group Ironman",
+  };
+
+  const title = titleMap[normalizedType] || type;
+
+  return (
+    <img
+      src={iconSrc}
+      alt={title}
+      title={title}
+      className="ui-ironman-icon"
+      width={16}
+      height={16}
+      {...props}
+    />
   );
 };

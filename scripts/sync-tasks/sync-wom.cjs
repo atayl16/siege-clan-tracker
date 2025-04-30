@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
+const { build } = require('vite');
 require('dotenv').config();
 
 // Initialize Supabase client
@@ -97,7 +98,8 @@ async function syncWomMembers() {
         wom_id: membership.playerId,
         wom_name: membership.player.username.toLowerCase(), // Store lowercase for easier comparison
         display_name: membership.player.displayName || membership.player.username,
-        womrole: membership.role || null
+        womrole: membership.role || null,
+        build: membership.player.build || null,
       }));
     
     console.log(`Found ${womMembers.length} members in WOM group`);

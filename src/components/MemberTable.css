@@ -137,6 +137,26 @@
   border-radius: 0.5rem;
 }
 
+.ui-ironman-icon {
+  margin-right: 4px;
+  vertical-align: middle;
+  display: inline-block;
+  max-height: 16px;
+  width: auto;
+}
+
+.ui-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-name-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Animation for expanded content */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
