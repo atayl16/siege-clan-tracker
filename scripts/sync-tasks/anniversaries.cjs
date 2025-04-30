@@ -25,13 +25,11 @@ async function main() {
   
   console.log(`Checking for anniversaries on ${month}-${day}`);
   
-  // Query for members with anniversaries today
-  // Join date is stored as YYYY-MM-DD in the database
-  const { data: members, error } = await supabase
-    .rpc("get_todays_anniversaries")
-    .select("wom_id, name, wom_name, join_date");
+  // Use the exact RPC function without any additional selects
+  const { data: members, error } = await supabase.rpc("get_todays_anniversaries");
   
   if (error) {
+    console.error('RPC error details:', JSON.stringify(error, null, 2));
     throw new Error(`Failed to query anniversaries: ${error.message}`);
   }
   
@@ -62,7 +60,8 @@ async function main() {
     return;
   }
   
-  console.log(`Found ${anniversaries.length} member(s) with anniversaries today.`);
+  console.log(`Found ${anniversaries.length} member(s) with anniversaries today:`);
+  console.log(anniversaries.map(a => `${a.name || a.wom_name} - ${a.years} years`).join(', '));
   
   // Get the webhook URL - prefer anniversary-specific URL if available
   const webhookUrl = process.env.DISCORD_ANNIVERSARY_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL;
@@ -102,17 +101,26 @@ async function sendSingleAnniversaryMessage(webhookUrl, member) {
     }]
   };
   
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(message)
-  });
+  console.log('Sending single anniversary message to Discord...');
   
-  if (!response.ok) {
-    throw new Error(`Discord API returned ${response.status}`);
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(message)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Discord API returned ${response.status}: ${errorText}`);
+    }
+    
+    console.log('Discord message sent successfully!');
+    return response;
+  } catch (error) {
+    console.error('Error sending to Discord:', error);
+    throw error;
   }
-  
-  return response;
 }
 
 async function sendGroupAnniversaryMessage(webhookUrl, members) {
@@ -139,17 +147,26 @@ async function sendGroupAnniversaryMessage(webhookUrl, members) {
     }]
   };
   
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(message)
-  });
+  console.log('Sending group anniversary message to Discord...');
   
-  if (!response.ok) {
-    throw new Error(`Discord API returned ${response.status}`);
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(message)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Discord API returned ${response.status}: ${errorText}`);
+    }
+    
+    console.log('Discord message sent successfully!');
+    return response;
+  } catch (error) {
+    console.error('Error sending to Discord:', error);
+    throw error;
   }
-  
-  return response;
 }
 
 // Run the script

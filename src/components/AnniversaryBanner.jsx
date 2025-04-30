@@ -8,11 +8,7 @@ export default function AnniversaryBanner() {
   const { anniversaries, loading } = useAnniversaries();
 
   // Don't render if no anniversaries or still loading
-  if (loading) {
-    return null; // Or return a loading indicator if preferred
-  }
-
-  if (!anniversaries || anniversaries.length === 0) {
+  if (loading || !anniversaries || anniversaries.length === 0) {
     return null;
   }
 
@@ -24,13 +20,9 @@ export default function AnniversaryBanner() {
             <FaBirthdayCake />
           </div>
           <div className="ui-anniversary-content">
-            <h3 className="ui-anniversary-title">Clan Anniversary!</h3>
+            <span className="ui-anniversary-title">Clan Anniversary!</span>
             <p className="ui-anniversary-text">
-              Congratulations to{" "}
-              <strong>{member.name || member.wom_name}</strong>!
-              <br />
-              {member.years > 1 ? `${member.years} years` : "1 year"} in the
-              clan today!
+              <strong>{member.name || member.wom_name}</strong> - {member.years > 1 ? `${member.years} years` : "1 year"} in the clan today!
             </p>
           </div>
         </Card>
