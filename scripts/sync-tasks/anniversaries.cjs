@@ -2,8 +2,8 @@
  * Clan Anniversary Notifications
  * Sends Discord notifications for clan members celebrating anniversaries today
  */
-import fetch from 'node-fetch';
-import { createClient } from '@supabase/supabase-js';
+const fetch = require('node-fetch');
+const { createClient } = require('@supabase/supabase-js');
 
 async function main() {
   console.log('🎂 Checking for clan anniversaries...');
@@ -28,9 +28,8 @@ async function main() {
   // Query for members with anniversaries today
   // Join date is stored as YYYY-MM-DD in the database
   const { data: members, error } = await supabase
-    .from('members')
-    .select('wom_id, name, wom_name, join_date')
-    .ilike('join_date', `____-${month}-${day}`); // Using LIKE to match any year with today's month-day
+    .rpc("get_todays_anniversaries")
+    .select("wom_id, name, wom_name, join_date");
   
   if (error) {
     throw new Error(`Failed to query anniversaries: ${error.message}`);
