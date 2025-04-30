@@ -320,42 +320,67 @@ export default function AdminMemberTable({
       throw error;
     }
   };
-
-  // Fallback function for direct API access
-  const refreshMemberWomData = async (womId) => {
+  
+  const checkWomRoleStatus = async (member) => {
     try {
-      setRefreshing(`wom-${womId}`);
-
-      // Use context method to fetch WOM player data
-      const womData = await fetchers.wom.player(null, womId);
-
-      if (!womData) {
-        throw new Error("Failed to fetch player data from WOM");
+      setRefreshing(`wom-check-${member.wom_id}`);
+      
+      // Get fresh data from the WOM Group context
+      const womMembership = groupData?.memberships?.find(
+        (m) => m.player?.id === member.wom_id
+      );
+      
+      if (!womMembership || !womMembership.player) {
+        throw new Error("Member not found in WOM group data");
       }
-
-      // Update the member with fresh WOM data
-      const updatedData = {
-        wom_id: womId,
-        first_xp: womData.exp || 0,
-        current_xp: womData.exp || 0,
-        ehb: womData.ehb || 0,
-        level: womData.level || 0,
-        current_lvl: womData.level || 0,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Use context method to update member
-      await fetchers.supabase.updateMember(updatedData);
-
-      // Refresh local data
-      if (onRefresh) {
-        onRefresh();
+      
+      // Extract just the role
+      const womRole = womMembership.role;
+      
+      if (!womRole) {
+        alert("No role information found in WOM data");
+        return false;
       }
-
+      
+      // Simply compare the roles without updating
+      if (womRole.toLowerCase() !== (member.womrole || '').toLowerCase()) {
+        // Show modal or confirmation dialog with the role difference
+        if (window.confirm(`WOM role (${womRole}) differs from current role (${member.womrole || 'none'}). Update to match WOM?`)) {
+          // Only if user confirms, update just the role
+          await fetchers.supabase.updateMember({
+            wom_id: member.wom_id,
+            womrole: womRole,
+          });
+          
+          // Show success message
+          const successToast = document.createElement("div");
+          successToast.className = "update-success-toast";
+          successToast.textContent = `Updated ${member.name}'s role to ${womRole}`;
+          document.body.appendChild(successToast);
+          
+          // Remove the toast after 2 seconds
+          setTimeout(() => {
+            successToast.classList.add("toast-fade-out");
+            setTimeout(() => {
+              document.body.removeChild(successToast);
+            }, 300);
+          }, 2000);
+          
+          // Refresh the view
+          if (onRefresh) {
+            onRefresh();
+          }
+        }
+      } else {
+        // Roles match - just inform the user
+        alert(`Role is already up-to-date: ${womRole}`);
+      }
+      
       return true;
     } catch (error) {
-      console.error("Error refreshing member WOM data:", error);
-      throw error;
+      console.error("Error checking WOM role:", error);
+      alert(`Error checking WOM role: ${error.message}`);
+      return false;
     } finally {
       setRefreshing(null);
     }
@@ -495,18 +520,15 @@ export default function AdminMemberTable({
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUpdateToCorrectRole(
-                                member,
-                                roleStatus.correctRole
-                              );
+                              checkWomRoleStatus(member);
                             }}
-                            title={`Update to correct role: ${roleStatus.correctRole}`}
-                            disabled={refreshing === `fix-${member.wom_id}`}
+                            title="Sync with latest WOM data"
+                            disabled={refreshing === `wom-${member.wom_id}`}
                           >
-                            {refreshing === `fix-${member.wom_id}` ? (
+                            {refreshing === `wom-${member.wom_id}` ? (
                               <div className="ui-button-spinner"></div>
                             ) : (
-                              "Fix Rank"
+                              "Sync WOM"
                             )}
                           </Button>
                         )}

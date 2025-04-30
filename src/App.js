@@ -35,7 +35,7 @@ const AppContent = () => {
       {showNavbar && <Navbar />}
       {<AnniversaryBanner />}
       <Routes>
-        <Route path="/" element={<WelcomePage />} />
+        <Route path="/" element={<MembersPage />} />
         <Route path="/members" element={<MembersPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/login" element={<Login />} />
