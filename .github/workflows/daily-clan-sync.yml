@@ -70,7 +70,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_ANNIVERSARY_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ANNIVERSARY_WEBHOOK_URL: ${{ secrets.DISCORD_ANNIVERSARY_WEBHOOK_URL }}
       
       # Optional summary step to report overall status
       - name: Summary
