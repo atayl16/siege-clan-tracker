@@ -1,4 +1,4 @@
-const { checkRunewatch } = require('../../scripts/sync-tasks/runewatch-check');
+const { checkRunewatch } = require('../../scripts/sync-tasks/runewatch-check.cjs');
 
 exports.handler = async function(event, context) {
   try {
