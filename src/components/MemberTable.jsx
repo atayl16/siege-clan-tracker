@@ -304,11 +304,11 @@ export default function MemberTable({ members }) {
         ),
       },
       {
-        accessorKey: "siege_score",
-        header: "Score",
+        accessorKey: "current_lvl",
+        header: "Level",
         cell: ({ row }) => (
-          <div className="ui-cell-content ui-center-content ui-score-cell">
-            {safeFormat(row.original.siege_score)}
+          <div className="ui-cell-content ui-center-content ui-level-cell">
+            {row.original.current_lvl || "-"}
           </div>
         ),
       },
@@ -390,6 +390,12 @@ export default function MemberTable({ members }) {
                           </span>
                         </div>
                         <div className="ui-detail-item">
+                          <span className="ui-detail-label">Siege Score</span>
+                          <span className="ui-detail-value">
+                            {safeFormat(row.original.siege_score || 0)}
+                          </span>
+                        </div>
+                        <div className="ui-detail-item">
                           <span className="ui-detail-label">Joined</span>
                           <span className="ui-detail-value">
                             {row.original.join_date
@@ -434,12 +440,6 @@ export default function MemberTable({ members }) {
                               }
                               return "Max rank achieved";
                             })()}
-                          </span>
-                        </div>
-                        <div className="ui-detail-item">
-                          <span className="ui-detail-label">Level</span>
-                          <span className="ui-detail-value">
-                            {row.original.current_lvl || "?"}
                           </span>
                         </div>
                       </div>
