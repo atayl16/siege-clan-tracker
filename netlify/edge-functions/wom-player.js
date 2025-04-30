@@ -1,6 +1,8 @@
 export default async (request, _context) => {
   // Use Deno.env.get() for environment variables
   const TTL = 600; // Cache for 10 minutes
+
+  console.log("Fetching WOM player data...");
   
   try {
     // Extract player ID from URL or query params

@@ -1,0 +1,59 @@
+name: Hourly Clan Data Sync
+
+on:
+  schedule:
+    # Run hourly
+    - cron: "0 * * * *"
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run WOM Sync
+        if: ${{ github.event.inputs.job_to_run == 'wom-sync' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        run: node scripts/sync-tasks/sync-wom.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+          WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
+          
+      - name: Run WOM Events Sync
+        if: ${{ github.event.inputs.job_to_run == 'wom-events' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        run: node scripts/sync-tasks/wom-events.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+          WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
+          
+      - name: Run RuneWatch Check
+        if: ${{ github.event.inputs.job_to_run == 'runewatch' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        run: node scripts/sync-tasks/runewatch-check.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+            
+      # Optional summary step to report overall status
+      - name: Summary
+        run: |
+          echo "🔍 Daily clan sync process completed"
+          if [[ "${{ github.event.inputs.job_to_run }}" != "" ]]; then
+            echo "Executed job: ${{ github.event.inputs.job_to_run }}"
+          else
+            echo "Ran all jobs via scheduled execution"
+          fi

@@ -4,6 +4,8 @@ export default async (_request, _context) => {
   
   // Cache for 30 minutes (1800 seconds)
   const TTL = 1800;
+
+  console.log("Fetching WOM competitions data...");
   
   try {
     // Fetch from WOM API

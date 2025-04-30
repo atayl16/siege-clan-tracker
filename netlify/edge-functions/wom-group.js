@@ -8,6 +8,8 @@ export default async (_request, _context) => {
   
   // Cache for 15 minutes (900 seconds)
   const TTL = 900;
+
+  console.log("Fetching WOM group data...");
   
   try {
     // Fetch from WOM API

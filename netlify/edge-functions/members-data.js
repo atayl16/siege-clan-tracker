@@ -7,6 +7,8 @@ export default async (request, _context) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const API_ACCESS_KEY = Deno.env.get("API_ACCESS_KEY");
   
+  console.log("Fetching members data from Supabase...");
+
   // Cache for 5 minutes (300 seconds)
   const TTL = 300;
   
