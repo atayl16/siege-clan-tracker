@@ -15,6 +15,7 @@ import ultimateIcon from "../assets/images/ironman/Ultimate_ironman_chat_badge.p
 import groupIcon from "../assets/images/ironman/Group_ironman_chat_badge.png";
 import hardcoreGroupIcon from "../assets/images/ironman/Hardcore_group_ironman_chat_badge.png";
 import unrankedGroupIcon from "../assets/images/ironman/Unranked_group_ironman_chat_badge.png";// Define admin rank titles
+
 export const ADMIN_RANKS = ["Owner", "Deputy Owner", "General", "Captain", "PvM Organizer"];
 
 // Helper component for clan icons

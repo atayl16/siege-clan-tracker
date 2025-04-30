@@ -216,36 +216,25 @@ const fetchers = {
 
     refreshPlayerWomData: async (womId) => {
       try {
-        // First fetch the data from WOM API
         const response = await fetch(
           `https://api.wiseoldman.net/v2/players/${womId}`,
-          {
-            headers: { "User-Agent": "Siege-Clan-Tracker/1.0" },
-          }
+          { headers: { "User-Agent": "Siege-Clan-Tracker/1.0" } }
         );
-
-        if (!response.ok) {
-          throw new Error(`WOM API error: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`WOM API error: ${response.status}`);
         const womData = await response.json();
-
-        // Update the member in the database
+    
         const memberData = {
           wom_id: womId,
-          first_xp: womData.exp,
           current_xp: womData.exp,
-          ehb: womData.ehb || 0,
-          level: womData.level || 0,
-          current_lvl: womData.level || 0,
+          current_lvl: womData.level,
           updated_at: new Date().toISOString(),
         };
-
+    
         const { error } = await supabase.rpc("admin_upsert_member", {
           member_data: memberData,
         });
-
         if (error) throw error;
+    
         return { success: true, data: womData };
       } catch (error) {
         console.error("Error refreshing player WOM data:", error);

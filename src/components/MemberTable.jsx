@@ -302,11 +302,6 @@ export default function MemberTable({ members }) {
         cell: ({ row }) => {
           // Get ironman type from member data - first check database field
           const ironmanType = getIronmanType(row.original);
-          
-          // Add debug logging
-          if (row.original.build || row.original.ironman_type || row.original.wom_account_type) {
-            console.log(`Player: ${row.original.name}, Build: ${row.original.build}, Type: ${ironmanType}, WOM type: ${row.original.wom_account_type}`);
-          }
         
           return (
             <div className="ui-cell-content ui-name-cell">
