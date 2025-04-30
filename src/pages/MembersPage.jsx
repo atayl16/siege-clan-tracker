@@ -23,6 +23,7 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Tabs from "../components/ui/Tabs";
 import StatGroup from "../components/ui/StatGroup";
+import SearchInput from "../components/ui/SearchInput";
 
 import "./MembersPage.css";
 
@@ -158,38 +159,20 @@ export default function MembersPage() {
         onChange={handleTabChange}
         className="ui-dashboard-tabs"
       >
-        <Tabs.Tab
-          tabId="members"
-          label="Members"
-          icon={<FaUsers />}
-        >
+        <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
           <div className="ui-content-header">
             <h2>Clan Members</h2>
             <div className="ui-actions-container">
-              <div className="ui-search-container">
-                <div className="ui-search-input-wrapper">
-                  <FaSearch className="ui-search-icon" />
-                  <input
-                    type="text"
-                    className="ui-search-input"
-                    placeholder="Search members..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                  />
-                  {searchTerm && (
-                    <button
-                      className="ui-clear-search"
-                      onClick={() => {
-                        setSearchTerm("");
-                        searchParams.delete("search");
-                        setSearchParams(searchParams);
-                      }}
-                    >
-                      <FaTimes />
-                    </button>
-                  )}
-                </div>
-              </div>
+              <SearchInput
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onClear={() => {
+                  setSearchTerm("");
+                  searchParams.delete("search");
+                  setSearchParams(searchParams);
+                }}
+                placeholder="Search members..."
+              />
             </div>
           </div>
           <div className="ui-member-table-container">
@@ -203,41 +186,41 @@ export default function MembersPage() {
           </div>
 
           <div className="ui-section-container">
-          <h3 className="ui-section-title">Clan Stats</h3>
-          <StatGroup className="ui-stats-group">
-            <StatGroup.Stat label="Members" value={members?.length || 0} />
-            <StatGroup.Stat
-              label="Total XP"
-              value={(() => {
-                if (!members || members.length === 0) return "0";
-                
-                const xpInMillions = Math.floor(
-                  members.reduce(
-                    (sum, m) => sum + (parseInt(m.current_xp) || 0),
-                    0
-                  ) / 1000000
-                );
+            <h3 className="ui-section-title">Clan Stats</h3>
+            <StatGroup className="ui-stats-group">
+              <StatGroup.Stat label="Members" value={members?.length || 0} />
+              <StatGroup.Stat
+                label="Total XP"
+                value={(() => {
+                  if (!members || members.length === 0) return "0";
 
-                return xpInMillions >= 1000
-                  ? `${(xpInMillions / 1000).toFixed(1)}B`
-                  : `${xpInMillions}M`;
-              })()}
-            />
-            <StatGroup.Stat
-              label="Avg. Level"
-              value={(() => {
-                if (!members || members.length === 0) return "0";
-                
-                return Math.floor(
-                  members.reduce(
-                    (sum, m) => sum + (parseInt(m.current_lvl) || 0),
-                    0
-                  ) / Math.max(1, members.length)
-                );
-              })()}
-            />
+                  const xpInMillions = Math.floor(
+                    members.reduce(
+                      (sum, m) => sum + (parseInt(m.current_xp) || 0),
+                      0
+                    ) / 1000000
+                  );
+
+                  return xpInMillions >= 1000
+                    ? `${(xpInMillions / 1000).toFixed(1)}B`
+                    : `${xpInMillions}M`;
+                })()}
+              />
+              <StatGroup.Stat
+                label="Avg. Level"
+                value={(() => {
+                  if (!members || members.length === 0) return "0";
+
+                  return Math.floor(
+                    members.reduce(
+                      (sum, m) => sum + (parseInt(m.current_lvl) || 0),
+                      0
+                    ) / Math.max(1, members.length)
+                  );
+                })()}
+              />
             </StatGroup>
-            
+
             {/* Clan Information section */}
             <h3 className="ui-section-title">Clan Information</h3>
             <div className="ui-clan-info-row">
@@ -276,11 +259,7 @@ export default function MembersPage() {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab
-          tabId="events"
-          label="Events"
-          icon={<FaCalendarAlt />}
-        >
+        <Tabs.Tab tabId="events" label="Events" icon={<FaCalendarAlt />}>
           <div className="ui-content-header">
             <h2>Clan Events</h2>
             <div className="ui-events-filters-container">
@@ -319,26 +298,31 @@ export default function MembersPage() {
             <StatGroup.Stat
               label="Active"
               value={
-                !events ? 0 : 
-                events.filter(
-                  (e) =>
-                    new Date(e.start_date) <= new Date() &&
-                    new Date(e.end_date) >= new Date()
-                ).length
+                !events
+                  ? 0
+                  : events.filter(
+                      (e) =>
+                        new Date(e.start_date) <= new Date() &&
+                        new Date(e.end_date) >= new Date()
+                    ).length
               }
             />
             <StatGroup.Stat
               label="Upcoming"
               value={
-                !events ? 0 : 
-                events.filter((e) => new Date(e.start_date) > new Date()).length
+                !events
+                  ? 0
+                  : events.filter((e) => new Date(e.start_date) > new Date())
+                      .length
               }
             />
             <StatGroup.Stat
               label="Completed"
               value={
-                !events ? 0 : 
-                events.filter((e) => new Date(e.end_date) < new Date()).length
+                !events
+                  ? 0
+                  : events.filter((e) => new Date(e.end_date) < new Date())
+                      .length
               }
             />
           </StatGroup>
@@ -376,17 +360,20 @@ export default function MembersPage() {
             />
 
             {/* Toggle button */}
-            {members && 
-              members.filter((m) => (parseInt(m.siege_score) || 0) > 0).length > 10 && (
-              <div className="ui-button-center">
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowFullLeaderboard(!showFullLeaderboard)}
-                >
-                  {showFullLeaderboard ? "Show Less" : "Show Full Leaderboard"}
-                </Button>
-              </div>
-            )}
+            {members &&
+              members.filter((m) => (parseInt(m.siege_score) || 0) > 0).length >
+                10 && (
+                <div className="ui-button-center">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowFullLeaderboard(!showFullLeaderboard)}
+                  >
+                    {showFullLeaderboard
+                      ? "Show Less"
+                      : "Show Full Leaderboard"}
+                  </Button>
+                </div>
+              )}
 
             <Card className="ui-leaderboard-info" variant="dark">
               <Card.Body>

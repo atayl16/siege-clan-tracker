@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
 import { ClanIcon, GemIcon, AdminIcon } from "./RankIcons";
-import { useWomGroup } from "../context/DataContext"; // Updated hook name
+import { useWomGroup } from "../context/DataContext";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import Card from "./ui/Card";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -58,8 +60,14 @@ const FIGHTER_RANKS = [
 ];
 
 // Helper function to safely format numbers
-const safeFormat = (value) => {
+const safeFormat = (value, options = {}) => {
   if (value === null || value === undefined) return "0";
+
+  // Apply floor if requested
+  if (options.floor) {
+    value = Math.floor(value);
+  }
+
   return Number(value).toLocaleString();
 };
 
@@ -74,7 +82,7 @@ const getNextRankInfo = (member) => {
   if (!member) return { amount: null, rank: null };
 
   const womRole = (member.womrole || "").toLowerCase().trim();
-  
+
   // Determine if member is skiller or fighter
   const isSkiller = SKILLER_RANK_NAMES.some((rank) =>
     womRole.includes(rank.toLowerCase())
@@ -84,8 +92,9 @@ const getNextRankInfo = (member) => {
   );
 
   if (isSkiller) {
-    const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
-    
+    const clanXp =
+      safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
+
     // Find the next rank
     for (let i = 0; i < SKILLER_RANKS.length; i++) {
       if (clanXp < SKILLER_RANKS[i].range[1]) {
@@ -94,14 +103,14 @@ const getNextRankInfo = (member) => {
         if (i < SKILLER_RANKS.length - 1) {
           return {
             amount: SKILLER_RANKS[i].range[1] - clanXp,
-            rank: SKILLER_RANKS[i + 1].name
+            rank: SKILLER_RANKS[i + 1].name,
           };
         }
       }
     }
   } else if (isFighter) {
     const clanEhb = safeParseInt(member.ehb);
-    
+
     // Find the next rank
     for (let i = 0; i < FIGHTER_RANKS.length; i++) {
       if (clanEhb < FIGHTER_RANKS[i].range[1]) {
@@ -110,7 +119,7 @@ const getNextRankInfo = (member) => {
         if (i < FIGHTER_RANKS.length - 1) {
           return {
             amount: FIGHTER_RANKS[i].range[1] - clanEhb,
-            rank: FIGHTER_RANKS[i + 1].name
+            rank: FIGHTER_RANKS[i + 1].name,
           };
         }
       }
@@ -121,54 +130,41 @@ const getNextRankInfo = (member) => {
 };
 
 // Main MemberTable component
-export default function MemberTable({
-  members,
-  isAdmin = false,
-  onRowClick,
-  onDeleteClick,
-}) {
+export default function MemberTable({ members }) {
   // Access WOM data using the updated context hook
   const { groupData, loading: womLoading } = useWomGroup();
-  
-  // Add state to track screen width
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [expandedRow, setExpandedRow] = useState(null);
 
-  // Add resize listener
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-  
   // Enhanced member data with WOM data
-  const enhancedMembers = React.useMemo(() => {
+  const enhancedMembers = useMemo(() => {
     if (!members || !groupData?.memberships) return members;
-    
+
     // Create a map of WOM members by ID for fast lookups
     const womMembersMap = {};
-    groupData.memberships.forEach(membership => {
+    groupData.memberships.forEach((membership) => {
       if (membership.player?.id) {
         womMembersMap[membership.player.id] = {
           ...membership.player,
-          role: membership.role
+          role: membership.role,
         };
       }
     });
-    
+
     // Enhance local members with fresh WOM data
-    return members.map(member => {
+    return members.map((member) => {
       const womMember = member.wom_id ? womMembersMap[member.wom_id] : null;
-      
+
       if (womMember) {
         // Use the most recent data from WOM if available
         return {
           ...member,
           // Only update these fields if you want the latest WOM data to override your DB
-          current_xp: womMember.latestSnapshot?.data?.skills?.overall?.experience || member.current_xp,
-          current_lvl: womMember.latestSnapshot?.data?.skills?.overall?.level || member.current_lvl,
+          current_xp:
+            womMember.latestSnapshot?.data?.skills?.overall?.experience ||
+            member.current_xp,
+          current_lvl:
+            womMember.latestSnapshot?.data?.skills?.overall?.level ||
+            member.current_lvl,
           womrole: womMember.role || member.womrole,
           ehb: womMember.ehb || member.ehb,
           // Add any other fields you want to use from WOM
@@ -178,66 +174,76 @@ export default function MemberTable({
     });
   }, [members, groupData]);
 
-  const sortedMembers = React.useMemo(() => {
-    // First filter members to remove hidden ones (when not in admin view)
-    const visibleMembers = isAdmin 
-      ? enhancedMembers || []
-      : (enhancedMembers || []).filter(member => !member.hidden);
-    
+  const sortedMembers = useMemo(() => {
+    // Filter out hidden members
+    const visibleMembers = (enhancedMembers || []).filter((member) => !member.hidden);
+
     // Then sort the visible members
     return [...visibleMembers].sort((a, b) => {
-      const aRole = (a.womrole || "").toLowerCase().trim().replace(/_/g, ' ');
-      const bRole = (b.womrole || "").toLowerCase().trim().replace(/_/g, ' ');
-  
+      const aRole = (a.womrole || "").toLowerCase().trim().replace(/_/g, " ");
+      const bRole = (b.womrole || "").toLowerCase().trim().replace(/_/g, " ");
+
       // Helper function for more accurate rank detection
       const getRankIndex = (role) => {
-        if (role === "owner" || (role.includes("owner") && !role.includes("deputy"))) {
+        if (
+          role === "owner" ||
+          (role.includes("owner") && !role.includes("deputy"))
+        ) {
           return 0; // Owner rank
-        } else if (role.includes("deputy owner") || role.includes("deputy_owner")) {
+        } else if (
+          role.includes("deputy owner") ||
+          role.includes("deputy_owner")
+        ) {
           return 1; // Deputy owner rank
         } else if (role.includes("general")) {
           return 2;
         } else if (role.includes("captain")) {
           return 3;
-        } else if (role.includes("pvm organizer") || role.includes("pvm_organizer")) {
+        } else if (
+          role.includes("pvm organizer") ||
+          role.includes("pvm_organizer")
+        ) {
           return 4;
         }
         return -1; // Not an admin rank
       };
-  
+
       const aAdminIndex = getRankIndex(aRole);
       const bAdminIndex = getRankIndex(bRole);
-  
+
       // Admin ranks come first, sorted by their order
       if (aAdminIndex !== -1 && bAdminIndex !== -1) {
         return aAdminIndex - bAdminIndex;
       }
       if (aAdminIndex !== -1) return -1; // a is an admin, b is not
       if (bAdminIndex !== -1) return 1; // b is an admin, a is not
-  
+
       // If neither is an admin, sort by "Clan XP Gained" in descending order
       const aClanXpGained =
         parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
       const bClanXpGained =
         parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10) || 0;
-  
+
       return bClanXpGained - aClanXpGained;
     });
-  }, [enhancedMembers, isAdmin]);
+  }, [enhancedMembers]);
 
-  // Define base columns that are shown in both public and admin views
-  const baseColumns = React.useMemo(() => {
-    // Start with the columns that always show
-    const columns = [
+  // Define columns for the table
+  const columns = useMemo(
+    () => [
       {
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => (
           <div className="ui-cell-content ui-name-cell">
             {row.original.name || row.original.wom_name || "N/A"}
+            {expandedRow === row.original.wom_id ? (
+              <FaChevronUp className="ui-expand-icon" />
+            ) : (
+              <FaChevronDown className="ui-expand-icon" />
+            )}
           </div>
         ),
-        headerClassName: "ui-name-column",
       },
       {
         accessorKey: "rank",
@@ -271,7 +277,7 @@ export default function MemberTable({
             adminRank = "PvM Organizer";
           }
 
-          // Check for skiller/fighter ranks (no change)
+          // Check for skiller/fighter ranks
           const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
             womRole.includes(name.toLowerCase())
           );
@@ -280,161 +286,34 @@ export default function MemberTable({
           );
 
           return (
-            <div className="ui-cell-content ui-rank-cell">
+            <div className="ui-cell-content ui-center-content ui-rank-cell">
               {adminRank && <AdminIcon title={adminRank} />}
               {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
               {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
             </div>
           );
         },
-        headerClassName: "ui-center-column",
       },
       {
         accessorKey: "ehb",
         header: "EHB",
         cell: ({ row }) => (
-          <div className="ui-cell-content ui-numeric-cell">
-            {safeFormat(row.original.ehb)}
+          <div className="ui-cell-content ui-center-content">
+            {safeFormat(row.original.ehb, { floor: true })}
           </div>
         ),
-        headerClassName: "ui-numeric-column",
-      },
-    ];
-
-    // Only add Clan XP Gained column if not on mobile
-    if (!isMobile) {
-      columns.push({
-        accessorKey: "clan_xp_gained",
-        header: "Clan XP",
-        cell: ({ row }) => {
-          // Safe calculation of XP gained
-          let gainedXp = 0;
-          if (
-            row.original.current_xp !== undefined &&
-            row.original.first_xp !== undefined
-          ) {
-            gainedXp =
-              safeParseInt(row.original.current_xp) -
-              safeParseInt(row.original.first_xp);
-          }
-
-          return (
-            <div className="ui-cell-content ui-numeric-cell ui-xp-cell">
-              {safeFormat(gainedXp)}
-            </div>
-          );
-        },
-        headerClassName: "ui-numeric-column",
-      });
-
-      columns.push({
-        accessorKey: "join_date",
-        header: "Joined",
-        cell: ({ row }) => {
-          const joinDate = row.original.join_date
-            ? new Date(row.original.join_date).toLocaleDateString(undefined, {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })
-            : "N/A";
-          return <div className="ui-cell-content ui-date-cell">{joinDate}</div>;
-        },
-        headerClassName: "ui-center-column"
-      });
-    }
-
-    // Add remaining columns
-    columns.push(
-      {
-        accessorKey: "next_level",
-        header: "Next Level",
-        cell: ({ row }) => {
-          const nextRankInfo = getNextRankInfo(row.original);
-          
-          return (
-            <div className="ui-cell-content ui-next-level-cell">
-              {nextRankInfo.amount !== null && nextRankInfo.amount > 0 ? (
-                <>
-                  {nextRankInfo.rank && (
-                    <span className="ui-next-rank-icon">
-                      {SKILLER_RANK_NAMES.includes(nextRankInfo.rank) ? 
-                        <GemIcon gemType={nextRankInfo.rank} /> : 
-                        <ClanIcon name={nextRankInfo.rank} />}
-                    </span>
-                  )}
-                  <span className="ui-next-rank-amount">{safeFormat(nextRankInfo.amount)}</span>
-                </>
-              ) : ""}
-            </div>
-          );
-        },
-        headerClassName: "ui-center-column"
       },
       {
         accessorKey: "siege_score",
-        header: "Siege Score",
+        header: "Score",
         cell: ({ row }) => (
-          <div className="ui-cell-content ui-numeric-cell ui-score-cell">
+          <div className="ui-cell-content ui-center-content ui-score-cell">
             {safeFormat(row.original.siege_score)}
           </div>
         ),
-        headerClassName: "ui-numeric-column"
-      }
-    );
-
-    return columns;
-  }, [isMobile]); // Add isMobile as a dependency to re-render when screen size changes
-
-  // Admin-only columns - only added if isAdmin=true
-  const adminColumns = React.useMemo(
-    () => [
-      {
-        accessorKey: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <div className="ui-cell-content ui-actions-cell">
-            <button
-              className="ui-button ui-button-small ui-button-info"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRowClick && onRowClick(row.original);
-              }}
-            >
-              Edit
-            </button>
-            <button
-              className="ui-button ui-button-small ui-button-danger"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("Deleting member:", row.original);
-
-                if (!row.original.wom_id) {
-                  console.error(
-                    "Cannot delete: wom_id is missing",
-                    row.original
-                  );
-                  alert("Cannot delete: Member ID (wom_id) is missing");
-                  return;
-                }
-
-                onDeleteClick && onDeleteClick(row.original);
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        ),
-        headerClassName: "ui-center-column"
       },
     ],
-    [onRowClick, onDeleteClick]
-  );
-
-  // Combine columns based on whether this is the admin view
-  const columns = React.useMemo(
-    () => (isAdmin ? [...baseColumns, ...adminColumns] : baseColumns),
-    [isAdmin, baseColumns, adminColumns]
+    [expandedRow]
   );
 
   const table = useReactTable({
@@ -445,13 +324,17 @@ export default function MemberTable({
 
   // Show loading state when fetching WOM data
   if (womLoading && members.length > 0) {
-    return <div className="ui-loading-state">Refreshing member data from Wise Old Man...</div>;
+    return (
+      <div className="ui-loading-state">
+        Refreshing member data from Wise Old Man...
+      </div>
+    );
   }
 
   if (!members || members.length === 0) {
     return <div className="ui-empty-state">No members found.</div>;
   }
-  
+
   return (
     <div className="ui-table-container ui-member-table-container">
       <table className="ui-table ui-member-table">
@@ -461,17 +344,11 @@ export default function MemberTable({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className={`ui-table-header-cell ${header.column.columnDef.headerClassName || ''}`}
-                  style={{
-                    width: getColumnWidth(header.id),
-                  }}
+                  className="ui-table-header-cell"
                 >
                   {header.isPlaceholder
                     ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                    : flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
             </tr>
@@ -479,52 +356,101 @@ export default function MemberTable({
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.id}
-              className={`ui-table-row ${isAdmin ? 'ui-clickable' : ''}`}
-              onClick={() => isAdmin && onRowClick && onRowClick(row.original)}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className="ui-table-cell"
-                  data-label={cell.column.columnDef.header}
-                  style={{
-                    width: getColumnWidth(cell.column.id),
-                  }}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
+            <React.Fragment key={row.id}>
+              <tr
+                className="ui-table-row ui-clickable"
+                onClick={() => {
+                  const rowId = row.original.wom_id;
+                  setExpandedRow(expandedRow === rowId ? null : rowId);
+                }}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="ui-table-cell"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+              
+              {/* Expanded row with additional details */}
+              {expandedRow === row.original.wom_id && (
+                <tr className="ui-table-expanded-row">
+                  <td colSpan={columns.length}>
+                    <div className="ui-expanded-content">
+                      <div className="ui-details-grid">
+                        <div className="ui-detail-item">
+                          <span className="ui-detail-label">Clan XP</span>
+                          <span className="ui-detail-value">
+                            {safeFormat(
+                              (parseInt(row.original.current_xp) || 0) -
+                                (parseInt(row.original.first_xp) || 0)
+                            )}
+                          </span>
+                        </div>
+                        <div className="ui-detail-item">
+                          <span className="ui-detail-label">Joined</span>
+                          <span className="ui-detail-value">
+                            {row.original.join_date
+                              ? new Date(row.original.join_date).toLocaleDateString(undefined, {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric"
+                                })
+                              : "N/A"}
+                          </span>
+                        </div>
+                        {/* Next rank information */}
+                        <div className="ui-detail-item">
+                          <span className="ui-detail-label">Next Rank</span>
+                          <span className="ui-detail-value">
+                            {(() => {
+                              const nextRankInfo = getNextRankInfo(row.original);
+                              if (nextRankInfo.amount && nextRankInfo.rank) {
+                                return (
+                                  <>
+                                    <span className="ui-next-rank-icon">
+                                      {SKILLER_RANK_NAMES.includes(
+                                        nextRankInfo.rank
+                                      ) ? (
+                                        <GemIcon gemType={nextRankInfo.rank} />
+                                      ) : (
+                                        <ClanIcon name={nextRankInfo.rank} />
+                                      )}
+                                    </span>
+                                    <span>
+                                      {nextRankInfo.rank}:{" "}
+                                      {safeFormat(nextRankInfo.amount)}{" "}
+                                      {SKILLER_RANK_NAMES.includes(
+                                        nextRankInfo.rank
+                                      )
+                                        ? "XP"
+                                        : "EHB"}{" "}
+                                      needed
+                                    </span>
+                                  </>
+                                );
+                              }
+                              return "Max rank achieved";
+                            })()}
+                          </span>
+                        </div>
+                        <div className="ui-detail-item">
+                          <span className="ui-detail-label">Level</span>
+                          <span className="ui-detail-value">
+                            {row.original.current_lvl || "?"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>
     </div>
   );
-}
-  
-// Helper function to distribute column widths
-function getColumnWidth(columnId) {
-  // Set appropriate widths for each column
-  switch(columnId) {
-    case 'name':
-      return '20%';
-    case 'rank':
-      return '12%';
-    case 'ehb':
-      return '10%';
-    case 'join_date':
-      return '13%';
-    case 'clan_xp_gained':
-      return '15%';
-    case 'next_level':
-      return '15%';
-    case 'siege_score':
-      return '10%';
-    case 'actions':
-      return '10%';
-    default:
-      return 'auto';
-  }
 }

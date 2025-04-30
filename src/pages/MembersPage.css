@@ -104,12 +104,11 @@
 
 /* MEMBER TABLE */
 .ui-member-table-container {
-  height: 31.25rem; /* 500px */
+  max-height: 30rem; /* Use max-height instead of height */
   overflow: auto;
   border-radius: var(--border-radius-sm, 0.25rem);
-  scrollbar-width: thin;
-  scrollbar-color: #666 #333;
-  background-color: #222;
+  scrollbar-width: none;
+  background-color: transparent; /* Change to transparent */
   margin-bottom: 1.25rem; /* 20px */
 }
 
