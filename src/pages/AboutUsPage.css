@@ -1,0 +1,60 @@
+.ui-page-container {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 20px;
+}
+
+.ui-section-container {
+  margin-bottom: 40px;
+}
+
+.ui-section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.ui-section-icon {
+  margin-right: 10px;
+}
+
+.ui-clan-info-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.ui-info-card {
+  height: 100%;
+}
+
+.ui-info-label {
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ui-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.ui-resource-link:hover {
+  color: var(--accent-color-light);
+  text-decoration: underline;
+}

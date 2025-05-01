@@ -367,7 +367,6 @@ export default function MemberTable() {
               {adminRank && <AdminIcon title={adminRank} />}
               {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
               {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
-              <span className="ui-rank-text">{row.original.womrole}</span>
             </div>
           );
         },

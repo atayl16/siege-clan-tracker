@@ -13,6 +13,9 @@ import RegistrationForm from "./pages/RegistrationForm";
 import Login from "./components/Login";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
+import EventsPage from "./pages/EventsPage"; // Import the new EventsPage
+import LeaderboardPage from "./pages/LeaderboardPage"; // Import the new LeaderboardPage
+import AboutUsPage from "./pages/AboutUsPage"; // Import the new AboutUsPage
 import WelcomePage from "./pages/WelcomePage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
@@ -26,84 +29,87 @@ import "./styles/App.css";
 
 function App() {
   // Create a wrapper component to check the current route
-const AppContent = () => {
-  const location = useLocation();
-  
-  // More robust check - only hide navbar on welcome page or auth pages
-  const hideNavbarPaths = [
-    "/login", 
-    "/register", 
-    "/forgot-password"
-  ];
-  
-  const showNavbar = !hideNavbarPaths.includes(location.pathname);
+  const AppContent = () => {
+    const location = useLocation();
+    
+    // More robust check - only hide navbar on welcome page or auth pages
+    const hideNavbarPaths = [
+      "/login", 
+      "/register", 
+      "/forgot-password"
+    ];
+    
+    const showNavbar = !hideNavbarPaths.includes(location.pathname);
 
-  return (
-    <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
-      <SeasonalFavicon />
-      {showNavbar && <Navbar />}
-      {<AnniversaryBanner />}
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/members" element={<MembersPage />} />
-        <Route path="/progress" element={<ProgressPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<RegistrationForm />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/achievements" element={<AchievementsPage />} />
+    return (
+      <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
+        <SeasonalFavicon />
+        {showNavbar && <Navbar />}
+        {<AnniversaryBanner />}
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/members" element={<MembersPage />} />
+          <Route path="/events" element={<EventsPage />} /> {/* New Events page route */}
+          <Route path="/leaderboard" element={<LeaderboardPage />} /> {/* New Leaderboard page route */}
+          <Route path="/about" element={<AboutUsPage />} /> {/* New About Us page route */}
+          <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegistrationForm />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/achievements" element={<AchievementsPage />} />
 
-        {/* Admin Routes - All protected */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/members"
-          element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/members/new"
-          element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/members/deleted"
-          element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/events/new"
-          element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Admin Routes - All protected */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/members"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/members/new"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/members/deleted"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/events/new"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* 404 Route */}
-        <Route
-          path="*"
-          element={<div className="page-container">404 - Page Not Found</div>}
-        />
-      </Routes>
-    </div>
-  );
-};
+          {/* 404 Route */}
+          <Route
+            path="*"
+            element={<div className="page-container">404 - Page Not Found</div>}
+          />
+        </Routes>
+      </div>
+    );
+  };
 
   return (
     <QueryClientProvider client={queryClient}>

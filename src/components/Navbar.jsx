@@ -56,12 +56,33 @@ export default function Navbar() {
         </button>
 
         <div id="navbar-links" className={`navbar-links ${isOpen ? 'active' : ''}`}>
-
+          {/* Main Navigation Links */}
           <Link
             to="/members"
             className={location.pathname === "/members" ? "active" : ""}
           >
-            Home
+            Members
+          </Link>
+          
+          <Link
+            to="/events"
+            className={location.pathname === "/events" ? "active" : ""}
+          >
+            Events
+          </Link>
+          
+          <Link
+            to="/leaderboard"
+            className={location.pathname === "/leaderboard" ? "active" : ""}
+          >
+            Leaderboard
+          </Link>
+          
+          <Link
+            to="/about"
+            className={location.pathname === "/about" ? "active" : ""}
+          >
+            About Us
           </Link>
 
           {/* Authentication links */}

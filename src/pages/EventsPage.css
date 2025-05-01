@@ -1,0 +1,22 @@
+.ui-page-container {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 20px;
+}
+
+.ui-events-filters-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.ui-events-summary {
+  margin-bottom: 20px;
+}
+
+.ui-button-center {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
