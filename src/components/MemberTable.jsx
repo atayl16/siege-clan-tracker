@@ -8,7 +8,6 @@ import { ClanIcon, GemIcon, AdminIcon, IronmanIcon } from "./RankIcons";
 import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import { useGroup } from "../hooks/useGroup"; // Added to get WOM group data
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import Card from "./ui/Card";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -195,10 +194,12 @@ const getIronmanType = (member) => {
 };
 
 // Main MemberTable component
-export default function MemberTable() {
-  const { members, loading: membersLoading } = useMembers(); // Use the new hook for member data
+export default function MemberTable({ filteredMembers = null }) {
+  const { members: allMembers, loading: membersLoading } = useMembers(); // Use the new hook for member data
   const { groupData, loading: groupLoading } = useGroup(); // Use the new hook for WOM group data
   const [expandedRow, setExpandedRow] = useState(null);
+
+  const members = filteredMembers || allMembers;
 
   // Enhanced member data with WOM data
   const enhancedMembers = useMemo(() => {
@@ -304,7 +305,7 @@ export default function MemberTable() {
         cell: ({ row }) => {
           // Get ironman type from member data
           const ironmanType = getIronmanType(row.original);
-          
+
           return (
             <div className="ui-cell-content ui-name-cell">
               <div className="ui-name-content">
@@ -400,11 +401,7 @@ export default function MemberTable() {
   });
 
   if (membersLoading || groupLoading) {
-    return (
-      <div className="ui-loading-state">
-        Loading member data...
-      </div>
-    );
+    return <div className="ui-loading-state">Loading member data...</div>;
   }
 
   if (!members || members.length === 0) {
@@ -421,7 +418,10 @@ export default function MemberTable() {
                 <th key={header.id} className="ui-table-header-cell">
                   {header.isPlaceholder
                     ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                 </th>
               ))}
             </tr>
@@ -443,7 +443,7 @@ export default function MemberTable() {
                   </td>
                 ))}
               </tr>
-              
+
               {/* Expanded row with additional details */}
               {expandedRow === row.original.wom_id && (
                 <tr className="ui-table-expanded-row">
@@ -469,10 +469,12 @@ export default function MemberTable() {
                           <span className="ui-detail-label">Joined</span>
                           <span className="ui-detail-value">
                             {row.original.join_date
-                              ? new Date(row.original.join_date).toLocaleDateString(undefined, {
+                              ? new Date(
+                                  row.original.join_date
+                                ).toLocaleDateString(undefined, {
                                   year: "numeric",
                                   month: "long",
-                                  day: "numeric"
+                                  day: "numeric",
                                 })
                               : "N/A"}
                           </span>
@@ -482,7 +484,9 @@ export default function MemberTable() {
                           <span className="ui-detail-label">Next Rank</span>
                           <span className="ui-detail-value">
                             {(() => {
-                              const nextRankInfo = getNextRankInfo(row.original);
+                              const nextRankInfo = getNextRankInfo(
+                                row.original
+                              );
                               if (nextRankInfo.amount && nextRankInfo.rank) {
                                 return (
                                   <>
@@ -513,7 +517,9 @@ export default function MemberTable() {
                           </span>
                         </div>
                         <div className="ui-detail-item">
-                          <span className="ui-detail-label">Starting Level</span>
+                          <span className="ui-detail-label">
+                            Starting Level
+                          </span>
                           <span className="ui-detail-value">
                             {row.original.first_lvl || "N/A"}
                           </span>
