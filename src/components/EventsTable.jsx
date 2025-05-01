@@ -14,17 +14,22 @@ export default function EventsTable({
   // Get competitions data from the new hook
   const { competitions, loading: womLoading } = useCompetitions();
 
-  const formatSkillName = (eventType) => {
-    if (!eventType) return null;
-
-    // Normalize the event type
-    let normalizedType = eventType.toLowerCase();
-
+  // Update your formatSkillName function to handle both fields
+  const formatSkillName = (event) => {
+    if (!event) return null;
+    
+    // Check if we have metric or type to work with
+    const metricValue = event.metric || event.type;
+    if (!metricValue) return null;
+  
+    // Normalize the event type/metric
+    let normalizedType = metricValue.toLowerCase();
+  
     // Remove any suffixes (like "_xp" or "_experience")
     if (normalizedType.includes("_")) {
       normalizedType = normalizedType.split("_")[0];
     }
-
+  
     // Capitalize first letter for the SkillIcon component
     return normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
   };
