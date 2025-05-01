@@ -10,26 +10,10 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Edge function routes
+# Automatically map all edge functions in the folder
 [[edge_functions]]
-  path = "/api/wom/player"
-  function = "wom-player"
-
-[[edge_functions]]
-  path = "/api/wom/group"
-  function = "wom-group"
-
-[[edge_functions]]
-  path = "/api/wom/competitions"
-  function = "wom-competitions"
-
-[[edge_functions]]
-  path = "/api/members"
-  function = "members-data"
-
-[[edge_functions]]
-  path = "/api/group-achievements"
-  function = "group-achievements"
+  path = "/api/*"
+  function = ":splat"
 
 [[redirects]]
   from = "/*"
