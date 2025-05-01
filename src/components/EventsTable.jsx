@@ -13,8 +13,7 @@ export default function EventsTable({
 }) {
   // Get competitions data from the new hook
   const { competitions, loading: womLoading } = useCompetitions();
-
-  // Update your formatSkillName function to handle both fields
+  
   const formatSkillName = (event) => {
     if (!event) return null;
     
@@ -24,7 +23,12 @@ export default function EventsTable({
   
     // Normalize the event type/metric
     let normalizedType = metricValue.toLowerCase();
-  
+    
+    // Special case for runecrafting -> Runecraft
+    if (normalizedType === 'runecrafting') {
+      return 'Runecraft'; // Your icon component expects "Runecraft"
+    }
+    
     // Remove any suffixes (like "_xp" or "_experience")
     if (normalizedType.includes("_")) {
       normalizedType = normalizedType.split("_")[0];
@@ -231,9 +235,9 @@ export default function EventsTable({
                   >
                     <td>
                       <strong className="ui-event-name">
-                        {event.type && (
+                        {(event.metric || event.type) && (
                           <span className="ui-event-skill-icon">
-                            <SkillIcon skill={formatSkillName(event.type)} />
+                            <SkillIcon skill={formatSkillName(event)} />
                           </span>
                         )}
                         {event.is_wom || event.wom_id ? (
@@ -291,9 +295,9 @@ export default function EventsTable({
                   >
                     <td>
                       <strong className="ui-event-name">
-                        {event.type && (
+                        {(event.metric || event.type) && (
                           <span className="ui-event-skill-icon">
-                            <SkillIcon skill={formatSkillName(event.type)} />
+                            <SkillIcon skill={formatSkillName(event)} />
                           </span>
                         )}
                         {event.is_wom || event.wom_id ? (
@@ -351,9 +355,9 @@ export default function EventsTable({
                   >
                     <td>
                       <strong className="ui-event-name">
-                        {event.type && (
+                        {(event.metric || event.type) && (
                           <span className="ui-event-skill-icon">
-                            <SkillIcon skill={formatSkillName(event.type)} />
+                            <SkillIcon skill={formatSkillName(event)} />
                           </span>
                         )}
                         {event.is_wom || event.wom_id ? (
