@@ -7,7 +7,7 @@ import {
   FIGHTER_RANK_NAMES,
 } from "../utils/rankUtils";
 import { titleize } from "../utils/stringUtils";
-import { useMembers, useMembersAdmin } from "../context/DataContext";
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import { FaExchangeAlt, FaCheck, FaExclamationTriangle } from "react-icons/fa";
 
 // Import UI components
@@ -21,15 +21,14 @@ import "./RankAlerts.css";
 export default function RankAlerts({ previewMode = false, onRankUpdate }) {
   const [alerts, setAlerts] = useState([]);
   
-  // Use the context hooks instead of direct Supabase queries
+  // Use the new hook to fetch members
   const { 
     members, 
     loading: membersLoading, 
     error: membersError,
-    refreshMembers 
+    refreshMembers,
+    updateMember 
   } = useMembers();
-  
-  const { updateMember } = useMembersAdmin();
 
   // Determine the priority of a rank update
   const getRankUpdatePriority = (member) => {
@@ -118,7 +117,7 @@ export default function RankAlerts({ previewMode = false, onRankUpdate }) {
         womrole: member.calculated_rank.toLowerCase()
       };
       
-      // Use the updateMember function from the context
+      // Use the updateMember function from the hook
       await updateMember(updatedMember);
 
       // Remove the updated member from alerts

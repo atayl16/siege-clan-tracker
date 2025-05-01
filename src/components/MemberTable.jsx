@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
 import { ClanIcon, GemIcon, AdminIcon, IronmanIcon } from "./RankIcons";
-import { useWomGroup } from "../context/DataContext";
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Card from "./ui/Card";
 import "./MemberTable.css";
@@ -130,96 +130,18 @@ const getNextRankInfo = (member) => {
 };
 
 // Main MemberTable component
-export default function MemberTable({ members }) {
-  // Access WOM data using the updated context hook
-  const { groupData, loading: womLoading } = useWomGroup();
+export default function MemberTable() {
+  const { members, loading: membersLoading } = useMembers(); // Use the new hook
   const [expandedRow, setExpandedRow] = useState(null);
 
-  // Enhanced member data with WOM data
-  const enhancedMembers = useMemo(() => {
-    if (!members || !groupData?.memberships) return members;
-
-    // Create a map of WOM members by ID for fast lookups
-    const womMembersMap = {};
-    groupData.memberships.forEach((membership) => {
-      if (membership.player?.id) {
-        womMembersMap[membership.player.id] = {
-          ...membership.player,
-          role: membership.role,
-        };
-      }
-    });
-
-    // Enhance local members with fresh WOM data
-    return members.map((member) => {
-      const womMember = member.wom_id ? womMembersMap[member.wom_id] : null;
-
-      if (womMember) {
-        // Use the most recent data from WOM if available
-        return {
-          ...member,
-          // Only update these fields if you want the latest WOM data to override your DB
-          current_xp:
-            womMember.latestSnapshot?.data?.skills?.overall?.experience ||
-            member.current_xp,
-          current_lvl:
-            womMember.latestSnapshot?.data?.skills?.overall?.level ||
-            member.current_lvl,
-          womrole: womMember.role || member.womrole,
-          ehb: womMember.ehb || member.ehb,
-          wom_account_type: womMember.type || member.wom_account_type,
-          wom_player: womMember,
-        };
-      }
-      return member;
-    });
-  }, [members, groupData]);
-
   const sortedMembers = useMemo(() => {
+    if (!members) return [];
+
     // Filter out hidden members
-    const visibleMembers = (enhancedMembers || []).filter((member) => !member.hidden);
+    const visibleMembers = members.filter((member) => !member.hidden);
 
     // Then sort the visible members
     return [...visibleMembers].sort((a, b) => {
-      const aRole = (a.womrole || "").toLowerCase().trim().replace(/_/g, " ");
-      const bRole = (b.womrole || "").toLowerCase().trim().replace(/_/g, " ");
-
-      // Helper function for more accurate rank detection
-      const getRankIndex = (role) => {
-        if (
-          role === "owner" ||
-          (role.includes("owner") && !role.includes("deputy"))
-        ) {
-          return 0; // Owner rank
-        } else if (
-          role.includes("deputy owner") ||
-          role.includes("deputy_owner")
-        ) {
-          return 1; // Deputy owner rank
-        } else if (role.includes("general")) {
-          return 2;
-        } else if (role.includes("captain")) {
-          return 3;
-        } else if (
-          role.includes("pvm organizer") ||
-          role.includes("pvm_organizer")
-        ) {
-          return 4;
-        }
-        return -1; // Not an admin rank
-      };
-
-      const aAdminIndex = getRankIndex(aRole);
-      const bAdminIndex = getRankIndex(bRole);
-
-      // Admin ranks come first, sorted by their order
-      if (aAdminIndex !== -1 && bAdminIndex !== -1) {
-        return aAdminIndex - bAdminIndex;
-      }
-      if (aAdminIndex !== -1) return -1; // a is an admin, b is not
-      if (bAdminIndex !== -1) return 1; // b is an admin, a is not
-
-      // If neither is an admin, sort by "Clan XP Gained" in descending order
       const aClanXpGained =
         parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
       const bClanXpGained =
@@ -227,147 +149,32 @@ export default function MemberTable({ members }) {
 
       return bClanXpGained - aClanXpGained;
     });
-  }, [enhancedMembers]);
+  }, [members]);
 
-  const getIronmanType = (member) => {
-    // First check the ironman_type field which is most specific
-    if (member.ironman_type) {
-      return member.ironman_type.toLowerCase();
-    }
-    
-    // Check build field from database (more limited options)
-    if (member.build) {
-      const build = member.build.toLowerCase();
-      // Regular means not an ironman at all
-      if (build === 'regular') {
-        return null;
-      } 
-      // Basic ironman
-      else if (build === 'ironman') {
-        return 'standard';
-      }
-      // Ultimate ironman
-      else if (build === 'ultimate' || build.includes('ultimate')) {
-        return 'ultimate';
-      }
-    }
-    
-    // Then try to extract from WOM data
-    if (member.wom_account_type) {
-      const accountType = member.wom_account_type.toLowerCase();
-      
-      if (accountType.includes('hardcore') && accountType.includes('group')) {
-        return 'hardcore_group';
-      } else if (accountType.includes('hardcore')) {
-        return 'hardcore';
-      } else if (accountType.includes('ultimate')) {
-        return 'ultimate';
-      } else if (accountType.includes('unranked') && accountType.includes('group')) {
-        return 'unranked_group';
-      } else if (accountType.includes('group')) {
-        return 'group';
-      } else if (accountType.includes('ironman') || accountType === 'im') {
-        return 'standard';
-      }
-    }
-    
-    // If account type isn't found, check if there's an ironman status in WOM player data
-    if (member.wom_player?.type) {
-      const womType = member.wom_player.type.toLowerCase();
-      
-      if (womType.includes('hardcore') && womType.includes('group')) {
-        return 'hardcore_group';
-      } else if (womType.includes('hardcore')) {
-        return 'hardcore';
-      } else if (womType.includes('ultimate')) {
-        return 'ultimate'; 
-      } else if (womType.includes('unranked') && womType.includes('group')) {
-        return 'unranked_group';
-      } else if (womType.includes('group')) {
-        return 'group';
-      } else if (womType.includes('ironman') || womType === 'im') {
-        return 'standard';
-      }
-    }
-    
-    return null; // Not an ironman or type couldn't be determined
-  };
-  
-  // Define columns for the table
   const columns = useMemo(
     () => [
       {
         accessorKey: "name",
         header: "Name",
-        cell: ({ row }) => {
-          // Get ironman type from member data - first check database field
-          const ironmanType = getIronmanType(row.original);
-        
-          return (
-            <div className="ui-cell-content ui-name-cell">
-              <div className="ui-name-content">
-                {ironmanType && <IronmanIcon type={ironmanType} />}
-                <span>
-                  {row.original.name || row.original.wom_name || "N/A"}
-                </span>
-              </div>
-              {expandedRow === row.original.wom_id ? (
-                <FaChevronUp className="ui-expand-icon" />
-              ) : (
-                <FaChevronDown className="ui-expand-icon" />
-              )}
-            </div>
-          );
-        },
+        cell: ({ row }) => (
+          <div className="ui-cell-content ui-name-cell">
+            <span>{row.original.name || "N/A"}</span>
+            {expandedRow === row.original.wom_id ? (
+              <FaChevronUp className="ui-expand-icon" />
+            ) : (
+              <FaChevronDown className="ui-expand-icon" />
+            )}
+          </div>
+        ),
       },
       {
         accessorKey: "rank",
         header: "Clan Rank",
-        cell: ({ row }) => {
-          const womRole = (row.original.womrole || "").toLowerCase().trim();
-
-          // Normalize the role for comparison
-          const normalizedRole = womRole.replace(/_/g, " ");
-
-          // Check for admin rank - try to match with normalized versions
-          let adminRank = null;
-          if (
-            normalizedRole.includes("owner") &&
-            !normalizedRole.includes("deputy")
-          ) {
-            adminRank = "Owner";
-          } else if (
-            normalizedRole.includes("deputy owner") ||
-            normalizedRole.includes("deputy_owner")
-          ) {
-            adminRank = "Deputy Owner";
-          } else if (normalizedRole.includes("general")) {
-            adminRank = "General";
-          } else if (normalizedRole.includes("captain")) {
-            adminRank = "Captain";
-          } else if (
-            normalizedRole.includes("pvm organizer") ||
-            normalizedRole.includes("pvm_organizer")
-          ) {
-            adminRank = "PvM Organizer";
-          }
-
-          // Check for skiller/fighter ranks
-          const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
-            womRole.includes(name.toLowerCase())
-          );
-          const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
-            womRole.includes(name.toLowerCase())
-          );
-
-          return (
-            <div className="ui-cell-content ui-center-content ui-rank-cell">
-              {adminRank && <AdminIcon title={adminRank} />}
-              {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
-              {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
-            </div>
-          );
-        },
+        cell: ({ row }) => (
+          <div className="ui-cell-content ui-center-content ui-rank-cell">
+            {row.original.womrole || "N/A"}
+          </div>
+        ),
       },
       {
         accessorKey: "ehb",
@@ -397,11 +204,10 @@ export default function MemberTable({ members }) {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // Show loading state when fetching WOM data
-  if (womLoading && members.length > 0) {
+  if (membersLoading) {
     return (
       <div className="ui-loading-state">
-        Refreshing member data from Wise Old Man...
+        Loading member data...
       </div>
     );
   }
@@ -417,10 +223,7 @@ export default function MemberTable({ members }) {
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id} className="ui-table-header-row">
               {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="ui-table-header-cell"
-                >
+                <th key={header.id} className="ui-table-header-cell">
                   {header.isPlaceholder
                     ? null
                     : flexRender(header.column.columnDef.header, header.getContext())}
@@ -440,88 +243,11 @@ export default function MemberTable({ members }) {
                 }}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="ui-table-cell"
-                  >
+                  <td key={cell.id} className="ui-table-cell">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
-              
-              {/* Expanded row with additional details */}
-              {expandedRow === row.original.wom_id && (
-                <tr className="ui-table-expanded-row">
-                  <td colSpan={columns.length}>
-                    <div className="ui-expanded-content">
-                      <div className="ui-details-grid">
-                        <div className="ui-detail-item">
-                          <span className="ui-detail-label">Clan XP</span>
-                          <span className="ui-detail-value">
-                            {safeFormat(
-                              (parseInt(row.original.current_xp) || 0) -
-                                (parseInt(row.original.first_xp) || 0)
-                            )}
-                          </span>
-                        </div>
-                        <div className="ui-detail-item">
-                          <span className="ui-detail-label">Siege Score</span>
-                          <span className="ui-detail-value">
-                            {safeFormat(row.original.siege_score || 0)}
-                          </span>
-                        </div>
-                        <div className="ui-detail-item">
-                          <span className="ui-detail-label">Joined</span>
-                          <span className="ui-detail-value">
-                            {row.original.join_date
-                              ? new Date(row.original.join_date).toLocaleDateString(undefined, {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric"
-                                })
-                              : "N/A"}
-                          </span>
-                        </div>
-                        {/* Next rank information */}
-                        <div className="ui-detail-item">
-                          <span className="ui-detail-label">Next Rank</span>
-                          <span className="ui-detail-value">
-                            {(() => {
-                              const nextRankInfo = getNextRankInfo(row.original);
-                              if (nextRankInfo.amount && nextRankInfo.rank) {
-                                return (
-                                  <>
-                                    <span className="ui-next-rank-icon">
-                                      {SKILLER_RANK_NAMES.includes(
-                                        nextRankInfo.rank
-                                      ) ? (
-                                        <GemIcon gemType={nextRankInfo.rank} />
-                                      ) : (
-                                        <ClanIcon name={nextRankInfo.rank} />
-                                      )}
-                                    </span>
-                                    <span>
-                                      {nextRankInfo.rank}:{" "}
-                                      {safeFormat(nextRankInfo.amount)}{" "}
-                                      {SKILLER_RANK_NAMES.includes(
-                                        nextRankInfo.rank
-                                      )
-                                        ? "XP"
-                                        : "EHB"}{" "}
-                                      needed
-                                    </span>
-                                  </>
-                                );
-                              }
-                              return "Max rank achieved";
-                            })()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
             </React.Fragment>
           ))}
         </tbody>

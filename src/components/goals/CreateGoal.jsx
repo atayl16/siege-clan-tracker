@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { usePlayerMetrics, usePlayerStats, useGoals } from "../../context/DataContext";
+import React, { useState, useEffect } from "react";
+import { usePlayer } from "../../hooks/usePlayer"; // New hook for player stats
+import { useUserGoals } from "../../hooks/useUserGoals"; // New hook for goals
 import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes } from "react-icons/fa";
-import { titleize } from '../../utils/stringUtils';
-import MetricSelector from '../MetricSelector';
+import { titleize } from "../../utils/stringUtils";
+import MetricSelector from "../MetricSelector";
 
 // Import UI components
 import Button from "../ui/Button";
 import Card from "../ui/Card";
 import "./CreateGoal.css";
 
-export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) {
+export default function CreateGoal({
+  player,
+  userId,
+  onGoalCreated,
+  onCancel,
+}) {
   // Form state
   const [goalType, setGoalType] = useState("skill");
   const [selectedMetric, setSelectedMetric] = useState("");
@@ -19,14 +25,12 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   const [targetMode, setTargetMode] = useState("gain");
   const [isPublic, setIsPublic] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false); // Track if user has interacted with the form
-  
-  // Use context hooks instead of direct API calls
-  const { stats: currentStats, loading: loadingStats } = usePlayerStats(
-    player.wom_id, 
-    goalType, 
-    selectedMetric
+
+  // Use new hooks for player stats and goals
+  const { player: currentStats, loading: loadingStats } = usePlayer(
+    player.wom_id
   );
-  const { createGoal, loading: submitting } = useGoals();
+  const { createGoal, loading: submitting } = useUserGoals();
 
   // Set initial selected metric when metrics load
   const handleMetricChange = (metric) => {
@@ -44,60 +48,70 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setHasInteracted(true); // User has now definitely interacted with the form
-  
+
     if (!selectedMetric || !targetValue) {
       setError("Please fill out all required fields");
       return;
     }
-  
+
     // Check if currentStats is loaded yet
     if (loadingStats) {
-      setError("Player statistics are still loading. Please wait a moment and try again.");
+      setError(
+        "Player statistics are still loading. Please wait a moment and try again."
+      );
       return;
     }
-  
+
     if (!currentStats) {
-      setError("Unable to load player statistics. Please try again or select a different skill/boss.");
+      setError(
+        "Unable to load player statistics. Please try again or select a different skill/boss."
+      );
       return;
     }
-  
+
     const targetValueInput = parseInt(targetValue, 10);
     let currentValue, startValue, actualTargetValue;
-  
+
     if (goalType === "skill") {
       // Safely access experience value with null coalescence
-      currentValue = currentStats.experience || 0;
-      startValue = currentStats.experience || 0;
-  
+      currentValue =
+        currentStats?.latestSnapshot?.data?.skills?.[selectedMetric]
+          ?.experience || 0;
+      startValue = currentValue;
+
       if (currentValue === 0 && selectedMetric) {
-        setError(`Could not find current experience for ${selectedMetric}. Try selecting a different skill.`);
+        setError(
+          `Could not find current experience for ${selectedMetric}. Try selecting a different skill.`
+        );
         return;
       }
-  
+
       // Calculate the target value based on mode
-      if (targetMode === "total") {
-        actualTargetValue = targetValueInput;
-      } else {
-        actualTargetValue = currentValue + targetValueInput;
-      }
+      actualTargetValue =
+        targetMode === "total"
+          ? targetValueInput
+          : currentValue + targetValueInput;
     } else {
       // Safely access kill count with null coalescence
-      currentValue = currentStats.kills || 0;
-      startValue = currentStats.kills || 0;
-      
+      currentValue =
+        currentStats?.latestSnapshot?.data?.bosses?.[selectedMetric]?.kills ||
+        0;
+      startValue = currentValue;
+
       if (currentValue === 0 && selectedMetric) {
-        setError(`Could not find current kill count for ${selectedMetric}. Try selecting a different boss.`);
+        setError(
+          `Could not find current kill count for ${selectedMetric}. Try selecting a different boss.`
+        );
         return;
       }
-  
+
       // Calculate the target value based on mode
-      if (targetMode === "total") {
-        actualTargetValue = targetValueInput;
-      } else {
-        actualTargetValue = currentValue + targetValueInput;
-      }
+      actualTargetValue =
+        targetMode === "total"
+          ? targetValueInput
+          : currentValue + targetValueInput;
     }
-  
+
     // Validation depends on target mode
     if (targetMode === "total" && actualTargetValue <= startValue) {
       setError("Target value must be greater than current value");
@@ -187,8 +201,8 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
           </div>
 
           {/* Only show loading indicator or stats after a metric has been selected */}
-          {selectedMetric && (
-            loadingStats ? (
+          {selectedMetric &&
+            (loadingStats ? (
               <div className="ui-loading-indicator">
                 <div className="ui-loading-spinner"></div>
                 <div className="ui-loading-text">Loading player stats...</div>
@@ -219,8 +233,7 @@ export default function CreateGoal({ player, userId, onGoalCreated, onCancel }) 
                   different {goalType}.
                 </span>
               </div>
-            ) : null
-          )}
+            ) : null)}
         </div>
 
         {/* Target Mode Selection */}

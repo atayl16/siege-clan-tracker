@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { usePlayerGoals } from "../../context/DataContext";
+import { useUserGoals } from "../../hooks/useUserGoals"; // Updated to use new hook
 import GoalProgress from "./GoalProgress";
 import CreateGoal from "./CreateGoal";
 import { refreshPlayerData } from "../../utils/womApi";
@@ -20,15 +20,10 @@ export default function GoalsList({ player, userId, onClose }) {
       `GoalsList: No userId provided for player ${player?.name} (${player?.wom_id})`
     );
   }
-  
-  const { 
-    goals, 
-    loading, 
-    error: apiError, 
-    refreshGoals, 
-    deleteGoal 
-  } = usePlayerGoals(userId, player.wom_id);
-  
+
+  // Use new hook for goals
+  const { goals, loading, error: apiError, refresh: refreshGoals, deleteGoal } = useUserGoals();
+
   const [error, setError] = useState(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -39,11 +34,11 @@ export default function GoalsList({ player, userId, onClose }) {
 
     try {
       const result = await deleteGoal(goalId);
-      
+
       if (!result.success) {
         throw new Error("Failed to delete goal");
       }
-      
+
       // No need to manually update the goals list - the hook handles it
       setError(null);
     } catch (err) {
@@ -61,34 +56,34 @@ export default function GoalsList({ player, userId, onClose }) {
     refreshGoals();
     setShowAddGoal(false);
   };
-  
+
   const handleSyncProgress = async () => {
     try {
       setSyncing(true);
       setSyncSuccess(false);
       setError(null);
-  
+
       // Refresh the player data from WOM API
       const refreshResult = await refreshPlayerData(player.wom_id);
-  
+
       // Check if the refresh was successful
       if (!refreshResult.success) {
         console.warn("Player data refresh failed, continuing with goal updates anyway");
       }
-  
+
       // Update the goals with the latest data
       const result = await updatePlayerGoals(player.wom_id, userId);
-  
+
       // Refresh goals list with updated data
       refreshGoals();
-  
+
       setSyncSuccess(true);
-  
+
       // Hide success message after 3 seconds
       setTimeout(() => {
         setSyncSuccess(false);
       }, 3000);
-  
+
       return result;
     } catch (err) {
       console.error("Error syncing player progress:", err);
@@ -100,15 +95,15 @@ export default function GoalsList({ player, userId, onClose }) {
   };
 
   const getGoalTypeVariant = (goalType) => {
-    switch(goalType.toLowerCase()) {
-      case 'skill':
-        return 'primary';
-      case 'boss':
-        return 'danger';
-      case 'activity':
-        return 'success';
+    switch (goalType.toLowerCase()) {
+      case "skill":
+        return "primary";
+      case "boss":
+        return "danger";
+      case "activity":
+        return "success";
       default:
-        return 'secondary';
+        return "secondary";
     }
   };
 
@@ -120,9 +115,9 @@ export default function GoalsList({ player, userId, onClose }) {
       <div className="ui-goals-header">
         <h2>Goals for {titleize(player.name)}</h2>
         {onClose && (
-          <Button 
-            variant="text" 
-            className="ui-close-button" 
+          <Button
+            variant="text"
+            className="ui-close-button"
             onClick={onClose}
             icon={<FaTimes />}
           />
@@ -134,7 +129,7 @@ export default function GoalsList({ player, userId, onClose }) {
           <span>{displayError}</span>
         </div>
       )}
-      
+
       {syncSuccess && (
         <div className="ui-message ui-message-success">
           <span>Progress updated successfully!</span>
@@ -189,22 +184,22 @@ export default function GoalsList({ player, userId, onClose }) {
       ) : (
         <div className="ui-goals-grid">
           {goals.map((goal) => (
-            <Card 
+            <Card
               key={goal.id}
               className={`ui-goal-card ${goal.completed ? "ui-goal-completed" : ""}`}
               variant={goal.completed ? "dark" : "default"}
             >
               <Card.Header className="ui-goal-header">
                 <h3 className="ui-goal-metric">{titleize(goal.metric)}</h3>
-                <Badge 
+                <Badge
                   variant={getGoalTypeVariant(goal.goal_type)}
                   className="ui-goal-type-badge"
                 >
                   {goal.goal_type}
                 </Badge>
                 {goal.completed && (
-                  <Badge 
-                    variant="success" 
+                  <Badge
+                    variant="success"
                     className="ui-goal-completed-badge"
                   >
                     Completed
@@ -217,10 +212,10 @@ export default function GoalsList({ player, userId, onClose }) {
 
                 <div className="ui-goal-details">
                   <div className="ui-goal-target">
-                    <span className="ui-detail-label">Target:</span> 
+                    <span className="ui-detail-label">Target:</span>
                     <span className="ui-detail-value">{goal.target_value.toLocaleString()}</span>
                   </div>
-                  
+
                   {goal.target_date && (
                     <div className="ui-goal-deadline">
                       <span className="ui-detail-label">Deadline:</span>
@@ -229,7 +224,7 @@ export default function GoalsList({ player, userId, onClose }) {
                       </span>
                     </div>
                   )}
-                  
+
                   {goal.completed && (
                     <div className="ui-goal-completion">
                       <span className="ui-detail-label">Completed on:</span>

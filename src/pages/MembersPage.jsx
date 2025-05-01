@@ -4,7 +4,8 @@ import MemberTable from "../components/MemberTable";
 import Leaderboard from "../components/Leaderboard";
 import EventsTable from "../components/EventsTable";
 import ClanRanks from "../components/ClanRanks";
-import { useMembers, useEvents } from "../context/DataContext"; // Import from context
+import { useMembers } from "../hooks/useMembers"; // Updated hook
+import { useEvents } from "../hooks/useEvents"; // Updated hook
 import {
   FaSearch,
   FaTrophy,
@@ -32,7 +33,7 @@ export default function MembersPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Get data from context instead of local state
+  // Get data from hooks
   const { members, loading: membersLoading, error: membersError, refreshMembers } = useMembers();
   const { events, loading: eventsLoading, error: eventsError, refreshEvents } = useEvents();
   
@@ -97,12 +98,10 @@ export default function MembersPage() {
     // Lazy load data when tab is first accessed
     if (tabKey === "events" && !eventsLoaded) {
       setEventsLoaded(true);
-      // Events data is already loaded via the context
     }
     
     if (tabKey === "leaderboard" && !leaderboardLoaded) {
       setLeaderboardLoaded(true);
-      // Leaderboard data is derived from members which is already loaded
     }
   };
 

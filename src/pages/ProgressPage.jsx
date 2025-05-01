@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext"; 
-import { useData, useRaces, usePublicGoals } from "../context/DataContext";
-import { FaPlus, FaTrophy, FaBullseye, FaRocket, FaLock } from "react-icons/fa";
+import { useRaces } from "../hooks/useRaces"; // Updated hook
+import { usePublicGoals } from "../hooks/usePublicGoals"; // Updated hook
+import { FaPlus, FaTrophy, FaBullseye } from "react-icons/fa";
 import CreateRace from "../components/CreateRace";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 import RaceCard from "../components/RaceCard";
@@ -11,7 +12,6 @@ import "./ProgressPage.css";
 
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import Tabs from "../components/ui/Tabs";
 
 export default function ProgressPage() {
   const { user } = useAuth();
@@ -27,7 +27,7 @@ export default function ProgressPage() {
     }
   }, [user, activeTab]);
 
-  // Always fetch public races regardless of user authentication
+  // Fetch races and public goals
   const {
     activeRaces,
     publicRaces,
@@ -35,32 +35,23 @@ export default function ProgressPage() {
     refreshRaces,
   } = useRaces(user?.id);
 
-  // Always fetch public goals regardless of user authentication
   const {
     publicGoals,
     loading: goalsLoading,
     error: goalsError,
   } = usePublicGoals();
 
-  // Add debug logging to see what's happening
-  useEffect(() => {
-    console.log("Public goals data:", publicGoals);
-    console.log("Goals loading:", goalsLoading);
-    console.log("Goals error:", goalsError);
-  }, [publicGoals, goalsLoading, goalsError]);
-
-  const handleCreatedRace = (race) => {
+  const handleCreatedRace = () => {
     setShowCreateRace(false);
     refreshRaces();
   };
 
-  const filteredPublicRaces = publicRaces.filter(race => race.public === true);
+  const filteredPublicRaces = publicRaces.filter((race) => race.public === true);
 
   // Content for different tabs
   const renderTabContent = () => {
     switch (activeTab) {
       case "myRaces":
-        // Only require auth for My Races tab
         if (!user) {
           return (
             <EmptyState
@@ -136,7 +127,6 @@ export default function ProgressPage() {
       case "publicRaces":
         if (racesLoading) return <LoadingIndicator />;
 
-        // Always show public races regardless of authentication
         if (!filteredPublicRaces || filteredPublicRaces.length === 0) {
           return (
             <EmptyState
@@ -162,7 +152,6 @@ export default function ProgressPage() {
       case "publicGoals":
         if (goalsLoading) return <LoadingIndicator />;
 
-        // Always show public goals regardless of authentication
         if (!publicGoals || publicGoals.length === 0) {
           return (
             <EmptyState
@@ -192,7 +181,6 @@ export default function ProgressPage() {
 
   // Create tabs array based on authentication status
   const tabsToDisplay = [
-    // Public tabs are always shown
     {
       id: "publicRaces",
       label: "Public Races",
@@ -207,9 +195,7 @@ export default function ProgressPage() {
     },
   ];
 
-  // Add My Races tab if user is authenticated, or at the end if not
   if (user) {
-    // Insert at the beginning for authenticated users
     tabsToDisplay.unshift({
       id: "myRaces",
       label: "My Races",
@@ -218,14 +204,14 @@ export default function ProgressPage() {
     });
   }
 
-  return (   
+  return (
     <Card className="ui-container-content-card">
       <div className="ui-tabs-container">
         <div className="ui-tabs-nav">
-          {tabsToDisplay.map(tab => (
+          {tabsToDisplay.map((tab) => (
             <button
               key={tab.id}
-              className={`ui-tab ${tab.id === activeTab ? 'ui-tab-active' : ''}`}
+              className={`ui-tab ${tab.id === activeTab ? "ui-tab-active" : ""}`}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.icon && <span className="ui-tab-icon">{tab.icon}</span>}
@@ -234,7 +220,7 @@ export default function ProgressPage() {
           ))}
         </div>
       </div>
-      
+
       <div className="ui-tab-content">{renderTabContent()}</div>
     </Card>
   );

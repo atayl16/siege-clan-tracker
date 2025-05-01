@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMembers, useData } from "../context/DataContext";
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import DatePicker from "react-datepicker";
 import { FaSave, FaTimes, FaExclamationTriangle } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
@@ -31,8 +31,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const { fetchers } = useData();  
-  const { refreshMembers } = useMembers();
+  const { updateMember, refreshMembers } = useMembers(); // Use the new hook
   
   // Initialize form data when member prop changes
   useEffect(() => {
@@ -95,10 +94,10 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         updated_at: new Date().toISOString(),
       };
 
-      // Use DataContext instead of direct Supabase call
-      const result = await fetchers.supabase.updateMember(memberData);
+      // Use the new hook's updateMember method
+      const result = await updateMember(memberData);
 
-      // Refresh the members data in the SWR cache
+      // Refresh the members data
       refreshMembers();
 
       // Call the onSave callback with the updated data

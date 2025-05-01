@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useUserClaimRequests, useAvailableMembers, useData } from "../context/DataContext";
+import { useClaimRequests } from "../hooks/useClaimRequests"; // New hook for claim requests
+import { useMembers } from "../hooks/useMembers"; // New hook for members
 import { FaCheck, FaTimes, FaClock, FaInfoCircle } from "react-icons/fa";
 
 // Import UI components
@@ -23,22 +24,22 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   const [activeTab, setActiveTab] = useState("code");
 
   const { user, claimPlayer } = useAuth();
-  const { fetchers } = useData(); // Add this for DataContext
-  
-  // Get data from context hooks
-  const { 
-    requests: userRequests, 
-    loading: requestsLoading, 
+
+  // Get data from hooks
+  const {
+    requests: userRequests,
+    loading: requestsLoading,
     error: requestsError,
-    refreshRequests 
-  } = useUserClaimRequests(user?.id);
-  
+    refresh: refreshRequests,
+    createClaimRequest,
+  } = useClaimRequests();
+
   const {
     members: availableMembers,
     loading: membersLoading,
     error: membersError,
-    refreshAvailableMembers
-  } = useAvailableMembers();
+    refresh: refreshAvailableMembers,
+  } = useMembers();
 
   // Get fresh data when switching tabs
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           message: result.message,
         });
         setClaimCode(""); // Clear the input on success
-        
+
         // Refresh data after a successful claim
         refreshAvailableMembers();
         refreshRequests();
@@ -87,36 +88,36 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
   const handleRequestClaim = async (e) => {
     e.preventDefault();
-    
+
     if (!user) {
       setError("You must be logged in to request a player claim");
       return;
     }
-    
+
     // Find the selected member from the availableMembers array
-    const memberObj = availableMembers?.find(member => 
-      member.wom_id === parseInt(selectedMember, 10)
+    const memberObj = availableMembers?.find(
+      (member) => member.wom_id === parseInt(selectedMember, 10)
     );
-    
+
     if (!memberObj) {
       setError("Please select a valid player");
       return;
     }
-  
+
     setLoading(true);
     try {
-      // Use the context method instead of direct insert
-      await fetchers.supabase.createClaimRequest({
+      // Use the new createClaimRequest method
+      await createClaimRequest({
         user_id: user.id,
         wom_id: parseInt(selectedMember, 10),
         rsn: memberObj.name,
         message: message.trim() || null,
         status: "pending",
       });
-      
+
       setNotification({
         type: "success",
-        message: "Your claim request has been submitted"
+        message: "Your claim request has been submitted",
       });
       setSelectedMember("");
       setMessage("");
@@ -199,18 +200,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                 {loading ? "Processing..." : "Claim Player"}
               </Button>
             </form>
-
-            <Card variant="dark" className="ui-info-card">
-              <Card.Body>
-                <h3 className="ui-info-heading">How to get a claim code</h3>
-                <ol className="ui-info-list">
-                  <li>Contact a clan admin in Discord</li>
-                  <li>Verify your in-game name</li>
-                  <li>Receive your unique claim code</li>
-                  <li>Enter the code above to link your account</li>
-                </ol>
-              </Card.Body>
-            </Card>
           </div>
         </Tabs.Tab>
 
@@ -220,26 +209,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
             <p className="ui-claim-description">
               Select your character from the list to request access.
             </p>
-
-            {notification && (
-              <div
-                className={`ui-notification-message ui-notification-${notification.type}`}
-              >
-                {notification.type === "success" ? (
-                  <FaCheck className="ui-notification-icon" />
-                ) : (
-                  <FaInfoCircle className="ui-notification-icon" />
-                )}
-                {notification.message}
-              </div>
-            )}
-
-            {error && (
-              <div className="ui-error-message">
-                <FaTimes className="ui-error-icon" />
-                {error}
-              </div>
-            )}
 
             {membersError && (
               <div className="ui-error-message">
@@ -303,28 +272,10 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                 {loading ? "Submitting..." : "Submit Request"}
               </Button>
             </form>
-
-            <Card variant="dark" className="ui-info-card">
-              <Card.Body>
-                <h3 className="ui-info-heading">What happens next?</h3>
-                <p>After submitting your request:</p>
-                <ol className="ui-info-list">
-                  <li>An admin will review your request</li>
-                  <li>They may verify your identity in Discord</li>
-                  <li>
-                    Once approved, you'll gain access to your player profile
-                  </li>
-                  <li>You can check the status in the "My Requests" tab</li>
-                </ol>
-              </Card.Body>
-            </Card>
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab
-          tabId="my-requests"
-          label="View My Requests"
-        >
+        <Tabs.Tab tabId="my-requests" label="View My Requests">
           <div className="ui-claim-tab-content">
             <h2 className="ui-claim-heading">My Claim Requests</h2>
             {requestsError && (

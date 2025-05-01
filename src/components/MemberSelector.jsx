@@ -1,5 +1,5 @@
 import React from "react";
-import { useMembers } from "../context/DataContext";
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import DataSelector from "./ui/DataSelector";
 import Badge from "./ui/Badge";
 import "./MemberSelector.css";
@@ -11,7 +11,7 @@ export default function MemberSelector({
   viewMode = "table",
   filterClaimed = false,
 }) {
-  const { members, loading, error } = useMembers();
+  const { members, loading, error } = useMembers(); // Use the new hook
 
   // Filter members if needed
   const filteredMembers = React.useMemo(() => {

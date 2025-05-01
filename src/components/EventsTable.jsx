@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { useWomCompetitions } from '../context/DataContext';
-import "./EventsTable.css";
+import { useWomCompetitions } from '../hooks/useWomCompetitions'; // Updated to use new hook
+import './EventsTable.css';
 
 export default function EventsTable({ 
   events = [],
@@ -10,7 +10,7 @@ export default function EventsTable({
   hideHeaders = false,
   includeWomCompetitions = true
 }) {
-  // Get competitions data from context
+  // Get competitions data from the new hook
   const { competitions, loading: womLoading } = useWomCompetitions();
   
   // Combine local events with WOM competitions
@@ -43,8 +43,6 @@ export default function EventsTable({
     return [...(events || []), ...uniqueWomEvents];
   }, [events, competitions, includeWomCompetitions]);
   
-  // Rest of your component remains the same...
-
   // Process and categorize events
   const { activeEvents, upcomingEvents, recentCompletedEvents } = useMemo(() => {
     const now = new Date();

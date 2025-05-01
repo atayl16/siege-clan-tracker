@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useUserClaimRequests, useData, useRaces } from "../context/DataContext";
+import { useUserClaims } from "../hooks/useUserClaims"; // Updated hook
+import { useRaces } from "../hooks/useRaces"; // Updated hook
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
@@ -25,7 +26,6 @@ import "./ProfilePage.css";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
-  // Make sure we have a valid user ID before rendering goals
   if (!user || !user.id) {
     return (
       <Card variant="default" hover className="ui-character-card">
@@ -41,13 +41,11 @@ function CharacterGoalCard({ claim, user }) {
 
   return (
     <Card variant="default" hover className="ui-character-card">
-      {/* Card header */}
       <Card.Body>
-        {/* Stats group */}
         <div className="ui-character-goal-content">
           <GoalsList
             player={claim.members}
-            userId={user.id} // Make sure this is always defined
+            userId={user.id}
             onClose={() => {}}
           />
         </div>
@@ -57,21 +55,13 @@ function CharacterGoalCard({ claim, user }) {
 }
 
 export default function ProfilePage() {
-  const { user, userClaims } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("characters");
-  const { fetchers } = useData();
   const [showCreateRace, setShowCreateRace] = useState(false);
 
-  // Replace direct Supabase call with context hook
-  const { requests: userRequests, refreshRequests: fetchUserRequests } =
-    useUserClaimRequests(user?.id);
-
-  // Get race data
-  const {
-    activeRaces,
-    loading: racesLoading,
-    refreshRaces,
-  } = useRaces(user?.id);
+  // Use new hooks
+  const { userClaims, refreshUserClaims } = useUserClaims(user?.id);
+  const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id);
 
   // Handle creating a race
   const handleCreatedRace = () => {
@@ -84,7 +74,6 @@ export default function ProfilePage() {
     ? activeRaces.filter((race) => {
         if (race.creator_id === user?.id) return true;
 
-        // Check if any of user's characters are participants
         const userCharacterIds = userClaims.map(
           (claim) => claim.members.wom_id
         );
@@ -94,17 +83,12 @@ export default function ProfilePage() {
       })
     : [];
 
-  // Just call fetchUserRequests when needed
-    useEffect(() => {
-      if (user) {
-        fetchUserRequests();
-      }
-    }, [user, fetchUserRequests]);
-
-  // Handle showing goals
-  const handleShowGoals = () => {
-    setActiveTab("goals");
-  };
+  // Fetch user claims when the user changes
+  useEffect(() => {
+    if (user) {
+      refreshUserClaims();
+    }
+  }, [user, refreshUserClaims]);
 
   // Update goals effect
   useEffect(() => {
@@ -276,7 +260,7 @@ export default function ProfilePage() {
                   </Card.Body>
 
                   <Card.Footer className="ui-character-card-footer">
-                    <Button variant="primary" onClick={handleShowGoals}>
+                    <Button variant="primary" onClick={() => setActiveTab("goals")}>
                       Manage Goals
                     </Button>
                     <div className="ui-claim-date">
@@ -328,7 +312,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="claim-player-section">
-            <ClaimPlayer onRequestSubmitted={fetchUserRequests} />
+            <ClaimPlayer onRequestSubmitted={refreshUserClaims} />
           </div>
         </Tabs.Tab>
 

@@ -1,16 +1,16 @@
 import useSWR from "swr";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
+const fetcher = (url) => fetch(url).then((r) => r.json());
 
-export function useGroupAchievements() {
-  const { data, error, mutate } = useSWR("/api/wom-group-achievements", fetcher, {
+export function useCompetitions() {
+  const { data, error, mutate } = useSWR("/api/wom-competitions", fetcher, {
     refreshInterval: 60000,
     dedupingInterval: 30000,
     revalidateOnMount: true,
     revalidateOnFocus: false,
   });
   return {
-    groupAchievements: data,
+    competitions: data,
     loading: !data && !error,
     error,
     refresh: mutate,

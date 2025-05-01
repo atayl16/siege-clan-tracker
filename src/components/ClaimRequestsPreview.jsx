@@ -1,64 +1,77 @@
 import React, { useState, useEffect } from "react";
-import { useData, useClaimRequests } from "../context/DataContext";
+import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated to use new hook
 import Button from "./ui/Button";
 import Card from "./ui/Card";
 import Badge from "./ui/Badge";
-import { FaCheckCircle, FaUser, FaCalendarAlt, FaExclamationTriangle, FaCheck, FaTimes, FaUserPlus, FaSync } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaUser,
+  FaCalendarAlt,
+  FaExclamationTriangle,
+  FaCheck,
+  FaTimes,
+  FaUserPlus,
+} from "react-icons/fa";
 
 import "./ClaimRequestsPreview.css";
 
-export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestProcessed }) {
+export default function ClaimRequestsPreview({
+  count,
+  onViewAllClick,
+  onRequestProcessed,
+}) {
   const [actionLoading, setActionLoading] = useState(null);
   const [actionResult, setActionResult] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
-  
-  // Use the context hook to get pending requests
-  const { 
-    requests: allRequests, 
+
+  // Use the new hook to get pending requests
+  const {
+    requests: allRequests,
     loading,
     error,
-    refreshRequests
-  } = useClaimRequests({ status: "pending" });
-  
+    refresh: refreshRequests,
+    processRequest,
+  } = useClaimRequests();
+
   // Ensure we only display truly pending requests by double-checking status
   useEffect(() => {
     if (allRequests && Array.isArray(allRequests)) {
       // Filter to ensure only pending items are included
       const strictlyPendingRequests = allRequests.filter(
-        req => String(req.status).toLowerCase().trim() === 'pending'
+        (req) => String(req.status).toLowerCase().trim() === "pending"
       );
-      
+
       // Take only the 3 most recent pending requests
       setPendingRequests(strictlyPendingRequests.slice(0, 3));
     }
   }, [allRequests]);
 
-  const { fetchers } = useData();
-  
   const handleApprove = async (request) => {
     setActionLoading(request.id);
     setActionResult(null);
-    
+
     try {
-      await fetchers.supabase.processRequest(
-        request.id, 
-        "approved", 
-        "Approved via admin dashboard", 
-        request.user_id, 
+      await processRequest(
+        request.id,
+        "approved",
+        "Approved via admin dashboard",
+        request.user_id,
         request.wom_id
       );
-      
+
       setActionResult({
-        type: 'success',
-        message: `Approved claim for ${request.rsn}`
+        type: "success",
+        message: `Approved claim for ${request.rsn}`,
       });
-      
+
       // Remove from local state immediately
-      setPendingRequests(current => current.filter(req => req.id !== request.id));
-      
-      // Refresh data with SWR
+      setPendingRequests((current) =>
+        current.filter((req) => req.id !== request.id)
+      );
+
+      // Refresh data
       refreshRequests();
-      
+
       // Notify parent
       if (onRequestProcessed) {
         onRequestProcessed();
@@ -66,41 +79,40 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
     } catch (err) {
       console.error("Error approving request:", err);
       setActionResult({
-        type: 'error',
-        message: `Error: ${err.message}`
+        type: "error",
+        message: `Error: ${err.message}`,
       });
     } finally {
       setActionLoading(null);
     }
   };
-  
+
   const handleDeny = async (request) => {
     setActionLoading(request.id);
     setActionResult(null);
-    
+
     try {
-      // Use the context method instead of direct Supabase call
-      await fetchers.supabase.processRequest(
-        request.id, 
-        "denied", 
-        "Denied", 
-        request.user_id, 
+      await processRequest(
+        request.id,
+        "denied",
+        "Denied",
+        request.user_id,
         request.wom_id
       );
-      
+
       setActionResult({
-        type: 'success',
-        message: `Denied claim for ${request.rsn}`
+        type: "success",
+        message: `Denied claim for ${request.rsn}`,
       });
-      
+
       // Remove from local state immediately
-      setPendingRequests(current => 
-        current.filter(req => req.id !== request.id)
+      setPendingRequests((current) =>
+        current.filter((req) => req.id !== request.id)
       );
-      
-      // Refresh data with SWR
+
+      // Refresh data
       refreshRequests();
-      
+
       // Notify parent
       if (onRequestProcessed) {
         onRequestProcessed();
@@ -108,8 +120,8 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
     } catch (err) {
       console.error("Error denying request:", err);
       setActionResult({
-        type: 'error',
-        message: `Failed to deny: ${err.message}`
+        type: "error",
+        message: `Failed to deny: ${err.message}`,
       });
     } finally {
       setActionLoading(null);
@@ -144,9 +156,10 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
   }
 
   // Count of strictly pending requests for display
-  const pendingCount = allRequests?.filter(
-    req => String(req.status).toLowerCase().trim() === 'pending'
-  ).length || 0;
+  const pendingCount =
+    allRequests?.filter(
+      (req) => String(req.status).toLowerCase().trim() === "pending"
+    ).length || 0;
 
   return (
     <Card variant="dark" className="ui-claim-requests-container">
@@ -160,11 +173,17 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
           </h3>
         </div>
       </Card.Header>
-      
+
       <Card.Body>
         {actionResult && (
-          <div className={`ui-message ${actionResult.type === 'success' ? 'ui-message-success' : 'ui-message-error'}`}>
-            {actionResult.type === 'success' ? (
+          <div
+            className={`ui-message ${
+              actionResult.type === "success"
+                ? "ui-message-success"
+                : "ui-message-error"
+            }`}
+          >
+            {actionResult.type === "success" ? (
               <FaCheckCircle className="ui-message-icon" />
             ) : (
               <FaExclamationTriangle className="ui-message-icon" />
@@ -172,9 +191,9 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
             <span>{actionResult.message}</span>
           </div>
         )}
-        
+
         <ul className="ui-reported-members-list">
-          {pendingRequests.map(request => (
+          {pendingRequests.map((request) => (
             <li key={request.id} className="ui-reported-member-item">
               <div className="ui-member-info">
                 <div className="ui-reported-member-name">{request.rsn}</div>
@@ -187,37 +206,37 @@ export default function ClaimRequestsPreview({ count, onViewAllClick, onRequestP
                     <FaCalendarAlt className="ui-icon-left" />
                     {new Date(request.created_at).toLocaleDateString()}
                   </div>
-                  
+
                   {request.message && (
                     <div className="ui-request-message">"{request.message}"</div>
                   )}
                 </div>
               </div>
-              
+
               <div className="ui-request-actions">
                 <Button
-                  variant="success" 
+                  variant="success"
                   size="sm"
                   icon={<FaCheck />}
                   onClick={() => handleApprove(request)}
                   disabled={actionLoading === request.id}
                 >
-                  {actionLoading === request.id ? 'Processing...' : 'Approve'}
+                  {actionLoading === request.id ? "Processing..." : "Approve"}
                 </Button>
                 <Button
-                  variant="danger" 
+                  variant="danger"
                   size="sm"
                   icon={<FaTimes />}
                   onClick={() => handleDeny(request)}
                   disabled={actionLoading === request.id}
                 >
-                  {actionLoading === request.id ? 'Processing...' : 'Deny'}
+                  {actionLoading === request.id ? "Processing..." : "Deny"}
                 </Button>
               </div>
             </li>
           ))}
         </ul>
-        
+
         {pendingCount > 3 && (
           <div className="ui-view-all-container">
             <Button

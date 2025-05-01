@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
 import FormInput from "./ui/FormInput";
-import { FaUserPlus, FaLock, FaExclamationTriangle } from "react-icons/fa";
+import { FaUserPlus, FaExclamationTriangle } from "react-icons/fa";
 import "./RegistrationForm.css";
 
 export default function RegistrationForm() {

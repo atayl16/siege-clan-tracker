@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePlayerMetrics } from "../context/DataContext";
+import { useMetrics } from "../hooks/useMetrics"; // Updated to use new hook
 import "./MetricSelector.css";
 
 export default function MetricSelector({ 
@@ -11,7 +11,7 @@ export default function MetricSelector({
   required = true,
   placeholderText
 }) {
-  const { metrics, loading: loadingMetrics } = usePlayerMetrics(metricType);
+  const { metrics, loading: loadingMetrics } = useMetrics(metricType); // Use the new hook
   
   const handleMetricChange = (e) => {
     if (onMetricChange) {
