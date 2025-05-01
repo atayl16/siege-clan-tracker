@@ -16,6 +16,7 @@ import MembersPage from "./pages/MembersPage";
 import WelcomePage from "./pages/WelcomePage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
+import AchievementsPage from "./pages/AchievementsPage";
 import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -50,6 +51,7 @@ const AppContent = () => {
         <Route path="/register" element={<RegistrationForm />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/achievements" element={<AchievementsPage />} />
 
         {/* Admin Routes - All protected */}
         <Route
