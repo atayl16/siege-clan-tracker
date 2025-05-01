@@ -210,7 +210,6 @@ export default function EventsTable({
                 <tr>
                   <th>Event</th>
                   <th>Ends</th>
-                  <th>Current Leader</th>
                   <th>Remaining</th>
                 </tr>
               </thead>
@@ -235,18 +234,6 @@ export default function EventsTable({
                     </td>
                     <td className="ui-event-date">
                       {formatDate(event.end_date)} at {formatTime(event.end_date)}
-                    </td>
-                    <td className="ui-event-leader">
-                      {event.currentLeader ? (
-                        <div className="ui-leader-info">
-                          <span className="ui-leader-name">{event.currentLeader}</span>
-                          <span className="ui-leader-gain">
-                            {formatGain(event.leaderGain, event.type)} {event.type && !event.type.includes('exp') ? event.type : ''}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="ui-text-muted">No participants yet</span>
-                      )}
                     </td>
                     <td>
                       <span className="ui-badge ui-badge-warning">

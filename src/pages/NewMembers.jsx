@@ -89,7 +89,7 @@ export default function NewMembers() {
 
           <div className="ui-requirement-card">
             <h4>Regular Accounts</h4>
-            <div className="ui-requirement-value">Total Level 1500+</div>
+            <div className="ui-requirement-value">Total Level 1750+</div>
             <p>For standard gameplay accounts</p>
           </div>
         </div>
@@ -110,20 +110,20 @@ export default function NewMembers() {
 
         <div className="ui-rules-content">
           <ol className="ui-rules-list">
-            <li>Be respectful to all clan members and guests in the CC.</li>
-            <li>No excessive flaming, trolling, or harassment.</li>
-            <li>Use appropriate language - keep it PG-13.</li>
-            <li>No spamming in the clan chat.</li>
-            <li>Participate in clan events when possible.</li>
-            <li>Help newer players when you can.</li>
-            <li>Follow all Jagex rules for Old School RuneScape.</li>
+            <li>Follow the rules of the game.</li>
+            <li>Respect all clan members even if you disagree with their viewpoint - a little bit of respect goes a long way!</li>
+            <li>No discrimination of any kind. We aim to have a very inclusive environment!</li>
+            <li>Do not spoil anything from popular media in the clan chat or in the discord server. (Do not spoil anything in private chat without the consent of that person)</li>
+            <li>No scamming.</li>
+            <li>Do not bring drama to the clan. Any drama will get shut down and dealt with. This community is a place where members come and chill and play the game. Siege is a drama-free clan. Remember this rule and store it in your brains (:</li>
           </ol>
-
+        
           <div className="ui-rules-note">
             <p>
-              Our main goal is to maintain a friendly, relaxed environment.
-              Repeated rule violations may result in temporary or permanent
-              removal from the clan.
+              Siege Staff Team have the right to kick any member from this clan if you break any of the above rulings.
+            </p>
+            <p>
+              We would like to think we a very laid back clan so please don't take advantage of that and ruin it for everyone else!
             </p>
           </div>
         </div>
