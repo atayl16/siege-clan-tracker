@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useData, useClaimRequests } from "../context/DataContext";
+import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated to use new hook
 import { FaCheck, FaTimes, FaInfoCircle, FaUser, FaGamepad } from "react-icons/fa";
 
 // Import UI components
@@ -20,46 +20,39 @@ export default function ClaimRequestManager() {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [currentRequest, setCurrentRequest] = useState(null);
   const [currentAction, setCurrentAction] = useState(null);
-  const [lastRequestData, setLastRequestData] = useState(null);
 
-  // Use the context hook to get ALL requests first, then filter locally
-  const { 
-    requests: allRequests, 
-    loading, 
-    error: fetchError, 
-    refreshRequests 
-  } = useClaimRequests({ status: null }); // Use null to get all requests
-  
-  // Apply local filtering based on current filter
-  const filteredRequests = allRequests?.filter(request => {
-    if (filter === 'all') return true;
-    
-    // Handle possible case sensitivity issues by normalizing
-    const requestStatus = String(request.status || '').toLowerCase();
+  // Use the new hook to get all requests
+  const {
+    requests: allRequests,
+    loading,
+    error: fetchError,
+    refresh: refreshRequests,
+    processRequest,
+  } = useClaimRequests();
+
+  // Apply local filtering based on the current filter
+  const filteredRequests = allRequests?.filter((request) => {
+    if (filter === "all") return true;
+
+    // Normalize case for comparison
+    const requestStatus = String(request.status || "").toLowerCase();
     const filterValue = String(filter).toLowerCase();
-    
+
     return requestStatus === filterValue;
   });
 
-  // Force refresh when filter changes
+  // Refresh requests when the filter changes
   useEffect(() => {
-    refreshRequests(); 
-    
-    // For debugging purposes, store the full response
-    if (allRequests) {
-      setLastRequestData({
-        filter,
-        total: allRequests.length,
-        filtered: filteredRequests?.length || 0,
-        allStatuses: [...new Set(allRequests.map(r => r.status))]
-      });
-    }
-  }, [filter, refreshRequests, allRequests, filteredRequests?.length]);
+    refreshRequests();
+  }, [filter, refreshRequests]);
 
-  const handleFilterChange = useCallback((newFilter) => {
-    if (newFilter === filter) return;
-    setFilter(newFilter);
-  }, [filter]);
+  const handleFilterChange = useCallback(
+    (newFilter) => {
+      if (newFilter === filter) return;
+      setFilter(newFilter);
+    },
+    [filter]
+  );
 
   const openActionModal = (request, action) => {
     setCurrentRequest(request);
@@ -68,62 +61,37 @@ export default function ClaimRequestManager() {
     setShowNotesModal(true);
   };
 
-  const { fetchers } = useData();
-  
-  const processRequest = async (requestId, status, notes, userId, womId) => {
-    setProcessingId(requestId);
+  const confirmAction = async () => {
+    if (!currentRequest || !currentAction) return;
+
+    setProcessingId(currentRequest.id);
     try {
-      await fetchers.supabase.processRequest(
-        requestId,
-        status,
-        notes,
-        userId,
-        womId
+      await processRequest(
+        currentRequest.id,
+        currentAction,
+        adminNotes,
+        currentRequest.user_id,
+        currentRequest.wom_id
       );
-      setSuccessMessage(`Request ${status === "approved" ? "approved" : "denied"} successfully`);
+
+      setSuccessMessage(
+        `Request ${currentAction === "approved" ? "approved" : "denied"} successfully`
+      );
       setTimeout(() => setSuccessMessage(null), 5000);
       refreshRequests();
-      
-      // Wait a moment to ensure database has updated
-      setTimeout(() => {
-        refreshRequests();
-      }, 500);
     } catch (err) {
       console.error("Error processing request:", err);
       setActionError(`Failed to process request: ${err.message}`);
       setTimeout(() => setActionError(null), 5000);
     } finally {
       setProcessingId(null);
+      setShowNotesModal(false);
     }
   };
 
-  useEffect(() => {
-    console.log("ClaimRequestManager render:", { 
-      allRequests, 
-      filteredRequests,
-      loading,
-      error: fetchError,
-      filter
-    });
-  }, [allRequests, filteredRequests, loading, fetchError, filter]);
-
-  const confirmAction = () => {
-    if (!currentRequest || !currentAction) return;
-
-    processRequest(
-      currentRequest.id,
-      currentAction,
-      adminNotes,
-      currentRequest.user_id,
-      currentRequest.wom_id
-    );
-    setShowNotesModal(false);
-  };
-
   const getStatusBadge = (status) => {
-    // Normalize status first to handle potential case differences
-    const normalizedStatus = String(status || '').toLowerCase();
-    
+    const normalizedStatus = String(status || "").toLowerCase();
+
     switch (normalizedStatus) {
       case "approved":
         return (
@@ -180,7 +148,6 @@ export default function ClaimRequestManager() {
           </Button>
         </div>
 
-        {/* Display fetch errors from SWR */}
         {fetchError && (
           <div className="ui-error-message">
             <FaTimes className="ui-error-icon" /> Error loading requests:{" "}
@@ -188,7 +155,6 @@ export default function ClaimRequestManager() {
           </div>
         )}
 
-        {/* Display action errors from UI operations */}
         {actionError && (
           <div className="ui-error-message">
             <FaTimes className="ui-error-icon" /> {actionError}
@@ -213,11 +179,7 @@ export default function ClaimRequestManager() {
             title="No Requests Found"
             description={`No ${
               filter !== "all" ? filter : ""
-            } claim requests found.${
-              allRequests?.length > 0
-                ? ` (${allRequests.length} total requests available)`
-                : ""
-            }`}
+            } claim requests found.`}
             icon={<FaGamepad className="ui-empty-state-icon" />}
           />
         ) : (

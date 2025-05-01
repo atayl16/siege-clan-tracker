@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaPlus, FaTimes, FaGlobe, FaLock } from 'react-icons/fa';
-import { useRaces } from '../context/DataContext';
+import { useRaces } from '../hooks/useRaces'; // Updated to use new hook
 import MemberSelector from './MemberSelector';
 import MetricSelector from './MetricSelector';
 import './CreateRace.css';
@@ -25,7 +25,7 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const { createRace } = useRaces();
+  const { createRace } = useRaces(); // Use the new hook
 
   const handleAddParticipant = () => {
     setParticipants([
@@ -233,14 +233,14 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
               <div className="ui-form-row">
                 <div className="ui-form-group ui-form-group-half">
                   <label className="ui-form-label">Select Metric</label>
-                  {/* Use our new MetricSelector component */}
                   <MetricSelector
-                    metricType={participant.metricType}
-                    selectedMetric={participant.metric}
+                    playerId={participant.playerId} // Pass the playerId to fetch metrics
+                    metricType={participant.metricType} // Pass the metricType ("skill" or "boss")
+                    selectedMetric={participant.metric} // The currently selected metric
                     onMetricChange={(metric) =>
                       handleParticipantChange(index, "metric", metric)
                     }
-                    disabled={!participant.playerId}
+                    disabled={!participant.playerId} // Disable if no player is selected
                     placeholderText="Select metric"
                   />
                 </div>

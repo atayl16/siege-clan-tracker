@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
 import { ClanIcon, GemIcon, AdminIcon, IronmanIcon } from "./RankIcons";
-import { useWomGroup } from "../context/DataContext";
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
+import { useGroup } from "../hooks/useGroup"; // Added to get WOM group data
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import Card from "./ui/Card";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -129,11 +129,77 @@ const getNextRankInfo = (member) => {
   return { amount: null, rank: null };
 };
 
+const getIronmanType = (member) => {
+  // First check the ironman_type field which is most specific
+  if (member.ironman_type) {
+    return member.ironman_type.toLowerCase();
+  }
+  
+  // Check build field from database (more limited options)
+  if (member.build) {
+    const build = member.build.toLowerCase();
+    // Regular means not an ironman at all
+    if (build === 'regular') {
+      return null;
+    } 
+    // Basic ironman
+    else if (build === 'ironman') {
+      return 'standard';
+    }
+    // Ultimate ironman
+    else if (build === 'ultimate' || build.includes('ultimate')) {
+      return 'ultimate';
+    }
+  }
+  
+  // Then try to extract from WOM data
+  if (member.wom_account_type) {
+    const accountType = member.wom_account_type.toLowerCase();
+    
+    if (accountType.includes('hardcore') && accountType.includes('group')) {
+      return 'hardcore_group';
+    } else if (accountType.includes('hardcore')) {
+      return 'hardcore';
+    } else if (accountType.includes('ultimate')) {
+      return 'ultimate';
+    } else if (accountType.includes('unranked') && accountType.includes('group')) {
+      return 'unranked_group';
+    } else if (accountType.includes('group')) {
+      return 'group';
+    } else if (accountType.includes('ironman') || accountType === 'im') {
+      return 'standard';
+    }
+  }
+  
+  // If account type isn't found, check if there's an ironman status in WOM player data
+  if (member.wom_player?.type) {
+    const womType = member.wom_player.type.toLowerCase();
+    
+    if (womType.includes('hardcore') && womType.includes('group')) {
+      return 'hardcore_group';
+    } else if (womType.includes('hardcore')) {
+      return 'hardcore';
+    } else if (womType.includes('ultimate')) {
+      return 'ultimate'; 
+    } else if (womType.includes('unranked') && womType.includes('group')) {
+      return 'unranked_group';
+    } else if (womType.includes('group')) {
+      return 'group';
+    } else if (womType.includes('ironman') || womType === 'im') {
+      return 'standard';
+    }
+  }
+  
+  return null; // Not an ironman or type couldn't be determined
+};
+
 // Main MemberTable component
-export default function MemberTable({ members }) {
-  // Access WOM data using the updated context hook
-  const { groupData, loading: womLoading } = useWomGroup();
+export default function MemberTable({ filteredMembers = null }) {
+  const { members: allMembers, loading: membersLoading } = useMembers(); // Use the new hook for member data
+  const { groupData, loading: groupLoading } = useGroup(); // Use the new hook for WOM group data
   const [expandedRow, setExpandedRow] = useState(null);
+
+  const members = filteredMembers || allMembers;
 
   // Enhanced member data with WOM data
   const enhancedMembers = useMemo(() => {
@@ -155,10 +221,10 @@ export default function MemberTable({ members }) {
       const womMember = member.wom_id ? womMembersMap[member.wom_id] : null;
 
       if (womMember) {
-        // Use the most recent data from WOM if available
+        // Prefer WOM current data for display, fallback to DB data
+        // THIS DOES NOT UPDATE THE DATABASE - only the UI view
         return {
           ...member,
-          // Only update these fields if you want the latest WOM data to override your DB
           current_xp:
             womMember.latestSnapshot?.data?.skills?.overall?.experience ||
             member.current_xp,
@@ -176,8 +242,10 @@ export default function MemberTable({ members }) {
   }, [members, groupData]);
 
   const sortedMembers = useMemo(() => {
+    if (!enhancedMembers) return [];
+
     // Filter out hidden members
-    const visibleMembers = (enhancedMembers || []).filter((member) => !member.hidden);
+    const visibleMembers = enhancedMembers.filter((member) => !member.hidden);
 
     // Then sort the visible members
     return [...visibleMembers].sort((a, b) => {
@@ -229,129 +297,33 @@ export default function MemberTable({ members }) {
     });
   }, [enhancedMembers]);
 
-  const getIronmanType = (member) => {
-    // First check the ironman_type field which is most specific
-    if (member.ironman_type) {
-      return member.ironman_type.toLowerCase();
-    }
-    
-    // Check build field from database (more limited options)
-    if (member.build) {
-      const build = member.build.toLowerCase();
-      // Regular means not an ironman at all
-      if (build === 'regular') {
-        return null;
-      } 
-      // Basic ironman
-      else if (build === 'ironman') {
-        return 'standard';
-      }
-      // Ultimate ironman
-      else if (build === 'ultimate' || build.includes('ultimate')) {
-        return 'ultimate';
-      }
-    }
-    
-    // Then try to extract from WOM data
-    if (member.wom_account_type) {
-      const accountType = member.wom_account_type.toLowerCase();
-      
-      if (accountType.includes('hardcore') && accountType.includes('group')) {
-        return 'hardcore_group';
-      } else if (accountType.includes('hardcore')) {
-        return 'hardcore';
-      } else if (accountType.includes('ultimate')) {
-        return 'ultimate';
-      } else if (accountType.includes('unranked') && accountType.includes('group')) {
-        return 'unranked_group';
-      } else if (accountType.includes('group')) {
-        return 'group';
-      } else if (accountType.includes('ironman') || accountType === 'im') {
-        return 'standard';
-      }
-    }
-    
-    // If account type isn't found, check if there's an ironman status in WOM player data
-    if (member.wom_player?.type) {
-      const womType = member.wom_player.type.toLowerCase();
-      
-      if (womType.includes('hardcore') && womType.includes('group')) {
-        return 'hardcore_group';
-      } else if (womType.includes('hardcore')) {
-        return 'hardcore';
-      } else if (womType.includes('ultimate')) {
-        return 'ultimate'; 
-      } else if (womType.includes('unranked') && womType.includes('group')) {
-        return 'unranked_group';
-      } else if (womType.includes('group')) {
-        return 'group';
-      } else if (womType.includes('ironman') || womType === 'im') {
-        return 'standard';
-      }
-    }
-    
-    return null; // Not an ironman or type couldn't be determined
-  };
-  
-  // Define columns for the table
   const columns = useMemo(
     () => [
       {
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => {
-          // Get ironman type from member data - first check database field
+          // Get ironman type from member data
           const ironmanType = getIronmanType(row.original);
-        
-          return (
-            <div className="ui-cell-content ui-name-cell">
-              <div className="ui-name-content">
-                {ironmanType && <IronmanIcon type={ironmanType} />}
-                <span>
-                  {row.original.name || row.original.wom_name || "N/A"}
-                </span>
-              </div>
-              {expandedRow === row.original.wom_id ? (
-                <FaChevronUp className="ui-expand-icon" />
-              ) : (
-                <FaChevronDown className="ui-expand-icon" />
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "rank",
-        header: "Clan Rank",
-        cell: ({ row }) => {
           const womRole = (row.original.womrole || "").toLowerCase().trim();
-
-          // Normalize the role for comparison
-          const normalizedRole = womRole.replace(/_/g, " ");
-
+  
+          // Get the clan rank icon
           // Check for admin rank - try to match with normalized versions
+          const normalizedRole = womRole.replace(/_/g, " ");
           let adminRank = null;
-          if (
-            normalizedRole.includes("owner") &&
-            !normalizedRole.includes("deputy")
-          ) {
+          
+          if (normalizedRole.includes("owner") && !normalizedRole.includes("deputy")) {
             adminRank = "Owner";
-          } else if (
-            normalizedRole.includes("deputy owner") ||
-            normalizedRole.includes("deputy_owner")
-          ) {
+          } else if (normalizedRole.includes("deputy owner") || normalizedRole.includes("deputy_owner")) {
             adminRank = "Deputy Owner";
           } else if (normalizedRole.includes("general")) {
             adminRank = "General";
           } else if (normalizedRole.includes("captain")) {
             adminRank = "Captain";
-          } else if (
-            normalizedRole.includes("pvm organizer") ||
-            normalizedRole.includes("pvm_organizer")
-          ) {
+          } else if (normalizedRole.includes("pvm organizer") || normalizedRole.includes("pvm_organizer")) {
             adminRank = "PvM Organizer";
           }
-
+  
           // Check for skiller/fighter ranks
           const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
             womRole.includes(name.toLowerCase())
@@ -359,12 +331,36 @@ export default function MemberTable({ members }) {
           const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
             womRole.includes(name.toLowerCase())
           );
-
+  
           return (
-            <div className="ui-cell-content ui-center-content ui-rank-cell">
-              {adminRank && <AdminIcon title={adminRank} />}
-              {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
-              {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+            <div className="ui-cell-content ui-name-cell">
+              <div className="ui-name-content">
+                {/* Rank icon on the left */}
+                <div className="ui-rank-icon-left">
+                  {adminRank && <AdminIcon title={adminRank} />}
+                  {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
+                  {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+                </div>
+                
+                {/* Username in the middle */}
+                <span className="ui-member-name">
+                  {row.original.name || row.original.wom_name || "N/A"}
+                </span>
+                
+                {/* Ironman icon on the right */}
+                {ironmanType && (
+                  <div className="ui-ironman-icon-right">
+                    <IronmanIcon type={ironmanType} />
+                  </div>
+                )}
+              </div>
+              
+              {/* Expand/collapse arrow */}
+              {expandedRow === row.original.wom_id ? (
+                <FaChevronUp className="ui-expand-icon" />
+              ) : (
+                <FaChevronDown className="ui-expand-icon" />
+              )}
             </div>
           );
         },
@@ -387,6 +383,27 @@ export default function MemberTable({ members }) {
           </div>
         ),
       },
+      {
+        accessorKey: "join_date",
+        header: "Joined",
+        cell: ({ row }) => {
+          if (!row.original.join_date) return <div className="ui-cell-content ui-center-content">-</div>;
+          
+          const date = new Date(row.original.join_date);
+          // Format date with shortened month (Jan, Feb, Mar, etc.)
+          const formattedDate = date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+          });
+          
+          return (
+            <div className="ui-cell-content ui-center-content">
+              {formattedDate}
+            </div>
+          );
+        },
+      },
     ],
     [expandedRow]
   );
@@ -397,13 +414,8 @@ export default function MemberTable({ members }) {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // Show loading state when fetching WOM data
-  if (womLoading && members.length > 0) {
-    return (
-      <div className="ui-loading-state">
-        Refreshing member data from Wise Old Man...
-      </div>
-    );
+  if (membersLoading || groupLoading) {
+    return <div className="ui-loading-state">Loading member data...</div>;
   }
 
   if (!members || members.length === 0) {
@@ -417,13 +429,13 @@ export default function MemberTable({ members }) {
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id} className="ui-table-header-row">
               {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="ui-table-header-cell"
-                >
+                <th key={header.id} className="ui-table-header-cell">
                   {header.isPlaceholder
                     ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                 </th>
               ))}
             </tr>
@@ -440,15 +452,12 @@ export default function MemberTable({ members }) {
                 }}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="ui-table-cell"
-                  >
+                  <td key={cell.id} className="ui-table-cell">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
-              
+
               {/* Expanded row with additional details */}
               {expandedRow === row.original.wom_id && (
                 <tr className="ui-table-expanded-row">
@@ -474,10 +483,12 @@ export default function MemberTable({ members }) {
                           <span className="ui-detail-label">Joined</span>
                           <span className="ui-detail-value">
                             {row.original.join_date
-                              ? new Date(row.original.join_date).toLocaleDateString(undefined, {
+                              ? new Date(
+                                  row.original.join_date
+                                ).toLocaleDateString(undefined, {
                                   year: "numeric",
                                   month: "long",
-                                  day: "numeric"
+                                  day: "numeric",
                                 })
                               : "N/A"}
                           </span>
@@ -487,7 +498,9 @@ export default function MemberTable({ members }) {
                           <span className="ui-detail-label">Next Rank</span>
                           <span className="ui-detail-value">
                             {(() => {
-                              const nextRankInfo = getNextRankInfo(row.original);
+                              const nextRankInfo = getNextRankInfo(
+                                row.original
+                              );
                               if (nextRankInfo.amount && nextRankInfo.rank) {
                                 return (
                                   <>
@@ -515,6 +528,20 @@ export default function MemberTable({ members }) {
                               }
                               return "Max rank achieved";
                             })()}
+                          </span>
+                        </div>
+                        <div className="ui-detail-item">
+                          <span className="ui-detail-label">
+                            Starting Level
+                          </span>
+                          <span className="ui-detail-value">
+                            {row.original.first_lvl || "N/A"}
+                          </span>
+                        </div>
+                        <div className="ui-detail-item">
+                          <span className="ui-detail-label">Starting XP</span>
+                          <span className="ui-detail-value">
+                            {safeFormat(row.original.first_xp || 0)}
                           </span>
                         </div>
                       </div>

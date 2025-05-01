@@ -1,0 +1,335 @@
+/* BASE LAYOUT */
+.ui-page-container {
+  width: 85%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* CONTENT HEADER */
+.ui-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5625rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ui-content-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-orange, #ff9800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* SECTION LAYOUT */
+.ui-section-container {
+  margin-bottom: 2.5rem;
+  background-color: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 1.25rem;
+}
+
+.ui-section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-section-icon {
+  margin-right: 0.625rem;
+  font-size: 1.125rem;
+}
+
+/* WELCOME CONTENT */
+.ui-welcome-content {
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+.ui-welcome-content p {
+  margin-bottom: 1rem;
+}
+
+.ui-discord-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.875rem;
+}
+
+.ui-discord-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  background-color: #5865F2;
+  color: white;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.ui-discord-button:hover {
+  background-color: #4752c4;
+  transform: translateY(-2px);
+}
+
+.ui-discord-button:active {
+  transform: translateY(0);
+}
+
+/* REQUIREMENTS SECTION */
+.ui-requirements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ui-requirement-card {
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  padding: 1.25rem;
+}
+
+.ui-requirement-card h4 {
+  margin-top: 0;
+  margin-bottom: 0.625rem;
+  color: var(--accent-color, #2196f3);
+  font-weight: 600;
+}
+
+.ui-requirement-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.625rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-requirement-card p {
+  margin-bottom: 0;
+  color: #aaa;
+  font-size: 0.875rem;
+}
+
+.ui-requirements-note {
+  margin-top: 1.25rem;
+  padding: 0.9375rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-sm, 0.25rem);
+}
+
+.ui-requirements-note p {
+  margin-bottom: 0;
+  font-style: italic;
+  color: #aaa;
+}
+
+/* RULES SECTION */
+.ui-rules-content {
+  line-height: 1.6;
+}
+
+.ui-rules-list {
+  padding-left: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ui-rules-list li {
+  margin-bottom: 0.625rem;
+}
+
+.ui-rules-note {
+  margin-top: 1.25rem;
+  padding: 0.9375rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-sm, 0.25rem);
+}
+
+.ui-rules-note p {
+  margin-bottom: 0;
+  font-style: italic;
+  color: #aaa;
+}
+
+/* RESPONSIVE STYLES */
+@media (max-width: 768px) {
+  .ui-page-container {
+    width: 98%;
+    padding: 1rem;
+  }
+  
+  .ui-section-container {
+    padding: 1rem;
+  }
+  
+  .ui-requirements-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-page-container {
+    width: 100%;
+    padding: 0.75rem;
+  }
+  
+  .ui-section-title {
+    font-size: 1.125rem;
+  }
+}
+
+/* Video background container */
+.ui-video-background-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Video element styling */
+.ui-video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.ui-video-background video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Overlay to ensure text readability */
+.ui-video-background .ui-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* Dark overlay */
+  z-index: 1;
+}
+
+/* Video Hero Section */
+.ui-video-hero-container {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  border-radius: var(--border-radius-md, 0.5rem);
+}
+
+.ui-video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.ui-video-background video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.ui-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.ui-hero-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.ui-hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-orange, #ff9800);
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* Discord Button */
+.ui-discord-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.875rem;
+}
+
+.ui-discord-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  background-color: #5865F2;
+  color: white;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.ui-discord-button:hover {
+  background-color: #4752c4;
+  transform: translateY(-2px);
+}
+
+.ui-discord-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ui-video-hero-container {
+    height: 250px;
+  }
+  
+  .ui-hero-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-video-hero-container {
+    height: 200px;
+  }
+  
+  .ui-hero-title {
+    font-size: 2rem;
+  }
+}

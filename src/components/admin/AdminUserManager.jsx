@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useUsers } from '../../context/DataContext';
+import { useData } from '../../context/DataContext'; // Updated to use new DataContext
 import UserSelector from '../UserSelector';
 import { FaUserShield, FaUser, FaCheckCircle, FaExclamationTriangle, FaKey } from 'react-icons/fa';
 
@@ -19,9 +19,9 @@ export default function AdminUserManager() {
   const [supabaseUUID, setSupabaseUUID] = useState('');
   const { toggleAdminStatus, linkUserToSupabaseAuth } = useAuth();
   
-  // Get all users from the context
-  const { users, loading: usersLoading, error: usersError, refreshUsers } = useUsers();
-  
+  // Get all users from the new DataContext
+  const { users, loading: usersLoading, error: usersError, refresh: refreshUsers } = useData();
+
   // Filter admin users from the users data
   const adminUsers = useMemo(() => {
     return users?.filter(user => user.is_admin) || [];

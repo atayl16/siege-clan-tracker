@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { useWomCompetitions } from '../context/DataContext';
-import "./EventsTable.css";
+import { useCompetitions } from '../hooks/useCompetitions';
+import { SkillIcon } from './OsrsIcons';
+import './EventsTable.css';
 
 export default function EventsTable({ 
   events = [],
@@ -10,8 +11,32 @@ export default function EventsTable({
   hideHeaders = false,
   includeWomCompetitions = true
 }) {
-  // Get competitions data from context
-  const { competitions, loading: womLoading } = useWomCompetitions();
+  // Get competitions data from the new hook
+  const { competitions, loading: womLoading } = useCompetitions();
+  
+  const formatSkillName = (event) => {
+    if (!event) return null;
+    
+    // Check if we have metric or type to work with
+    const metricValue = event.metric || event.type;
+    if (!metricValue) return null;
+  
+    // Normalize the event type/metric
+    let normalizedType = metricValue.toLowerCase();
+    
+    // Handle runecrafting/runecraft consistently
+    if (normalizedType.includes('runecraft')) {
+      return 'Runecraft'; // Your icon component expects "Runecraft"
+    }
+    
+    // Remove any suffixes (like "_xp" or "_experience")
+    if (normalizedType.includes("_")) {
+      normalizedType = normalizedType.split("_")[0];
+    }
+  
+    // Capitalize first letter for the SkillIcon component
+    return normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
+  };
   
   // Combine local events with WOM competitions
   const combinedEvents = useMemo(() => {
@@ -29,22 +54,54 @@ export default function EventsTable({
     // but only include those not already in our database
     const uniqueWomEvents = competitions
       .filter(comp => !existingWomIds.has(comp.id.toString()))
-      .map(comp => ({
-        id: `wom-${comp.id}`,
-        name: comp.title,
-        type: comp.metric,
-        start_date: comp.startsAt,
-        end_date: comp.endsAt,
-        is_wom: true,
-        wom_id: comp.id
-        // Additional mapping as needed
-      }));
+      .map(comp => {
+        // Find current leader if competition has participants
+        let currentLeader = null;
+        let leaderGain = 0;
+        
+        if (comp.participants && comp.participants.length > 0) {
+          // Sort participants by progress (descending)
+          const sortedParticipants = [...comp.participants].sort((a, b) => b.progress.gained - a.progress.gained);
+          if (sortedParticipants.length > 0) {
+            currentLeader = sortedParticipants[0].player.displayName;
+            leaderGain = sortedParticipants[0].progress.gained;
+          }
+        }
+        
+        return {
+          id: `wom-${comp.id}`,
+          name: comp.title,
+          type: comp.metric,
+          start_date: comp.startsAt,
+          end_date: comp.endsAt,
+          is_wom: true,
+          wom_id: comp.id,
+          currentLeader: currentLeader,
+          leaderGain: leaderGain
+        };
+      });
     
-    return [...(events || []), ...uniqueWomEvents];
+    // Also add leader data to existing events that have wom_id
+    const enhancedEvents = (events || []).map(event => {
+      if (event.wom_id) {
+        const matchingComp = competitions.find(comp => comp.id.toString() === event.wom_id.toString());
+        if (matchingComp && matchingComp.participants && matchingComp.participants.length > 0) {
+          const sortedParticipants = [...matchingComp.participants].sort((a, b) => b.progress.gained - a.progress.gained);
+          if (sortedParticipants.length > 0) {
+            return {
+              ...event,
+              currentLeader: sortedParticipants[0].player.displayName,
+              leaderGain: sortedParticipants[0].progress.gained
+            };
+          }
+        }
+      }
+      return event;
+    });
+    
+    return [...enhancedEvents, ...uniqueWomEvents];
   }, [events, competitions, includeWomCompetitions]);
   
-  // Rest of your component remains the same...
-
   // Process and categorize events
   const { activeEvents, upcomingEvents, recentCompletedEvents } = useMemo(() => {
     const now = new Date();
@@ -147,6 +204,11 @@ export default function EventsTable({
   const hasUpcomingEvents = upcomingEvents.length > 0;
   const hasCompletedEvents = recentCompletedEvents.length > 0;
 
+  // Generate WOM competition URL
+  const getWomCompetitionUrl = (womId) => {
+    return `https://wiseoldman.net/competitions/${womId}`;
+  };
+
   return (
     <div className="ui-events-tables">
       {hasActiveEvents && (
@@ -165,14 +227,36 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {activeEvents.map((event) => (
-                  <tr key={event.id} className={`ui-event-row ui-event-active ${event.is_wom ? 'ui-event-wom' : ''}`}>
+                  <tr
+                    key={event.id}
+                    className={`ui-event-row ui-event-active ${
+                      event.is_wom ? "ui-event-wom" : ""
+                    }`}
+                  >
                     <td>
                       <strong className="ui-event-name">
-                        {event.name}
+                        {(event.metric || event.type) && (
+                          <span className="ui-event-skill-icon">
+                            <SkillIcon skill={formatSkillName(event)} />
+                          </span>
+                        )}
+                        {event.is_wom || event.wom_id ? (
+                          <a
+                            href={getWomCompetitionUrl(event.wom_id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ui-event-wom-link"
+                          >
+                            {event.name}
+                          </a>
+                        ) : (
+                          event.name
+                        )}
                       </strong>
                     </td>
                     <td className="ui-event-date">
-                      {formatDate(event.end_date)} at {formatTime(event.end_date)}
+                      {formatDate(event.end_date)} at{" "}
+                      {formatTime(event.end_date)}
                     </td>
                     <td>
                       <span className="ui-badge ui-badge-warning">
@@ -203,14 +287,36 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {upcomingEvents.map((event) => (
-                  <tr key={event.id} className={`ui-event-row ui-event-upcoming ${event.is_wom ? 'ui-event-wom' : ''}`}>
+                  <tr
+                    key={event.id}
+                    className={`ui-event-row ui-event-upcoming ${
+                      event.is_wom ? "ui-event-wom" : ""
+                    }`}
+                  >
                     <td>
                       <strong className="ui-event-name">
-                        {event.name}
+                        {(event.metric || event.type) && (
+                          <span className="ui-event-skill-icon">
+                            <SkillIcon skill={formatSkillName(event)} />
+                          </span>
+                        )}
+                        {event.is_wom || event.wom_id ? (
+                          <a
+                            href={getWomCompetitionUrl(event.wom_id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ui-event-wom-link"
+                          >
+                            {event.name}
+                          </a>
+                        ) : (
+                          event.name
+                        )}
                       </strong>
                     </td>
                     <td className="ui-event-date">
-                      {formatDate(event.start_date)} at {formatTime(event.start_date)}
+                      {formatDate(event.start_date)} at{" "}
+                      {formatTime(event.start_date)}
                     </td>
                     <td>
                       <span className="ui-badge ui-badge-info">
@@ -241,20 +347,45 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {recentCompletedEvents.map((event) => (
-                  <tr key={event.id} className={`ui-event-row ui-event-completed ${event.is_wom ? 'ui-event-wom' : ''}`}>
+                  <tr
+                    key={event.id}
+                    className={`ui-event-row ui-event-completed ${
+                      event.is_wom ? "ui-event-wom" : ""
+                    }`}
+                  >
                     <td>
                       <strong className="ui-event-name">
-                        {event.name}
+                        {(event.metric || event.type) && (
+                          <span className="ui-event-skill-icon">
+                            <SkillIcon skill={formatSkillName(event)} />
+                          </span>
+                        )}
+                        {event.is_wom || event.wom_id ? (
+                          <a
+                            href={getWomCompetitionUrl(event.wom_id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ui-event-wom-link"
+                          >
+                            {event.name}
+                          </a>
+                        ) : (
+                          event.name
+                        )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
+                    <td className="ui-event-date">
+                      {formatDate(event.end_date)}
+                    </td>
                     <td>
                       {event.winner_username ? (
                         <span className="ui-winner-badge">
                           🏆 {event.winner_username}
                         </span>
                       ) : (
-                        <span className="ui-text-muted">No winner recorded</span>
+                        <span className="ui-text-muted">
+                          No winner recorded
+                        </span>
                       )}
                     </td>
                   </tr>

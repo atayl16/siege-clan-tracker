@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { usePublicGoals } from '../../context/DataContext';
+import { useUserGoals } from '../../hooks/useUserGoals'; // Updated to use new hook
 import GoalProgress from './GoalProgress';
 import { FaFilter, FaSort } from 'react-icons/fa';
 import { titleize } from '../../utils/stringUtils';
@@ -9,20 +9,25 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function PublicGoalsBoard() {
-  const { publicGoals, loading } = usePublicGoals();
+  const { goals, loading } = useUserGoals(); // Use the new hook
   const [sortBy, setSortBy] = useState('progress');
   const [filterType, setFilterType] = useState('all');
-  
+
+  // Filter public goals
+  const publicGoals = useMemo(() => {
+    return goals?.filter((goal) => goal.public) || [];
+  }, [goals]);
+
   const sortedGoals = useMemo(() => {
     if (!publicGoals) return [];
-    
+
     let filtered = publicGoals;
-    
+
     // Apply filters
     if (filterType !== 'all') {
-      filtered = filtered.filter(goal => goal.goal_type === filterType);
+      filtered = filtered.filter((goal) => goal.goal_type === filterType);
     }
-    
+
     // Apply sorting
     return [...filtered].sort((a, b) => {
       if (sortBy === 'progress') {
@@ -39,11 +44,11 @@ export default function PublicGoalsBoard() {
       return 0;
     });
   }, [publicGoals, sortBy, filterType]);
-  
+
   if (loading) {
     return <div className="ui-loading-container">Loading public goals...</div>;
   }
-  
+
   return (
     <div className="ui-public-goals-board">
       <div className="ui-board-header">
@@ -51,7 +56,7 @@ export default function PublicGoalsBoard() {
         <div className="ui-board-controls">
           <div className="ui-filter-group">
             <label><FaFilter /> Filter:</label>
-            <select value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="all">All Types</option>
               <option value="skill">Skills</option>
               <option value="boss">Bosses</option>
@@ -59,7 +64,7 @@ export default function PublicGoalsBoard() {
           </div>
           <div className="ui-sort-group">
             <label><FaSort /> Sort By:</label>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="progress">Progress</option>
               <option value="recent">Recently Added</option>
               <option value="deadline">Upcoming Deadlines</option>
@@ -67,12 +72,12 @@ export default function PublicGoalsBoard() {
           </div>
         </div>
       </div>
-      
+
       <div className="ui-public-goals-grid">
         {sortedGoals.length === 0 ? (
           <div className="ui-empty-message">No public goals found</div>
         ) : (
-          sortedGoals.map(goal => (
+          sortedGoals.map((goal) => (
             <Card key={goal.id} className="ui-public-goal-card">
               <Card.Header>
                 <div className="ui-goal-player">{titleize(goal.player_name)}</div>
@@ -81,7 +86,7 @@ export default function PublicGoalsBoard() {
               <Card.Body>
                 <h3 className="ui-goal-metric">{titleize(goal.metric)}</h3>
                 <GoalProgress goal={goal} />
-                
+
                 <div className="ui-goal-details">
                   {goal.target_date && (
                     <div className="ui-goal-deadline">

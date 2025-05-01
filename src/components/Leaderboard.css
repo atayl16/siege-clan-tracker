@@ -13,32 +13,60 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Table styling */
-.ui-table-container {
-  overflow-x: auto;
+/* Table styling with more specific selectors */
+.ui-leaderboard-table-container {
   border-radius: var(--border-radius-sm, 0.25rem);
   background-color: #222;
+  margin-bottom: 1rem;
+  overflow-x: visible; /* Ensure table doesn't cause scrolling */
 }
 
-.ui-leaderboard .ui-table {
+.ui-leaderboard-table {
   width: 100%;
   border-collapse: separate;
+  table-layout: fixed; /* Ensures columns respect their widths */
   border-spacing: 0;
 }
 
-.ui-leaderboard .ui-table thead {
+/* Set specific column widths */
+.ui-leaderboard-table th:first-child,
+.ui-leaderboard-table td:first-child {
+  width: 60px; /* Width for rank column */
+  min-width: 60px;
+  text-align: center;
+}
+
+.ui-leaderboard-table th:last-child,
+.ui-leaderboard-table td:last-child {
+  width: 70px; /* Width for score column */
+  min-width: 70px;
+  text-align: right;
+}
+
+.ui-leaderboard-table th:nth-child(2),
+.ui-leaderboard-table td:nth-child(2) {
+  /* Let player name take remaining space */
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-leaderboard-table thead {
   background-color: #2a2a2a;
 }
 
-.ui-leaderboard .ui-table th {
-  padding: 0.75rem; /* 12px */
+.ui-leaderboard-table th {
+  padding: 0.75rem 0.5rem; /* Slightly reduced horizontal padding */
   font-weight: 600;
   color: #ddd;
   border-bottom: 0.125rem solid #444; /* 2px */
-  text-align: left;
+  white-space: nowrap !important; /* Critical - prevent wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.ui-leaderboard .ui-table td {
+.ui-leaderboard-table td {
   padding: 0.75rem; /* 12px */
   vertical-align: middle;
   border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05); /* 1px */
@@ -124,6 +152,9 @@
 .ui-player-name {
   flex: 1;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ui-player-score {
@@ -181,8 +212,8 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .ui-leaderboard .ui-table th,
-  .ui-leaderboard .ui-table td {
+  .ui-leaderboard-table th,
+  .ui-leaderboard-table td {
     padding: 0.625rem 0.5rem; /* 10px 8px */
     font-size: 0.9375rem; /* 15px */
   }
@@ -195,35 +226,50 @@
   }
 }
 
+/* Mobile responsiveness */
 @media (max-width: 576px) {
-  .ui-leaderboard .ui-table th,
-  .ui-leaderboard .ui-table td {
-    padding: 0.5rem 0.375rem; /* 8px 6px */
+  /* Adjust column widths for small screens */
+  .ui-leaderboard-table th:first-child,
+  .ui-leaderboard-table td:first-child {
+    width: 50px;
+    min-width: 50px;
+  }
+
+  .ui-leaderboard-table th:last-child,
+  .ui-leaderboard-table td:last-child {
+    width: 55px;
+    min-width: 55px;
+  }
+  
+  .ui-leaderboard-table th,
+  .ui-leaderboard-table td {
+    padding: 0.5rem 0.1875rem; /* 8px 3px - minimal horizontal padding */
     font-size: 0.875rem; /* 14px */
   }
-  
-  /* Allow table cells to wrap on very small screens */
-  .ui-leaderboard .ui-table th {
-    white-space: normal;
-    word-break: break-word;
+}
+
+/* For extremely small screens */
+@media (max-width: 375px) {
+  .ui-leaderboard-table th:first-child,
+  .ui-leaderboard-table td:first-child {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .ui-leaderboard-table th:last-child,
+  .ui-leaderboard-table td:last-child {
+    width: 50px;
+    min-width: 50px;
   }
   
-  .ui-mini-player {
-    padding: 0.3125rem 0; /* 5px */
+  .ui-leaderboard-table th,
+  .ui-leaderboard-table td {
+    padding: 0.375rem 0.125rem; /* 6px 2px - minimum padding */
+    font-size: 0.6875rem; /* 11px - smaller font size */
   }
   
-  .ui-rank-badge {
-    width: 1.25rem; /* 20px */
-    height: 1.25rem; /* 20px */
-    font-size: 0.75rem; /* 12px */
-    margin-right: 0.375rem; /* 6px */
-  }
-  
-  .ui-player-name {
-    font-size: 0.875rem; /* 14px */
-  }
-  
-  .ui-player-score {
+  /* Reduce icon sizes further */
+  .ui-gold-icon, .ui-silver-icon, .ui-bronze-icon {
     font-size: 0.875rem; /* 14px */
   }
 }

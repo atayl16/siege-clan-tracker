@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
-import { useMembers, useMembersAdmin, useClaimRequests } from "../context/DataContext";
+import { useMembers } from "../hooks/useMembers"; // Updated hook
+import { useClaimRequests } from "../hooks/useClaimRequests"; // New hook
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
@@ -13,13 +14,11 @@ import GenerateClaimCode from "../components/GenerateClaimCode";
 import ClaimRequestManager from "../components/ClaimRequestManager";
 import ClaimRequestsPreview from "../components/ClaimRequestsPreview";
 import AdminUserManager from "../components/admin/AdminUserManager";
-import AdminResetPassword from "../components/admin/AdminResetPassword";
 
 // UI Components
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Modal from "../components/ui/Modal";
-import StatGroup from "../components/ui/StatGroup";
 import Tabs from "../components/ui/Tabs";
 import SearchInput from "../components/ui/SearchInput";
 import EmptyState from "../components/ui/EmptyState";
@@ -53,56 +52,52 @@ export default function AdminPage() {
   const [userSubTab, setUserSubTab] = useState("requests");
   const searchInputRef = useRef(null);
 
-  // Use context hooks instead of direct Supabase calls
-  const { 
-    members, 
-    loading: membersLoading, 
+  // Use new hooks
+  const {
+    members,
+    loading: membersLoading,
     error: membersError,
-    refreshMembers 
+    refreshMembers,
+    updateMember,
+    deleteMember,
   } = useMembers();
 
-  const { updateMember, deleteMember } = useMembersAdmin();
-
-  // Get pending claim requests count
-  const { 
-    requests: pendingRequests, 
-    refreshRequests 
-  } = useClaimRequests({ status: "pending" });
+  const {
+    claimRequests: pendingRequests,
+    refreshClaimRequests,
+  } = useClaimRequests();
 
   // Calculate and set alerts count whenever members data changes
   useEffect(() => {
     if (members) {
-      // Filter visible members and count those needing rank updates
-      const visibleMembers = members.filter(member => !member.hidden);
-      const needsUpdates = visibleMembers.filter(member => memberNeedsRankUpdate(member));
+      const visibleMembers = members.filter((member) => !member.hidden);
+      const needsUpdates = visibleMembers.filter((member) =>
+        memberNeedsRankUpdate(member)
+      );
       setAlertsCount(needsUpdates.length);
     }
   }, [members]);
-  
+
   // Filter members based on search term
   useEffect(() => {
-    if (!members) {
-      console.log("No members data available yet");
-      return;
-    }
-    
+    if (!members) return;
+
     if (!searchTerm.trim()) {
-      console.log(`Setting all ${members.length} members as filteredMembers`);
       setFilteredMembers(members);
       return;
     }
-    
+
     const lowercaseSearch = searchTerm.toLowerCase();
-    const filtered = members.filter(member => 
-      (member.name || "").toLowerCase().includes(lowercaseSearch) ||
-      (member.wom_name || "").toLowerCase().includes(lowercaseSearch) ||
-      (member.womrole || "").toLowerCase().includes(lowercaseSearch)
+    const filtered = members.filter(
+      (member) =>
+        (member.name || "").toLowerCase().includes(lowercaseSearch) ||
+        (member.wom_name || "").toLowerCase().includes(lowercaseSearch) ||
+        (member.womrole || "").toLowerCase().includes(lowercaseSearch)
     );
-    
-    console.log(`Search term "${searchTerm}" matched ${filtered.length} members`);
+
     setFilteredMembers(filtered);
   }, [searchTerm, members]);
-  
+
   // Make sure filteredMembers is properly initialized when members data is loaded
   useEffect(() => {
     if (members && members.length > 0) {
@@ -120,50 +115,38 @@ export default function AdminPage() {
   // Handle deleting a member
   const handleDeleteMember = async (member) => {
     if (!member || !member.wom_id) {
-      console.error("Cannot delete: wom_id is missing", member);
       setNotification({
-        type: 'error',
+        type: "error",
         message: "Cannot delete member: Missing identifier",
-        id: Date.now()
       });
       return;
     }
-  
-    if (!window.confirm(`Are you sure you want to delete ${member.name || member.wom_name}?`)) {
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${member.name || member.wom_name}?`
+      )
+    ) {
       return;
     }
-    
+
     try {
-      // Use deleteMember function from useMembersAdmin hook
-      const result = await deleteMember(member.wom_id);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to delete member");
-      }
-      
-      // Clear selection if needed
+      await deleteMember(member.wom_id);
+
       if (selectedMember?.wom_id === member.wom_id) {
         setSelectedMember(null);
       }
-      
-      // Show notification
+
       setNotification({
-        type: 'success',
+        type: "success",
         message: `${member.name || member.wom_name} was successfully deleted.`,
-        id: Date.now()
       });
-      
-      // Auto-dismiss
-      setTimeout(() => {
-        setNotification(prev => prev?.id === Date.now() ? null : prev);
-      }, 5000);
-      
+
+      refreshMembers();
     } catch (err) {
-      console.error("Error deleting member:", err);
       setNotification({
-        type: 'error',
+        type: "error",
         message: `Failed to delete ${member.name || member.wom_name}: ${err.message}`,
-        id: Date.now()
       });
     }
   };
@@ -171,81 +154,71 @@ export default function AdminPage() {
   // Handle saving member data
   const handleSaveMember = async (updatedMember) => {
     try {
-      // Use updateMember function from useMembersAdmin hook
       await updateMember(updatedMember);
-      
-      // Clear selection
+
       setSelectedMember(null);
       setIsAddingMember(false);
-      
-      // Show notification
+
       setNotification({
-        type: 'success',
+        type: "success",
         message: `${updatedMember.name || updatedMember.wom_name} was successfully saved.`,
-        id: Date.now()
       });
-      
-      // Refresh members data
+
       refreshMembers();
-      
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
     } catch (err) {
-      console.error("Error saving member:", err);
       setNotification({
-        type: 'error',
+        type: "error",
         message: `Failed to save ${updatedMember.name || updatedMember.wom_name}: ${err.message}`,
-        id: Date.now()
       });
     }
   };
-  
+
   // Export members to CSV
   const exportToCSV = () => {
     try {
-      // Prepare CSV data
       const headers = [
         "Name", "WOM ID", "WOM Name", "Title", "WOM Role",
         "Current Level", "Current XP", "Initial Level", "Initial XP",
         "EHB", "Siege Score", "Join Date", "Updated At"
       ];
-      
-      const csvRows = [];
-      csvRows.push(headers.join(','));
-      
-      members.forEach(member => {
+
+      const csvRows = [headers.join(",")];
+
+      members.forEach((member) => {
         const row = [
-          `"${member.name || ''}"`,
-          member.wom_id || '',
-          `"${member.wom_name || ''}"`,
-          `"${member.title || ''}"`,
-          `"${member.womrole || ''}"`,
+          `"${member.name || ""}"`,
+          member.wom_id || "",
+          `"${member.wom_name || ""}"`,
+          `"${member.title || ""}"`,
+          `"${member.womrole || ""}"`,
           member.current_lvl || 0,
           member.current_xp || 0,
           member.first_lvl || 0,
           member.first_xp || 0,
           member.ehb || 0,
           member.siege_score || 0,
-          member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : '',
-          member.updated_at ? new Date(member.updated_at).toISOString().split('T')[0] : ''
+          member.created_at
+            ? new Date(member.created_at).toISOString().split("T")[0]
+            : "",
+          member.updated_at
+            ? new Date(member.updated_at).toISOString().split("T")[0]
+            : "",
         ];
-        
-        csvRows.push(row.join(','));
+
+        csvRows.push(row.join(","));
       });
-      
-      // Create and download the CSV file
-      const csvString = csvRows.join('\n');
-      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      
-      const fileName = `siege-members-${new Date().toISOString().split('T')[0]}.csv`;
-      
+
+      const csvString = csvRows.join("\n");
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+
+      const fileName = `siege-members-${new Date()
+        .toISOString()
+        .split("T")[0]}.csv`;
+
       if (navigator.msSaveBlob) {
-        // IE 10+
         navigator.msSaveBlob(blob, fileName);
       } else {
-        // Other browsers
         const url = URL.createObjectURL(blob);
         link.href = url;
         link.download = fileName;
@@ -253,73 +226,51 @@ export default function AdminPage() {
         link.click();
         document.body.removeChild(link);
       }
-      
+
       setNotification({
-        type: 'success',
+        type: "success",
         message: `Exported ${members.length} members to CSV.`,
-        id: Date.now()
       });
-      
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-      
     } catch (err) {
-      console.error("Error exporting to CSV:", err);
       setNotification({
-        type: 'error',
+        type: "error",
         message: `Failed to export to CSV: ${err.message}`,
-        id: Date.now()
       });
     }
   };
-  
-  // Reset all siege scores using the updateMember function
+
+  // Reset all siege scores
   const handleResetScores = async () => {
     if (resetConfirmText !== "RESET ALL SCORES") {
       setNotification({
-        type: 'error',
+        type: "error",
         message: "Confirmation text doesn't match. Scores not reset.",
-        id: Date.now()
       });
       return;
     }
-    
+
     try {
-      // First, export current scores for backup
       exportToCSV();
-      
-      // Update each member's siege score to 0
-      const updatePromises = members.map(member => 
+
+      const updatePromises = members.map((member) =>
         updateMember({ ...member, siege_score: 0 })
       );
-      
+
       await Promise.all(updatePromises);
-      
-      // Hide confirmation
+
       setShowResetConfirm(false);
       setResetConfirmText("");
-      
-      // Refresh members data
+
       refreshMembers();
-      
-      // Show notification
+
       setNotification({
-        type: 'success',
+        type: "success",
         message: `Reset all siege scores to 0. A backup CSV was downloaded.`,
-        id: Date.now()
       });
-      
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-      
     } catch (err) {
-      console.error("Error resetting scores:", err);
       setNotification({
-        type: 'error',
+        type: "error",
         message: `Failed to reset scores: ${err.message}`,
-        id: Date.now()
       });
     }
   };
@@ -333,7 +284,7 @@ export default function AdminPage() {
         action={
           <Button
             variant="primary"
-            onClick={() => window.location.href = '/login'}
+            onClick={() => (window.location.href = "/login")}
           >
             Log In
           </Button>
@@ -655,15 +606,7 @@ export default function AdminPage() {
                     </Card.Body>
                   </Card>
                 </Tabs.Tab>
-                
-                <Tabs.Tab tabId="passwords" label="Reset Passwords">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <AdminResetPassword />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-              </Tabs>
+            </Tabs>
             </div>
           </div>
         </Tabs.Tab>

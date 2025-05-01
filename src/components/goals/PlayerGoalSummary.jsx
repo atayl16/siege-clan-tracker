@@ -1,11 +1,11 @@
 import React from 'react';
-import { usePlayerGoals } from '../../context/DataContext';
+import { useUserGoals } from '../../hooks/useUserGoals'; // Updated to use new hook
 import GoalProgress from './GoalProgress';
 import './PlayerGoalSummary.css';
 
 export default function PlayerGoalSummary({ playerId, userId }) {
-  // Move the hook call before any conditional logic
-  const { goals, loading } = usePlayerGoals(userId, playerId);
+  // Use the new hook
+  const { goals, loading } = useUserGoals();
 
   if (!playerId || !userId) {
     return (
@@ -19,20 +19,23 @@ export default function PlayerGoalSummary({ playerId, userId }) {
     return <div className="inline-goals-loading">Loading goals...</div>;
   }
 
-  if (!goals || goals.length === 0) {
+  // Filter goals for the specific player and user
+  const filteredGoals = goals?.filter(
+    (goal) => goal.user_id === userId && goal.wom_id === playerId
+  );
+
+  if (!filteredGoals || filteredGoals.length === 0) {
     return <div className="inline-goals-empty">No active goals</div>;
   }
 
   // Get up to 3 uncompleted goals
-  const activeGoals = goals
-    .filter(goal => !goal.completed)
-    .slice(0, 3);
+  const activeGoals = filteredGoals.filter((goal) => !goal.completed).slice(0, 3);
 
   return (
     <div className="inline-goals-container">
       <h4 className="inline-goals-header">Current Goals</h4>
       <div className="inline-goals-list">
-        {activeGoals.map(goal => (
+        {activeGoals.map((goal) => (
           <div key={goal.id} className="inline-goal-item">
             <div className="inline-goal-title">
               {goal.metric} ({goal.goal_type})

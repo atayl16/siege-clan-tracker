@@ -1,9 +1,10 @@
-import React from 'react';
-import { usePlayerMetrics } from "../context/DataContext";
+import React from "react";
+import { useMetrics } from "../hooks/useMetrics"; // Use the updated hook
 import "./MetricSelector.css";
 
 export default function MetricSelector({ 
-  metricType, // "skill" or "boss"
+  playerId, // Pass the player ID to fetch metrics
+  metricType, // "skill", "boss", "activity", or "computed"
   selectedMetric,
   onMetricChange,
   className = "",
@@ -11,14 +12,14 @@ export default function MetricSelector({
   required = true,
   placeholderText
 }) {
-  const { metrics, loading: loadingMetrics } = usePlayerMetrics(metricType);
-  
+  const { metrics, loading: loadingMetrics } = useMetrics(playerId, metricType); // Use the updated hook
+
   const handleMetricChange = (e) => {
     if (onMetricChange) {
       onMetricChange(e.target.value);
     }
   };
-  
+
   const getPlaceholderText = () => {
     if (placeholderText) {
       return placeholderText;

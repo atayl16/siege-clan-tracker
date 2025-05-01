@@ -33,7 +33,7 @@ export default function Navbar() {
   return (
     <nav className="navbar" style={{ backgroundColor: "black" }}>
       <div className="navbar-container">
-        <Link className="navbar-brand" to="/members">
+        <Link className="navbar-brand" to="/">
           <img
             src={getSeasonalIcon()}
             alt="Siege Logo"
@@ -44,9 +44,9 @@ export default function Navbar() {
           <span className="brand-name">Siege Clan</span>
         </Link>
 
-        <button 
+        <button
           id="navbar-toggle"
-          className={`navbar-toggle ${isOpen ? 'active' : ''}`} 
+          className={`navbar-toggle ${isOpen ? "active" : ""}`}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle navigation"
         >
@@ -55,55 +55,52 @@ export default function Navbar() {
           <span></span>
         </button>
 
-        <div id="navbar-links" className={`navbar-links ${isOpen ? 'active' : ''}`}>
+        <div
+          id="navbar-links"
+          className={`navbar-links ${isOpen ? "active" : ""}`}
+        >
+          {/* Main Navigation Links */}
+          <Link
+            to="/"
+            className={location.pathname === "/" ? "active" : ""}
+          >
+            Home
+          </Link>
 
           <Link
             to="/members"
             className={location.pathname === "/members" ? "active" : ""}
           >
-            Home
+            Members
           </Link>
 
-          {/* Authentication links */}
-          {isLoggedIn() ? (
-            <>
-              <Link
-                to="/profile"
-                className={`profile-link ${location.pathname === "/profile" ? "active" : ""}`}
-              >
-                My Profile
-              </Link>
+          <Link
+            to="/events"
+            className={location.pathname === "/events" ? "active" : ""}
+          >
+            Events
+          </Link>
 
-              {isAdmin() && (
-                <Link
-                  to="/admin"
-                  className={`admin-link ${location.pathname === "/admin" ? "active" : ""}`}
-                >
-                  Admin
-                </Link>
-              )}
+          <Link
+            to="/leaderboard"
+            className={location.pathname === "/leaderboard" ? "active" : ""}
+          >
+            Leaderboard
+          </Link>
 
-              <button onClick={logout} className="logout-button">
-                Logout
-              </button>
-            </>
-          ) : (
-            <div className="navbar-auth-links">
-              <Link
-                to="/login"
-                className={location.pathname === "/login" ? "active" : ""}
-              >
-                Login
-              </Link>
+          <Link
+            to="/stats"
+            className={location.pathname === "/stats" ? "active" : ""}
+          >
+            Stats
+          </Link>
 
-              <Link
-                to="/register"
-                className={location.pathname === "/register" ? "active" : ""}
-              >
-                Register
-              </Link>
-            </div>
-          )}
+          <Link
+            to="/achievements"
+            className={location.pathname === "/achievements" ? "active" : ""}
+          >
+            Achievements
+          </Link>
         </div>
       </div>
     </nav>

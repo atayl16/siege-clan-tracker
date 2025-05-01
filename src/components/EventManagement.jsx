@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useEvents, useData } from '../context/DataContext';
+import { useEvents } from '../hooks/useEvents'; // Updated to use new hook
 import { FaEdit, FaTrash, FaCalendarPlus, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
 
 // Import UI components
@@ -17,14 +17,16 @@ export default function EventManagement() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [actionError, setActionError] = useState(null);
-  const { fetchers } = useData();
 
-  // Use the context hook instead of direct Supabase queries
+  // Use the new hook to manage events
   const { 
     events, 
     loading, 
     error: fetchError, 
-    refreshEvents 
+    refreshEvents, 
+    createEvent, 
+    updateEvent, 
+    deleteEvent 
   } = useEvents();
 
   const handleEventSave = async (savedEvent) => {
@@ -32,11 +34,11 @@ export default function EventManagement() {
       setActionError(null);
 
       if (editingEvent) {
-        // Use context method for update
-        await fetchers.supabase.updateEvent(savedEvent);
+        // Use the new hook's update method
+        await updateEvent(savedEvent);
         setEditingEvent(null);
       } else {
-        // Create new event - remove any ID and non-database fields
+        // Create new event
         const { id, _tempId, ...eventData } = savedEvent;
 
         // Extract only the fields that exist in the database schema
@@ -50,8 +52,8 @@ export default function EventManagement() {
           status: eventData.status || "upcoming",
         };
 
-        // Use context method for create
-        await fetchers.supabase.createEvent(eventToInsert);
+        // Use the new hook's create method
+        await createEvent(eventToInsert);
         setIsCreatingEvent(false);
       }
 
@@ -82,8 +84,8 @@ export default function EventManagement() {
     try {
       setActionError(null);
 
-      // Use context method for delete
-      await fetchers.supabase.deleteEvent(deleteConfirm.id);
+      // Use the new hook's delete method
+      await deleteEvent(deleteConfirm.id);
 
       setDeleteConfirm(null);
 

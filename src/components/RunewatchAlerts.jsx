@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useMembers, useData } from "../context/DataContext";
-import { supabase } from "../supabaseClient"; // Add supabase import
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Modal from './ui/Modal';
-import Badge from './ui/Badge';
 import { FaExclamationTriangle, FaCheck, FaSync, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import './RunewatchAlerts.css';
 
@@ -14,10 +12,9 @@ export default function RunewatchAlerts({ previewMode = false }) {
   const [memberToWhitelist, setMemberToWhitelist] = useState(null);
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
-  const { fetchers } = useData();
-  
-  // Get members data from context
-  const { members, loading, error: membersError, refreshMembers } = useMembers();
+
+  // Use the new hook to fetch members
+  const { members, loading, error: membersError, refreshMembers, updateMember } = useMembers();
 
   // Filter reported members
   const reportedMembers = React.useMemo(() => {
@@ -66,24 +63,18 @@ export default function RunewatchAlerts({ previewMode = false }) {
       const checkedMembers = [];
       
       for (const member of membersToCheck) {
-        // Note: You would need to implement or use a proper Runewatch API here
-        // This is just a placeholder to show the concept
         try {
           const response = await fetch(`/api/runewatch?rsn=${encodeURIComponent(member.name || member.wom_name)}`);
           const data = await response.json();
           
           if (data.reported) {
-            // Update the member in the database
-            const { error } = await supabase
-              .from("members")
-              .update({
-                runewatch_reported: true,
-                runewatch_report_data: data,
-                runewatch_checked_at: new Date().toISOString()
-              })
-              .eq("wom_id", member.wom_id);
-              
-            if (error) throw error;
+            // Update the member using the new hook
+            await updateMember({
+              ...member,
+              runewatch_reported: true,
+              runewatch_report_data: data,
+              runewatch_checked_at: new Date().toISOString(),
+            });
             
             checkedMembers.push(member);
           }
@@ -116,12 +107,12 @@ export default function RunewatchAlerts({ previewMode = false }) {
     if (!memberToWhitelist) return;
 
     try {
-      await fetchers.supabase.whitelistRunewatchMember(
-        memberToWhitelist.wom_id,
-        whitelistReason
-      );
-
-      if (supabaseError) throw supabaseError;
+      // Update the member using the new hook
+      await updateMember({
+        ...memberToWhitelist,
+        runewatch_whitelisted: true,
+        runewatch_whitelist_reason: whitelistReason,
+      });
 
       // Refresh data from context instead of managing local state
       await refreshMembers();

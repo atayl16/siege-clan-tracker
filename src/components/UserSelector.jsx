@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUsers } from "../context/DataContext";
+import { useUsers } from "../hooks/useUsers"; // Updated to use new hook
 import DataSelector from './ui/DataSelector';
 import Badge from './ui/Badge';
 import './UserSelector.css';
@@ -11,10 +11,14 @@ export default function UserSelector({
   viewMode = 'table',
   excludeAdmins = false,
 }) {
-  // Use the context hook for all data fetching with our new DataContext
-  const { users, loading, error } = useUsers({
-    excludeAdmins,
-  });
+  // Use the new hook to fetch users
+  const { users, loading, error } = useUsers();
+
+  // Filter users if excludeAdmins is true
+  const filteredUsers = React.useMemo(() => {
+    if (!users) return [];
+    return excludeAdmins ? users.filter((user) => !user.is_admin) : users;
+  }, [users, excludeAdmins]);
 
   // Define columns for the table view
   const columns = [
@@ -53,7 +57,7 @@ export default function UserSelector({
   return (
     <div className="user-selector-container">      
       <DataSelector
-        data={users}
+        data={filteredUsers}
         columns={columns}
         onSelect={onUserSelect}
         selectedId={selectedUserId}
