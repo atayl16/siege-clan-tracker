@@ -88,16 +88,6 @@ export default function EventsPage() {
               </button>
             )}
           </div>
-          <select
-            className="ui-form-select"
-            value={eventsFilterType}
-            onChange={(e) => setEventsFilterType(e.target.value)}
-          >
-            <option value="all">All Events</option>
-            <option value="active">Active Events</option>
-            <option value="upcoming">Upcoming Events</option>
-            <option value="completed">Completed Events</option>
-          </select>
         </div>
       </div>
 

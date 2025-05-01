@@ -1,22 +1,212 @@
+/* BASE LAYOUT */
 .ui-page-container {
+  width: 85%;
+  max-width: 1400px;
   margin: 0 auto;
-  max-width: 1200px;
-  padding: 20px;
+  padding: 1.25rem;
+  color: var(--color-text, #e0e0e0);
 }
 
+/* CONTENT HEADER */
+.ui-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5625rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ui-content-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-orange, #ff9800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* EVENTS FILTERS */
 .ui-events-filters-container {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 1rem;
+  flex: 1;
+  justify-content: flex-end;
+  max-width: 600px; /* Wider container for search now that dropdown is gone */
 }
 
+/* SEARCH INPUT */
+.ui-search-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 500px; /* Expanded width for better search experience */
+}
+
+.ui-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-light, #aaa);
+  font-size: 0.9375rem;
+}
+
+.ui-search-input {
+  width: 100%;
+  padding: 0.6875rem 2.5rem 0.6875rem 2.1875rem;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  border: 1px solid var(--color-border, #444);
+  background-color: var(--color-bg-dark, #333);
+  color: var(--color-text, #e0e0e0);
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+}
+
+.ui-search-input:focus {
+  outline: none;
+  border-color: var(--color-orange, #ff9800);
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+}
+
+.ui-search-input::placeholder {
+  color: var(--color-text-light, #aaa);
+}
+
+.ui-clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-light, #aaa);
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3125rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.ui-clear-search:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-text, #e0e0e0);
+}
+
+/* EVENTS SUMMARY STATS */
 .ui-events-summary {
-  margin-bottom: 20px;
+  margin-bottom: 1.5625rem;
 }
 
+/* SECTION CONTAINER */
+.ui-section-container {
+  background-color: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+/* BUTTON CENTER */
 .ui-button-center {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 1.5625rem;
+  margin-bottom: 0.625rem;
+}
+
+/* LOADING & ERROR STATES */
+.ui-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 0;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: var(--border-radius-md, 0.5rem);
+  margin-bottom: 1.25rem;
+}
+
+.ui-loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0.1875rem solid rgba(255,152,0,0.3);
+  border-radius: 50%;
+  border-top-color: var(--color-orange, #ff9800);
+  animation: ui-spin 1s linear infinite;
+  margin-bottom: 0.9375rem;
+}
+
+.ui-loading-text {
+  color: #aaa;
+  font-weight: 500;
+}
+
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ui-error-container {
+  display: flex;
+  align-items: center;
+  padding: 1.25rem;
+  background-color: rgba(220,53,69,0.1);
+  border: 1px solid rgba(220,53,69,0.2);
+  border-radius: var(--border-radius-md, 0.5rem);
+  margin-bottom: 1.25rem;
+}
+
+.ui-error-icon {
+  font-size: 1.75rem;
+  margin-right: 1.25rem;
+  color: var(--color-danger, #dc3545);
+}
+
+.ui-error-message h3 {
+  margin-top: 0;
+  margin-bottom: 0.625rem;
+  color: var(--color-danger, #dc3545);
+}
+
+.ui-error-message p {
+  margin-bottom: 0.9375rem;
+  color: var(--color-danger, #dc3545);
+}
+
+/* RESPONSIVE STYLES */
+@media (max-width: 768px) {
+  .ui-page-container {
+    width: 98%;
+    padding: 1rem;
+  }
+  
+  .ui-content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .ui-events-filters-container {
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .ui-search-input-wrapper {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-page-container {
+    width: 100%;
+    padding: 0.75rem;
+  }
+  
+  .ui-section-container {
+    padding: 1rem;
+  }
 }

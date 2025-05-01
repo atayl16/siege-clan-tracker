@@ -20,6 +20,7 @@ import WelcomePage from "./pages/WelcomePage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
 import AchievementsPage from "./pages/AchievementsPage";
+import NewMembers from "./pages/NewMembers";
 import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -58,6 +59,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
+          <Route path="/new-members" element={<NewMembers />} />
 
           {/* Admin Routes - All protected */}
           <Route

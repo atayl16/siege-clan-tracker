@@ -44,9 +44,9 @@ export default function Navbar() {
           <span className="brand-name">Siege Clan</span>
         </Link>
 
-        <button 
+        <button
           id="navbar-toggle"
-          className={`navbar-toggle ${isOpen ? 'active' : ''}`} 
+          className={`navbar-toggle ${isOpen ? "active" : ""}`}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle navigation"
         >
@@ -55,7 +55,10 @@ export default function Navbar() {
           <span></span>
         </button>
 
-        <div id="navbar-links" className={`navbar-links ${isOpen ? 'active' : ''}`}>
+        <div
+          id="navbar-links"
+          className={`navbar-links ${isOpen ? "active" : ""}`}
+        >
           {/* Main Navigation Links */}
           <Link
             to="/members"
@@ -63,21 +66,21 @@ export default function Navbar() {
           >
             Members
           </Link>
-          
+
           <Link
             to="/events"
             className={location.pathname === "/events" ? "active" : ""}
           >
             Events
           </Link>
-          
+
           <Link
             to="/leaderboard"
             className={location.pathname === "/leaderboard" ? "active" : ""}
           >
             Leaderboard
           </Link>
-          
+
           <Link
             to="/about"
             className={location.pathname === "/about" ? "active" : ""}
@@ -85,12 +88,21 @@ export default function Navbar() {
             About Us
           </Link>
 
+          <Link
+            to="/achievements"
+            className={location.pathname === "/achievements" ? "active" : ""}
+          >
+            Achievements
+          </Link>
+
           {/* Authentication links */}
           {isLoggedIn() ? (
             <>
               <Link
                 to="/profile"
-                className={`profile-link ${location.pathname === "/profile" ? "active" : ""}`}
+                className={`profile-link ${
+                  location.pathname === "/profile" ? "active" : ""
+                }`}
               >
                 My Profile
               </Link>
@@ -98,7 +110,9 @@ export default function Navbar() {
               {isAdmin() && (
                 <Link
                   to="/admin"
-                  className={`admin-link ${location.pathname === "/admin" ? "active" : ""}`}
+                  className={`admin-link ${
+                    location.pathname === "/admin" ? "active" : ""
+                  }`}
                 >
                   Admin
                 </Link>
