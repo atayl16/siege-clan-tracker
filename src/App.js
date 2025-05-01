@@ -9,7 +9,7 @@ import {
 import { AuthProvider } from "./context/AuthContext";
 import { DataProvider } from "./context/DataContext-OLD";
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import RegistrationForm from "./components/RegistrationForm";
+import RegistrationForm from "./pages/RegistrationForm";
 import Login from "./components/Login";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
