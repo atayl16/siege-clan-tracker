@@ -234,12 +234,13 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
                 <div className="ui-form-group ui-form-group-half">
                   <label className="ui-form-label">Select Metric</label>
                   <MetricSelector
-                    metricType={participant.metricType}
-                    selectedMetric={participant.metric}
+                    playerId={participant.playerId} // Pass the playerId to fetch metrics
+                    metricType={participant.metricType} // Pass the metricType ("skill" or "boss")
+                    selectedMetric={participant.metric} // The currently selected metric
                     onMetricChange={(metric) =>
                       handleParticipantChange(index, "metric", metric)
                     }
-                    disabled={!participant.playerId}
+                    disabled={!participant.playerId} // Disable if no player is selected
                     placeholderText="Select metric"
                   />
                 </div>

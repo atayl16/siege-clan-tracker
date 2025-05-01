@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useUserGoals } from "../../hooks/useUserGoals"; // Updated to use new hook
+import { usePlayer } from "../../hooks/usePlayer"; // New hook for fetching player data
 import GoalProgress from "./GoalProgress";
 import CreateGoal from "./CreateGoal";
-import { refreshPlayerData } from "../../utils/womApi";
 import { updatePlayerGoals } from "../../services/goalProgressService";
 import { titleize } from "../../utils/stringUtils";
 import { FaSync, FaPlus, FaTimes, FaTrash } from "react-icons/fa";
@@ -23,6 +23,9 @@ export default function GoalsList({ player, userId, onClose }) {
 
   // Use new hook for goals
   const { goals, loading, error: apiError, refresh: refreshGoals, deleteGoal } = useUserGoals();
+
+  // Use new hook for player data
+  const { refreshPlayer } = usePlayer(player?.wom_id);
 
   const [error, setError] = useState(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
@@ -63,8 +66,8 @@ export default function GoalsList({ player, userId, onClose }) {
       setSyncSuccess(false);
       setError(null);
 
-      // Refresh the player data from WOM API
-      const refreshResult = await refreshPlayerData(player.wom_id);
+      // Refresh the player data using the new hook
+      const refreshResult = await refreshPlayer();
 
       // Check if the refresh was successful
       if (!refreshResult.success) {

@@ -192,11 +192,13 @@ export default function CreateGoal({
 
           <div className="ui-form-group">
             <MetricSelector
-              metricType={goalType}
-              selectedMetric={selectedMetric}
-              onMetricChange={handleMetricChange}
-              disabled={false}
-              required={true}
+              playerId={player.wom_id} // Pass the player ID to fetch metrics
+              metricType={goalType} // Pass the metric type ("skill" or "boss")
+              selectedMetric={selectedMetric} // The currently selected metric
+              onMetricChange={handleMetricChange} // Callback to update the selected metric
+              disabled={false} // Enable the dropdown
+              required={true} // Make the field required
+              placeholderText={`Select a ${goalType}`} // Dynamic placeholder text
             />
           </div>
 

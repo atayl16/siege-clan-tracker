@@ -1,12 +1,11 @@
 import { supabase } from "../supabaseClient";
-import { fetchPlayerStats } from "../utils/womApi";
+import { usePlayer } from "../hooks/usePlayer"; // New hook for fetching player data
 
 // Helper function to extract metric data from player data
 function extractMetricData(playerData, type, metric) {
   if (!playerData) return null;
-  
-  if (type === 'skill') {
-    // Try various possible data structures
+
+  if (type === "skill") {
     if (playerData.latestSnapshot?.data?.skills && playerData.latestSnapshot.data.skills[metric]) {
       return playerData.latestSnapshot.data.skills[metric];
     } else if (playerData.data?.skills && playerData.data.skills[metric]) {
@@ -15,7 +14,7 @@ function extractMetricData(playerData, type, metric) {
       return playerData.skills[metric];
     }
     return { experience: 0, level: 1, rank: 0 };
-  } else if (type === 'boss') {
+  } else if (type === "boss") {
     if (playerData.latestSnapshot?.data?.bosses && playerData.latestSnapshot.data.bosses[metric]) {
       return playerData.latestSnapshot.data.bosses[metric];
     } else if (playerData.data?.bosses && playerData.data.bosses[metric]) {
@@ -28,36 +27,32 @@ function extractMetricData(playerData, type, metric) {
   return null;
 }
 
-// Get player statistics via context or directly from API as fallback
-async function getPlayerStat(womId, type, metric, contextFetcher = null) {
+// Get player statistics using the new hook
+async function getPlayerStat(womId, type, metric) {
   try {
-    // If we have a context fetcher, try to use it first
-    if (contextFetcher) {
-      try {
-        const playerData = await contextFetcher(`player-${womId}`, womId);
-        const metricData = extractMetricData(playerData, type, metric);
-        
-        if (metricData) {
-          console.log(`Found ${type} data for ${metric} using context:`, metricData);
-          return metricData;
-        }
-      } catch (contextError) {
-        console.warn(`Context fetcher failed for ${womId}, falling back to direct API:`, contextError.message);
-      }
+    // Use the new hook to fetch player data
+    const { data: playerData, error } = await usePlayer(womId);
+
+    if (error) {
+      console.error(`Error fetching player data for WOM ID ${womId}:`, error);
+      throw error;
     }
-    
-    // Fall back to direct API call
-    console.log(`Using direct API call for ${womId}, ${type}, ${metric}`);
-    const metricData = await fetchPlayerStats(womId, type, metric);
-    return metricData;
+
+    const metricData = extractMetricData(playerData, type, metric);
+    if (metricData) {
+      console.log(`Found ${type} data for ${metric}:`, metricData);
+      return metricData;
+    }
+
+    console.warn(`No ${type} data found for ${metric}`);
+    return type === "skill" ? { experience: 0, level: 1, rank: 0 } : { kills: 0, rank: 0 };
   } catch (error) {
     console.error(`Failed to get player stat for ${type} ${metric}:`, error);
-    // Return default values based on type
-    return type === 'skill' ? { experience: 0, level: 1, rank: 0 } : { kills: 0, rank: 0 };
+    return type === "skill" ? { experience: 0, level: 1, rank: 0 } : { kills: 0, rank: 0 };
   }
 }
 
-export async function updatePlayerGoals(womId, userId, contextFetcher = null) {
+export async function updatePlayerGoals(womId, userId) {
   try {
     console.log(`Updating goals for player: ${womId}, user: ${userId}`);
 
@@ -93,13 +88,8 @@ export async function updatePlayerGoals(womId, userId, contextFetcher = null) {
       for (const goal of skillGoals) {
         try {
           // Get the current stat for this metric
-          const playerStat = await getPlayerStat(
-            womId,
-            "skill",
-            goal.metric,
-            contextFetcher
-          );
-          
+          const playerStat = await getPlayerStat(womId, "skill", goal.metric);
+
           console.log(`Fetched stat for ${goal.metric}:`, playerStat);
 
           if (playerStat && playerStat.experience !== undefined) {
@@ -111,7 +101,6 @@ export async function updatePlayerGoals(womId, userId, contextFetcher = null) {
             );
 
             // Always update the current value, even if it hasn't changed
-            // This ensures we're working with the latest data
             const { error: updateError } = await supabase
               .from("user_goals")
               .update({
@@ -141,13 +130,8 @@ export async function updatePlayerGoals(womId, userId, contextFetcher = null) {
     if (bossGoals.length > 0) {
       for (const goal of bossGoals) {
         try {
-          const playerStat = await getPlayerStat(
-            womId, 
-            "boss", 
-            goal.metric,
-            contextFetcher
-          );
-          
+          const playerStat = await getPlayerStat(womId, "boss", goal.metric);
+
           console.log(`Fetched stat for ${goal.metric}:`, playerStat);
 
           if (playerStat && playerStat.kills !== undefined) {
@@ -193,11 +177,3 @@ export async function updatePlayerGoals(womId, userId, contextFetcher = null) {
     throw error;
   }
 }
-
-// Usage example:
-// To use with context:
-//   const { fetchers } = useData();
-//   updatePlayerGoals(womId, userId, fetchers.wom.player);
-// 
-// To use without context (direct API call only):
-//   updatePlayerGoals(womId, userId);

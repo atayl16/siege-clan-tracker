@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useMembers } from "../context/DataContext"; // Updated to use new hook
+import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import { FaBirthdayCake } from "react-icons/fa";
 import Card from "./ui/Card";
 import "./AnniversaryBanner.css";

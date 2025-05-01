@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useWomCompetitions } from '../hooks/useWomCompetitions'; // Updated to use new hook
+import { useCompetitions } from '../hooks/useCompetitions'; // Updated to use new hook
 import './EventsTable.css';
 
 export default function EventsTable({ 
@@ -11,7 +11,7 @@ export default function EventsTable({
   includeWomCompetitions = true
 }) {
   // Get competitions data from the new hook
-  const { competitions, loading: womLoading } = useWomCompetitions();
+  const { competitions, loading: womLoading } = useCompetitions();
   
   // Combine local events with WOM competitions
   const combinedEvents = useMemo(() => {
