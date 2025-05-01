@@ -23,4 +23,6 @@ export default async (req) => {
   });
 };
 
-export const config = { cache: "manual" };
+export const config = {
+  path: "/api/group-achievements",
+};

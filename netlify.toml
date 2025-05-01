@@ -27,6 +27,9 @@
   path = "/api/members"
   function = "members-data"
 
+[[edge_functions]]
+  directory = "netlify/edge-functions"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
