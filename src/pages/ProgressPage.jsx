@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext"; 
 import { useRaces } from "../hooks/useRaces"; // Updated hook
-import { usePublicGoals } from "../hooks/usePublicGoals"; // Updated hook
+import { useUserGoals } from "../hooks/useUserGoals"; // Updated hook
 import { FaPlus, FaTrophy, FaBullseye } from "react-icons/fa";
 import CreateRace from "../components/CreateRace";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
@@ -27,7 +27,7 @@ export default function ProgressPage() {
     }
   }, [user, activeTab]);
 
-  // Fetch races and public goals
+  // Fetch races and user goals
   const {
     activeRaces,
     publicRaces,
@@ -36,10 +36,10 @@ export default function ProgressPage() {
   } = useRaces(user?.id);
 
   const {
-    publicGoals,
+    userGoals,
     loading: goalsLoading,
     error: goalsError,
-  } = usePublicGoals();
+  } = useUserGoals();
 
   const handleCreatedRace = () => {
     setShowCreateRace(false);
@@ -47,6 +47,7 @@ export default function ProgressPage() {
   };
 
   const filteredPublicRaces = publicRaces.filter((race) => race.public === true);
+  const publicGoals = userGoals.filter((goal) => goal.public === true);
 
   // Content for different tabs
   const renderTabContent = () => {
