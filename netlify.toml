@@ -28,7 +28,8 @@
   function = "members-data"
 
 [[edge_functions]]
-  directory = "netlify/edge-functions"
+  path = "/api/group-achievements"
+  function = "group-achievements"
 
 [[redirects]]
   from = "/*"
