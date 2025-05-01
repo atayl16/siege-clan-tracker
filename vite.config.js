@@ -96,12 +96,13 @@ export default defineConfig(({ mode }) => {
 
     // Define environment variables similar to CRA
     define: {
-      // Make env variables available as process.env.X
-      // This mimics CRA's environment variable handling
-      ...Object.keys(env).reduce((acc, key) => {
-        acc[`process.env.${key}`] = JSON.stringify(env[key]);
-        return acc;
-      }, {}),
+      // Only expose variables prefixed with VITE_ to the client
+      ...Object.keys(env)
+        .filter((key) => key.startsWith("VITE_")) // Only include VITE_ prefixed variables
+        .reduce((acc, key) => {
+          acc[`process.env.${key}`] = JSON.stringify(env[key]);
+          return acc;
+        }, {}),
     },
 
     // CSS handling
