@@ -33,9 +33,8 @@ export default async (request, _context) => {
     // Get only necessary fields instead of '*'
     const { data, error } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name, current_lvl, current_xp, siege_score, active, runewatch_reported, runewatch_whitelisted')
-      .eq('active', true) // Only get active members
-      .order('name');
+      .select('*') // Fetch all columns from the members table
+      .order('name'); // Order by name
     
     if (error) throw error;
     
