@@ -1,31 +1,21 @@
-export default async (req) => {
-  console.log("Edge function: group-achievements executing");
-
-  const url = new URL(req.url);
-  const limit = url.searchParams.get("limit") || 10;
-  const offset = url.searchParams.get("offset") || 0;
-
+export default async (_request, _context) => {
   // Get environment variables using Deno.env.get
-  const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID");
+  const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID") || '2928'; // Default group ID
   const WOM_API_KEY = Deno.env.get("WOM_API_KEY");
+  
+  // Cache for 10 minutes (600 seconds)
+  const TTL = 600;
 
-  if (!WOM_GROUP_ID || !WOM_API_KEY) {
-    console.error("Missing required environment variables");
-    return new Response(
-      JSON.stringify({ error: "Server configuration error: Missing environment variables." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  console.log(`Fetching achievements for group ID: ${WOM_GROUP_ID} with limit=${limit} and offset=${offset}`);
+  console.log(`Fetching achievements for group ID: ${WOM_GROUP_ID}`);
 
   try {
     const response = await fetch(
-      `https://api.wiseoldman.net/v2/groups/${WOM_GROUP_ID}/achievements?limit=${limit}&offset=${offset}`,
+      `https://api.wiseoldman.net/v2/groups/${WOM_GROUP_ID}/achievements`,
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${WOM_API_KEY}`,
+          "User-Agent": "Siege-Clan-Tracker/1.0",
+          ...(WOM_API_KEY ? { "Authorization": `Bearer ${WOM_API_KEY}` } : {})
         },
       }
     );
@@ -48,8 +38,8 @@ export default async (req) => {
     return new Response(JSON.stringify(data), {
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=300",
-        "CDN-Cache-Control": "public, max-age=300",
+        "Cache-Control": `public, max-age=${TTL}`,
+        "CDN-Cache-Control": `public, max-age=${TTL}`,
         "Netlify-Cache-Tag": `group-achievements-${WOM_GROUP_ID}`,
       },
     });
@@ -60,8 +50,4 @@ export default async (req) => {
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
-};
-
-export const config = {
-  path: "/api/group-achievements",
 };
