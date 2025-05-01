@@ -7,8 +7,8 @@ async function sendAnniversaries() {
   try {
     // Initialize Supabase client
     const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      process.env.REACT_APP_SUPABASE_URL,
+      process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
     );
     
     // Get today's date in the format stored in your database
