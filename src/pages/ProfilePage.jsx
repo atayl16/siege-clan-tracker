@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useUserClaims } from "../hooks/useUserClaims"; // Updated hook
+import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated hook
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
@@ -60,7 +60,7 @@ export default function ProfilePage() {
   const [showCreateRace, setShowCreateRace] = useState(false);
 
   // Use new hooks
-  const { userClaims, refreshUserClaims } = useUserClaims(user?.id);
+  const { userClaims, refreshUserClaims } = useClaimRequests(user?.id);
   const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id);
 
   // Handle creating a race
