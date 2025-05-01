@@ -175,16 +175,25 @@
 }
 
 .ui-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  display: flex;
+  justify-content: space-around; /* This distributes items evenly with space around */
   gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .ui-info-item {
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px; /* Prevent items from getting too wide */
   padding: 1rem;
   background-color: rgba(0, 0, 0, 0.15);
   border-radius: var(--border-radius-sm, 0.25rem);
   border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .ui-info-label {
@@ -213,11 +222,48 @@
   text-decoration: underline;
 }
 
+.ui-clan-info-section {
+  margin-top: 2rem;
+}
+
+.ui-info-label {
+  font-weight: 600;
+  margin-bottom: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center icon and text */
+  gap: 0.5rem;
+  color: var(--color-orange, #ff9800);
+  width: 100%; /* Full width for better centering */
+}
+
+.ui-info-value {
+  color: var(--color-text, #e0e0e0);
+  font-size: 1.125rem;
+  display: flex;
+  justify-content: center; /* Center content */
+  width: 100%; /* Full width */
+}
+
+.ui-resource-link {
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .ui-info-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .ui-info-item {
+    width: 100%;
+    max-width: 100%;
   }
 }
 

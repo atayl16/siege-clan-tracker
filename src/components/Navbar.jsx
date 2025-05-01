@@ -89,10 +89,10 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/about"
-            className={location.pathname === "/about" ? "active" : ""}
+            to="/stats"
+            className={location.pathname === "/stats" ? "active" : ""}
           >
-            About Us
+            Stats
           </Link>
 
           <Link

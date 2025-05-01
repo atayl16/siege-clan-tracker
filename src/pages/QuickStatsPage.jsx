@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import { useMembers } from "../hooks/useMembers";
+import ClanRanks from "../components/ClanRanks";
 import { 
   FaCalendarDay, 
   FaDiscord, 
   FaChartLine, 
   FaChartBar, 
-  FaMedal,
   FaTimes,
   FaShieldAlt,
   FaTrophy,
@@ -13,11 +13,10 @@ import {
 } from "react-icons/fa";
 
 // Import UI components
-import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import StatGroup from "../components/ui/StatGroup";
 
-import "./AboutUsPage.css";
+import "./QuickStatsPage.css";
 
 // Helper function to identify ironman accounts (reused from MemberTable)
 const isIronman = (member) => {
@@ -52,7 +51,7 @@ const isIronman = (member) => {
   return false;
 };
 
-export default function AboutUsPage() {
+export default function QuickStatsPage() {
   const { members, loading: membersLoading, error: membersError, refreshMembers } = useMembers();
 
   // Calculate member statistics
@@ -224,6 +223,15 @@ export default function AboutUsPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Clan Ranks */}
+        <div className="ui-clan-ranks-section">
+          <h3 className="ui-section-title">
+            <FaShieldAlt className="ui-section-icon" /> Clan Ranks
+          </h3>
+          
+          <ClanRanks />
         </div>
       </div>
     </div>

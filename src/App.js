@@ -15,7 +15,7 @@ import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
 import EventsPage from "./pages/EventsPage"; // Import the new EventsPage
 import LeaderboardPage from "./pages/LeaderboardPage"; // Import the new LeaderboardPage
-import AboutUsPage from "./pages/AboutUsPage"; // Import the new AboutUsPage
+import QuickStatsPage from "./pages/QuickStatsPage"; // Import the new AboutUsPage
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
 import AchievementsPage from "./pages/AchievementsPage";
@@ -49,9 +49,9 @@ function App() {
         <Routes>
           <Route path="/" element={<NewMembers />} />
           <Route path="/members" element={<MembersPage />} />
-          <Route path="/events" element={<EventsPage />} /> {/* New Events page route */}
-          <Route path="/leaderboard" element={<LeaderboardPage />} /> {/* New Leaderboard page route */}
-          <Route path="/about" element={<AboutUsPage />} /> {/* New About Us page route */}
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/stats" element={<QuickStatsPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegistrationForm />} />

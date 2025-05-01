@@ -305,56 +305,25 @@ export default function MemberTable({ filteredMembers = null }) {
         cell: ({ row }) => {
           // Get ironman type from member data
           const ironmanType = getIronmanType(row.original);
-
-          return (
-            <div className="ui-cell-content ui-name-cell">
-              <div className="ui-name-content">
-                {ironmanType && <IronmanIcon type={ironmanType} />}
-                <span>
-                  {row.original.name || row.original.wom_name || "N/A"}
-                </span>
-              </div>
-              {expandedRow === row.original.wom_id ? (
-                <FaChevronUp className="ui-expand-icon" />
-              ) : (
-                <FaChevronDown className="ui-expand-icon" />
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "rank",
-        header: "Clan Rank",
-        cell: ({ row }) => {
           const womRole = (row.original.womrole || "").toLowerCase().trim();
-
-          // Normalize the role for comparison
-          const normalizedRole = womRole.replace(/_/g, " ");
-
+  
+          // Get the clan rank icon
           // Check for admin rank - try to match with normalized versions
+          const normalizedRole = womRole.replace(/_/g, " ");
           let adminRank = null;
-          if (
-            normalizedRole.includes("owner") &&
-            !normalizedRole.includes("deputy")
-          ) {
+          
+          if (normalizedRole.includes("owner") && !normalizedRole.includes("deputy")) {
             adminRank = "Owner";
-          } else if (
-            normalizedRole.includes("deputy owner") ||
-            normalizedRole.includes("deputy_owner")
-          ) {
+          } else if (normalizedRole.includes("deputy owner") || normalizedRole.includes("deputy_owner")) {
             adminRank = "Deputy Owner";
           } else if (normalizedRole.includes("general")) {
             adminRank = "General";
           } else if (normalizedRole.includes("captain")) {
             adminRank = "Captain";
-          } else if (
-            normalizedRole.includes("pvm organizer") ||
-            normalizedRole.includes("pvm_organizer")
-          ) {
+          } else if (normalizedRole.includes("pvm organizer") || normalizedRole.includes("pvm_organizer")) {
             adminRank = "PvM Organizer";
           }
-
+  
           // Check for skiller/fighter ranks
           const matchedSkillerRank = SKILLER_RANK_NAMES.find((name) =>
             womRole.includes(name.toLowerCase())
@@ -362,12 +331,36 @@ export default function MemberTable({ filteredMembers = null }) {
           const matchedFighterRank = FIGHTER_RANK_NAMES.find((name) =>
             womRole.includes(name.toLowerCase())
           );
-
+  
           return (
-            <div className="ui-cell-content ui-center-content ui-rank-cell">
-              {adminRank && <AdminIcon title={adminRank} />}
-              {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
-              {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+            <div className="ui-cell-content ui-name-cell">
+              <div className="ui-name-content">
+                {/* Rank icon on the left */}
+                <div className="ui-rank-icon-left">
+                  {adminRank && <AdminIcon title={adminRank} />}
+                  {matchedSkillerRank && <GemIcon gemType={matchedSkillerRank} />}
+                  {matchedFighterRank && <ClanIcon name={matchedFighterRank} />}
+                </div>
+                
+                {/* Username in the middle */}
+                <span className="ui-member-name">
+                  {row.original.name || row.original.wom_name || "N/A"}
+                </span>
+                
+                {/* Ironman icon on the right */}
+                {ironmanType && (
+                  <div className="ui-ironman-icon-right">
+                    <IronmanIcon type={ironmanType} />
+                  </div>
+                )}
+              </div>
+              
+              {/* Expand/collapse arrow */}
+              {expandedRow === row.original.wom_id ? (
+                <FaChevronUp className="ui-expand-icon" />
+              ) : (
+                <FaChevronDown className="ui-expand-icon" />
+              )}
             </div>
           );
         },
@@ -389,6 +382,27 @@ export default function MemberTable({ filteredMembers = null }) {
             {row.original.current_lvl || "-"}
           </div>
         ),
+      },
+      {
+        accessorKey: "join_date",
+        header: "Joined",
+        cell: ({ row }) => {
+          if (!row.original.join_date) return <div className="ui-cell-content ui-center-content">-</div>;
+          
+          const date = new Date(row.original.join_date);
+          // Format date with shortened month (Jan, Feb, Mar, etc.)
+          const formattedDate = date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+          });
+          
+          return (
+            <div className="ui-cell-content ui-center-content">
+              {formattedDate}
+            </div>
+          );
+        },
       },
     ],
     [expandedRow]
