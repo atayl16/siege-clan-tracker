@@ -24,8 +24,8 @@ export default function EventsTable({
     // Normalize the event type/metric
     let normalizedType = metricValue.toLowerCase();
     
-    // Special case for runecrafting -> Runecraft
-    if (normalizedType === 'runecrafting') {
+    // Handle runecrafting/runecraft consistently
+    if (normalizedType.includes('runecraft')) {
       return 'Runecraft'; // Your icon component expects "Runecraft"
     }
     

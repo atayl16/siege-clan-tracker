@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import EventsTable from "../components/EventsTable";
 import { useEvents } from "../hooks/useEvents";
-import { FaSearch, FaCalendarAlt, FaTimes } from "react-icons/fa";
+import { FaSearch, FaTimes } from "react-icons/fa";
 
 // Import UI components
 import Button from "../components/ui/Button";
@@ -15,33 +15,12 @@ export default function EventsPage() {
   
   // State for filters and expanded views
   const [showAllEvents, setShowAllEvents] = useState(false);
-  const [eventsSearchTerm, setEventsSearchTerm] = useState('');
-  const [eventsFilterType, setEventsFilterType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Filter events based on search term and filter type
   const filteredEvents = useMemo(() => {
-    if (!events) return [];
-    return events.filter(event => {
-      const matchesSearch = event.name?.toLowerCase().includes(eventsSearchTerm.toLowerCase());
-      
-      if (eventsFilterType === 'active') {
-        const now = new Date();
-        return matchesSearch && 
-          new Date(event.start_date) <= now && 
-          new Date(event.end_date) >= now;
-      }
-      
-      if (eventsFilterType === 'upcoming') {
-        return matchesSearch && new Date(event.start_date) > new Date();
-      }
-      
-      if (eventsFilterType === 'completed') {
-        return matchesSearch && new Date(event.end_date) < new Date();
-      }
-      
-      return matchesSearch; // 'all' filter
-    });
-  }, [events, eventsSearchTerm, eventsFilterType]);
+    return events || [];
+  }, [events]);
 
   return (
     <div className="ui-page-container">
@@ -76,13 +55,13 @@ export default function EventsPage() {
               type="text"
               className="ui-search-input"
               placeholder="Search events..."
-              value={eventsSearchTerm}
-              onChange={(e) => setEventsSearchTerm(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            {eventsSearchTerm && (
+            {searchTerm && (
               <button
                 className="ui-clear-search"
-                onClick={() => setEventsSearchTerm("")}
+                onClick={() => setSearchTerm("")}
               >
                 <FaTimes />
               </button>
@@ -109,8 +88,7 @@ export default function EventsPage() {
           value={
             !events
               ? 0
-              : events.filter((e) => new Date(e.start_date) > new Date())
-                  .length
+              : events.filter((e) => new Date(e.start_date) > new Date()).length
           }
         />
         <StatGroup.Stat
@@ -118,8 +96,7 @@ export default function EventsPage() {
           value={
             !events
               ? 0
-              : events.filter((e) => new Date(e.end_date) < new Date())
-                  .length
+              : events.filter((e) => new Date(e.end_date) < new Date()).length
           }
         />
       </StatGroup>
@@ -131,6 +108,7 @@ export default function EventsPage() {
           upcomingLimit={showAllEvents ? null : 6}
           completedLimit={showAllEvents ? null : 5}
           loading={eventsLoading}
+          searchTerm={searchTerm}
         />
       </div>
 
