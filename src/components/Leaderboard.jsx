@@ -143,13 +143,13 @@ export default function SiegeLeaderboard({
     <div className={`ui-leaderboard ${className}`}>
       {showTitle && <h2 className="ui-leaderboard-title">{displayTitle}</h2>}
 
-      <div className="ui-table-container">
-        <table className="ui-table">
+      <div className="ui-leaderboard-table-container">
+        <table className="ui-leaderboard-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>{type === "score" ? "Score" : "Event Wins"}</th>
+              <th>{type === "score" ? "Score" : "Wins"}</th>
             </tr>
           </thead>
           <tbody>
