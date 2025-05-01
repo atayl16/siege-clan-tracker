@@ -194,18 +194,20 @@
   color: var(--color-orange, #ff9800);
 }
 
-.ui-leader-info {
+.ui-event-name {
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 
-.ui-leader-name {
-  font-weight: 600;
+.ui-event-skill-icon {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
 }
 
-.ui-leader-gain {
-  font-size: 0.85rem;
-  color: var(--color-success, #4caf50);
+.ui-event-skill-icon img {
+  width: 20px;
+  height: 20px;
 }
 
 /* Mobile optimizations */

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { useCompetitions } from '../hooks/useCompetitions'; // Updated to use new hook
+import { useCompetitions } from '../hooks/useCompetitions';
+import { SkillIcon } from './OsrsIcons';
 import './EventsTable.css';
 
 export default function EventsTable({ 
@@ -12,6 +13,21 @@ export default function EventsTable({
 }) {
   // Get competitions data from the new hook
   const { competitions, loading: womLoading } = useCompetitions();
+
+  const formatSkillName = (eventType) => {
+    if (!eventType) return null;
+
+    // Normalize the event type
+    let normalizedType = eventType.toLowerCase();
+
+    // Remove any suffixes (like "_xp" or "_experience")
+    if (normalizedType.includes("_")) {
+      normalizedType = normalizedType.split("_")[0];
+    }
+
+    // Capitalize first letter for the SkillIcon component
+    return normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
+  };
   
   // Combine local events with WOM competitions
   const combinedEvents = useMemo(() => {
@@ -160,19 +176,6 @@ export default function EventsTable({
       return 'less than a minute';
     }
   };
-  
-  // Format gain values appropriately
-  const formatGain = (value, metric) => {
-    if (value === undefined || value === null) return '';
-    
-    // Handle experience or large numbers by formatting with commas
-    if (metric?.includes('exp') || value > 10000) {
-      return value.toLocaleString();
-    }
-    
-    // Handle small values (like boss kills) as integers
-    return Math.floor(value).toString();
-  };
 
   // Show loading state when fetching WOM data
   if (womLoading) {
@@ -215,13 +218,23 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {activeEvents.map((event) => (
-                  <tr key={event.id} className={`ui-event-row ui-event-active ${event.is_wom ? 'ui-event-wom' : ''}`}>
+                  <tr
+                    key={event.id}
+                    className={`ui-event-row ui-event-active ${
+                      event.is_wom ? "ui-event-wom" : ""
+                    }`}
+                  >
                     <td>
                       <strong className="ui-event-name">
+                        {event.type && (
+                          <span className="ui-event-skill-icon">
+                            <SkillIcon skill={formatSkillName(event.type)} />
+                          </span>
+                        )}
                         {event.is_wom || event.wom_id ? (
-                          <a 
-                            href={getWomCompetitionUrl(event.wom_id)} 
-                            target="_blank" 
+                          <a
+                            href={getWomCompetitionUrl(event.wom_id)}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="ui-event-wom-link"
                           >
@@ -233,7 +246,8 @@ export default function EventsTable({
                       </strong>
                     </td>
                     <td className="ui-event-date">
-                      {formatDate(event.end_date)} at {formatTime(event.end_date)}
+                      {formatDate(event.end_date)} at{" "}
+                      {formatTime(event.end_date)}
                     </td>
                     <td>
                       <span className="ui-badge ui-badge-warning">
@@ -264,13 +278,23 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {upcomingEvents.map((event) => (
-                  <tr key={event.id} className={`ui-event-row ui-event-upcoming ${event.is_wom ? 'ui-event-wom' : ''}`}>
+                  <tr
+                    key={event.id}
+                    className={`ui-event-row ui-event-upcoming ${
+                      event.is_wom ? "ui-event-wom" : ""
+                    }`}
+                  >
                     <td>
                       <strong className="ui-event-name">
+                        {event.type && (
+                          <span className="ui-event-skill-icon">
+                            <SkillIcon skill={formatSkillName(event.type)} />
+                          </span>
+                        )}
                         {event.is_wom || event.wom_id ? (
-                          <a 
-                            href={getWomCompetitionUrl(event.wom_id)} 
-                            target="_blank" 
+                          <a
+                            href={getWomCompetitionUrl(event.wom_id)}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="ui-event-wom-link"
                           >
@@ -282,7 +306,8 @@ export default function EventsTable({
                       </strong>
                     </td>
                     <td className="ui-event-date">
-                      {formatDate(event.start_date)} at {formatTime(event.start_date)}
+                      {formatDate(event.start_date)} at{" "}
+                      {formatTime(event.start_date)}
                     </td>
                     <td>
                       <span className="ui-badge ui-badge-info">
@@ -313,13 +338,23 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {recentCompletedEvents.map((event) => (
-                  <tr key={event.id} className={`ui-event-row ui-event-completed ${event.is_wom ? 'ui-event-wom' : ''}`}>
+                  <tr
+                    key={event.id}
+                    className={`ui-event-row ui-event-completed ${
+                      event.is_wom ? "ui-event-wom" : ""
+                    }`}
+                  >
                     <td>
                       <strong className="ui-event-name">
+                        {event.type && (
+                          <span className="ui-event-skill-icon">
+                            <SkillIcon skill={formatSkillName(event.type)} />
+                          </span>
+                        )}
                         {event.is_wom || event.wom_id ? (
-                          <a 
-                            href={getWomCompetitionUrl(event.wom_id)} 
-                            target="_blank" 
+                          <a
+                            href={getWomCompetitionUrl(event.wom_id)}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="ui-event-wom-link"
                           >
@@ -330,14 +365,18 @@ export default function EventsTable({
                         )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
+                    <td className="ui-event-date">
+                      {formatDate(event.end_date)}
+                    </td>
                     <td>
                       {event.winner_username ? (
                         <span className="ui-winner-badge">
                           🏆 {event.winner_username}
                         </span>
                       ) : (
-                        <span className="ui-text-muted">No winner recorded</span>
+                        <span className="ui-text-muted">
+                          No winner recorded
+                        </span>
                       )}
                     </td>
                   </tr>
