@@ -5,24 +5,11 @@ export default async (request, _context) => {
   // Get environment variables with Deno.env.get()
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const API_ACCESS_KEY = Deno.env.get("API_ACCESS_KEY");
   
   console.log("Fetching members data from Supabase...");
 
   // Cache for 5 minutes (300 seconds)
   const TTL = 300;
-  
-  // Check for API key in headers for protection (optional)
-  const apiKey = request.headers.get('x-api-key');
-  if (API_ACCESS_KEY && apiKey !== API_ACCESS_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      { 
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-  }
   
   // Handle conditional requests
   const ifNoneMatch = request.headers.get('If-None-Match');
