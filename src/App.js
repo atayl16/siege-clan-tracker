@@ -16,7 +16,6 @@ import MembersPage from "./pages/MembersPage";
 import EventsPage from "./pages/EventsPage"; // Import the new EventsPage
 import LeaderboardPage from "./pages/LeaderboardPage"; // Import the new LeaderboardPage
 import AboutUsPage from "./pages/AboutUsPage"; // Import the new AboutUsPage
-import WelcomePage from "./pages/WelcomePage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
 import AchievementsPage from "./pages/AchievementsPage";
@@ -48,7 +47,7 @@ function App() {
         {showNavbar && <Navbar />}
         {<AnniversaryBanner />}
         <Routes>
-          <Route path="/" element={<WelcomePage />} />
+          <Route path="/" element={<NewMembers />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/events" element={<EventsPage />} /> {/* New Events page route */}
           <Route path="/leaderboard" element={<LeaderboardPage />} /> {/* New Leaderboard page route */}

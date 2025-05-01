@@ -33,7 +33,7 @@ export default function Navbar() {
   return (
     <nav className="navbar" style={{ backgroundColor: "black" }}>
       <div className="navbar-container">
-        <Link className="navbar-brand" to="/members">
+        <Link className="navbar-brand" to="/">
           <img
             src={getSeasonalIcon()}
             alt="Siege Logo"
@@ -60,6 +60,13 @@ export default function Navbar() {
           className={`navbar-links ${isOpen ? "active" : ""}`}
         >
           {/* Main Navigation Links */}
+          <Link
+            to="/"
+            className={location.pathname === "/" ? "active" : ""}
+          >
+            Home
+          </Link>
+
           <Link
             to="/members"
             className={location.pathname === "/members" ? "active" : ""}
@@ -94,51 +101,6 @@ export default function Navbar() {
           >
             Achievements
           </Link>
-
-          {/* Authentication links */}
-          {isLoggedIn() ? (
-            <>
-              <Link
-                to="/profile"
-                className={`profile-link ${
-                  location.pathname === "/profile" ? "active" : ""
-                }`}
-              >
-                My Profile
-              </Link>
-
-              {isAdmin() && (
-                <Link
-                  to="/admin"
-                  className={`admin-link ${
-                    location.pathname === "/admin" ? "active" : ""
-                  }`}
-                >
-                  Admin
-                </Link>
-              )}
-
-              <button onClick={logout} className="logout-button">
-                Logout
-              </button>
-            </>
-          ) : (
-            <div className="navbar-auth-links">
-              <Link
-                to="/login"
-                className={location.pathname === "/login" ? "active" : ""}
-              >
-                Login
-              </Link>
-
-              <Link
-                to="/register"
-                className={location.pathname === "/register" ? "active" : ""}
-              >
-                Register
-              </Link>
-            </div>
-          )}
         </div>
       </div>
     </nav>
