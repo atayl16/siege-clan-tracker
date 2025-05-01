@@ -24,11 +24,6 @@ export default function AchievementsPage() {
           </li>
         ))}
       </ul>
-      {!showAll && (
-        <button className="show-more-button" onClick={() => setShowAll(true)}>
-          Show More
-        </button>
-      )}
     </div>
   );
 }
