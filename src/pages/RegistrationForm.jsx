@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import Card from "./ui/Card";
-import Button from "./ui/Button";
-import FormInput from "./ui/FormInput";
+import { useAuth } from "../context/AuthContext"; // Corrected path
+import Card from "../components/ui/Card"; // Corrected path
+import Button from "../components/ui/Button"; // Corrected path
+import FormInput from "../components/ui/FormInput"; // Corrected path
 import { FaUserPlus, FaExclamationTriangle } from "react-icons/fa";
 import "./RegistrationForm.css";
 
