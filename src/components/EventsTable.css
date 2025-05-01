@@ -182,3 +182,42 @@
     font-size: 0.8125rem; /* 13px */
   }
 }
+
+.ui-event-wom-link {
+  color: var(--color-text, #e0e0e0);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-orange, #ff9800);
+  transition: color 0.2s;
+}
+
+.ui-event-wom-link:hover {
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-leader-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-leader-name {
+  font-weight: 600;
+}
+
+.ui-leader-gain {
+  font-size: 0.85rem;
+  color: var(--color-success, #4caf50);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .ui-table th:nth-child(3), 
+  .ui-table td:nth-child(3) {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-event-date {
+    display: none;
+  }
+}
