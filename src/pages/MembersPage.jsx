@@ -92,7 +92,7 @@ export default function MembersPage() {
       </div>
 
       <div className="ui-member-table-container">
-        <MemberTable />
+        <MemberTable filteredMembers={filteredMembers} />
       </div>
     </div>
   );
