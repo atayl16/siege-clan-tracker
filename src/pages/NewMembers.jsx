@@ -120,10 +120,10 @@ export default function NewMembers() {
         
           <div className="ui-rules-note">
             <p>
-              Siege Staff Team have the right to kick any member from this clan if you break any of the above rulings.
+              Siege Staff Team has the right to kick any member from this clan if you break any of the above rulings.
             </p>
             <p>
-              We would like to think we a very laid back clan so please don't take advantage of that and ruin it for everyone else!
+              We would like to think we are a very laid back clan so please don't take advantage of that and ruin it for everyone else!
             </p>
           </div>
         </div>
