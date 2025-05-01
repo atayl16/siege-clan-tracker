@@ -51,3 +51,7 @@ export default async (_request, _context) => {
     );
   }
 };
+
+export const config = {
+  path: "/api/wom-group-achievements",
+};
