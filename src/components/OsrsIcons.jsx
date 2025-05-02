@@ -117,6 +117,7 @@ export const SkillIcon = ({ skill }) => {
     Hunter: HunterIcon,
     Magic: MagicIcon,
     Mining: MiningIcon,
+    Overall: OsrsIcon,
     Prayer: PrayerIcon,
     Ranged: RangedIcon,
     Runecraft: RunecraftIcon,
