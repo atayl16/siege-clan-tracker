@@ -18,9 +18,18 @@ export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Filter events based on search term and filter type
-  const filteredEvents = useMemo(() => {
-    return events || [];
-  }, [events]);
+const filteredEvents = useMemo(() => {
+  if (!events) return [];
+  if (!searchTerm.trim()) return events;
+
+  const term = searchTerm.toLowerCase().trim();
+  return events.filter(
+    (event) =>
+      (event.name && event.name.toLowerCase().includes(term)) ||
+      (event.type && event.type.toLowerCase().includes(term)) ||
+      (event.metric && event.metric.toLowerCase().includes(term))
+  );
+}, [events, searchTerm]);
 
   return (
     <div className="ui-page-container">
@@ -108,7 +117,6 @@ export default function EventsPage() {
           upcomingLimit={showAllEvents ? null : 6}
           completedLimit={showAllEvents ? null : 5}
           loading={eventsLoading}
-          searchTerm={searchTerm}
         />
       </div>
 
