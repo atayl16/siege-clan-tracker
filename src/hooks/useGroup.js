@@ -9,8 +9,12 @@ export function useGroup() {
     revalidateOnMount: true,
     revalidateOnFocus: false,
   });
+
+  const memberCount = data?.memberships?.length || 0;
+
   return {
     group: data,
+    memberCount,
     loading: !data && !error,
     error,
     refresh: mutate,

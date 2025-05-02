@@ -7,7 +7,7 @@
   color: var(--color-text, #e0e0e0);
 }
 
-/* CONTENT HEADER - matches other pages */
+/* CONTENT HEADER */
 .ui-content-header {
   display: flex;
   justify-content: space-between;
@@ -33,7 +33,15 @@
   font-size: 1.25rem;
 }
 
-/* SECTION CONTAINER - matches other pages */
+.ui-actions-container {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  justify-content: flex-end;
+  max-width: 400px;
+}
+
+/* SECTION CONTAINER */
 .ui-section-container {
   background-color: #222;
   border-radius: var(--border-radius-md, 0.5rem);
@@ -42,83 +50,74 @@
   overflow: hidden;
 }
 
-/* ACHIEVEMENTS LIST */
-.ui-achievements-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* TABLE CONTAINER AND STYLES */
+.ui-table-container {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.ui-achievement-item {
-  background-color: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: var(--border-radius-sm, 0.25rem);
-  padding: 1rem;
-  margin-bottom: 1rem;
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ui-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ui-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ui-achievement-row {
   transition: background-color 0.2s;
 }
 
-.ui-achievement-item:hover {
-  background-color: rgba(0, 0, 0, 0.25);
-}
-
-.ui-achievement-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
+.ui-achievement-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ui-player-name {
   font-weight: 600;
-  font-size: 1.125rem;
   color: var(--accent-color, #2196f3);
+}
+
+.ui-achievement-name {
+  color: var(--color-text, #e0e0e0);
 }
 
 .ui-achievement-date {
   font-size: 0.875rem;
   color: #aaa;
+  white-space: nowrap;
 }
 
-.ui-achievement-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.ui-achievement-name {
-  font-size: 1rem;
-  color: var(--color-text, #e0e0e0);
-}
-
-.ui-achievement-details {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.ui-achievement-metric,
-.ui-achievement-measure {
-  font-size: 0.875rem;
+/* EMPTY STATES */
+.ui-empty-message {
+  padding: 2rem;
+  text-align: center;
   color: #aaa;
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius-xs, 0.125rem);
 }
 
-/* BUTTON CENTER - matches other pages */
+/* BUTTON CENTER */
 .ui-button-center {
   display: flex;
   justify-content: center;
   margin-top: 1.5625rem;
 }
 
-/* LOADING & ERROR STATES - matches other pages */
+/* LOADING & ERROR STATES */
 .ui-loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 0;
+  padding: a2.5rem 0;
   background-color: rgba(0,0,0,0.05);
   border-radius: var(--border-radius-md, 0.5rem);
   margin-bottom: 1.25rem;
@@ -177,14 +176,16 @@
     padding: 1rem;
   }
   
-  .ui-achievement-header {
+  .ui-content-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.25rem;
+    gap: 0.75rem;
   }
   
-  .ui-achievement-date {
-    font-size: 0.75rem;
+  .ui-actions-container {
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -198,7 +199,30 @@
     padding: 1rem;
   }
   
-  .ui-achievement-item {
-    padding: 0.75rem;
+  .ui-table th:nth-child(3),
+  .ui-table td:nth-child(3) {
+    display: none;
+  }
+}
+
+.ui-achievement-icon img {
+  width: 50px; /* Increase width */
+  height: 50px; /* Increase height */
+  margin-right: 12px; /* Adjust spacing between icon and text */
+  vertical-align: middle; /* Align icon with text */
+  display: inline-block;
+}
+
+/* Align text with larger icons */
+.ui-achievement-name {
+  display: flex;
+  align-items: center;
+}
+
+/* Hide date column on mobile */
+@media (max-width: 576px) {
+  .ui-table th:nth-child(3), /* Date header */
+  .ui-table td:nth-child(3) { /* Date data */
+    display: none;
   }
 }

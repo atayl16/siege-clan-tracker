@@ -13,9 +13,10 @@ import RegistrationForm from "./pages/RegistrationForm";
 import Login from "./components/Login";
 import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
-import EventsPage from "./pages/EventsPage"; // Import the new EventsPage
-import LeaderboardPage from "./pages/LeaderboardPage"; // Import the new LeaderboardPage
-import QuickStatsPage from "./pages/QuickStatsPage"; // Import the new AboutUsPage
+import EventsPage from "./pages/EventsPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import QuickStatsPage from "./pages/QuickStatsPage";
+import BossStatsPage from "./pages/BossStatsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
 import AchievementsPage from "./pages/AchievementsPage";
@@ -59,6 +60,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
           <Route path="/new-members" element={<NewMembers />} />
+          <Route path="/bosses" element={<BossStatsPage />} />
 
           {/* Admin Routes - All protected */}
           <Route

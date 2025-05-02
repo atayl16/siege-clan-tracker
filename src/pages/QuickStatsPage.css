@@ -299,3 +299,186 @@
     font-size: 1.125rem;
   }
 }
+
+/* Grid layout for clan info */
+.ui-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.ui-info-item {
+  background-color: var(--card-bg, #222);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ui-info-label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ui-info-value {
+  color: var(--text-color, #e0e0e0);
+  font-size: 0.9rem;
+}
+
+.ui-resource-link {
+  color: var(--primary-color, #2196f3);
+  text-decoration: none;
+}
+
+.ui-resource-link:hover {
+  text-decoration: underline;
+}
+
+/* Links container */
+.ui-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Styled links */
+.ui-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.ui-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  transform: translateX(0.125rem);
+}
+
+/* Custom icon for Wise Old Man */
+.ui-custom-icon {
+  height: 30px;
+  vertical-align: middle;
+}
+
+/* BASE LAYOUT */
+.quick-stats-page-container {
+  width: 85%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* CONTENT HEADER */
+.quick-stats-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5625rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.quick-stats-content-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-orange, #ff9800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* SECTION LAYOUT */
+.quick-stats-section-container {
+  margin-bottom: 2.5rem;
+  background-color: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 1.25rem;
+}
+
+.quick-stats-section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+}
+
+.quick-stats-section-icon {
+  margin-right: 0.625rem;
+  font-size: 1.125rem;
+}
+
+/* STATS GROUP */
+.quick-stats-stats-group {
+  margin-bottom: 1.5rem;
+}
+
+/* CLAN INFO LAYOUT */
+.quick-stats-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.quick-stats-info-item {
+  background-color: var(--card-bg, #222);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.quick-stats-info-label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-stats-info-value {
+  color: var(--text-color, #e0e0e0);
+  font-size: 0.9rem;
+}
+
+.quick-stats-resource-link {
+  color: var(--primary-color, #2196f3);
+  text-decoration: none;
+}
+
+.quick-stats-resource-link:hover {
+  text-decoration: underline;
+}
+
+/* Links container */
+.quick-stats-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Styled links */
+.quick-stats-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.quick-stats-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  transform: translateX(0.125rem);
+}
+
+/* Custom icon for Wise Old Man */
+.quick-stats-custom-icon {
+  height: 30px;
+  vertical-align: middle;
+}
