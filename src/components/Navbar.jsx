@@ -60,10 +60,7 @@ export default function Navbar() {
           className={`navbar-links ${isOpen ? "active" : ""}`}
         >
           {/* Main Navigation Links */}
-          <Link
-            to="/"
-            className={location.pathname === "/" ? "active" : ""}
-          >
+          <Link to="/" className={location.pathname === "/" ? "active" : ""}>
             Home
           </Link>
 
@@ -86,6 +83,13 @@ export default function Navbar() {
             className={location.pathname === "/leaderboard" ? "active" : ""}
           >
             Leaderboard
+          </Link>
+
+          <Link
+            to="/bosses"
+            className={location.pathname === "/leaderboard" ? "active" : ""}
+          >
+            Hall of Fame
           </Link>
 
           <Link
