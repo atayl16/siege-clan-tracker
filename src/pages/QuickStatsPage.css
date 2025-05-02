@@ -107,3 +107,71 @@
   height: 30px;
   vertical-align: middle;
 }
+
+.quick-stats-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem; /* Increased gap for better spacing */
+  margin-top: 1.5rem; /* Added margin to separate it from the title */
+}
+
+/* Clan Information Card */
+.quick-stats-info-item {
+  background-color: var(--card-bg, #2a2a2a); /* Slightly lighter background for better contrast */
+  padding: 1.25rem; /* Increased padding for consistency */
+  border-radius: var(--border-radius-md, 0.5rem);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  transition: transform 0.2s, box-shadow 0.2s; /* Smooth hover effect */
+}
+
+.quick-stats-info-item:hover {
+  transform: translateY(-4px); /* Lift effect on hover */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
+
+/* Label Styling */
+.quick-stats-info-label {
+  font-weight: 600; /* Slightly bolder for emphasis */
+  font-size: 1rem;
+  color: var(--color-text, #e0e0e0);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem; /* Consistent spacing below the label */
+}
+
+/* Value Styling */
+.quick-stats-info-value {
+  font-size: 0.95rem;
+  color: var(--text-color-light, #b0b0b0); /* Lighter text for values */
+  line-height: 1.4;
+}
+
+/* Links Container */
+.quick-stats-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Increased gap for better spacing */
+}
+
+/* Styled Links */
+.quick-stats-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.quick-stats-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  transform: translateX(0.125rem);
+}
+
+/* Custom Icon Styling */
+.quick-stats-custom-icon {
+  height: 30px;
+  vertical-align: middle;
+}

@@ -104,7 +104,7 @@ export default function QuickStatsPage() {
         <h3 className="quick-stats-section-title">
           <FaLink className="quick-stats-section-icon" /> Clan Information
         </h3>
-
+      
         <div className="quick-stats-info-grid">
           <div className="quick-stats-info-item">
             <div className="quick-stats-info-label">
@@ -112,7 +112,7 @@ export default function QuickStatsPage() {
             </div>
             <div className="quick-stats-info-value">April 23, 2022</div>
           </div>
-
+      
           <div className="quick-stats-info-item">
             <div className="quick-stats-info-label">
               <FaComments /> Community
@@ -141,7 +141,7 @@ export default function QuickStatsPage() {
               </a>
             </div>
           </div>
-
+      
           <div className="quick-stats-info-item">
             <div className="quick-stats-info-label">
               <FaGlobe /> Home World
