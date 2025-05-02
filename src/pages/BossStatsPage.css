@@ -65,3 +65,12 @@
   border-radius: 8px;
   margin-top: 1rem;
 }
+
+.ui-boss-icon img,
+.ui-activity-icon img {
+  width: 20px; /* Set a consistent width */
+  height: 20px; /* Set a consistent height */
+  margin-right: 8px; /* Add spacing between the icon and text */
+  vertical-align: middle; /* Align the icon with the text */
+  display: inline-block;
+}
