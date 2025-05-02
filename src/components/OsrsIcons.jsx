@@ -39,7 +39,8 @@ import MasterClueIcon from "../assets/images/clues/Clue_scroll_(master)_detail.p
 
 // New activity imports
 import LeaguesIcon from "../assets/images/other/Leagues.png";
-import BountyHunterIcon from "../assets/images/other/Bounty.png";
+import BountyHunterRedIcon from "../assets/images/other/Bounty-red.png";
+import BountyHunterBlueIcon from "../assets/images/other/Bounty-blue.png";
 import LastManStandingIcon from "../assets/images/other/Last_Man_Standing_logo.png";
 import SoulWarsIcon from "../assets/images/other/Soul_Wars_logo.png";
 import GuardiansOfTheRiftIcon from "../assets/images/other/Rewards_Guardian.png";
@@ -178,8 +179,8 @@ export const ActivityIcon = ({ type }) => {
 
     // Other Activities
     league_points: LeaguesIcon,
-    bounty_hunter_hunter: BountyHunterIcon,
-    bounty_hunter_rogue: BountyHunterIcon,
+    bounty_hunter_hunter: BountyHunterBlueIcon,
+    bounty_hunter_rogue: BountyHunterRedIcon,
     last_man_standing: LastManStandingIcon,
     pvp_arena: PvPArenaIcon,
     soul_wars_zeal: SoulWarsIcon,
