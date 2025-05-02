@@ -7,6 +7,7 @@ import {
   FaChartLine, 
   FaChartBar, 
   FaShieldAlt,
+  FaGlobe,
   FaTrophy,
   FaLink,
 } from "react-icons/fa";
@@ -73,21 +74,23 @@ export default function QuickStatsPage() {
           />
           <StatGroup.Stat
             label="Average XP"
-            value={(
-              (clanStats.averageStats?.skills?.overall?.experience || 0) /
-              1_000_000
-            ).toFixed(1) + "M"}
+            value={
+              (
+                (clanStats.averageStats?.skills?.overall?.experience || 0) /
+                1_000_000
+              ).toFixed(1) + "M"
+            }
             icon={<FaChartLine />}
           />
         </StatGroup>
       </div>
 
-      {/* Clan Information section - Now using a different layout */}
+      {/* Clan Information section */}
       <div className="ui-clan-info-section">
         <h3 className="ui-section-title">
           <FaLink className="ui-section-icon" /> Clan Information
         </h3>
-        
+
         <div className="ui-info-grid">
           <div className="ui-info-item">
             <div className="ui-info-label">
@@ -95,10 +98,10 @@ export default function QuickStatsPage() {
             </div>
             <div className="ui-info-value">April 23, 2022</div>
           </div>
-          
+
           <div className="ui-info-item">
             <div className="ui-info-label">
-              <FaDiscord /> Community
+              <FaDiscord /> Community & Stats
             </div>
             <div className="ui-info-value">
               <a
@@ -109,14 +112,7 @@ export default function QuickStatsPage() {
               >
                 Discord Server
               </a>
-            </div>
-          </div>
-          
-          <div className="ui-info-item">
-            <div className="ui-info-label">
-              <FaChartLine /> Stats
-            </div>
-            <div className="ui-info-value">
+              <br />
               <a
                 href="https://wiseoldman.net/groups/2928"
                 target="_blank"
@@ -127,6 +123,13 @@ export default function QuickStatsPage() {
               </a>
             </div>
           </div>
+
+          <div className="ui-info-item">
+            <div className="ui-info-label">
+              <FaGlobe /> Home World
+            </div>
+            <div className="ui-info-value">517</div>
+          </div>
         </div>
       </div>
 
@@ -135,7 +138,7 @@ export default function QuickStatsPage() {
         <h3 className="ui-section-title">
           <FaShieldAlt className="ui-section-icon" /> Clan Ranks
         </h3>
-        
+
         <ClanRanks />
       </div>
     </div>
