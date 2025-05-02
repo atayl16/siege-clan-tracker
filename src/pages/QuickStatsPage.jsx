@@ -117,14 +117,14 @@ export default function QuickStatsPage() {
             <div className="quick-stats-info-label">
               <FaComments /> Community
             </div>
-            <div className="quick-stats-info-value quick-stats-info-links quick-stats-custom-icon">
+            <div className="quick-stats-info-value quick-stats-info-links">
               <a
                 href="https://discord.gg/aXYHD6UdQJ"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="quick-stats-resource-link"
               >
-                <FaDiscord /> Discord Server
+                <FaDiscord className="quick-stats-custom-icon" /> Discord Server
               </a>
               <a
                 href="https://wiseoldman.net/groups/2928"
