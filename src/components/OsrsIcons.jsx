@@ -43,7 +43,7 @@ import AlchemicalHydraIcon from "../assets/images/bosses/Alchemical_Hydra.png";
 import AmoxliatlIcon from "../assets/images/bosses/Amoxliatl.png";
 import AraxxorIcon from "../assets/images/bosses/Araxxor.png";
 import ArtioIcon from "../assets/images/bosses/Artio.png";
-import BarrowsChestsIcon from "../assets/images/bosses/Barrows_Chests.jpg";
+import BarrowsChestsIcon from "../assets/images/bosses/Barrows.png";
 import BryophytaIcon from "../assets/images/bosses/Bryophyta.png";
 import CallistoIcon from "../assets/images/bosses/Callisto.png";
 import CalvarionIcon from "../assets/images/bosses/Calvarion.png";
