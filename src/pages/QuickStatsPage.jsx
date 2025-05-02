@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import ClanRanks from "../components/ClanRanks";
 import { useClanStats } from "../hooks/useGroupStats";
 import { 
