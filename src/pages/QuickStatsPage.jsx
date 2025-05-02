@@ -1,6 +1,7 @@
 import React from "react";
 import ClanRanks from "../components/ClanRanks";
 import { useClanStats } from "../hooks/useGroupStats";
+import { useGroup } from "../hooks/useGroup";
 import { 
   FaCalendarDay, 
   FaDiscord, 
@@ -17,9 +18,14 @@ import StatGroup from "../components/ui/StatGroup";
 import "./QuickStatsPage.css";
 
 export default function QuickStatsPage() {
-  const { data: clanStats, isLoading, error } = useClanStats();
+  const {
+    data: clanStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useClanStats();
+  const { memberCount, loading: groupLoading, error: groupError } = useGroup();
 
-  if (isLoading) {
+  if (statsLoading || groupLoading) {
     return (
       <div className="ui-loading-container">
         <div className="ui-loading-spinner"></div>
@@ -28,11 +34,15 @@ export default function QuickStatsPage() {
     );
   }
 
-  if (error) {
+  if (statsError || groupError) {
     return (
       <div className="ui-error-container">
         <h3>Error Loading Clan Stats</h3>
-        <p>{error.message || "Failed to load stats data"}</p>
+        <p>
+          {statsError?.message ||
+            groupError?.message ||
+            "Failed to load stats data"}
+        </p>
       </div>
     );
   }
@@ -68,18 +78,18 @@ export default function QuickStatsPage() {
 
         <StatGroup className="ui-stats-group">
           <StatGroup.Stat
+            label="Total Members"
+            value={memberCount}
+            icon={<FaUsers />}
+          />
+          <StatGroup.Stat
             label="Average Level"
-            value={clanStats.averageStats?.skills?.overall?.level || 0}
+            value={clanStats.averageLevel}
             icon={<FaChartBar />}
           />
           <StatGroup.Stat
             label="Average XP"
-            value={
-              (
-                (clanStats.averageStats?.skills?.overall?.experience || 0) /
-                1_000_000
-              ).toFixed(1) + "M"
-            }
+            value={(clanStats.averageExperience / 1_000_000).toFixed(1) + "M"}
             icon={<FaChartLine />}
           />
         </StatGroup>

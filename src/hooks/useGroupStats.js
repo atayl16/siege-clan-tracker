@@ -75,11 +75,16 @@ export function useClanStats() {
     // Directly use the stats provided by the API
     const { maxedCombatCount, maxedTotalCount, maxed200msCount, averageStats } = data;
 
+    // Extract average level and experience from nested structure
+    const averageLevel = averageStats?.data?.skills?.overall?.level || 0;
+    const averageExperience = averageStats?.data?.skills?.overall?.experience || 0;
+
     return {
       maxedCombatCount,
       maxedTotalCount,
       maxed200msCount,
-      averageStats,
+      averageLevel,
+      averageExperience,
     };
   }, [data]);
 

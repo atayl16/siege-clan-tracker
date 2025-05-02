@@ -299,3 +299,39 @@
     font-size: 1.125rem;
   }
 }
+
+/* Grid layout for clan info */
+.ui-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.ui-info-item {
+  background-color: var(--card-bg, #222);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ui-info-label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ui-info-value {
+  color: var(--text-color, #e0e0e0);
+  font-size: 0.9rem;
+}
+
+.ui-resource-link {
+  color: var(--primary-color, #2196f3);
+  text-decoration: none;
+}
+
+.ui-resource-link:hover {
+  text-decoration: underline;
+}
