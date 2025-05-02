@@ -65,7 +65,7 @@ import HesporiIcon from "../assets/images/bosses/Hespori.png";
 import KalphiteQueenIcon from "../assets/images/bosses/Kalphite_Queen.png";
 import KingBlackDragonIcon from "../assets/images/bosses/King_Black_Dragon.png";
 import KrakenIcon from "../assets/images/bosses/Cave_kraken.png";
-import KreeArraIcon from "../assets/images/bosses/Kree'Arra.png";
+import KreeArraIcon from "../assets/images/bosses/Kree'arra.png";
 import KrilTsutsarothIcon from "../assets/images/bosses/K'ril_Tsutsaroth.png";
 import LunarChestsIcon from "../assets/images/bosses/Blue_Moon.png";
 import MimicIcon from "../assets/images/bosses/The_Mimic.png";
