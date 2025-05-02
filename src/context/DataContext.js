@@ -3,6 +3,7 @@ import { useGroup } from "../hooks/useGroup";
 import { usePlayer } from "../hooks/usePlayer";
 import { useCompetitions } from "../hooks/useCompetitions";
 import { useGroupAchievements } from "../hooks/useGroupAchievements";
+import { useGroupStats } from "../hooks/useGroupStats";
 import { useMembers } from "../hooks/useMembers";
 import { useClaimRequests, useEvents, useRaces, useUsers } from "./DataContext-OLD";
 import { useUserGoals } from "../hooks/useUserGoals";
@@ -15,6 +16,7 @@ export function DataProvider({ children }) {
         ...useGroup(),
         ...useCompetitions(),
         ...useGroupAchievements(),
+        ...useGroupStats(),
         ...useMembers(),
         ...useClaimRequests(),
         ...useEvents(),

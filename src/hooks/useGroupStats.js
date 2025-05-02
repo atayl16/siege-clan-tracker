@@ -1,0 +1,59 @@
+import useSWR from "swr";
+
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
+export function useGroupStats(limit = null) {
+  const { data, error, mutate } = useSWR(
+    "/api/wom-group-stats",
+    fetcher,
+    {
+      refreshInterval: 60000,
+      dedupingInterval: 30000,
+      revalidateOnMount: true,
+      revalidateOnFocus: false,
+    }
+  );
+
+  return {
+    data: limit && data ? data.slice(0, limit) : data,
+    isLoading: !data && !error,
+    error,
+    refresh: mutate,
+  };
+}
+
+export function useGroupBossStats() {
+  const { data, error, mutate } = useGroupStats();
+
+  // Process only the bosses and activities data
+  const processedData = data
+    ? {
+        bosses: Object.entries(data.metricLeaders?.bosses || {})
+          .map(([name, stats]) => ({
+            metric: name,
+            displayName: formatDisplayName(name),
+            kills: stats.kills,
+            rank: stats.rank,
+            player: stats.player,
+          }))
+          .filter((boss) => boss.player), // Filter out null players
+
+        activities: Object.entries(data.metricLeaders?.activities || {})
+          .map(([name, stats]) => ({
+            metric: name,
+            displayName: formatDisplayName(name),
+            score: stats.score,
+            rank: stats.rank,
+            player: stats.player,
+          }))
+          .filter((activity) => activity.player), // Filter out null players
+      }
+    : null;
+
+  return {
+    data: processedData,
+    isLoading: !data && !error,
+    error,
+    refresh: mutate,
+  };
+}
