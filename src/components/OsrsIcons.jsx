@@ -37,6 +37,15 @@ import HardClueIcon from "../assets/images/clues/Clue_scroll_(hard)_detail.png";
 import EliteClueIcon from "../assets/images/clues/Clue_scroll_(elite)_detail.png";
 import MasterClueIcon from "../assets/images/clues/Clue_scroll_(master)_detail.png";
 
+// New activity imports
+import LeaguesIcon from "../assets/images/other/Leagues.png";
+import BountyHunterIcon from "../assets/images/other/Bounty.png";
+import LastManStandingIcon from "../assets/images/other/Last_Man_Standing_logo.png";
+import SoulWarsIcon from "../assets/images/other/Soul_Wars_logo.png";
+import GuardiansOfTheRiftIcon from "../assets/images/other/Rewards_guardian.png";
+import CollectionsLoggedIcon from "../assets/images/other/Collection_log_detail.png";
+import PvPArenaIcon from "../assets/images/other/PK-Skull.png";
+
 // New boss imports
 import AbyssalSireIcon from "../assets/images/bosses/Abyssal_Sire.png";
 import AlchemicalHydraIcon from "../assets/images/bosses/Alchemical_Hydra.png";
@@ -81,7 +90,7 @@ import SkotizoIcon from "../assets/images/bosses/Skotizo.png";
 import SolHereditIcon from "../assets/images/bosses/Sol_Heredit.png";
 import SpindelIcon from "../assets/images/bosses/Spindel.png";
 import TemporossIcon from "../assets/images/bosses/Tempoross.png";
-import TheGauntletIcon from "../assets/images/bosses/Corrupted_Hunllef.png";
+import TheGauntletIcon from "../assets/images/bosses/Crystalline_Hunllef.png";
 import TheCorruptedGauntletIcon from "../assets/images/bosses/Corrupted_Hunllef.png";
 import TheHueycoatlIcon from "../assets/images/bosses/The_Hueycoatl.png";
 import TheLeviathanIcon from "../assets/images/bosses/The_Leviathan.png";
@@ -98,7 +107,7 @@ import WintertodtIcon from "../assets/images/bosses/Howling_Snow_Storm.gif";
 import ZalcanoIcon from "../assets/images/bosses/Zalcano.png";
 import ZulrahIcon from "../assets/images/bosses/Zulrah.png";
 
-import OsrsIcon from "../assets/images/Old_School_RuneScape_Mobile_icon.png";
+import OsrsIcon from "../assets/images/other/Old_School_RuneScape_Mobile_icon.png";
 
 export const SkillIcon = ({ skill }) => {
   const skillIcons = {
@@ -159,24 +168,24 @@ export const RaidIcon = ({ raid }) => {
 export const ActivityIcon = ({ type }) => {
   const activityIcons = {
     // Clue Scrolls
-    "clue_scrolls_all": OsrsIcon, // Use a generic icon for "all" clues
-    "clue_scrolls_beginner": BeginnerClueIcon,
-    "clue_scrolls_easy": EasyClueIcon,
-    "clue_scrolls_medium": MediumClueIcon,
-    "clue_scrolls_hard": HardClueIcon,
-    "clue_scrolls_elite": EliteClueIcon,
-    "clue_scrolls_master": MasterClueIcon,
+    clue_scrolls_all: MasterClueIcon,
+    clue_scrolls_beginner: BeginnerClueIcon,
+    clue_scrolls_easy: EasyClueIcon,
+    clue_scrolls_medium: MediumClueIcon,
+    clue_scrolls_hard: HardClueIcon,
+    clue_scrolls_elite: EliteClueIcon,
+    clue_scrolls_master: MasterClueIcon,
 
     // Other Activities
-    "league_points": OsrsIcon,
-    "bounty_hunter_hunter": OsrsIcon,
-    "bounty_hunter_rogue": OsrsIcon,
-    "last_man_standing": OsrsIcon,
-    "pvp_arena": OsrsIcon,
-    "soul_wars_zeal": OsrsIcon,
-    "guardians_of_the_rift": OsrsIcon,
-    "colosseum_glory": OsrsIcon,
-    "collections_logged": OsrsIcon,
+    league_points: LeaguesIcon,
+    bounty_hunter_hunter: BountyHunterIcon,
+    bounty_hunter_rogue: BountyHunterIcon,
+    last_man_standing: LastManStandingIcon,
+    pvp_arena: PvPArenaIcon,
+    soul_wars_zeal: SoulWarsIcon,
+    guardians_of_the_rift: GuardiansOfTheRiftIcon,
+    colosseum_glory: SolHereditIcon,
+    collections_logged: CollectionsLoggedIcon,
   };
 
   return activityIcons[type] ? (
@@ -234,7 +243,7 @@ export const BossIcon = ({ boss }) => {
     spindel: SpindelIcon,
     tempoross: TemporossIcon,
     the_gauntlet: TheGauntletIcon,
-    the_corrupted_gauntlet: TheGauntletIcon,
+    the_corrupted_gauntlet: TheCorruptedGauntletIcon,
     the_hueycoatl: TheHueycoatlIcon,
     the_leviathan: TheLeviathanIcon,
     the_royal_titans: TheRoyalTitansIcon,
