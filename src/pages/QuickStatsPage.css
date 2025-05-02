@@ -335,3 +335,32 @@
 .ui-resource-link:hover {
   text-decoration: underline;
 }
+
+/* Links container */
+.ui-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Styled links */
+.ui-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.ui-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  transform: translateX(0.125rem);
+}
+
+/* Custom icon for Wise Old Man */
+.ui-custom-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}

@@ -11,8 +11,11 @@ import {
   FaGlobe,
   FaTrophy,
   FaLink,
-  FaUsers
+  FaUsers,
+  FaComments
 } from "react-icons/fa";
+import WiseOldManIcon from "../assets/images/other/Wise_Old_Man_chathead.png"; // Import the custom icon
+
 
 // Import UI components
 import StatGroup from "../components/ui/StatGroup";
@@ -112,24 +115,28 @@ export default function QuickStatsPage() {
 
           <div className="ui-info-item">
             <div className="ui-info-label">
-              <FaDiscord /> Community & Stats
+              <FaComments /> Community
             </div>
-            <div className="ui-info-value">
+            <div className="ui-info-value ui-info-links">
               <a
                 href="https://discord.gg/aXYHD6UdQJ"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ui-resource-link"
               >
-                Discord Server
+                <FaDiscord /> Discord Server
               </a>
-              <br />
               <a
                 href="https://wiseoldman.net/groups/2928"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ui-resource-link"
               >
+                <img
+                  src={WiseOldManIcon}
+                  alt="Wise Old Man"
+                  className="ui-custom-icon"
+                />
                 WiseOldMan Group
               </a>
             </div>
