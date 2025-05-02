@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useGroupBossStats } from "../hooks/useGroupStats";
 import { FaSkull, FaTimes } from "react-icons/fa";
+import MetricIcon from "../components/MetricIcon"; // Import MetricIcon
 import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
 import "./BossStatsPage.css";
@@ -102,6 +103,9 @@ export default function BossStatsPage() {
                       {filteredData.bosses.map((boss, index) => (
                         <tr key={index} className="ui-stats-row">
                           <td className="ui-boss-name">
+                            <span className="ui-boss-icon">
+                              <MetricIcon metric={boss.metric || boss.displayName} />
+                            </span>
                             {boss.displayName}
                           </td>
                           <td className="ui-player-name">
@@ -142,6 +146,9 @@ export default function BossStatsPage() {
                       {filteredData.activities.map((activity, index) => (
                         <tr key={index} className="ui-stats-row">
                           <td className="ui-activity-name">
+                            <span className="ui-activity-icon">
+                              <MetricIcon metric={activity.metric || activity.displayName} />
+                            </span>
                             {activity.displayName}
                           </td>
                           <td className="ui-player-name">

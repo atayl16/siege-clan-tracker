@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useGroupAchievements } from "../hooks/useGroupAchievements";
 import { FaTrophy, FaTimes, FaSearch } from "react-icons/fa";
+import MetricIcon from "../components/MetricIcon"; // Import MetricIcon
 import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
 import "./AchievementsPage.css";
@@ -82,6 +83,9 @@ export default function AchievementsPage() {
                           {achievement.player.displayName}
                         </td>
                         <td className="ui-achievement-name">
+                          <span className="ui-achievement-icon">
+                            <MetricIcon metric={achievement.metric} />
+                          </span>
                           {achievement.name}
                         </td>
                         <td className="ui-achievement-date">

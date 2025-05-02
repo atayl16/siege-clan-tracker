@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
-import { useCompetitions } from '../hooks/useCompetitions';
-import { SkillIcon } from './OsrsIcons';
-import './EventsTable.css';
+import React, { useMemo } from "react";
+import { useCompetitions } from "../hooks/useCompetitions";
+import MetricIcon from "./MetricIcon"; // Use MetricIcon
+import "./EventsTable.css";
 
-export default function EventsTable({ 
+export default function EventsTable({
   events = [],
-  activeLimit = null, 
-  upcomingLimit = null, 
+  activeLimit = null,
+  upcomingLimit = null,
   completedLimit = null,
   hideHeaders = false,
   includeWomCompetitions = true,
@@ -14,30 +14,6 @@ export default function EventsTable({
 }) {
   // Get competitions data from the new hook
   const { competitions, loading: womLoading } = useCompetitions();
-
-  const formatSkillName = (event) => {
-    if (!event) return null;
-
-    // Check if we have metric or type to work with
-    const metricValue = event.metric || event.type;
-    if (!metricValue) return null;
-
-    // Normalize the event type/metric
-    let normalizedType = metricValue.toLowerCase();
-
-    // Handle runecrafting/runecraft consistently
-    if (normalizedType.includes("runecraft")) {
-      return "Runecraft"; // Your icon component expects "Runecraft"
-    }
-
-    // Remove any suffixes (like "_xp" or "_experience")
-    if (normalizedType.includes("_")) {
-      normalizedType = normalizedType.split("_")[0];
-    }
-
-    // Capitalize first letter for the SkillIcon component
-    return normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
-  };
 
   // Combine local events with WOM competitions
   const combinedEvents = useMemo(() => {
@@ -52,7 +28,6 @@ export default function EventsTable({
     });
 
     // Convert WOM competitions to match our event format
-    // but only include those not already in our database
     const uniqueWomEvents = competitions
       .filter((comp) => !existingWomIds.has(comp.id.toString()))
       .map((comp) => {
@@ -61,7 +36,6 @@ export default function EventsTable({
         let leaderGain = 0;
 
         if (comp.participants && comp.participants.length > 0) {
-          // Sort participants by progress (descending)
           const sortedParticipants = [...comp.participants].sort(
             (a, b) => b.progress.gained - a.progress.gained
           );
@@ -84,7 +58,7 @@ export default function EventsTable({
         };
       });
 
-    // Also add leader data to existing events that have wom_id
+    // Add leader data to existing events that have wom_id
     const enhancedEvents = (events || []).map((event) => {
       if (event.wom_id) {
         const matchingComp = competitions.find(
@@ -125,53 +99,50 @@ export default function EventsTable({
   }, [events, competitions, includeWomCompetitions, searchTerm]);
 
   // Process and categorize events
-  const { activeEvents, upcomingEvents, recentCompletedEvents } =
-    useMemo(() => {
-      const now = new Date();
-      const active = [];
-      const upcoming = [];
-      const completed = [];
+  const { activeEvents, upcomingEvents, recentCompletedEvents } = useMemo(() => {
+    const now = new Date();
+    const active = [];
+    const upcoming = [];
+    const completed = [];
 
-      combinedEvents.forEach((event) => {
-        const startDate = event.start_date ? new Date(event.start_date) : null;
-        const endDate = event.end_date ? new Date(event.end_date) : null;
+    combinedEvents.forEach((event) => {
+      const startDate = event.start_date ? new Date(event.start_date) : null;
+      const endDate = event.end_date ? new Date(event.end_date) : null;
 
-        if (!startDate || !endDate) return;
+      if (!startDate || !endDate) return;
 
-        if (now < startDate) {
-          upcoming.push({ ...event, timeUntil: startDate - now });
-        } else if (now > endDate) {
-          completed.push({ ...event, completedAt: endDate });
-        } else {
-          active.push({ ...event, timeRemaining: endDate - now });
-        }
-      });
+      if (now < startDate) {
+        upcoming.push({ ...event, timeUntil: startDate - now });
+      } else if (now > endDate) {
+        completed.push({ ...event, completedAt: endDate });
+      } else {
+        active.push({ ...event, timeRemaining: endDate - now });
+      }
+    });
 
-      // Sort upcoming by closest start date
-      upcoming.sort((a, b) => a.timeUntil - b.timeUntil);
+    // Sort upcoming by closest start date
+    upcoming.sort((a, b) => a.timeUntil - b.timeUntil);
 
-      // Sort active by soonest to end
-      active.sort((a, b) => a.timeRemaining - b.timeRemaining);
+    // Sort active by soonest to end
+    active.sort((a, b) => a.timeRemaining - b.timeRemaining);
 
-      // Sort completed by most recent
-      completed.sort((a, b) => b.completedAt - a.completedAt);
+    // Sort completed by most recent
+    completed.sort((a, b) => b.completedAt - a.completedAt);
 
-      // Apply limits if specified
-      const limitedActive =
-        activeLimit !== null ? active.slice(0, activeLimit) : active;
-      const limitedUpcoming =
-        upcomingLimit !== null ? upcoming.slice(0, upcomingLimit) : upcoming;
-      const limitedCompleted =
-        completedLimit !== null
-          ? completed.slice(0, completedLimit)
-          : completed;
+    // Apply limits if specified
+    const limitedActive =
+      activeLimit !== null ? active.slice(0, activeLimit) : active;
+    const limitedUpcoming =
+      upcomingLimit !== null ? upcoming.slice(0, upcomingLimit) : upcoming;
+    const limitedCompleted =
+      completedLimit !== null ? completed.slice(0, completedLimit) : completed;
 
-      return {
-        activeEvents: limitedActive,
-        upcomingEvents: limitedUpcoming,
-        recentCompletedEvents: limitedCompleted,
-      };
-    }, [combinedEvents, activeLimit, upcomingLimit, completedLimit]);
+    return {
+      activeEvents: limitedActive,
+      upcomingEvents: limitedUpcoming,
+      recentCompletedEvents: limitedCompleted,
+    };
+  }, [combinedEvents, activeLimit, upcomingLimit, completedLimit]);
 
   // Format the date consistently (handles UTC correctly)
   const formatDate = (dateString) => {
@@ -181,17 +152,6 @@ export default function EventsTable({
       year: "numeric",
       month: "short",
       day: "numeric",
-    });
-  };
-
-  // Format the time consistently (handles UTC correctly)
-  const formatTime = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
     });
   };
 
@@ -241,9 +201,7 @@ export default function EventsTable({
     <div className="ui-events-tables">
       {hasActiveEvents && (
         <div className="ui-event-section">
-          {!hideHeaders && (
-            <h3 className="ui-section-heading">Active Events</h3>
-          )}
+          {!hideHeaders && <h3 className="ui-section-heading">Active Events</h3>}
           <div className="ui-table-container">
             <table className="ui-table">
               <thead>
@@ -255,19 +213,12 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {activeEvents.map((event) => (
-                  <tr
-                    key={event.id}
-                    className={`ui-event-row ui-event-active ${
-                      event.is_wom ? "ui-event-wom" : ""
-                    }`}
-                  >
+                  <tr key={event.id} className="ui-event-row ui-event-active">
                     <td>
                       <strong className="ui-event-name">
-                        {(event.metric || event.type) && (
-                          <span className="ui-event-skill-icon">
-                            <SkillIcon skill={formatSkillName(event)} />
-                          </span>
-                        )}
+                        <span className="ui-event-skill-icon">
+                          <MetricIcon metric={event.metric || event.type} />
+                        </span>
                         {event.is_wom || event.wom_id ? (
                           <a
                             href={getWomCompetitionUrl(event.wom_id)}
@@ -282,10 +233,7 @@ export default function EventsTable({
                         )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">
-                      {formatDate(event.end_date)} at{" "}
-                      {formatTime(event.end_date)}
-                    </td>
+                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
                     <td>
                       <span className="ui-badge ui-badge-warning">
                         {formatRelativeTime(event.timeRemaining)} left
@@ -301,9 +249,7 @@ export default function EventsTable({
 
       {hasUpcomingEvents && (
         <div className="ui-event-section">
-          {!hideHeaders && (
-            <h3 className="ui-section-heading">Upcoming Events</h3>
-          )}
+          {!hideHeaders && <h3 className="ui-section-heading">Upcoming Events</h3>}
           <div className="ui-table-container">
             <table className="ui-table">
               <thead>
@@ -315,19 +261,12 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {upcomingEvents.map((event) => (
-                  <tr
-                    key={event.id}
-                    className={`ui-event-row ui-event-upcoming ${
-                      event.is_wom ? "ui-event-wom" : ""
-                    }`}
-                  >
+                  <tr key={event.id} className="ui-event-row ui-event-upcoming">
                     <td>
                       <strong className="ui-event-name">
-                        {(event.metric || event.type) && (
-                          <span className="ui-event-skill-icon">
-                            <SkillIcon skill={formatSkillName(event)} />
-                          </span>
-                        )}
+                        <span className="ui-event-skill-icon">
+                          <MetricIcon metric={event.metric || event.type} />
+                        </span>
                         {event.is_wom || event.wom_id ? (
                           <a
                             href={getWomCompetitionUrl(event.wom_id)}
@@ -342,10 +281,7 @@ export default function EventsTable({
                         )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">
-                      {formatDate(event.start_date)} at{" "}
-                      {formatTime(event.start_date)}
-                    </td>
+                    <td className="ui-event-date">{formatDate(event.start_date)}</td>
                     <td>
                       <span className="ui-badge ui-badge-info">
                         {formatRelativeTime(event.timeUntil)}
@@ -361,9 +297,7 @@ export default function EventsTable({
 
       {hasCompletedEvents && (
         <div className="ui-event-section">
-          {!hideHeaders && (
-            <h3 className="ui-section-heading">Completed Events</h3>
-          )}
+          {!hideHeaders && <h3 className="ui-section-heading">Completed Events</h3>}
           <div className="ui-table-container">
             <table className="ui-table">
               <thead>
@@ -375,19 +309,12 @@ export default function EventsTable({
               </thead>
               <tbody>
                 {recentCompletedEvents.map((event) => (
-                  <tr
-                    key={event.id}
-                    className={`ui-event-row ui-event-completed ${
-                      event.is_wom ? "ui-event-wom" : ""
-                    }`}
-                  >
+                  <tr key={event.id} className="ui-event-row ui-event-completed">
                     <td>
                       <strong className="ui-event-name">
-                        {(event.metric || event.type) && (
-                          <span className="ui-event-skill-icon">
-                            <SkillIcon skill={formatSkillName(event)} />
-                          </span>
-                        )}
+                        <span className="ui-event-skill-icon">
+                          <MetricIcon metric={event.metric || event.type} />
+                        </span>
                         {event.is_wom || event.wom_id ? (
                           <a
                             href={getWomCompetitionUrl(event.wom_id)}
@@ -402,18 +329,14 @@ export default function EventsTable({
                         )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">
-                      {formatDate(event.end_date)}
-                    </td>
+                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
                     <td>
                       {event.winner_username ? (
                         <span className="ui-winner-badge">
                           🏆 {event.winner_username}
                         </span>
                       ) : (
-                        <span className="ui-text-muted">
-                          No winner recorded
-                        </span>
+                        <span className="ui-text-muted">No winner recorded</span>
                       )}
                     </td>
                   </tr>
@@ -424,7 +347,6 @@ export default function EventsTable({
         </div>
       )}
 
-      {/* Show message if no events of any type are available */}
       {!hasActiveEvents && !hasUpcomingEvents && !hasCompletedEvents && (
         <div className="ui-empty-message">
           <p>No events available</p>
