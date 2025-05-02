@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import EventsTable from "../components/EventsTable";
 import { useEvents } from "../hooks/useEvents";
-import { FaSearch, FaTimes } from "react-icons/fa";
+import { FaSearch, FaTimes, FaInfoCircle } from "react-icons/fa";
 
 // Import UI components
 import Button from "../components/ui/Button";
@@ -79,6 +79,62 @@ const filteredEvents = useMemo(() => {
         </div>
       </div>
 
+      {/* Event Types Info Section */}
+      <div className="ui-section-container ui-events-info-container">
+        <div className="ui-events-info-header">
+          <FaInfoCircle className="ui-events-info-icon" />
+          <h3>About Our Events</h3>
+        </div>
+        <div className="ui-events-info-content">
+          <p>
+            We encourage our clan members to enjoy different play styles, hang
+            out with each other and most of all have fun! To help this, we host
+            regular events, including:
+          </p>
+
+          <div className="ui-events-types-grid">
+            <div className="ui-event-type-card">
+              <h4>SotW</h4>
+              <p>
+                Skill of the Week - A competition to gain the most XP in a
+                specific skill over 7 days.
+              </p>
+            </div>
+
+            <div className="ui-event-type-card">
+              <h4>BotW</h4>
+              <p>
+                Boss of the Week - A competition to get the most kills at a
+                specific boss over 7 days.
+              </p>
+            </div>
+
+            <div className="ui-event-type-card">
+              <h4>Raids</h4>
+              <p>
+                We host regular raid events including group raids, learner raids with experiences teachers and Raid Week.
+              </p>
+            </div>
+
+            <div className="ui-event-type-card">
+              <h4>Bingo/Tile Races</h4>
+              <p>
+                Teams compete to complete tasks on a bingo board within a time
+                limit. Winners receive prizes!
+              </p>
+            </div>
+
+            <div className="ui-event-type-card">
+              <h4>Member-run Events</h4>
+              <p>
+                Short events (1-2 hours) organized by clan members, such as
+                group bossing, skilling, minigames, hide and seek and more.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <StatGroup className="ui-events-summary">
         <StatGroup.Stat
           label="Active"
@@ -117,6 +173,7 @@ const filteredEvents = useMemo(() => {
           upcomingLimit={showAllEvents ? null : 6}
           completedLimit={showAllEvents ? null : 5}
           loading={eventsLoading}
+          searchTerm={searchTerm}
         />
       </div>
 
