@@ -31,16 +31,16 @@ export default function QuickStatsPage() {
 
   if (statsLoading || groupLoading) {
     return (
-      <div className="ui-loading-container">
-        <div className="ui-loading-spinner"></div>
-        <div className="ui-loading-text">Loading clan stats...</div>
+      <div className="quick-stats-loading-container">
+        <div className="quick-stats-loading-spinner"></div>
+        <div className="quick-stats-loading-text">Loading clan stats...</div>
       </div>
     );
   }
 
   if (statsError || groupError) {
     return (
-      <div className="ui-error-container">
+      <div className="quick-stats-error-container">
         <h3>Error Loading Clan Stats</h3>
         <p>
           {statsError?.message ||
@@ -52,17 +52,17 @@ export default function QuickStatsPage() {
   }
 
   return (
-    <div className="ui-page-container">
-      <div className="ui-content-header">
+    <div className="quick-stats-page-container">
+      <div className="quick-stats-content-header">
         <h2>Clan Quick Stats</h2>
       </div>
 
-      <div className="ui-section-container">
-        <h3 className="ui-section-title">
-          <FaChartBar className="ui-section-icon" /> Clan Stats
+      <div className="quick-stats-section-container">
+        <h3 className="quick-stats-section-title">
+          <FaChartBar className="quick-stats-section-icon" /> Clan Stats
         </h3>
 
-        <StatGroup className="ui-stats-group">
+        <StatGroup className="quick-stats-stats-group">
           <StatGroup.Stat
             label="Maxed Combat"
             value={clanStats.maxedCombatCount}
@@ -80,7 +80,7 @@ export default function QuickStatsPage() {
           />
         </StatGroup>
 
-        <StatGroup className="ui-stats-group">
+        <StatGroup className="quick-stats-stats-group">
           <StatGroup.Stat
             label="Total Members"
             value={memberCount}
@@ -100,29 +100,29 @@ export default function QuickStatsPage() {
       </div>
 
       {/* Clan Information section */}
-      <div className="ui-clan-info-section">
-        <h3 className="ui-section-title">
-          <FaLink className="ui-section-icon" /> Clan Information
+      <div className="quick-stats-clan-info-section">
+        <h3 className="quick-stats-section-title">
+          <FaLink className="quick-stats-section-icon" /> Clan Information
         </h3>
 
-        <div className="ui-info-grid">
-          <div className="ui-info-item">
-            <div className="ui-info-label">
+        <div className="quick-stats-info-grid">
+          <div className="quick-stats-info-item">
+            <div className="quick-stats-info-label">
               <FaCalendarDay /> Founded
             </div>
-            <div className="ui-info-value">April 23, 2022</div>
+            <div className="quick-stats-info-value">April 23, 2022</div>
           </div>
 
-          <div className="ui-info-item">
-            <div className="ui-info-label">
+          <div className="quick-stats-info-item">
+            <div className="quick-stats-info-label">
               <FaComments /> Community
             </div>
-            <div className="ui-info-value ui-info-links ui-custom-icon">
+            <div className="quick-stats-info-value quick-stats-info-links">
               <a
                 href="https://discord.gg/aXYHD6UdQJ"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ui-resource-link"
+                className="quick-stats-resource-link"
               >
                 <FaDiscord /> Discord Server
               </a>
@@ -130,31 +130,31 @@ export default function QuickStatsPage() {
                 href="https://wiseoldman.net/groups/2928"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ui-resource-link"
+                className="quick-stats-resource-link"
               >
                 <img
                   src={WiseOldManIcon}
                   alt="Wise Old Man"
-                  className="ui-custom-icon"
+                  className="quick-stats-custom-icon"
                 />
                 WiseOldMan Group
               </a>
             </div>
           </div>
 
-          <div className="ui-info-item">
-            <div className="ui-info-label">
+          <div className="quick-stats-info-item">
+            <div className="quick-stats-info-label">
               <FaGlobe /> Home World
             </div>
-            <div className="ui-info-value">517</div>
+            <div className="quick-stats-info-value">517</div>
           </div>
         </div>
       </div>
 
       {/* Clan Ranks */}
-      <div className="ui-clan-ranks-section">
-        <h3 className="ui-section-title">
-          <FaShieldAlt className="ui-section-icon" /> Clan Ranks
+      <div className="quick-stats-clan-ranks-section">
+        <h3 className="quick-stats-section-title">
+          <FaShieldAlt className="quick-stats-section-icon" /> Clan Ranks
         </h3>
 
         <ClanRanks />
