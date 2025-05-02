@@ -2,6 +2,13 @@ import useSWR from "swr";
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
+function formatDisplayName(name) {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function useGroupStats(limit = null) {
   const { data, error, mutate } = useSWR(
     "/api/wom-group-stats",
