@@ -108,7 +108,7 @@ const MetricIcon = ({ metric }) => {
     return <SkillIcon skill={skillName} />;
   }
 
-  // Default to OsrsIcon if no match is found
+  // Default to the OsrsIcon if no match is found
   return <OldSchoolIcon />;
 };
 
