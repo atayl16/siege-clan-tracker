@@ -240,23 +240,18 @@ export default function MemberTable({ filteredMembers = null }) {
       return member;
     });
   }, [members, groupData]);
-  
+
   const sortedMembers = useMemo(() => {
     if (!enhancedMembers) return [];
-  
+
     // Filter out hidden members
     const visibleMembers = enhancedMembers.filter((member) => !member.hidden);
-  
+
     // Then sort the visible members
     return [...visibleMembers].sort((a, b) => {
-      // First, sort by alt status (non-alts first)
-      if (a.alt && !b.alt) return 1;  // a is alt, b is not, so b comes first
-      if (!a.alt && b.alt) return -1; // a is not alt, b is alt, so a comes first
-      
-      // If both are alts or both are not alts, continue with normal sorting
       const aRole = (a.womrole || "").toLowerCase().trim().replace(/_/g, " ");
       const bRole = (b.womrole || "").toLowerCase().trim().replace(/_/g, " ");
-  
+
       // Helper function for more accurate rank detection
       const getRankIndex = (role) => {
         if (
@@ -281,23 +276,23 @@ export default function MemberTable({ filteredMembers = null }) {
         }
         return -1; // Not an admin rank
       };
-  
+
       const aAdminIndex = getRankIndex(aRole);
       const bAdminIndex = getRankIndex(bRole);
-  
+
       // Admin ranks come first, sorted by their order
       if (aAdminIndex !== -1 && bAdminIndex !== -1) {
         return aAdminIndex - bAdminIndex;
       }
       if (aAdminIndex !== -1) return -1; // a is an admin, b is not
       if (bAdminIndex !== -1) return 1; // b is an admin, a is not
-  
+
       // If neither is an admin, sort by "Clan XP Gained" in descending order
       const aClanXpGained =
         parseInt(a.current_xp || 0, 10) - parseInt(a.first_xp || 0, 10) || 0;
       const bClanXpGained =
         parseInt(b.current_xp || 0, 10) - parseInt(b.first_xp || 0, 10) || 0;
-  
+
       return bClanXpGained - aClanXpGained;
     });
   }, [enhancedMembers]);

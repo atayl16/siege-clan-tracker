@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import MemberTable from "../components/MemberTable";
 import { useMembers } from "../hooks/useMembers";
-import { FaSearch, FaUsers, FaTimes } from "react-icons/fa";
+import MemberTable from "../components/MemberTable";
+import { FaTimes, FaFilter, FaCheck } from "react-icons/fa";
 
 // Import UI components
 import Button from "../components/ui/Button";
@@ -26,15 +26,98 @@ export default function MembersPage() {
     searchParams.get("search") || ""
   );
 
+  // Filter states
+  const [showAlts, setShowAlts] = useState(false); // Alt accounts hidden by default
+  const [filterIronman, setFilterIronman] = useState(false);
+  const [filterSkiller, setFilterSkiller] = useState(false);
+  const [filterFighter, setFilterFighter] = useState(false);
+  const [hideAdmin, setHideAdmin] = useState(false);
+  const [showFilterOptions, setShowFilterOptions] = useState(false);
+
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
-    if (!members || !searchTerm) return members || [];
-    return members.filter((member) =>
-      (member.name || member.wom_name || "")
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    );
-  }, [members, searchTerm]);
+    if (!members) return [];
+
+    return members.filter((member) => {
+      // Search filter
+      if (
+        searchTerm &&
+        !(member.name || member.wom_name || "")
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Alt account filter
+      if (!showAlts && member.alt) {
+        return false;
+      }
+
+      // Ironman filter
+      if (filterIronman) {
+        const isIronman =
+          member.build?.toLowerCase().includes("ironman") ||
+          member.wom_account_type?.toLowerCase().includes("ironman") ||
+          member.ironman_type;
+        if (!isIronman) return false;
+      }
+
+      // Admin filter
+      if (hideAdmin) {
+        const role = (member.womrole || "").toLowerCase();
+        if (
+          role.includes("owner") ||
+          role.includes("general") ||
+          role.includes("captain") ||
+          role.includes("organizer")
+        ) {
+          return false;
+        }
+      }
+
+      // Skiller/Fighter filters
+      if (filterSkiller || filterFighter) {
+        const role = (member.womrole || "").toLowerCase();
+
+        const isSkiller = [
+          "opal",
+          "sapphire",
+          "emerald",
+          "ruby",
+          "diamond",
+          "dragonstone",
+          "onyx",
+          "zenyte",
+        ].some((gem) => role.includes(gem));
+
+        const isFighter = [
+          "mentor",
+          "prefect",
+          "leader",
+          "supervisor",
+          "superior",
+          "executive",
+          "senator",
+          "monarch",
+          "tzkal",
+        ].some((rank) => role.includes(rank));
+
+        if (filterSkiller && !isSkiller) return false;
+        if (filterFighter && !isFighter) return false;
+      }
+
+      return true;
+    });
+  }, [
+    members,
+    searchTerm,
+    showAlts,
+    filterIronman,
+    filterSkiller,
+    filterFighter,
+    hideAdmin,
+  ]);
 
   // Update URL when search term changes
   const handleSearchChange = (e) => {
@@ -50,6 +133,15 @@ export default function MembersPage() {
       setSearchParams(searchParams);
     }
   };
+
+  // Count number of active filters
+  const activeFilterCount = [
+    showAlts, // Showing alts is considered an active filter
+    filterIronman,
+    filterSkiller,
+    filterFighter,
+    hideAdmin,
+  ].filter(Boolean).length;
 
   return (
     <div className="ui-page-container">
@@ -78,17 +170,138 @@ export default function MembersPage() {
       <div className="ui-content-header">
         <h2>Clan Members</h2>
         <div className="ui-actions-container">
+          <div className="ui-filter-button-wrapper">
+            <Button
+              variant="secondary"
+              onClick={() => setShowFilterOptions(!showFilterOptions)}
+              className={activeFilterCount > 0 ? "ui-active-filters" : ""}
+            >
+              <FaFilter /> Filters
+              {activeFilterCount > 0 && (
+                <span className="ui-filter-count">{activeFilterCount}</span>
+              )}
+            </Button>
+
+            {showFilterOptions && (
+              <div className="ui-filter-dropdown">
+                <h4 className="ui-filter-section-title">Show/Hide</h4>
+                <div className="ui-filter-option">
+                  <label className="ui-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={showAlts}
+                      onChange={() => setShowAlts(!showAlts)}
+                    />
+                    <span className="ui-filter-text">Show Alt Accounts</span>
+                  </label>
+                </div>
+                <div className="ui-filter-option">
+                  <label className="ui-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={hideAdmin}
+                      onChange={() => setHideAdmin(!hideAdmin)}
+                    />
+                    <span className="ui-filter-text">Hide Admin Ranks</span>
+                  </label>
+                </div>
+
+                <h4 className="ui-filter-section-title">Account Type</h4>
+                <div className="ui-filter-option">
+                  <label className="ui-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={filterIronman}
+                      onChange={() => setFilterIronman(!filterIronman)}
+                    />
+                    <span className="ui-filter-text">Ironman Only</span>
+                  </label>
+                </div>
+
+                <h4 className="ui-filter-section-title">Rank Type</h4>
+                <div className="ui-filter-option">
+                  <label className="ui-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={filterSkiller}
+                      onChange={() => setFilterSkiller(!filterSkiller)}
+                    />
+                    <span className="ui-filter-text">Skillers Only</span>
+                  </label>
+                </div>
+                <div className="ui-filter-option">
+                  <label className="ui-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={filterFighter}
+                      onChange={() => setFilterFighter(!filterFighter)}
+                    />
+                    <span className="ui-filter-text">Fighters Only</span>
+                  </label>
+                </div>
+
+                <div className="ui-filter-actions">
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => {
+                      setShowAlts(false);
+                      setFilterIronman(false);
+                      setFilterSkiller(false);
+                      setFilterFighter(false);
+                      setHideAdmin(false);
+                    }}
+                  >
+                    Reset Filters
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <SearchInput
             value={searchTerm}
             onChange={handleSearchChange}
             onClear={() => {
               setSearchTerm("");
-              searchParams.delete("search");
-              setSearchParams(searchParams);
+              setSearchParams({});
             }}
             placeholder="Search members..."
           />
         </div>
+      </div>
+
+      <div className="ui-filter-summary">
+        {activeFilterCount > 0 && (
+          <>
+            <span className="ui-filter-label">Active filters:</span>
+            {showAlts && (
+              <span className="ui-filter-tag">
+                Show Alts <FaTimes onClick={() => setShowAlts(false)} />
+              </span>
+            )}
+            {filterIronman && (
+              <span className="ui-filter-tag">
+                Ironman <FaTimes onClick={() => setFilterIronman(false)} />
+              </span>
+            )}
+            {filterSkiller && (
+              <span className="ui-filter-tag">
+                Skillers <FaTimes onClick={() => setFilterSkiller(false)} />
+              </span>
+            )}
+            {filterFighter && (
+              <span className="ui-filter-tag">
+                Fighters <FaTimes onClick={() => setFilterFighter(false)} />
+              </span>
+            )}
+            {hideAdmin && (
+              <span className="ui-filter-tag">
+                No Admin <FaTimes onClick={() => setHideAdmin(false)} />
+              </span>
+            )}
+          </>
+        )}
       </div>
 
       <div className="ui-member-table-container">
