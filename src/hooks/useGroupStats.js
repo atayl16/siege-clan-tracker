@@ -64,3 +64,44 @@ export function useGroupBossStats() {
     refresh: mutate,
   };
 }
+
+export function useClanStats() {
+  const { data, error, mutate } = useGroupStats();
+
+  const processedStats = useMemo(() => {
+    if (!data) return null;
+
+    const members = data.members || [];
+    const visibleMembers = members.filter((m) => !m.hidden);
+
+    // Calculate maxed combat, total, and 200m counts
+    const maxedCombatCount = visibleMembers.filter(
+      (m) => m.combatLevel === 126
+    ).length;
+
+    const maxedTotalCount = visibleMembers.filter(
+      (m) => parseInt(m.current_lvl) === 2277
+    ).length;
+
+    const maxed200msCount = visibleMembers.filter(
+      (m) => m.skills?.overall?.experience >= 200_000_000
+    ).length;
+
+    // Calculate average stats
+    const averageStats = data.averageStats || {};
+
+    return {
+      maxedCombatCount,
+      maxedTotalCount,
+      maxed200msCount,
+      averageStats,
+    };
+  }, [data]);
+
+  return {
+    data: processedStats,
+    isLoading: !data && !error,
+    error,
+    refresh: mutate,
+  };
+}
