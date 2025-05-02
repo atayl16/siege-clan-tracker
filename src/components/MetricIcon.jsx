@@ -1,5 +1,5 @@
 import React from "react";
-import { BossIcon, SkillIcon, ClueIcon, RaidIcon, OsrsIcon } from "./OsrsIcons";
+import { BossIcon, SkillIcon, ClueIcon, RaidIcon, OldSchoolIcon } from "./OsrsIcons";
 
 const MetricIcon = ({ metric }) => {
   const bossMetrics = [
@@ -109,7 +109,7 @@ const MetricIcon = ({ metric }) => {
   }
 
   // Default to OsrsIcon if no match is found
-  return <OsrsIcon />;
+  return <OldSchoolIcon />;
 };
 
 export default MetricIcon;

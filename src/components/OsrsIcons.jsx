@@ -244,6 +244,6 @@ export const BossIcon = ({ boss }) => {
   return bossIcons[boss] ? <img src={bossIcons[boss]} alt={`${boss} icon`} /> : null;
 };
 
-export const OsrsIcon = () => {
-  return <img src={OsrsIcon} alt="Old School RuneScape Icon" />;
+export const OldSchoolIcon = () => {
+  return <img src={OldSchoolIcon} alt="Old School RuneScape Icon" />;
 }
