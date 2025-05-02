@@ -98,7 +98,7 @@ import WintertodtIcon from "../assets/images/bosses/Howling_Snow_Storm.gif";
 import ZalcanoIcon from "../assets/images/bosses/Zalcano.png";
 import ZulrahIcon from "../assets/images/bosses/Zulrah.png";
 
-import OldSchoolIcon from "../assets/images/Old_School_RuneScape_Mobile_icon.png";
+import OsrsIcon from "../assets/images/Old_School_RuneScape_Mobile_icon.png";
 
 export const SkillIcon = ({ skill }) => {
   const skillIcons = {
@@ -251,5 +251,5 @@ export const BossIcon = ({ boss }) => {
 };
 
 export const OldSchoolIcon = () => {
-  return <img src={OldSchoolIcon} alt="Old School RuneScape Icon" />;
+  return <img src={OsrsIcon} alt="Old School RuneScape Icon" />;
 }
