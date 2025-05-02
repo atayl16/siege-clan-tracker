@@ -120,6 +120,7 @@ export const SkillIcon = ({ skill }) => {
     Prayer: PrayerIcon,
     Ranged: RangedIcon,
     Runecraft: RunecraftIcon,
+    Runecrafting: RunecraftIcon,
     Slayer: SlayerIcon,
     Smithing: SmithingIcon,
     Strength: StrengthIcon,
@@ -154,29 +155,35 @@ export const RaidIcon = ({ raid }) => {
   return raidIcons[raid] ? <img src={raidIcons[raid]} alt={`${raid} icon`} /> : null;
 };
 
-export const ClueIcon = ({ type }) => {
-  const clueIcons = {
-    "beginner": BeginnerClueIcon,
-    "beginner_clue": BeginnerClueIcon,
-    
-    "easy": EasyClueIcon,
-    "easy_clue": EasyClueIcon,
+export const ActivityIcon = ({ type }) => {
+  const activityIcons = {
+    // Clue Scrolls
+    "clue_scrolls_all": OsrsIcon, // Use a generic icon for "all" clues
+    "clue_scrolls_beginner": BeginnerClueIcon,
+    "clue_scrolls_easy": EasyClueIcon,
+    "clue_scrolls_medium": MediumClueIcon,
+    "clue_scrolls_hard": HardClueIcon,
+    "clue_scrolls_elite": EliteClueIcon,
+    "clue_scrolls_master": MasterClueIcon,
 
-    "medium": MediumClueIcon,
-    "medium_clue": MediumClueIcon,
-    
-    "hard": HardClueIcon,
-    "hard_clue": HardClueIcon,
-    
-    "elite": EliteClueIcon,
-    "elite_clue": EliteClueIcon,
-    
-    "master": MasterClueIcon,
-    "master_clue": MasterClueIcon
+    // Other Activities
+    "league_points": OsrsIcon,
+    "bounty_hunter_hunter": OsrsIcon,
+    "bounty_hunter_rogue": OsrsIcon,
+    "last_man_standing": OsrsIcon,
+    "pvp_arena": OsrsIcon,
+    "soul_wars_zeal": OsrsIcon,
+    "guardians_of_the_rift": OsrsIcon,
+    "colosseum_glory": OsrsIcon,
+    "collections_logged": OsrsIcon,
   };
 
-  return clueIcons[type] ? <img src={clueIcons[type]} alt={`${type} clue icon`} /> : null;
-}
+  return activityIcons[type] ? (
+    <img src={activityIcons[type]} alt={`${type.replace(/_/g, " ")} icon`} />
+  ) : (
+    <img src={OsrsIcon} alt="Default Old School RuneScape Icon" />
+  );
+};
 
 export const BossIcon = ({ boss }) => {
   const bossIcons = {

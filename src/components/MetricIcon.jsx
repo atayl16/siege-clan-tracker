@@ -1,5 +1,5 @@
 import React from "react";
-import { BossIcon, SkillIcon, ClueIcon, RaidIcon, OldSchoolIcon } from "./OsrsIcons";
+import { BossIcon, SkillIcon, ActivityIcon, RaidIcon, OldSchoolIcon } from "./OsrsIcons";
 
 const MetricIcon = ({ metric }) => {
   const bossMetrics = [
@@ -70,13 +70,23 @@ const MetricIcon = ({ metric }) => {
     "zulrah",
   ];
 
-  const clueMetrics = [
-    "beginner",
-    "easy",
-    "medium",
-    "hard",
-    "elite",
-    "master",
+  const activityMetrics = [
+    "league_points",
+    "bounty_hunter_hunter",
+    "bounty_hunter_rogue",
+    "clue_scrolls_all",
+    "clue_scrolls_beginner",
+    "clue_scrolls_easy",
+    "clue_scrolls_medium",
+    "clue_scrolls_hard",
+    "clue_scrolls_elite",
+    "clue_scrolls_master",
+    "last_man_standing",
+    "pvp_arena",
+    "soul_wars_zeal",
+    "guardians_of_the_rift",
+    "colosseum_glory",
+    "collections_logged",
   ];
 
   const raidMetrics = [
@@ -99,8 +109,8 @@ const MetricIcon = ({ metric }) => {
     return <RaidIcon raid={metric} />;
   }
 
-  if (clueMetrics.includes(metric)) {
-    return <ClueIcon type={metric} />;
+  if (activityMetrics.includes(metric)) {
+    return <ActivityIcon type={metric} />;
   }
 
   if (metric) {
