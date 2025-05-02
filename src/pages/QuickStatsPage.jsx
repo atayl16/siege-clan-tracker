@@ -117,7 +117,7 @@ export default function QuickStatsPage() {
             <div className="ui-info-label">
               <FaComments /> Community
             </div>
-            <div className="ui-info-value ui-info-links">
+            <div className="ui-info-value ui-info-links ui-custom-icon">
               <a
                 href="https://discord.gg/aXYHD6UdQJ"
                 target="_blank"
