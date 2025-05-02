@@ -98,7 +98,7 @@ import WintertodtIcon from "../assets/images/bosses/Howling_Snow_Storm.gif";
 import ZalcanoIcon from "../assets/images/bosses/Zalcano.png";
 import ZulrahIcon from "../assets/images/bosses/Zulrah.png";
 
-import OsrsIcon from "../assets/images/Old_School_RuneScape_Mobile_icon.png";
+import OldSchoolIcon from "../assets/images/Old_School_RuneScape_Mobile_icon.png";
 
 export const SkillIcon = ({ skill }) => {
   const skillIcons = {
@@ -132,21 +132,27 @@ export const SkillIcon = ({ skill }) => {
 
 export const RaidIcon = ({ raid }) => {
   const raidIcons = {
+    // Chambers of Xeric
     "Chambers of Xeric": ChambersOfXericIcon,
     "chambers_of_xeric": ChambersOfXericIcon,
     "cox": ChambersOfXericIcon,
-    
+    "chambers_of_xeric_challenge_mode": ChambersOfXericIcon, // Reuse Chambers of Xeric icon
+
+    // Theatre of Blood
     "Theatre of Blood": TheatreOfBloodIcon,
     "theatre_of_blood": TheatreOfBloodIcon,
     "tob": TheatreOfBloodIcon,
-    
+    "theatre_of_blood_hard_mode": TheatreOfBloodIcon, // Reuse Theatre of Blood icon
+
+    // Tombs of Amascut
     "Tombs of Amascut": TombsOfAmascutIcon,
     "tombs_of_amascut": TombsOfAmascutIcon,
-    "toa": TombsOfAmascutIcon
+    "toa": TombsOfAmascutIcon,
+    "tombs_of_amascut_expert": TombsOfAmascutIcon, // Reuse Tombs of Amascut icon
   };
 
   return raidIcons[raid] ? <img src={raidIcons[raid]} alt={`${raid} icon`} /> : null;
-}
+};
 
 export const ClueIcon = ({ type }) => {
   const clueIcons = {
