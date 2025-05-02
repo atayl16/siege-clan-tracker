@@ -1,4 +1,370 @@
 /* BASE LAYOUT */
+.ui-page-container {
+  width: 85%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* CONTENT HEADER */
+.ui-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5625rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ui-content-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-orange, #ff9800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* SECTION LAYOUT */
+.ui-section-container {
+  margin-bottom: 2.5rem;
+  background-color: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 1.25rem;
+}
+
+.ui-section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-section-icon {
+  margin-right: 0.625rem;
+  font-size: 1.125rem;
+}
+
+/* STATS GROUP */
+.ui-stats-group {
+  margin-bottom: 1.5rem;
+}
+
+/* CLAN INFO LAYOUT */
+.ui-clan-info-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18.75rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.ui-info-card {
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ui-info-label {
+  font-weight: 600;
+  margin-bottom: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-info-value {
+  color: var(--color-text, #e0e0e0);
+  font-size: 1.125rem;
+}
+
+.ui-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ui-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+  padding: 0.375rem 0;
+}
+
+.ui-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  transform: translateX(0.125rem);
+}
+
+/* LOADING & ERROR STATES */
+.ui-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 0;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: var(--border-radius-md, 0.5rem);
+  margin-bottom: 1.25rem;
+}
+
+.ui-loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0.1875rem solid rgba(255,152,0,0.3);
+  border-radius: 50%;
+  border-top-color: var(--color-orange, #ff9800);
+  animation: ui-spin 1s linear infinite;
+  margin-bottom: 0.9375rem;
+}
+
+.ui-loading-text {
+  color: #aaa;
+  font-weight: 500;
+}
+
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ui-error-container {
+  display: flex;
+  align-items: center;
+  padding: 1.25rem;
+  background-color: rgba(220,53,69,0.1);
+  border: 1px solid rgba(220,53,69,0.2);
+  border-radius: var(--border-radius-md, 0.5rem);
+  margin-bottom: 1.25rem;
+}
+
+.ui-error-icon {
+  font-size: 1.75rem;
+  margin-right: 1.25rem;
+  color: var(--color-danger, #dc3545);
+}
+
+.ui-error-message h3 {
+  margin-top: 0;
+  margin-bottom: 0.625rem;
+  color: var(--color-danger, #dc3545);
+}
+
+.ui-error-message p {
+  margin-bottom: 0.9375rem;
+  color: var(--color-danger, #dc3545);
+}
+
+/* Enhanced stats layout */
+.ui-expanded-stats {
+  margin-bottom: 2rem;
+}
+
+.ui-stats-group {
+  margin-bottom: 1rem;
+}
+
+/* Information grid layout (replaces the cards) */
+.ui-clan-info-section {
+  margin-top: 2rem;
+}
+
+.ui-info-grid {
+  display: flex;
+  justify-content: space-around; /* This distributes items evenly with space around */
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.ui-info-item {
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px; /* Prevent items from getting too wide */
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.ui-info-label {
+  font-weight: 600;
+  margin-bottom: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-info-value {
+  color: var(--color-text, #e0e0e0);
+  font-size: 1.125rem;
+}
+
+.ui-resource-link {
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+  display: inline-block;
+}
+
+.ui-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  text-decoration: underline;
+}
+
+.ui-clan-info-section {
+  margin-top: 2rem;
+}
+
+.ui-info-label {
+  font-weight: 600;
+  margin-bottom: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center icon and text */
+  gap: 0.5rem;
+  color: var(--color-orange, #ff9800);
+  width: 100%; /* Full width for better centering */
+}
+
+.ui-info-value {
+  color: var(--color-text, #e0e0e0);
+  font-size: 1.125rem;
+  display: flex;
+  justify-content: center; /* Center content */
+  width: 100%; /* Full width */
+}
+
+.ui-resource-link {
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ui-info-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .ui-info-item {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* RESPONSIVE STYLES */
+@media (max-width: 768px) {
+  .ui-page-container {
+    width: 98%;
+    padding: 1rem;
+  }
+  
+  .ui-content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .ui-section-container {
+    padding: 1rem;
+  }
+  
+  .ui-clan-info-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-page-container {
+    width: 100%;
+    padding: 0.75rem;
+  }
+  
+  .ui-section-title {
+    font-size: 1.125rem;
+  }
+}
+
+/* Grid layout for clan info */
+.ui-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.ui-info-item {
+  background-color: var(--card-bg, #222);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ui-info-label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ui-info-value {
+  color: var(--text-color, #e0e0e0);
+  font-size: 0.9rem;
+}
+
+.ui-resource-link {
+  color: var(--primary-color, #2196f3);
+  text-decoration: none;
+}
+
+.ui-resource-link:hover {
+  text-decoration: underline;
+}
+
+/* Links container */
+.ui-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Styled links */
+.ui-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-color, #2196f3);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.ui-resource-link:hover {
+  color: var(--accent-color-light, #64b5f6);
+  transform: translateX(0.125rem);
+}
+
+/* Custom icon for Wise Old Man */
+.ui-custom-icon {
+  height: 30px;
+  vertical-align: middle;
+}
+
+/* BASE LAYOUT */
 .quick-stats-page-container {
   width: 85%;
   max-width: 1400px;
