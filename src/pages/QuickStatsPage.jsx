@@ -11,6 +11,7 @@ import {
   FaGlobe,
   FaTrophy,
   FaLink,
+  FaUsers
 } from "react-icons/fa";
 
 // Import UI components
