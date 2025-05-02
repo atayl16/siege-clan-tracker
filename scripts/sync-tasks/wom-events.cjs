@@ -12,188 +12,424 @@ const WOM_API_KEY = process.env.WOM_API_KEY;
 const WOM_GROUP_ID = process.env.WOM_GROUP_ID;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
-// Main execution function
-async function syncWomEvents() {
-  try {
-    console.log('🔄 Starting WOM Events sync...');
-    
-    // Log environment variables status (without revealing values)
-    console.log('Environment check:');
-    console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set ✓' : 'Missing ❌'}`);
-    console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
-    console.log(`- WOM_API_KEY: ${process.env.WOM_API_KEY ? 'Set ✓' : 'Missing ❌'}`);
-    console.log(`- WOM_GROUP_ID: ${process.env.WOM_GROUP_ID ? 'Set ✓' : 'Missing ❌'}`);
-    
-    // Fetch competitions for the group
-    console.log(`Fetching competitions for WOM group ${WOM_GROUP_ID}`);
-    const competitionsResponse = await fetch(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}/competitions`, {
-      headers: {
-        'x-api-key': WOM_API_KEY
-      }
-    });
-    
-    if (!competitionsResponse.ok) {
-      throw new Error(`Failed to fetch competitions: ${competitionsResponse.status}`);
-    }
-    
-    const competitions = await competitionsResponse.json();
-    console.log(`Found ${competitions.length} competitions`);
-    
-    // Calculate the one month ago date for filtering old events
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    console.log(`Skipping events completed before: ${oneMonthAgo.toISOString()}`);
-    
-    // Track stats for results
-    let totalProcessed = 0;
-    let skippedOld = 0;
-    let skippedProcessed = 0;
-    let updatedEvents = 0;
-    let addedPoints = 0;
-    
-    // Store competitions in Supabase
-    for (const comp of competitions) {
-      // Check if this competition already exists in our database
-      const { data: existingComp, error: checkError } = await supabase
-        .from('events')
-        .select('id, status, winner_username, points_processed, end_date')
-        .eq('wom_id', comp.id)
-        .single();
+// Cache for API responses to reduce duplicate calls
+const apiCache = new Map();
+
+// Helper function to add delay with exponential backoff
+async function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper function for API requests with retry logic
+async function fetchWithRetry(url, options = {}, retries = 3, initialBackoff = 2000) {
+  let lastError;
+  let backoff = initialBackoff;
+  
+  // Check cache first
+  const cacheKey = `${url}-${JSON.stringify(options.body || {})}`;
+  if (apiCache.has(cacheKey)) {
+    return apiCache.get(cacheKey);
+  }
+  
+  // Ensure headers include API key
+  const headers = {
+    ...options.headers,
+    'x-api-key': WOM_API_KEY
+  };
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, { ...options, headers });
       
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means not found, which is fine
-        console.error(`Error checking for existing competition ${comp.id}:`, checkError);
+      if (response.status === 429) {
+        console.log(`Rate limit hit on attempt ${attempt + 1}. Backing off for ${backoff}ms...`);
+        await delay(backoff);
+        // Exponential backoff
+        backoff *= 2;
         continue;
       }
       
-      // Determine status based on dates
-      const now = new Date();
-      const startDate = new Date(comp.startsAt);
-      const endDate = new Date(comp.endsAt);
-      
-      let status = 'upcoming';
-      if (now > endDate) {
-        status = 'completed';
-      } else if (now >= startDate) {
-        status = 'active';
-      }
-      
-      // Format the data for our events table
-      const eventData = {
-        name: comp.title,
-        wom_id: comp.id,
-        is_wom: true,
-        type: comp.title.toLowerCase().includes('sotw') || comp.title.toLowerCase().includes('skill') 
-          ? 'skilling' 
-          : comp.title.toLowerCase().includes('botw') || comp.title.toLowerCase().includes('boss') 
-            ? 'bossing'
-            : comp.title.toLowerCase().includes('raid') 
-              ? 'raids'
-              : 'other',
-        start_date: comp.startsAt,
-        end_date: comp.endsAt,
-        metric: comp.metric,
-        status: status,
-        description: `WOM Competition: ${comp.metric.replace(/_/g, ' ')}`
-      };
-      
-      // If it's a completed competition and we don't have a winner yet, get the winner
-      if (status === 'completed' && (!existingComp || !existingComp.winner_username)) {
-        try {
-          console.log(`Fetching winner for completed competition ${comp.id}: ${comp.title}`);
-          
-          // Fetch competition details to get participants
-          const detailsResponse = await fetch(`${WOM_API_BASE}/competitions/${comp.id}`, {
-            headers: {
-              'x-api-key': WOM_API_KEY
-            }
-          });
-          
-          if (detailsResponse.ok) {
-            const detailsData = await detailsResponse.json();
-            
-            // Get participants and sort by progress gained (highest first)
-            const participants = detailsData.participations || [];
-            participants.sort((a, b) => (b.progress?.gained || 0) - (a.progress?.gained || 0));
-            
-            // Extract winner info - just store display name or username
-            const winner = participants.length > 0 ? participants[0] : null;
-            
-            if (winner && winner.player) {
-              const winnerName = winner.player.displayName || winner.player.username;
-              console.log(`Winner for "${comp.title}": ${winnerName} with ${winner.progress?.gained} gained`);
-              
-              // Add winner username to event data
-              eventData.winner_username = winnerName;
-            }
-          } else {
-            console.error(`Failed to fetch competition details: ${detailsResponse.status}`);
-          }
-        } catch (err) {
-          console.error(`Error fetching competition winner: ${err}`);
-        }
-      } else if (existingComp && existingComp.winner_username) {
-        // Keep existing winner information
-        eventData.winner_username = existingComp.winner_username;
-      }
-      
-      if (existingComp) {
-        // Update existing event
-        const { error: updateError } = await supabase
-          .from('events')
-          .update(eventData)
-          .eq('id', existingComp.id);
-        
-        if (updateError) {
-          console.error(`Error updating competition ${comp.id}:`, updateError);
-        } else {
-          updatedEvents++;
-        }
+      if (response.ok) {
+        const data = await response.json();
+        // Store in cache
+        apiCache.set(cacheKey, data);
+        return data;
       } else {
-        // Insert new event
-        const { error: insertError } = await supabase
-          .from('events')
-          .insert([eventData]);
-        
-        if (insertError) {
-          console.error(`Error inserting competition ${comp.id}:`, insertError);
-        } else {
-          updatedEvents++;
-        }
+        const errorText = await response.text();
+        throw new Error(`Request failed with status ${response.status}: ${errorText}`);
       }
+    } catch (err) {
+      lastError = err;
       
-      // If the competition is completed, check if we should process results
-      if (status === 'completed') {
-        // Check if points have already been processed
-        const alreadyProcessed = existingComp && existingComp.points_processed === true;
-        
-        // Check if the event is over a month old
-        const eventEndDate = new Date(comp.endsAt);
-        const isTooOld = eventEndDate < oneMonthAgo;
-        
-        if (alreadyProcessed) {
-          console.log(`Skipping points for competition ${comp.id} - already processed`);
-          skippedProcessed++;
-        } else if (isTooOld) {
-          console.log(`Skipping points for competition ${comp.id} - over one month old (ended ${eventEndDate.toISOString()})`);
-          skippedOld++;
-          
-          // Mark old competitions as processed so we don't check them again
-          if (existingComp) {
-            await supabase
-              .from('events')
-              .update({ points_processed: true, skipped_reason: 'too_old' })
-              .eq('id', existingComp.id);
-          }
-        } else {
-          console.log(`Processing points for competition ${comp.id}`);
-          await processCompetitionResults(comp.id);
-          addedPoints++;
-        }
-        
-        totalProcessed++;
+      if (attempt < retries) {
+        console.log(`Request failed (attempt ${attempt + 1}/${retries + 1}). Retrying in ${backoff}ms...`);
+        await delay(backoff);
+        // Exponential backoff
+        backoff *= 2;
       }
     }
+  }
+  
+  throw lastError || new Error('Request failed after multiple retries');
+}
+
+// Main execution function
+async function syncWomEvents() {
+  try {
+    console.log("🔄 Starting WOM Events sync...");
+
+    // Log environment variables status (without revealing values)
+    console.log("Environment check:");
+    console.log(
+      `- SUPABASE_URL: ${process.env.SUPABASE_URL ? "Set ✓" : "Missing ❌"}`
+    );
+    console.log(
+      `- SUPABASE_SERVICE_ROLE_KEY: ${
+        process.env.SUPABASE_SERVICE_ROLE_KEY ? "Set ✓" : "Missing ❌"
+      }`
+    );
+    console.log(
+      `- WOM_API_KEY: ${process.env.WOM_API_KEY ? "Set ✓" : "Missing ❌"}`
+    );
+    console.log(
+      `- WOM_GROUP_ID: ${process.env.WOM_GROUP_ID ? "Set ✓" : "Missing ❌"}`
+    );
+
+    // OPTIMIZATION: Get last sync time to optimize processing
+    const { data: syncInfo } = await supabase
+      .from("sync_logs")
+      .select("last_sync")
+      .eq("type", "wom_events")
+      .order("last_sync", { ascending: false })
+      .limit(1)
+      .single();
     
+    const lastSyncTime = syncInfo?.last_sync || new Date(0).toISOString();
+    console.log(`Last sync time: ${lastSyncTime}`);
+
+    // Fetch competitions for the group
+    console.log(`Fetching competitions for WOM group ${WOM_GROUP_ID}`);
+    const competitions = await fetchWithRetry(
+      `${WOM_API_BASE}/groups/${WOM_GROUP_ID}/competitions`
+    );
+    
+    console.log(`Found ${competitions.length} competitions`);
+
+    // Calculate the one month ago date for filtering old events
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    // Calculate one day ago for prioritization
+    const oneDayAgo = new Date(Date.now() - 86400000);
+    
+    console.log(`Skipping events completed before: ${oneMonthAgo.toISOString()}`);
+
+    // Filter out competitions that ended more than a month ago
+    const recentCompetitions = competitions.filter((comp) => {
+      const endDate = new Date(comp.endsAt);
+      const isRecent = endDate >= oneMonthAgo;
+      if (!isRecent) {
+        console.log(
+          `Skipping old competition: "${
+            comp.title
+          }" (ended ${endDate.toISOString()})`
+        );
+      }
+      return isRecent;
+    });
+
+    console.log(
+      `Processing ${recentCompetitions.length} of ${
+        competitions.length
+      } competitions (${
+        competitions.length - recentCompetitions.length
+      } old competitions filtered out)`
+    );
+
+    // OPTIMIZATION: Prioritize newly completed competitions
+    // Sort competitions by priority:
+    // 1. Newly completed in the last day
+    // 2. Active competitions
+    // 3. Upcoming competitions
+    // 4. Older completed competitions
+    
+    const now = new Date();
+    
+    // Split competitions into categories
+    const newlyCompleted = recentCompetitions.filter(comp => {
+      const endDate = new Date(comp.endsAt);
+      return endDate <= now && endDate >= oneDayAgo;
+    });
+    
+    const activeCompetitions = recentCompetitions.filter(comp => {
+      const startDate = new Date(comp.startsAt);
+      const endDate = new Date(comp.endsAt);
+      return now >= startDate && now <= endDate;
+    });
+    
+    const upcomingCompetitions = recentCompetitions.filter(comp => {
+      const startDate = new Date(comp.startsAt);
+      return startDate > now;
+    });
+    
+    const olderCompleted = recentCompetitions.filter(comp => {
+      const endDate = new Date(comp.endsAt);
+      return endDate < oneDayAgo && endDate >= oneMonthAgo;
+    });
+    
+    console.log(`Competition categories:
+    - Newly completed (last 24h): ${newlyCompleted.length}
+    - Active competitions: ${activeCompetitions.length}
+    - Upcoming competitions: ${upcomingCompetitions.length}
+    - Older completed competitions: ${olderCompleted.length}`);
+
+    // OPTIMIZATION: Use time-based processing to limit competitions per run
+    const currentHour = new Date().getHours();
+    const hourBasedLimit = 5; // Base limit of competitions to process per hour
+    
+    // Process different types in different hours
+    let competitionsToProcess = [];
+    
+    // Always process newly completed first
+    competitionsToProcess = [...newlyCompleted];
+    
+    // Then based on the hour, process different categories
+    if (currentHour % 4 === 0) {
+      // First quarter: Focus on active
+      competitionsToProcess = [
+        ...competitionsToProcess,
+        ...activeCompetitions.slice(0, hourBasedLimit)
+      ];
+    } else if (currentHour % 4 === 1) {
+      // Second quarter: Focus on upcoming
+      competitionsToProcess = [
+        ...competitionsToProcess,
+        ...upcomingCompetitions.slice(0, hourBasedLimit)
+      ];
+    } else if (currentHour % 4 === 2 || currentHour % 4 === 3) {
+      // Third/fourth quarter: Process older completed, but distributed
+      // Use modulo to select different subset each hour
+      const chunk = Math.floor(olderCompleted.length / 4);
+      const startIdx = (currentHour % 4) * chunk;
+      competitionsToProcess = [
+        ...competitionsToProcess,
+        ...olderCompleted.slice(startIdx, startIdx + hourBasedLimit)
+      ];
+    }
+    
+    // Make sure we don't process too many in one go
+    const maxCompetitionsPerRun = 10;
+    if (competitionsToProcess.length > maxCompetitionsPerRun) {
+      console.log(`Limiting to ${maxCompetitionsPerRun} competitions for this run`);
+      competitionsToProcess = competitionsToProcess.slice(0, maxCompetitionsPerRun);
+    }
+    
+    console.log(`Processing ${competitionsToProcess.length} competitions in this run`);
+
+    // Track stats for results
+    let totalProcessed = 0;
+    let skippedOld = competitions.length - recentCompetitions.length;
+    let skippedProcessed = 0;
+    let updatedEvents = 0;
+    let addedPoints = 0;
+
+    // Prefetch existing competitions in one batch query for efficiency
+    const womIds = competitionsToProcess.map(comp => comp.id);
+    
+    const { data: existingComps, error: batchFetchError } = await supabase
+      .from("events")
+      .select("id, wom_id, status, winner_username, points_processed, end_date")
+      .in("wom_id", womIds);
+    
+    if (batchFetchError) {
+      console.error("Error batch fetching competitions:", batchFetchError);
+    }
+    
+    // Create lookup map for quick access
+    const existingCompMap = new Map();
+    if (existingComps) {
+      existingComps.forEach(comp => {
+        existingCompMap.set(comp.wom_id, comp);
+      });
+    }
+
+    // OPTIMIZATION: Process competitions in parallel batches
+    const batchSize = 3; // Process 3 at a time
+    
+    for (let i = 0; i < competitionsToProcess.length; i += batchSize) {
+      const batch = competitionsToProcess.slice(i, i + batchSize);
+      
+      // Process this batch in parallel
+      await Promise.all(batch.map(async (comp) => {
+        try {
+          // Get existing comp from our map
+          const existingComp = existingCompMap.get(comp.id);
+          
+          // Determine status based on dates
+          const now = new Date();
+          const startDate = new Date(comp.startsAt);
+          const endDate = new Date(comp.endsAt);
+
+          let status = "upcoming";
+          if (now > endDate) {
+            status = "completed";
+          } else if (now >= startDate) {
+            status = "active";
+          }
+
+          // Format the data for our events table
+          const eventData = {
+            name: comp.title,
+            wom_id: comp.id,
+            is_wom: true,
+            type:
+              comp.title.toLowerCase().includes("sotw") ||
+              comp.title.toLowerCase().includes("skill")
+                ? "skilling"
+                : comp.title.toLowerCase().includes("botw") ||
+                  comp.title.toLowerCase().includes("boss")
+                ? "bossing"
+                : comp.title.toLowerCase().includes("raid")
+                ? "raids"
+                : "other",
+            start_date: comp.startsAt,
+            end_date: comp.endsAt,
+            metric: comp.metric,
+            status: status,
+            description: `WOM Competition: ${comp.metric.replace(/_/g, " ")}`,
+          };
+
+          // If it's a completed competition and we don't have a winner yet, get the winner
+          if (
+            status === "completed" &&
+            (!existingComp || !existingComp.winner_username)
+          ) {
+            try {
+              console.log(
+                `Fetching winner for completed competition ${comp.id}: ${comp.title}`
+              );
+
+              // Fetch competition details to get participants
+              const detailsData = await fetchWithRetry(
+                `${WOM_API_BASE}/competitions/${comp.id}`
+              );
+
+              // Get participants and sort by progress gained (highest first)
+              const participants = detailsData.participations || [];
+              participants.sort(
+                (a, b) => (b.progress?.gained || 0) - (a.progress?.gained || 0)
+              );
+
+              // Extract winner info - just store display name or username
+              const winner = participants.length > 0 ? participants[0] : null;
+
+              if (winner && winner.player) {
+                const winnerName =
+                  winner.player.displayName || winner.player.username;
+                console.log(
+                  `Winner for "${comp.title}": ${winnerName} with ${winner.progress?.gained} gained`
+                );
+
+                // Add winner username to event data
+                eventData.winner_username = winnerName;
+              }
+            } catch (err) {
+              console.error(`Error fetching competition winner: ${err}`);
+            }
+          } else if (existingComp && existingComp.winner_username) {
+            // Keep existing winner information
+            eventData.winner_username = existingComp.winner_username;
+          }
+
+          if (existingComp) {
+            // Update existing event
+            const { error: updateError } = await supabase
+              .from("events")
+              .update(eventData)
+              .eq("id", existingComp.id);
+
+            if (updateError) {
+              console.error(`Error updating competition ${comp.id}:`, updateError);
+            } else {
+              updatedEvents++;
+            }
+          } else {
+            // Insert new event
+            const { error: insertError } = await supabase
+              .from("events")
+              .insert([eventData]);
+
+            if (insertError) {
+              console.error(`Error inserting competition ${comp.id}:`, insertError);
+            } else {
+              updatedEvents++;
+            }
+          }
+
+          // If the competition is completed, check if we should process results
+          if (status === "completed") {
+            // Check if points have already been processed
+            const alreadyProcessed =
+              existingComp && existingComp.points_processed === true;
+
+            // Check if the event is over a month old
+            const eventEndDate = new Date(comp.endsAt);
+            const isTooOld = eventEndDate < oneMonthAgo;
+
+            if (alreadyProcessed) {
+              console.log(
+                `Skipping points for competition ${comp.id} - already processed`
+              );
+              skippedProcessed++;
+            } else if (isTooOld) {
+              console.log(
+                `Skipping points for competition ${
+                  comp.id
+                } - over one month old (ended ${eventEndDate.toISOString()})`
+              );
+              skippedOld++;
+
+              // Mark old competitions as processed so we don't check them again
+              if (existingComp) {
+                await supabase
+                  .from("events")
+                  .update({ points_processed: true, skipped_reason: "too_old" })
+                  .eq("id", existingComp.id);
+              }
+            } else {
+              console.log(`Processing points for competition ${comp.id}`);
+              await processCompetitionResults(comp.id);
+              addedPoints++;
+            }
+
+            totalProcessed++;
+          }
+        } catch (err) {
+          console.error(`Error processing competition ${comp.id}:`, err);
+        }
+      }));
+      
+      // Small delay between batches to avoid overwhelming the API
+      if (i + batchSize < competitionsToProcess.length) {
+        await delay(1000);
+      }
+    }
+
+    // Update the sync log with current time
+    await supabase
+      .from("sync_logs")
+      .upsert({
+        type: "wom_events",
+        last_sync: new Date().toISOString(),
+        details: JSON.stringify({
+          totalProcessed,
+          updatedEvents,
+          addedPoints,
+          skippedProcessed,
+          skippedOld
+        })
+      });
+
     console.log(`Events processing summary:
     - Total completed competitions: ${totalProcessed}
     - Updated events: ${updatedEvents}
@@ -206,9 +442,8 @@ async function syncWomEvents() {
       updatedEvents,
       addedPoints,
       skippedProcessed,
-      skippedOld
+      skippedOld,
     };
-    
   } catch (err) {
     console.error('❌ Error in WOM events sync:', err);
     // Exit with error code for GitHub Actions
@@ -217,7 +452,6 @@ async function syncWomEvents() {
 }
 
 // Process competition results and award points
-
 async function processCompetitionResults(competitionId) {
   try {
     // First check if we've already processed points for this competition
@@ -275,22 +509,10 @@ async function processCompetitionResults(competitionId) {
     }
 
     // Fetch competition details to get participants and results
-    const compDetailsResponse = await fetch(
-      `${WOM_API_BASE}/competitions/${competitionId}`,
-      {
-        headers: {
-          "x-api-key": WOM_API_KEY,
-        },
-      }
+    const compDetails = await fetchWithRetry(
+      `${WOM_API_BASE}/competitions/${competitionId}`
     );
-
-    if (!compDetailsResponse.ok) {
-      throw new Error(
-        `Failed to fetch competition details: ${compDetailsResponse.status}`
-      );
-    }
-
-    const compDetails = await compDetailsResponse.json();
+    
     const participants = compDetails.participations || [];
 
     if (!participants || participants.length === 0) {
@@ -347,6 +569,29 @@ async function processCompetitionResults(competitionId) {
     const pointsData = [];
     const memberUpdates = [];
 
+    // OPTIMIZATION: Gather all usernames first to minimize database queries
+    const allUsernames = validParticipants.map(p => 
+      p.player.username.toLowerCase()
+    );
+    
+    const allDisplayNames = validParticipants
+      .filter(p => p.player.displayName)
+      .map(p => p.player.displayName.toLowerCase());
+    
+    // Get all members matching these usernames in one query
+    const { data: memberMatches } = await supabase
+      .from("members")
+      .select("wom_id, wom_name, siege_score")
+      .or(`wom_name.in.(${allUsernames.map(u => `"${u}"`).join(',')}),wom_name.in.(${allDisplayNames.map(d => `"${d}"`).join(',')})`);
+    
+    // Create a map for quick lookups
+    const memberMap = new Map();
+    if (memberMatches) {
+      memberMatches.forEach(member => {
+        memberMap.set(member.wom_name.toLowerCase(), member);
+      });
+    }
+
     for (const group of progressGroups) {
       // Determine points for this place
       let pointsToAward = 2; // Default participation points
@@ -366,53 +611,15 @@ async function processCompetitionResults(competitionId) {
       // Process all participants in this tie group
       for (const participant of group.participants) {
         try {
-          // Get the member from our database
+          // Try to find the member using our pre-loaded map
           const username = participant.player.username.toLowerCase();
-          const { data: members, error: memberQueryError } = await supabase
-            .from("members")
-            .select("wom_id, siege_score")
-            .ilike("wom_name", username);
-
-          if (memberQueryError) {
-            console.error(
-              `Error querying member ${username}:`,
-              memberQueryError
-            );
-            continue;
-          }
-
-          // Define member outside of conditional blocks so it's available throughout
-          let member;
-
-          // Use the first match if any found
-          if (!members || members.length === 0) {
-            console.log(
-              `Member not found: ${username} - will try alternative lookup`
-            );
-
-            // Try alternative lookup with display name
-            const displayName = participant.player.displayName?.toLowerCase();
-            if (displayName && displayName !== username) {
-              const { data: altMembers } = await supabase
-                .from("members")
-                .select("wom_id, siege_score")
-                .ilike("wom_name", displayName);
-
-              if (altMembers && altMembers.length > 0) {
-                console.log(`Found member via display name: ${displayName}`);
-                member = altMembers[0];
-              } else {
-                console.error(
-                  `Member not found by username or display name: ${username}`
-                );
-                continue;
-              }
-            } else {
-              console.error(`Member not found: ${username}`);
-              continue;
-            }
-          } else {
-            member = members[0];
+          const displayName = participant.player.displayName?.toLowerCase();
+          
+          let member = memberMap.get(username);
+          
+          // Try display name if username didn't match
+          if (!member && displayName && displayName !== username) {
+            member = memberMap.get(displayName);
           }
 
           // Only process if we found a valid member
@@ -435,6 +642,10 @@ async function processCompetitionResults(competitionId) {
               points_awarded: pointsToAward,
               progress: participant.progress.gained,
             });
+          } else {
+            console.log(
+              `Member not found for player: ${participant.player.username}`
+            );
           }
         } catch (err) {
           console.error(
