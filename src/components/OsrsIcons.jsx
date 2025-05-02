@@ -42,7 +42,7 @@ import LeaguesIcon from "../assets/images/other/Leagues.png";
 import BountyHunterIcon from "../assets/images/other/Bounty.png";
 import LastManStandingIcon from "../assets/images/other/Last_Man_Standing_logo.png";
 import SoulWarsIcon from "../assets/images/other/Soul_Wars_logo.png";
-import GuardiansOfTheRiftIcon from "../assets/images/other/Rewards_guardian.png";
+import GuardiansOfTheRiftIcon from "../assets/images/other/Rewards_Guardian.png";
 import CollectionsLoggedIcon from "../assets/images/other/Collection_log_detail.png";
 import PvPArenaIcon from "../assets/images/other/PK-Skull.png";
 
