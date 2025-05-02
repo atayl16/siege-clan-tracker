@@ -266,3 +266,29 @@
     padding: 0.75rem;
   }
 }
+
+/* Collapsible section header */
+.ui-events-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.ui-events-info-header h3 {
+  margin: 0;
+  flex-grow: 1;
+}
+
+.ui-events-info-header .ui-events-info-icon {
+  margin-right: 8px;
+}
+
+.ui-events-info-header svg {
+  font-size: 1.2rem;
+}
+
+/* Collapsible content */
+.ui-events-info-content {
+  margin-top: 1rem;
+}
