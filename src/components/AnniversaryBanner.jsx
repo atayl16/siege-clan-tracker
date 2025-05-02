@@ -16,18 +16,30 @@ export default function AnniversaryBanner() {
   // Filter members with anniversaries today
   const anniversaries = useMemo(() => {
     if (!members) return [];
+    
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    
     return members
       .filter((member) => {
         if (!member.join_date) return false;
+        
         const joinDate = new Date(member.join_date);
-        return (
+        const joinYear = joinDate.getFullYear();
+        
+        // Check if it's the same month and day (anniversary)
+        const isSameMonthAndDay = 
           joinDate.getMonth() + 1 === today.month &&
-          joinDate.getDate() === today.day
-        );
+          joinDate.getDate() === today.day;
+          
+        // Exclude members who joined today (same year, month, and day)
+        const isNotToday = !(isSameMonthAndDay && joinYear === currentYear);
+        
+        return isSameMonthAndDay && isNotToday;
       })
       .map((member) => {
         const joinDate = new Date(member.join_date);
-        const years = new Date().getFullYear() - joinDate.getFullYear();
+        const years = currentDate.getFullYear() - joinDate.getFullYear();
         return { ...member, years };
       });
   }, [members, today]);
@@ -48,7 +60,7 @@ export default function AnniversaryBanner() {
             <span className="ui-anniversary-title">Clan Anniversary!</span>
             <p className="ui-anniversary-text">
               <strong>{member.name || member.wom_name}</strong> -{" "}
-              {member.years > 1 ? `${member.years} years` : "1 year"} in the clan today!
+              {member.years} {member.years === 1 ? "year" : "years"} in the clan today!
             </p>
           </div>
         </Card>

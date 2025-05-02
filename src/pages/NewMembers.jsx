@@ -3,7 +3,6 @@ import {
   FaMedal,
   FaUserPlus,
   FaBook,
-  FaChevronRight,
   FaDiscord,
 } from "react-icons/fa";
 import Button from "../components/ui/Button";
@@ -22,12 +21,12 @@ export default function NewMembers() {
           </video>
           <div className="ui-video-overlay"></div>
         </div>
-        
+
         <div className="ui-hero-content">
           <h1 className="ui-hero-title">Welcome to Siege</h1>
         </div>
       </div>
-      
+
       {/* Welcome Section */}
       <div className="ui-section-container">
         <h3 className="ui-section-title">
@@ -68,7 +67,7 @@ export default function NewMembers() {
       {/* Level Requirements Section */}
       <div className="ui-section-container">
         <h3 className="ui-section-title">
-          <FaChevronRight className="ui-section-icon" /> Minimum Level Requirements
+          <FaMedal className="ui-section-icon" /> Minimum Level Requirements
         </h3>
 
         <div className="ui-requirements-grid">
@@ -101,7 +100,7 @@ export default function NewMembers() {
           </p>
         </div>
       </div>
-      
+
       {/* Rules Section */}
       <div className="ui-section-container">
         <h3 className="ui-section-title">
@@ -111,19 +110,36 @@ export default function NewMembers() {
         <div className="ui-rules-content">
           <ol className="ui-rules-list">
             <li>Follow the rules of the game.</li>
-            <li>Respect all clan members even if you disagree with their viewpoint - a little bit of respect goes a long way!</li>
-            <li>No discrimination of any kind. We aim to have a very inclusive environment!</li>
-            <li>Do not spoil anything from popular media in the clan chat or in the discord server. (Do not spoil anything in private chat without the consent of that person)</li>
+            <li>
+              Respect all clan members even if you disagree with their viewpoint
+              - a little bit of respect goes a long way!
+            </li>
+            <li>
+              No discrimination of any kind. We aim to have a very inclusive
+              environment!
+            </li>
+            <li>
+              Do not spoil anything from popular media in the clan chat or in
+              the discord server. (Do not spoil anything in private chat without
+              the consent of that person)
+            </li>
             <li>No scamming.</li>
-            <li>Do not bring drama to the clan. Any drama will get shut down and dealt with. This community is a place where members come and chill and play the game. Siege is a drama-free clan. Remember this rule and store it in your brains (:</li>
+            <li>
+              Do not bring drama to the clan. Any drama will get shut down and
+              dealt with. This community is a place where members come and chill
+              and play the game. Siege is a drama-free clan. Remember this rule
+              and store it in your brains (:
+            </li>
           </ol>
-        
+
           <div className="ui-rules-note">
             <p>
-              Siege Staff Team has the right to kick any member from this clan if you break any of the above rulings.
+              Siege Staff Team has the right to kick any member from this clan
+              if you break any of the above rulings.
             </p>
             <p>
-              We would like to think we are a very laid back clan so please don't take advantage of that and ruin it for everyone else!
+              We would like to think we are a very laid back clan so please
+              don't take advantage of that and ruin it for everyone else!
             </p>
           </div>
         </div>
