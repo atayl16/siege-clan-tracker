@@ -28,7 +28,7 @@
 
 /* SECTION LAYOUT */
 .quick-stats-section-container {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   background-color: #222;
   border-radius: var(--border-radius-md, 0.5rem);
   padding: 1.25rem;
@@ -133,7 +133,7 @@
 .quick-stats-info-label {
   font-weight: 600; /* Slightly bolder for emphasis */
   font-size: 1rem;
-  color: var(--color-text, #e0e0e0);
+  color: var(--color-orange, #ff9800); /* Consistent color for labels */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -174,4 +174,8 @@
 .quick-stats-custom-icon {
   height: 30px;
   vertical-align: middle;
+}
+
+.quick-stats-clan-info-section {
+  margin-bottom: 2rem;
 }
