@@ -5,8 +5,10 @@ import { useCompetitions } from "../hooks/useCompetitions";
 import { useGroupAchievements } from "../hooks/useGroupAchievements";
 import { useGroupStats } from "../hooks/useGroupStats";
 import { useMembers } from "../hooks/useMembers";
-import { useClaimRequests, useEvents, useRaces, useUsers } from "./DataContext-OLD";
-import { useUserGoals } from "../hooks/useUserGoals";
+import { useClaimRequests } from "../hooks/useClaimRequests";
+import { useEvents } from "../hooks/useEvents";
+import { useRaces } from "../hooks/useRaces";
+import { useUsers } from "../hooks/useUsers";import { useUserGoals } from "../hooks/useUserGoals";
 
 const DataContext = createContext({});
 export function DataProvider({ children }) {
