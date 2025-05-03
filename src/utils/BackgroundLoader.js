@@ -44,50 +44,60 @@ function BackgroundLoader() {
 
     console.log("Starting background loading...");
 
-    // Start API prefetching in priority order
+    // Start API prefetching in priority order    
     const prefetchApiData = () => {
       console.log("Background loading API data...");
       
+      // Helper function to safely prefetch with error handling
+      const safePrefetch = (queryKey, endpoint) => {
+        queryClient.prefetchQuery(queryKey, () => 
+          fetch(endpoint)
+            .then(res => {
+              if (!res.ok) {
+                // Log warning but don't throw to prevent React Query retries
+                console.log(`Background loader: ${endpoint} returned ${res.status} - skipping prefetch`);
+                return {}; // Return empty object instead of failing
+              }
+              return res.json();
+            })
+            .catch(err => {
+              console.log(`Background loader: Could not fetch ${endpoint}`, err.message);
+              return {}; // Return empty object on network errors
+            })
+        );
+      };
+      
+      // Check if we're in a preview environment
+      const isPreviewEnvironment = window.location.hostname.includes('deploy-preview');
+      
       // Tier 1: Most critical data for navigation (highest priority)
-      queryClient.prefetchQuery(["wom-group"], () => 
-        fetch("/api/wom-group").then(res => res.json())
-      );
+      safePrefetch(["wom-group"], "/api/wom-group");
       
       // Tier 2: Commonly viewed pages (medium priority)
       setTimeout(() => {
-        queryClient.prefetchQuery(["wom-group-stats"], () => 
-          fetch("/api/wom-group-stats").then(res => res.json())
-        );
-        
-        queryClient.prefetchQuery(["members"], () => 
-          fetch("/api/members").then(res => res.json())
-        );
+        safePrefetch(["wom-group-stats"], "/api/wom-group-stats");
+        safePrefetch(["members"], "/api/members");
       }, 500);
       
       // Tier 3: Less frequently accessed pages (lower priority)
       setTimeout(() => {
-        queryClient.prefetchQuery(["events"], () => 
-          fetch("/api/events").then(res => res.json())
-        );
-        
-        queryClient.prefetchQuery(["wom-group-achievements"], () => 
-          fetch("/api/wom-group-achievements").then(res => res.json())
-        );
+        safePrefetch(["events"], "/api/events");
+        safePrefetch(["wom-group-achievements"], "/api/wom-group-achievements");
       }, 1500);
       
       // Tier 4: Rarely accessed pages (lowest priority)
+      // Only attempt in production environments unless overridden
       setTimeout(() => {
-        queryClient.prefetchQuery(["wom-competitions"], () => 
-          fetch("/api/wom-competitions").then(res => res.json())
-        );
-        
-        queryClient.prefetchQuery(["claim-requests"], () => 
-          fetch("/api/claim-requests").then(res => res.json())
-        );
-        
-        queryClient.prefetchQuery(["races"], () => 
-          fetch("/api/races").then(res => res.json())
-        );
+        // These endpoints are commonly failing in preview environments
+        if (!isPreviewEnvironment || window.FORCE_LOAD_ALL_APIS) {
+          safePrefetch(["wom-competitions"], "/api/wom-competitions");
+          safePrefetch(["claim-requests"], "/api/claim-requests");
+          safePrefetch(["races"], "/api/races");
+          safePrefetch(["users"], "/api/users");
+          safePrefetch(["user-goals"], "/api/user-goals");
+        } else {
+          console.log("Background loader: Skipping Tier 4 API prefetching in preview environment");
+        }
       }, 3000);
     };
 
