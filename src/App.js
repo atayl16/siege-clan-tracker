@@ -122,9 +122,8 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BackgroundLoader />
-
       <DataProvider>
+        <BackgroundLoader />
         <AuthProvider>
           <Router>
             <AppContent />
