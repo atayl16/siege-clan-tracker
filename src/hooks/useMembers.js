@@ -152,6 +152,71 @@ export function useMembers() {
     }
   };
 
+    // Toggle visibility function
+  const toggleMemberVisibility = async (member) => {
+    if (!member || !member.wom_id) {
+      throw new Error('Missing member WOM ID for visibility toggle');
+    }
+    
+    try {
+      const client = getAdminSupabaseClient();
+      const newVisibility = !member.hidden;
+      
+      console.log(`Attempting to ${newVisibility ? 'hide' : 'unhide'} member:`, member.name);
+      
+      const { data, error } = await client.rpc(
+        'admin_toggle_member_visibility',
+        { 
+          member_id: member.wom_id,
+          is_hidden: newVisibility
+        }
+      );
+      
+      if (error) throw error;
+      
+      console.log("RPC toggle visibility response:", data);
+      
+      // Refresh members list
+      await fetchMembers();
+      return data;
+    } catch (err) {
+      console.error('Error toggling member visibility:', err);
+      throw err;
+    }
+  };
+  
+  // Change rank type function
+  const changeMemberRank = async (member, newRank) => {
+    if (!member || !member.wom_id) {
+      throw new Error('Missing member WOM ID for rank change');
+    }
+    
+    try {
+      const client = getAdminSupabaseClient();
+      
+      console.log(`Changing ${member.name}'s rank to ${newRank}`);
+      
+      const { data, error } = await client.rpc(
+        'admin_change_member_rank',
+        { 
+          member_id: member.wom_id,
+          new_role: newRank
+        }
+      );
+      
+      if (error) throw error;
+      
+      console.log("RPC rank change response:", data);
+      
+      // Refresh members list
+      await fetchMembers();
+      return data;
+    } catch (err) {
+      console.error('Error changing member rank:', err);
+      throw err;
+    }
+  };
+
   // Initial fetch of members
   useEffect(() => {
     fetchMembers();
@@ -165,6 +230,8 @@ export function useMembers() {
     createMember,
     updateMember,
     deleteMember,
-    whitelistRunewatchMember
+    whitelistRunewatchMember,
+    toggleMemberVisibility,
+    changeMemberRank
   };
 }

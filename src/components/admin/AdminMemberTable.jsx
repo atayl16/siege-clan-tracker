@@ -195,125 +195,32 @@ export default function AdminMemberTable({
     }
   };
 
+  const handleToggleVisibility = async (member) => {
+    try {
+      setRefreshing(`visibility-${member.wom_id}`);
+      await toggleMemberVisibility(member);
+      onRefresh && onRefresh();
+    } catch (err) {
+      console.error("Error toggling visibility:", err);
+      alert("Failed to update visibility");
+    } finally {
+      setRefreshing(null);
+    }
+  };
+  
   const handleToggleRankType = async (member) => {
     try {
-      // Determine current rank type
-      const womRole = (member.womrole || "").toLowerCase();
-      const isSkiller =
-        womRole.includes("opal") ||
-        womRole.includes("sapphire") ||
-        womRole.includes("emerald") ||
-        womRole.includes("ruby") ||
-        womRole.includes("diamond") ||
-        womRole.includes("dragonstone") ||
-        womRole.includes("onyx") ||
-        womRole.includes("zenyte");
-
-      const isFighter =
-        womRole.includes("mentor") ||
-        womRole.includes("prefect") ||
-        womRole.includes("leader") ||
-        womRole.includes("supervisor") ||
-        womRole.includes("superior") ||
-        womRole.includes("executive") ||
-        womRole.includes("senator") ||
-        womRole.includes("monarch") ||
-        womRole.includes("tzkal");
-
-      // Calculate new rank type based on stats
-      let newRankType;
-      if (isSkiller) {
-        // Convert to fighter based on EHB
-        const ehb = parseInt(member.ehb) || 0;
-        if (ehb >= 1500) newRankType = "tzkal";
-        else if (ehb >= 1300) newRankType = "monarch";
-        else if (ehb >= 1100) newRankType = "senator";
-        else if (ehb >= 900) newRankType = "executive";
-        else if (ehb >= 700) newRankType = "superior";
-        else if (ehb >= 500) newRankType = "supervisor";
-        else if (ehb >= 300) newRankType = "leader";
-        else if (ehb >= 100) newRankType = "prefect";
-        else newRankType = "mentor";
-      } else {
-        // Convert to skiller based on XP
-        const clanXp =
-          (parseInt(member.current_xp) || 0) - (parseInt(member.first_xp) || 0);
-        if (clanXp >= 500000000) newRankType = "zenyte";
-        else if (clanXp >= 150000000) newRankType = "onyx";
-        else if (clanXp >= 90000000) newRankType = "dragonstone";
-        else if (clanXp >= 40000000) newRankType = "diamond";
-        else if (clanXp >= 15000000) newRankType = "ruby";
-        else if (clanXp >= 8000000) newRankType = "emerald";
-        else if (clanXp >= 3000000) newRankType = "sapphire";
-        else newRankType = "opal";
-      }
-
-      if (
-        window.confirm(`Change ${member.name}'s rank type to ${newRankType}?`)
-      ) {
+      // Determine new rank type logic...
+      const newRankType = calculateNewRankType(member);
+      
+      if (window.confirm(`Change ${member.name}'s rank type to ${newRankType}?`)) {
         setRefreshing(`rank-${member.wom_id}`);
-
-        await updateMember({
-          wom_id: member.wom_id,
-          womrole: newRankType,
-        });
-
+        await changeMemberRank(member, newRankType);
         onRefresh && onRefresh();
       }
     } catch (err) {
       console.error("Error toggling rank type:", err);
       alert("Failed to update rank type");
-    } finally {
-      setRefreshing(null);
-    }
-  };
-
-  const handleToggleVisibility = async (member) => {
-    try {
-      setRefreshing(`visibility-${member.wom_id}`);
-
-      // If we're unhiding a member, sync with latest WOM data
-      if (
-        member.hidden &&
-        window.confirm(`Unhide ${member.name} and refresh their WOM data?`)
-      ) {
-        const womMembership = group?.memberships?.find(
-          (m) => m.player?.id === member.wom_id
-        );
-
-        if (womMembership?.player) {
-          const womPlayer = womMembership.player;
-
-          // Update with fresh WOM data
-          await updateMember({
-            wom_id: member.wom_id,
-            name: member.name, // Keep existing name
-            current_xp:
-              womPlayer.latestSnapshot?.data?.skills?.overall?.experience ||
-              member.current_xp,
-            current_lvl:
-              womPlayer.latestSnapshot?.data?.skills?.overall?.level ||
-              member.current_lvl,
-            ehb: womPlayer.ehb || member.ehb,
-            womrole: womMembership.role || member.womrole,
-            hidden: false,
-          });
-        }
-      } else if (!member.hidden) {
-        // Just hide the member
-        await updateMember({
-          wom_id: member.wom_id,
-          hidden: true,
-        });
-      } else {
-        setRefreshing(null);
-        return; // User cancelled
-      }
-
-      onRefresh && onRefresh();
-    } catch (err) {
-      console.error("Error toggling visibility:", err);
-      alert("Failed to update visibility");
     } finally {
       setRefreshing(null);
     }
