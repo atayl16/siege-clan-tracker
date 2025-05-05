@@ -1,52 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useEvents } from '../hooks/useEvents';
 import { 
-  FaEdit, 
   FaExclamationTriangle, 
   FaCalendarAlt,
   FaCheck,
   FaClock,
   FaHourglass,
-  FaExternalLinkAlt // Added external link icon
+  FaExternalLinkAlt
 } from 'react-icons/fa';
 
 // Import UI components
 import Card from './ui/Card';
 import Button from './ui/Button';
-import Modal from './ui/Modal';
 import EmptyState from './ui/EmptyState';
 import Badge from './ui/Badge';
-import EventEditor from './EventEditor';
 import './EventManagement.css';
 
 export default function EventManagement() {
-  const [editingEvent, setEditingEvent] = useState(null);
-  const [actionError, setActionError] = useState(null);
+  const [actionError, setActionError] = React.useState(null);
 
   // Use the events hook
   const { 
     events, 
     loading, 
-    error: fetchError, 
-    refreshEvents, 
-    updateEvent
+    error: fetchError
   } = useEvents();
-
-  const handleEventSave = async (savedEvent) => {
-    try {
-      setActionError(null);
-      
-      // Update existing event
-      await updateEvent(savedEvent);
-      setEditingEvent(null);
-
-      // Refresh events data
-      refreshEvents();
-    } catch (err) {
-      console.error("Error saving event:", err);
-      setActionError(`Failed to save event: ${err.message}`);
-    }
-  };
 
   // Helper function to format date and time
   const formatDateTime = (dateString) => {
@@ -121,26 +99,9 @@ export default function EventManagement() {
       {(fetchError || actionError) && (
         <div className="ui-message ui-message-error">
           <FaExclamationTriangle className="ui-message-icon" />
-          <span>{actionError || fetchError.message || String(fetchError)}</span>
+          <span>{actionError || fetchError?.message || String(fetchError)}</span>
         </div>
       )}
-
-      {/* Event editing modal */}
-      <Modal
-        isOpen={editingEvent !== null}
-        onClose={() => setEditingEvent(null)}
-        title="Edit Event"
-        size="large"
-      >
-        {editingEvent && (
-          <EventEditor
-            event={editingEvent}
-            onSave={handleEventSave}
-            onCancel={() => setEditingEvent(null)}
-            isEditing={true}
-          />
-        )}
-      </Modal>
 
       <Card className="ui-events-table-container" variant="dark">
         <Card.Header className="ui-events-table-header">
@@ -195,18 +156,7 @@ export default function EventManagement() {
                     <td>{formatDateTime(event.end_date)}</td>
                     <td>
                       <div className="ui-event-actions">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setEditingEvent(event)}
-                          icon={<FaEdit />}
-                          className="ui-action-button"
-                          title="Edit Event"
-                        >
-                          Edit
-                        </Button>
-                        
-                        {/* Add WiseOldMan edit button only for WOM events */}
+                        {/* Only keep WiseOldMan edit button for WOM events */}
                         {event.is_wom && event.wom_id && (
                           <Button
                             variant="info"
@@ -216,7 +166,7 @@ export default function EventManagement() {
                             className="ui-action-button"
                             title="Edit in WiseOldMan"
                           >
-                            WOM
+                            WOM Edit
                           </Button>
                         )}
                       </div>

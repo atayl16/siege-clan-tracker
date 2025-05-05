@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
 import { useData } from "../context/DataContext";
+import { useSearchParams } from "react-router-dom";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
@@ -32,14 +33,21 @@ import {
 import "./AdminPage.css";
 
 export default function AdminPage() {
+  const [searchParams, setSearchParams] = useSearchParams(); // Use search params hook
   const { isAuthenticated, isAdmin } = useAuth();
+
+  // Initialize state from URL parameters or defaults
   const [selectedMember, setSelectedMember] = useState(null);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [activeTab, setActiveTab] = useState("alerts");
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "alerts"
+  );
   const [alertsCount, setAlertsCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
   const searchInputRef = useRef(null);
@@ -53,6 +61,37 @@ export default function AdminPage() {
     updateMember,
     deleteMember,
   } = useData();
+
+    const handleTabChange = (tabId) => {
+      setActiveTab(tabId);
+      // Update URL with new tab
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("tab", tabId);
+      setSearchParams(newParams);
+    };
+
+    // Update URL when search term changes
+    const handleSearchChange = (e) => {
+      const value = e.target.value;
+      setSearchTerm(value);
+
+      // Update URL with search term
+      const newParams = new URLSearchParams(searchParams);
+      if (value) {
+        newParams.set("search", value);
+      } else {
+        newParams.delete("search");
+      }
+      setSearchParams(newParams);
+    };
+
+    // Clear search and update URL
+    const handleSearchClear = () => {
+      setSearchTerm("");
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("search");
+      setSearchParams(newParams);
+    };
 
   // Calculate and set alerts count whenever members data changes
   useEffect(() => {
@@ -310,9 +349,15 @@ export default function AdminPage() {
       </div>
 
       {notification && (
-        <div className={`ui-notification ${notification.type === 'success' ? 'ui-notification-success' : 'ui-notification-error'}`}>
+        <div
+          className={`ui-notification ${
+            notification.type === "success"
+              ? "ui-notification-success"
+              : "ui-notification-error"
+          }`}
+        >
           <span>{notification.message}</span>
-          <button 
+          <button
             className="ui-notification-close"
             onClick={() => setNotification(null)}
           >
@@ -397,11 +442,15 @@ export default function AdminPage() {
       </Modal>
 
       {/* Admin Tabs - Simplified to only include Alerts, Members, and Events */}
-      <Tabs activeTab={activeTab} onChange={setActiveTab} className="admin-tabs">
-        <Tabs.Tab 
-          tabId="alerts" 
-          label="Alerts" 
-          icon={<FaBell />} 
+      <Tabs
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        className="admin-tabs"
+      >
+        <Tabs.Tab
+          tabId="alerts"
+          label="Alerts"
+          icon={<FaBell />}
           badge={alertsCount > 0 ? alertsCount : null}
         >
           <div className="tab-content alerts-content">
@@ -436,7 +485,8 @@ export default function AdminPage() {
               <Card className="alert-section full-width" variant="dark">
                 <Card.Header>
                   <h3>
-                    <FaExclamationTriangle className="alert-icon" /> Runewatch Alerts
+                    <FaExclamationTriangle className="alert-icon" /> Runewatch
+                    Alerts
                   </h3>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
@@ -455,8 +505,8 @@ export default function AdminPage() {
               <div className="admin-toolbar">
                 <SearchInput
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClear={() => setSearchTerm("")}
+                  onChange={handleSearchChange}
+                  onClear={handleSearchClear}
                   placeholder="Search members by name, WOM name, or role..."
                   ref={searchInputRef}
                   className="search-container"
@@ -472,7 +522,9 @@ export default function AdminPage() {
             ) : membersError ? (
               <div className="ui-error-container">
                 <FaExclamationTriangle className="ui-error-icon" />
-                <div className="ui-error-message">{membersError.message || String(membersError)}</div>
+                <div className="ui-error-message">
+                  {membersError.message || String(membersError)}
+                </div>
               </div>
             ) : (
               <>
