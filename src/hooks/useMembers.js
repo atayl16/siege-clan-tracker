@@ -56,7 +56,6 @@ export function useMembers() {
     }
   };
 
-  // Update a member
   const updateMember = async (memberData) => {
     if (!memberData || !memberData.wom_id) {
       throw new Error('Missing member WOM ID for update');
@@ -65,6 +64,26 @@ export function useMembers() {
     try {
       const client = getAdminSupabaseClient();
       
+      // Log exactly what we're trying to update
+      console.log("Attempting to update member:", {
+        wom_id: memberData.wom_id,
+        data: memberData
+      });
+      
+      // Try to find the record first to confirm it exists
+      const { data: existingMember } = await client
+        .from('members')
+        .select('wom_id, name')
+        .eq('wom_id', memberData.wom_id)
+        .single();
+        
+      console.log("Existing member check:", existingMember);
+      
+      if (!existingMember) {
+        throw new Error(`No member found with wom_id: ${memberData.wom_id}`);
+      }
+      
+      // Proceed with update if member exists
       const { data, error: updateError } = await client
         .from('members')
         .update(memberData)
@@ -74,13 +93,13 @@ export function useMembers() {
       if (updateError) {
         throw updateError;
       }
-
+  
       console.log("Update response:", { data, error: updateError });
       
       // Refresh members list
       await fetchMembers();
       console.log("Members refreshed after update");
-      return data[0];
+      return data[0] || existingMember; // Return something even if update didn't return data
     } catch (err) {
       console.error('Error updating member:', err);
       throw err;
