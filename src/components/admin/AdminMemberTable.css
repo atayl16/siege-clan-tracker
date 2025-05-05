@@ -339,6 +339,37 @@
   margin-bottom: 1rem;
 }
 
+/* Expanded row action buttons */
+.ui-expanded-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ui-points-button-group,
+.ui-member-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ui-member-action-buttons {
+  margin-top: 0.5rem;
+}
+
+.ui-member-action-buttons button,
+.ui-points-button-group button {
+  width: auto;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   .ui-score-with-button,

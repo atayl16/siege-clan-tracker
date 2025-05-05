@@ -135,19 +135,32 @@ export default function AdminMemberTable({
     }
 
     // Default - role is correct or couldn't determine
-    return { hasCorrectRole: true };
+    return { hasCorrectRole: true, currentType: isSkiller ? "skiller" : isFighter ? "fighter" : "unknown" };
   };
 
-  // Function implementations
-  const handleAddPoints = async (member) => {
+  // Function implementations - Updated to take a pointValue parameter
+  const handleAddPoints = async (member, pointValue = 2) => {
     try {
       setRefreshing(`score-${member.wom_id}`);
-      const newScore = (parseInt(member.siege_score) || 0) + 2;
+      const newScore = (parseInt(member.siege_score) || 0) + pointValue;
 
       await updateMember({
         wom_id: member.wom_id,
         siege_score: newScore,
       });
+
+      // Show success message
+      const successToast = document.createElement("div");
+      successToast.className = "update-success-toast";
+      successToast.textContent = `Added ${pointValue} points to ${member.name}`;
+      document.body.appendChild(successToast);
+
+      setTimeout(() => {
+        successToast.classList.add("toast-fade-out");
+        setTimeout(() => {
+          document.body.removeChild(successToast);
+        }, 300);
+      }, 2000);
 
       // Refresh the members list after update
       onRefresh && onRefresh();
@@ -286,29 +299,40 @@ export default function AdminMemberTable({
   const syncMemberWithWom = async (member) => {
     try {
       setRefreshing(`sync-${member.wom_id}`);
-
+  
       // First fetch fresh data from WOM API
       console.log("Fetching fresh WOM data...");
-      await refreshWomData();
-
+      
+      // Add a try/catch specifically for the refreshWomData call
+      try {
+        if (typeof refreshWomData === 'function') {
+          await refreshWomData();
+        } else {
+          console.warn("refreshWomData is not a function, skipping refresh step");
+        }
+      } catch (refreshError) {
+        console.warn("Error refreshing WOM data:", refreshError);
+        // Continue with the process anyway since it seems to work
+      }
+  
       // Get the latest data after refresh
       const womMembership = group?.memberships?.find(
         (m) => m.player?.id === member.wom_id
       );
-
+  
       if (!womMembership || !womMembership.player) {
         throw new Error("Member not found in WOM group data");
       }
-
+  
       const womPlayer = womMembership.player;
       const womRole = womMembership.role;
-
+  
       console.log("Found member in WOM data:", {
         name: womPlayer.displayName,
         role: womRole,
         ehb: womPlayer.ehb,
       });
-
+  
       const updatedData = {
         wom_id: member.wom_id,
         name: member.name, // Preserve name
@@ -322,23 +346,23 @@ export default function AdminMemberTable({
         womrole: womRole || member.womrole,
         updated_at: new Date().toISOString(),
       };
-
+  
       if (window.confirm(`Update ${member.name} with latest WOM data?`)) {
         await updateMember(updatedData);
-
+  
         // Show success message
         const successToast = document.createElement("div");
         successToast.className = "update-success-toast";
         successToast.textContent = `Updated ${member.name} with fresh WOM data`;
         document.body.appendChild(successToast);
-
+  
         setTimeout(() => {
           successToast.classList.add("toast-fade-out");
           setTimeout(() => {
             document.body.removeChild(successToast);
           }, 300);
         }, 2000);
-
+  
         onRefresh && onRefresh();
       }
     } catch (err) {
@@ -391,7 +415,7 @@ export default function AdminMemberTable({
               <th className="ui-text-center">EHB</th>
               <th className="ui-text-center">Clan XP</th>
               <th className="ui-text-center">Joined</th>
-              <th className="ui-text-center ui-actions-column">Actions</th>
+              <th className="ui-text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -400,6 +424,18 @@ export default function AdminMemberTable({
               const isExpanded = expandedRow === member.wom_id;
               const isRefreshing =
                 refreshing && refreshing.includes(member.wom_id);
+              
+              // Determine if member is a fighter or skiller
+              const womRole = (member.womrole || "").toLowerCase();
+              const isSkiller =
+                womRole.includes("opal") ||
+                womRole.includes("sapphire") ||
+                womRole.includes("emerald") ||
+                womRole.includes("ruby") ||
+                womRole.includes("diamond") ||
+                womRole.includes("dragonstone") ||
+                womRole.includes("onyx") ||
+                womRole.includes("zenyte");
 
               const rowClasses = [
                 isExpanded ? "ui-row-expanded" : "",
@@ -447,7 +483,7 @@ export default function AdminMemberTable({
                           size="md"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAddPoints(member);
+                            handleAddPoints(member, 2);
                           }}
                           title="Add 2 points to Siege Score"
                           disabled={isRefreshing}
@@ -484,7 +520,7 @@ export default function AdminMemberTable({
                             e.stopPropagation();
                             handleToggleRankType(member);
                           }}
-                          title="Switch between fighter and skiller rank"
+                          title={isSkiller ? "Switch to fighter rank" : "Switch to skiller rank"}
                           disabled={isRefreshing}
                           className="ui-toggle-rank-btn"
                         >
@@ -492,7 +528,7 @@ export default function AdminMemberTable({
                             <div className="ui-button-spinner"></div>
                           ) : (
                             <>
-                              <FaExchangeAlt /> Switch Rank
+                              <FaExchangeAlt /> {isSkiller ? "Fighter" : "Skiller"}
                             </>
                           )}
                         </Button>
@@ -513,87 +549,26 @@ export default function AdminMemberTable({
                           )
                         : "-"}
                     </td>
-                    <td>
-                      <div className="ui-admin-actions-cell">
-                        <div className="ui-action-button-group">
-                          <Button
-                            variant="success"
-                            size="md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              syncMemberWithWom(member);
-                            }}
-                            title="Sync with latest WOM data"
-                            disabled={isRefreshing}
-                            className="ui-action-button"
-                          >
-                            {refreshing === `sync-${member.wom_id}` ? (
-                              <div className="ui-button-spinner"></div>
-                            ) : (
-                              <>
-                                <FaSync /> Sync WOM
-                              </>
-                            )}
-                          </Button>
-
-                          <Button
-                            variant="warning"
-                            size="md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditClick(member);
-                            }}
-                            title="Edit member details"
-                            disabled={isRefreshing}
-                            className="ui-action-button"
-                          >
-                            <FaEdit /> Edit
-                          </Button>
-
-                          <Button
-                            variant="secondary"
-                            size="md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleVisibility(member);
-                            }}
-                            title={
-                              member.hidden ? "Unhide member" : "Hide member"
-                            }
-                            disabled={isRefreshing}
-                            className="ui-action-button"
-                          >
-                            {refreshing === `visibility-${member.wom_id}` ? (
-                              <div className="ui-button-spinner"></div>
-                            ) : member.hidden ? (
-                              <>
-                                <FaEye /> Unhide
-                              </>
-                            ) : (
-                              <>
-                                <FaEyeSlash /> Hide
-                              </>
-                            )}
-                          </Button>
-                        </div>
-
-                        {/* Delete button - separate for safety */}
-                        <div className="ui-delete-button-container">
-                          <Button
-                            variant="danger"
-                            size="md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteClick(member);
-                            }}
-                            title="Delete member"
-                            disabled={isRefreshing}
-                            className="ui-delete-button"
-                          >
-                            <FaTrash /> Delete
-                          </Button>
-                        </div>
-                      </div>
+                    <td className="ui-text-center">
+                      <Button
+                        variant="success"
+                        size="md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          syncMemberWithWom(member);
+                        }}
+                        title="Sync with latest WOM data"
+                        disabled={isRefreshing}
+                        className="ui-action-button"
+                      >
+                        {refreshing === `sync-${member.wom_id}` ? (
+                          <div className="ui-button-spinner"></div>
+                        ) : (
+                          <>
+                            <FaSync /> Sync
+                          </>
+                        )}
+                      </Button>
                     </td>
                   </tr>
 
@@ -708,6 +683,100 @@ export default function AdminMemberTable({
                                   </span>
                                 </div>
                               )}
+                              
+                              {/* New additional buttons section in expanded row */}
+                              <div className="ui-detail-item ui-expanded-actions">
+                                <span className="ui-detail-label">Add Siege Points:</span>
+                                <div className="ui-points-button-group">
+                                  <Button
+                                    variant="info"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddPoints(member, 5);
+                                    }}
+                                    disabled={isRefreshing}
+                                  >
+                                    +5
+                                  </Button>
+                                  <Button
+                                    variant="info"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddPoints(member, 10);
+                                    }}
+                                    disabled={isRefreshing}
+                                  >
+                                    +10
+                                  </Button>
+                                  <Button
+                                    variant="info"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddPoints(member, 15);
+                                    }}
+                                    disabled={isRefreshing}
+                                  >
+                                    +15
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              <div className="ui-detail-item ui-expanded-actions">
+                                <span className="ui-detail-label">Member Actions:</span>
+                                <div className="ui-member-action-buttons">
+                                  <Button
+                                    variant="warning"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onEditClick(member);
+                                    }}
+                                    title="Edit member details"
+                                    disabled={isRefreshing}
+                                  >
+                                    <FaEdit /> Edit Member
+                                  </Button>
+                                  
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleVisibility(member);
+                                    }}
+                                    title={member.hidden ? "Unhide member" : "Hide member"}
+                                    disabled={isRefreshing}
+                                  >
+                                    {refreshing === `visibility-${member.wom_id}` ? (
+                                      <div className="ui-button-spinner"></div>
+                                    ) : member.hidden ? (
+                                      <>
+                                        <FaEye /> Unhide
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FaEyeSlash /> Hide
+                                      </>
+                                    )}
+                                  </Button>
+                                  
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteClick(member);
+                                    }}
+                                    title="Delete member"
+                                    disabled={isRefreshing}
+                                  >
+                                    <FaTrash /> Delete
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           </Card.Body>
                         </Card>
