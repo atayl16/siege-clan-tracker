@@ -64,42 +64,31 @@ export function useMembers() {
     try {
       const client = getAdminSupabaseClient();
       
-      // Log exactly what we're trying to update
-      console.log("Attempting to update member:", {
-        wom_id: memberData.wom_id,
-        data: memberData
-      });
-      
-      // Try to find the record first to confirm it exists
-      const { data: existingMember } = await client
-        .from('members')
-        .select('wom_id, name')
-        .eq('wom_id', memberData.wom_id)
-        .single();
-        
-      console.log("Existing member check:", existingMember);
-      
-      if (!existingMember) {
-        throw new Error(`No member found with wom_id: ${memberData.wom_id}`);
+      // CONVERT DATA TYPES - ensure siege_score is a number
+      if (memberData.siege_score !== undefined) {
+        memberData.siege_score = Number(memberData.siege_score);
       }
       
-      // Proceed with update if member exists
-      const { data, error: updateError } = await client
-        .from('members')
-        .update(memberData)
-        .eq('wom_id', memberData.wom_id)
-        .select();
+      console.log("Attempting to update member:", memberData);
+      
+      // Try direct RPC call instead of table update
+      const { data, error: updateError } = await client.rpc(
+        'admin_update_member',
+        { 
+          member_id: memberData.wom_id,
+          updated_data: memberData
+        }
+      );
       
       if (updateError) {
         throw updateError;
       }
-  
-      console.log("Update response:", { data, error: updateError });
+      
+      console.log("RPC update response:", data);
       
       // Refresh members list
       await fetchMembers();
-      console.log("Members refreshed after update");
-      return data[0] || existingMember; // Return something even if update didn't return data
+      return data || memberData;
     } catch (err) {
       console.error('Error updating member:', err);
       throw err;
