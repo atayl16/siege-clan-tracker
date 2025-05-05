@@ -44,13 +44,20 @@
 .ui-activity-score {
   font-weight: 500;
   color: var(--success-color);
-  text-align: right; /* Align numbers to the right */
+  text-align: center; /* Align numbers to the right */
   min-width: 80px; /* Ensure enough space for larger numbers */
 }
 
 .ui-boss-rank,
 .ui-activity-rank {
   color: var(--text-muted);
+  text-align: center; /* Added to match kill count alignment */
+  min-width: 60px; /* Added to ensure consistent column width */
+}
+
+.ui-table th:nth-child(3), /* Kill Count / Score header */
+.ui-table th:nth-child(4) { /* Rank header */
+  text-align: center;
 }
 
 .ui-player-name {
