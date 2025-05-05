@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useGroupAchievements } from "../hooks/useGroupAchievements";
 import { FaTrophy, FaTimes, FaSearch } from "react-icons/fa";
-import MetricIcon from "../components/MetricIcon"; // Import MetricIcon
+import MetricIcon from "../components/MetricIcon";
 import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
 import "./AchievementsPage.css";
@@ -66,9 +66,9 @@ export default function AchievementsPage() {
       {!isLoading && filteredAchievements && (
         <div className="ui-section-container">
           {filteredAchievements.length > 0 ? (
-            <div className="ui-achievements-wrapper">
-              <div className="ui-table-container">
-                <table className="ui-table">
+            <div className="achievement-wrapper">
+              <div className="achievement-table-container">
+                <table className="achievement-table">
                   <thead>
                     <tr>
                       <th>Player</th>
@@ -78,17 +78,17 @@ export default function AchievementsPage() {
                   </thead>
                   <tbody>
                     {filteredAchievements.map((achievement, index) => (
-                      <tr key={index} className="ui-achievement-row">
-                        <td className="ui-player-name">
+                      <tr key={index} className="achievement-row">
+                        <td className="achievement-player-name">
                           {achievement.player.displayName}
                         </td>
-                        <td className="ui-achievement-name">
-                          <span className="ui-achievement-icon">
+                        <td className="achievement-name">
+                          <span className="achievement-icon">
                             <MetricIcon metric={achievement.metric} />
                           </span>
                           {achievement.name}
                         </td>
-                        <td className="ui-achievement-date">
+                        <td className="achievement-date">
                           {new Date(achievement.createdAt).toLocaleDateString(undefined, {
                             year: 'numeric',
                             month: 'long',
@@ -102,7 +102,7 @@ export default function AchievementsPage() {
               </div>
             </div>
           ) : (
-            <div className="ui-empty-message">
+            <div className="achievement-empty-message">
               <p>No achievements found{searchTerm ? " matching your search" : ""}</p>
             </div>
           )}

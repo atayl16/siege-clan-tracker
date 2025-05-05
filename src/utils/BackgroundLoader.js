@@ -41,27 +41,20 @@ function BackgroundLoader() {
   // Only start background loading after app has rendered
   useEffect(() => {
     if (!appHasLoaded) return;
-
-    console.log("Starting background loading...");
-
+    
     // Start API prefetching in priority order    
     const prefetchApiData = () => {
-      console.log("Background loading API data...");
-      
       // Helper function to safely prefetch with error handling
       const safePrefetch = (queryKey, endpoint) => {
         queryClient.prefetchQuery(queryKey, () => 
           fetch(endpoint)
             .then(res => {
               if (!res.ok) {
-                // Log warning but don't throw to prevent React Query retries
-                console.log(`Background loader: ${endpoint} returned ${res.status} - skipping prefetch`);
                 return {}; // Return empty object instead of failing
               }
               return res.json();
             })
             .catch(err => {
-              console.log(`Background loader: Could not fetch ${endpoint}`, err.message);
               return {}; // Return empty object on network errors
             })
         );
@@ -95,16 +88,12 @@ function BackgroundLoader() {
           safePrefetch(["races"], "/api/races");
           safePrefetch(["users"], "/api/users");
           safePrefetch(["user-goals"], "/api/user-goals");
-        } else {
-          console.log("Background loader: Skipping Tier 4 API prefetching in preview environment");
         }
       }, 3000);
     };
 
     // Start image preloading with prioritization
     const preloadImages = () => {
-      console.log("Background loading images...");
-      
       // List highest priority images first
       const imagesToPreload = [
         // Clan icons
@@ -126,26 +115,16 @@ function BackgroundLoader() {
         setTimeout(() => {
           const img = new Image();
           img.src = src;
-          img.onload = () => console.log(`Loaded: ${src.split('/').pop()}`);
-          img.onerror = () => console.error(`Failed to load: ${src}`);
         }, index * 100); // 100ms stagger between each image
       });
     };
 
     // Preload metric icons using the new optimized function from OsrsIcons
     const preloadGameIcons = () => {
-      console.log("Background loading metric icons...");
-      
       // Use the exported function from OsrsIcons with custom settings
       preloadMetricIcons({
         delayBetweenIcons: 75, // Slightly slower loading to reduce network congestion
-        logLoading: true // Log each icon as it loads
-      })
-      .then(() => {
-        console.log("Finished preloading all metric icons");
-      })
-      .catch(error => {
-        console.error("Error during metric icon preloading:", error);
+        logLoading: false // Disabled logging
       });
     };
 

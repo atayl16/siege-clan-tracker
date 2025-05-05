@@ -50,18 +50,18 @@
   overflow: hidden;
 }
 
-/* TABLE CONTAINER AND STYLES */
-.ui-table-container {
+/* Achievement-specific table container and styles */
+.achievement-table-container {
   width: 100%;
   overflow-x: auto;
 }
 
-.ui-table {
+.achievement-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.ui-table th {
+.achievement-table th {
   text-align: left;
   padding: 0.75rem 1rem;
   font-weight: 600;
@@ -69,36 +69,38 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.ui-table td {
+.achievement-table td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.ui-achievement-row {
+.achievement-row {
   transition: background-color 0.2s;
 }
 
-.ui-achievement-row:hover {
+.achievement-row:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.ui-player-name {
+.achievement-player-name {
   font-weight: 600;
   color: var(--accent-color, #2196f3);
 }
 
-.ui-achievement-name {
+.achievement-name {
   color: var(--color-text, #e0e0e0);
+  display: flex;
+  align-items: center;
 }
 
-.ui-achievement-date {
+.achievement-date {
   font-size: 0.875rem;
   color: #aaa;
   white-space: nowrap;
 }
 
 /* EMPTY STATES */
-.ui-empty-message {
+.achievement-empty-message {
   padding: 2rem;
   text-align: center;
   color: #aaa;
@@ -117,7 +119,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: a2.5rem 0;
+  padding: 2.5rem 0;
   background-color: rgba(0,0,0,0.05);
   border-radius: var(--border-radius-md, 0.5rem);
   margin-bottom: 1.25rem;
@@ -169,6 +171,15 @@
   color: var(--color-danger, #dc3545);
 }
 
+/* Achievement-specific icon */
+.achievement-icon img {
+  width: 50px;
+  height: 50px;
+  margin-right: 12px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
 /* RESPONSIVE STYLES */
 @media (max-width: 768px) {
   .ui-page-container {
@@ -199,30 +210,9 @@
     padding: 1rem;
   }
   
-  .ui-table th:nth-child(3),
-  .ui-table td:nth-child(3) {
-    display: none;
-  }
-}
-
-.ui-achievement-icon img {
-  width: 50px; /* Increase width */
-  height: 50px; /* Increase height */
-  margin-right: 12px; /* Adjust spacing between icon and text */
-  vertical-align: middle; /* Align icon with text */
-  display: inline-block;
-}
-
-/* Align text with larger icons */
-.ui-achievement-name {
-  display: flex;
-  align-items: center;
-}
-
-/* Hide date column on mobile */
-@media (max-width: 576px) {
-  .ui-table th:nth-child(3), /* Date header */
-  .ui-table td:nth-child(3) { /* Date data */
+  /* Achievement-specific mobile adjustments */
+  .achievement-table th:nth-child(3), /* Date header */
+  .achievement-table td:nth-child(3) { /* Date data */
     display: none;
   }
 }
