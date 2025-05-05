@@ -100,8 +100,43 @@
     display: none; /* Hide rank column on mobile */
   }
 
+  /* Make boss icons smaller on mobile */
+  .ui-boss-icon img,
+  .ui-activity-icon img {
+    width: 32px;  /* Reduced from 50px */
+    height: 32px; /* Reduced from 50px */
+    margin-right: 8px; /* Reduced margin */
+  }
+  
+  /* Adjust padding for smaller screens */
+  .ui-stats-row td {
+    padding: 10px 8px; /* Reduced horizontal padding */
+  }
+  
+  /* Ensure kill count remains prominent */
   .ui-boss-kills,
   .ui-activity-score {
-    min-width: 60px; /* Adjust minimum width for smaller screens */
+    min-width: 50px; /* Slightly smaller but still visible */
+    font-weight: 600; /* Make slightly bolder on mobile */
+  }
+  
+  /* Optional: Make boss name text smaller if needed */
+  .ui-boss-name,
+  .ui-activity-name {
+    font-size: 0.9rem;
+  }
+}
+
+/* For very small screens, further optimize space */
+@media (max-width: 480px) {
+  .ui-boss-icon img,
+  .ui-activity-icon img {
+    width: 28px;
+    height: 28px;
+    margin-right: 6px;
+  }
+  
+  .ui-stats-row td {
+    padding: 8px 6px;
   }
 }
