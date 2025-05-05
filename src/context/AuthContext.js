@@ -72,7 +72,7 @@ export function AuthProvider({ children }) {
         // Add the flag for service role access
         localStorage.setItem("useServiceRole", "true");
         setIsAuthenticated(true);
-
+      
         // Create a mock admin user for UI purposes
         localStorage.setItem(
           "user",
@@ -83,13 +83,51 @@ export function AuthProvider({ children }) {
             created_at: new Date().toISOString(),
           })
         );
-
+      
         setUser({
           id: "admin",
           username: "admin",
           is_admin: true,
         });
-
+      
+        // NEW CODE: Try to create a Supabase auth session for the admin
+        try {
+          // First check if we have a pre-configured admin account
+          const adminEmail = "admin@siegeclan.org"; // Use consistent email
+          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: adminEmail,
+            password: passwordHash // Use the same password hash
+          });
+      
+          if (signInError) {
+            console.log("Admin auth not found, creating...");
+            // If sign-in fails, try to create the account
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: adminEmail,
+              password: passwordHash
+            });
+      
+            if (!signUpError) {
+              console.log("Admin auth created successfully");
+            } else {
+              console.error("Failed to create admin auth:", signUpError);
+            }
+          } else {
+            console.log("Admin authenticated with Supabase");
+          }
+          
+          // Now call the function to register this user as admin
+          const { error: rpcError } = await supabase.rpc('register_admin_user');
+          if (rpcError) {
+            console.error("Error registering admin in database:", rpcError);
+          } else {
+            console.log("Admin registered in database successfully");
+          }
+        } catch (authError) {
+          console.error("Error setting up admin authentication:", authError);
+          // Continue anyway - the hard-coded admin should still work
+        }
+      
         return { success: true, isAdmin: true };
       }
   
