@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { useEvents } from '../hooks/useEvents';
 import { 
   FaEdit, 
-  FaTrash, 
-  FaCalendarPlus, 
   FaExclamationTriangle, 
   FaCalendarAlt,
   FaCheck,
   FaClock,
-  FaHourglass
+  FaHourglass,
+  FaExternalLinkAlt // Added external link icon
 } from 'react-icons/fa';
 
 // Import UI components
@@ -16,15 +15,12 @@ import Card from './ui/Card';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
 import EmptyState from './ui/EmptyState';
-import DataTable from './ui/DataTable';
 import Badge from './ui/Badge';
 import EventEditor from './EventEditor';
 import './EventManagement.css';
 
 export default function EventManagement() {
-  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [actionError, setActionError] = useState(null);
 
   // Use the events hook
@@ -33,68 +29,22 @@ export default function EventManagement() {
     loading, 
     error: fetchError, 
     refreshEvents, 
-    createEvent, 
-    updateEvent, 
-    deleteEvent 
+    updateEvent
   } = useEvents();
 
   const handleEventSave = async (savedEvent) => {
     try {
       setActionError(null);
-
-      if (editingEvent) {
-        // Use the new hook's update method
-        await updateEvent(savedEvent);
-        setEditingEvent(null);
-      } else {
-        // Create new event
-        const { id, _tempId, ...eventData } = savedEvent;
-
-        // Extract only the fields that exist in the database schema
-        const eventToInsert = {
-          name: eventData.name,
-          type: eventData.type,
-          start_date: eventData.start_date,
-          end_date: eventData.end_date,
-          is_wom: eventData.is_wom || false,
-          description: eventData.description || "",
-          status: eventData.status || "upcoming",
-        };
-
-        // Use the new hook's create method
-        await createEvent(eventToInsert);
-        setIsCreatingEvent(false);
-      }
+      
+      // Update existing event
+      await updateEvent(savedEvent);
+      setEditingEvent(null);
 
       // Refresh events data
       refreshEvents();
     } catch (err) {
       console.error("Error saving event:", err);
       setActionError(`Failed to save event: ${err.message}`);
-    }
-  };
-
-  const handleDeleteEvent = async () => {
-    try {
-      setActionError(null);
-      
-      if (!deleteConfirm || !deleteConfirm.id) {
-        setActionError("Cannot delete event: Missing event ID");
-        return;
-      }
-      
-      // Use the deleteEvent function from the hook
-      await deleteEvent(deleteConfirm.id);
-      
-      // Clear the delete confirmation
-      setDeleteConfirm(null);
-      
-      // Refresh events data
-      refreshEvents();
-      
-    } catch (err) {
-      console.error("Error deleting event:", err);
-      setActionError(`Failed to delete event: ${err.message}`);
     }
   };
 
@@ -157,81 +107,6 @@ export default function EventManagement() {
     }
   };
 
-  // Define event columns for the data table
-  const eventColumns = [
-    {
-      accessor: 'name',
-      Header: 'Event Name',
-      Cell: ({ row }) => (
-        <div className="ui-event-name">
-          {row.original.name}
-          {row.original.is_wom && (
-            <Badge variant="info" className="ui-event-tag">
-              WOM
-            </Badge>
-          )}
-          <div className="ui-event-status">
-            {(() => {
-              const status = getEventStatus(row.original);
-              return (
-                <Badge variant={status.variant} className="ui-status-badge">
-                  {status.icon} {status.label}
-                </Badge>
-              );
-            })()}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessor: 'type',
-      Header: 'Type',
-      Cell: ({ value }) => (
-        <span className="ui-event-type">
-          {formatEventType(value)}
-        </span>
-      ),
-    },
-    {
-      accessor: 'start_date',
-      Header: 'Starts',
-      Cell: ({ value }) => formatDateTime(value),
-    },
-    {
-      accessor: 'end_date',
-      Header: 'Ends',
-      Cell: ({ value }) => formatDateTime(value),
-    },
-    {
-      accessor: 'actions',
-      Header: 'Actions',
-      Cell: ({ row }) => (
-        <div className="ui-event-actions">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setEditingEvent(row.original)}
-            icon={<FaEdit />}
-            className="ui-action-button"
-            title="Edit Event"
-          >
-            Edit
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => setDeleteConfirm(row.original)}
-            icon={<FaTrash />}
-            className="ui-action-button"
-            title="Delete Event"
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   if (loading && (!events || events.length === 0)) {
     return (
       <div className="ui-loading-container">
@@ -249,47 +124,6 @@ export default function EventManagement() {
           <span>{actionError || fetchError.message || String(fetchError)}</span>
         </div>
       )}
-
-      {/* Delete confirmation modal */}
-      <Modal
-        isOpen={deleteConfirm !== null}
-        onClose={() => setDeleteConfirm(null)}
-        title="Confirm Deletion"
-      >
-        <div className="ui-delete-confirm">
-          <p>
-            Are you sure you want to delete the event{" "}
-            <strong>{deleteConfirm?.name}</strong>?
-          </p>
-          <p className="ui-delete-warning">This action cannot be undone.</p>
-
-          <Modal.Footer>
-            <Button
-              variant="danger"
-              onClick={handleDeleteEvent}
-              icon={<FaTrash />}
-            >
-              Delete Event
-            </Button>
-            <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-          </Modal.Footer>
-        </div>
-      </Modal>
-
-      {/* Event creation modal */}
-      <Modal
-        isOpen={isCreatingEvent}
-        onClose={() => setIsCreatingEvent(false)}
-        title="Create New Event"
-        size="large"
-      >
-        <EventEditor
-          onSave={handleEventSave}
-          onCancel={() => setIsCreatingEvent(false)}
-        />
-      </Modal>
 
       {/* Event editing modal */}
       <Modal
@@ -313,38 +147,14 @@ export default function EventManagement() {
           <h3 className="ui-section-title">
             <FaCalendarAlt className="ui-icon-left" /> Event Calendar
           </h3>
-          <div className="ui-event-actions">
-            <Button
-              variant="primary"
-              onClick={() => {
-                setIsCreatingEvent(true);
-                setEditingEvent(null);
-              }}
-              icon={<FaCalendarPlus />}
-            >
-              Create Event
-            </Button>
-          </div>
         </Card.Header>
         
         <Card.Body>
           {!events || events.length === 0 ? (
             <EmptyState
               title="No Events Found"
-              description="Create a new event to get started."
+              description="No events are currently scheduled."
               icon={<FaCalendarAlt className="ui-empty-state-icon" />}
-              action={
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setIsCreatingEvent(true);
-                    setEditingEvent(null);
-                  }}
-                  icon={<FaCalendarPlus />}
-                >
-                  Create Event
-                </Button>
-              }
             />
           ) : (
             <table className="ui-events-table">
@@ -368,6 +178,16 @@ export default function EventManagement() {
                             WOM
                           </Badge>
                         )}
+                        <div className="ui-event-status">
+                          {(() => {
+                            const status = getEventStatus(event);
+                            return (
+                              <Badge variant={status.variant} className="ui-status-badge">
+                                {status.icon} {status.label}
+                              </Badge>
+                            );
+                          })()}
+                        </div>
                       </div>
                     </td>
                     <td>{formatEventType(event.type)}</td>
@@ -385,16 +205,20 @@ export default function EventManagement() {
                         >
                           Edit
                         </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => setDeleteConfirm(event)}
-                          icon={<FaTrash />}
-                          className="ui-action-button"
-                          title="Delete Event"
-                        >
-                          Delete
-                        </Button>
+                        
+                        {/* Add WiseOldMan edit button only for WOM events */}
+                        {event.is_wom && event.wom_id && (
+                          <Button
+                            variant="info"
+                            size="sm"
+                            onClick={() => window.open(`https://wiseoldman.net/competitions/${event.wom_id}/edit`, '_blank')}
+                            icon={<FaExternalLinkAlt />}
+                            className="ui-action-button"
+                            title="Edit in WiseOldMan"
+                          >
+                            WOM
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
