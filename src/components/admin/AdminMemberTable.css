@@ -54,6 +54,14 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
+.ui-table button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
 /* Column widths */
 .ui-score-column {
   width: 15%;
@@ -95,8 +103,9 @@
 }
 
 .ui-add-points-btn {
-  width: 100%;
+  width: auto;
   min-height: 2.5rem;
+  padding: 0.5rem 1rem;
 }
 
 /* Role cell with button */
@@ -118,8 +127,9 @@
 }
 
 .ui-toggle-rank-btn {
-  width: 100%;
+  width: auto;
   min-height: 2.5rem;
+  padding: 0.5rem 1rem;
 }
 
 /* Action buttons cell */
@@ -130,13 +140,16 @@
 }
 
 .ui-action-button-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.5rem;
 }
 
 .ui-action-button {
   min-height: 2.5rem;
+  width: auto;
+  padding: 0.5rem 1rem;
 }
 
 /* Delete button container */
@@ -144,11 +157,14 @@
   margin-top: 0.5rem;
   border-top: 1px dashed rgba(220, 53, 69, 0.5);
   padding-top: 0.5rem;
+  display: flex;
+  justify-content: center;
 }
 
 .ui-delete-button {
-  width: 100%;
+  width: auto;
   min-height: 2.5rem;
+  padding: 0.5rem 1rem;
 }
 
 /* Player name cell */
@@ -332,7 +348,7 @@
   }
   
   .ui-action-button-group {
-    grid-template-columns: 1fr;
+    justify-content: center;
   }
 }
 
@@ -360,6 +376,11 @@
   .ui-table {
     width: max-content;
     min-width: 100%;
+  }
+
+  .ui-table button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
   }
 }
 

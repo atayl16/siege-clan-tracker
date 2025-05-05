@@ -10,7 +10,6 @@ import {
   FaEyeSlash,
   FaChevronDown,
   FaChevronUp,
-  FaShieldAlt,
   FaSync,
 } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
@@ -39,7 +38,6 @@ export default function AdminMemberTable({
 
   // Enhanced member data with WOM data - no changes here
   const enhancedMembers = useMemo(() => {
-    // Existing code...
     if (!members || !group?.memberships) return members;
 
     const womMembersMap = {};
@@ -72,9 +70,8 @@ export default function AdminMemberTable({
     });
   }, [members, group]);
 
-  // Calculate the correct role - no changes here
+  // Calculate the correct role
   const calculateCorrectRole = (member) => {
-    // Existing code...
     const womRole = (member.womrole || "").toLowerCase();
     const isSkiller =
       womRole.includes("opal") ||
@@ -141,9 +138,8 @@ export default function AdminMemberTable({
     return { hasCorrectRole: true };
   };
 
-  // Function implementations - no changes here
+  // Function implementations
   const handleAddPoints = async (member) => {
-    // Existing code...
     try {
       setRefreshing(`score-${member.wom_id}`);
       const newScore = (parseInt(member.siege_score) || 0) + 2;
@@ -164,7 +160,6 @@ export default function AdminMemberTable({
   };
 
   const handleToggleRankType = async (member) => {
-    // Existing code...
     try {
       // Determine current rank type
       const womRole = (member.womrole || "").toLowerCase();
@@ -238,7 +233,6 @@ export default function AdminMemberTable({
   };
 
   const handleToggleVisibility = async (member) => {
-    // Existing code...
     try {
       setRefreshing(`visibility-${member.wom_id}`);
 
@@ -289,45 +283,7 @@ export default function AdminMemberTable({
     }
   };
 
-  const handleWhitelistMember = async (member) => {
-    // Existing code...
-    try {
-      setRefreshing(`whitelist-${member.wom_id}`);
-
-      const reason = prompt("Enter reason for whitelisting:");
-      if (!reason) {
-        setRefreshing(null);
-        return; // User cancelled
-      }
-
-      // Use the new function from the hook
-      await whitelistRunewatchMember(member.wom_id, reason);
-
-      // Show success message
-      const successToast = document.createElement("div");
-      successToast.className = "update-success-toast";
-      successToast.textContent = `Whitelisted ${member.name} on Runewatch`;
-      document.body.appendChild(successToast);
-
-      // Remove the toast after 2 seconds
-      setTimeout(() => {
-        successToast.classList.add("toast-fade-out");
-        setTimeout(() => {
-          document.body.removeChild(successToast);
-        }, 300);
-      }, 2000);
-
-      onRefresh && onRefresh();
-    } catch (err) {
-      console.error("Error whitelisting member:", err);
-      alert("Failed to whitelist member");
-    } finally {
-      setRefreshing(null);
-    }
-  };
-
   const syncMemberWithWom = async (member) => {
-    // Existing code...
     try {
       setRefreshing(`sync-${member.wom_id}`);
 
@@ -393,9 +349,8 @@ export default function AdminMemberTable({
     }
   };
 
-  // Sort members - no changes here
+  // Sort members
   const sortedMembers = useMemo(() => {
-    // Existing code...
     if (!enhancedMembers || enhancedMembers.length === 0) return [];
 
     return [...enhancedMembers].sort((a, b) => {
@@ -620,30 +575,6 @@ export default function AdminMemberTable({
                               </>
                             )}
                           </Button>
-
-                          {/* Runewatch whitelist button */}
-                          {member.runewatch_flagged &&
-                            !member.runewatch_whitelisted && (
-                              <Button
-                                variant="danger"
-                                size="md"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleWhitelistMember(member);
-                                }}
-                                title="Whitelist on Runewatch"
-                                disabled={isRefreshing}
-                                className="ui-action-button"
-                              >
-                                {refreshing === `whitelist-${member.wom_id}` ? (
-                                  <div className="ui-button-spinner"></div>
-                                ) : (
-                                  <>
-                                    <FaShieldAlt /> Whitelist
-                                  </>
-                                )}
-                              </Button>
-                            )}
                         </div>
 
                         {/* Delete button - separate for safety */}
@@ -666,14 +597,13 @@ export default function AdminMemberTable({
                     </td>
                   </tr>
 
-                  {/* Expanded row with details - no changes here */}
+                  {/* Expanded row with details */}
                   {isExpanded && (
                     <tr className="ui-expanded-details-row">
                       <td colSpan={7}>
                         <Card variant="dark">
                           <Card.Body>
                             <div className="ui-details-grid">
-                              {/* Existing expanded row content */}
                               {!roleStatus.hasCorrectRole && (
                                 <div className="ui-detail-item ui-role-mismatch-alert">
                                   <span className="ui-detail-label">
