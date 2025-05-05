@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useData } from "../../context/DataContext"; // New DataContext
+import { useData } from "../../context/DataContext";
 import {
   FaEdit,
   FaTrash,
@@ -11,8 +11,10 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaShieldAlt,
+  FaSync,
 } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
+import { useCallback } from "react";
 
 // Import UI components
 import Button from "../ui/Button";
@@ -26,12 +28,18 @@ export default function AdminMemberTable({
   onDeleteClick,
   onRefresh,
 }) {
-  const { group, loading: womLoading, updateMember } = useData(); // Use new DataContext
+  const {
+    group,
+    loading: womLoading,
+    updateMember,
+    refreshWomData,
+  } = useData();
   const [expandedRow, setExpandedRow] = useState(null);
   const [refreshing, setRefreshing] = useState(null);
 
-  // Enhanced member data with WOM data - simplify to just what we need
+  // Enhanced member data with WOM data - no changes here
   const enhancedMembers = useMemo(() => {
+    // Existing code...
     if (!members || !group?.memberships) return members;
 
     const womMembersMap = {};
@@ -64,8 +72,9 @@ export default function AdminMemberTable({
     });
   }, [members, group]);
 
-  // Calculate the correct role for a member based on their stats
+  // Calculate the correct role - no changes here
   const calculateCorrectRole = (member) => {
+    // Existing code...
     const womRole = (member.womrole || "").toLowerCase();
     const isSkiller =
       womRole.includes("opal") ||
@@ -132,10 +141,9 @@ export default function AdminMemberTable({
     return { hasCorrectRole: true };
   };
 
-  // CORE ADMIN FUNCTIONS
-
-  // 1. Handle adding +2 to siege score
+  // Function implementations - no changes here
   const handleAddPoints = async (member) => {
+    // Existing code...
     try {
       setRefreshing(`score-${member.wom_id}`);
       const newScore = (parseInt(member.siege_score) || 0) + 2;
@@ -155,8 +163,8 @@ export default function AdminMemberTable({
     }
   };
 
-  // 2. Toggle between fighter and skiller ranks
   const handleToggleRankType = async (member) => {
+    // Existing code...
     try {
       // Determine current rank type
       const womRole = (member.womrole || "").toLowerCase();
@@ -229,8 +237,8 @@ export default function AdminMemberTable({
     }
   };
 
-  // 3. Toggle member visibility
   const handleToggleVisibility = async (member) => {
+    // Existing code...
     try {
       setRefreshing(`visibility-${member.wom_id}`);
 
@@ -281,26 +289,26 @@ export default function AdminMemberTable({
     }
   };
 
-  // 4. Whitelist a member on runewatch  
   const handleWhitelistMember = async (member) => {
+    // Existing code...
     try {
       setRefreshing(`whitelist-${member.wom_id}`);
-  
+
       const reason = prompt("Enter reason for whitelisting:");
       if (!reason) {
         setRefreshing(null);
         return; // User cancelled
       }
-  
+
       // Use the new function from the hook
       await whitelistRunewatchMember(member.wom_id, reason);
-  
+
       // Show success message
       const successToast = document.createElement("div");
       successToast.className = "update-success-toast";
       successToast.textContent = `Whitelisted ${member.name} on Runewatch`;
       document.body.appendChild(successToast);
-  
+
       // Remove the toast after 2 seconds
       setTimeout(() => {
         successToast.classList.add("toast-fade-out");
@@ -308,7 +316,7 @@ export default function AdminMemberTable({
           document.body.removeChild(successToast);
         }, 300);
       }, 2000);
-  
+
       onRefresh && onRefresh();
     } catch (err) {
       console.error("Error whitelisting member:", err);
@@ -318,11 +326,16 @@ export default function AdminMemberTable({
     }
   };
 
-  // 5. Sync member with WOM data
   const syncMemberWithWom = async (member) => {
+    // Existing code...
     try {
       setRefreshing(`sync-${member.wom_id}`);
 
+      // First fetch fresh data from WOM API
+      console.log("Fetching fresh WOM data...");
+      await refreshWomData();
+
+      // Get the latest data after refresh
       const womMembership = group?.memberships?.find(
         (m) => m.player?.id === member.wom_id
       );
@@ -333,6 +346,12 @@ export default function AdminMemberTable({
 
       const womPlayer = womMembership.player;
       const womRole = womMembership.role;
+
+      console.log("Found member in WOM data:", {
+        name: womPlayer.displayName,
+        role: womRole,
+        ehb: womPlayer.ehb,
+      });
 
       const updatedData = {
         wom_id: member.wom_id,
@@ -374,8 +393,9 @@ export default function AdminMemberTable({
     }
   };
 
-  // Sort members - incorrect ranks at top, hidden at bottom
+  // Sort members - no changes here
   const sortedMembers = useMemo(() => {
+    // Existing code...
     if (!enhancedMembers || enhancedMembers.length === 0) return [];
 
     return [...enhancedMembers].sort((a, b) => {
@@ -411,12 +431,12 @@ export default function AdminMemberTable({
           <thead>
             <tr>
               <th>Player Name</th>
-              <th className="ui-text-center">Siege Score</th>
-              <th className="ui-text-center">WOM Role</th>
+              <th className="ui-text-center ui-score-column">Siege Score</th>
+              <th className="ui-text-center ui-role-column">WOM Role</th>
               <th className="ui-text-center">EHB</th>
               <th className="ui-text-center">Clan XP</th>
               <th className="ui-text-center">Joined</th>
-              <th className="ui-text-center">Actions</th>
+              <th className="ui-text-center ui-actions-column">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -464,20 +484,64 @@ export default function AdminMemberTable({
                         )}
                       </div>
                     </td>
-                    <td className="ui-text-center">
-                      {member.siege_score || 0}
-                    </td>
-                    <td className="ui-text-center ui-position-relative">
-                      {titleize(member.womrole) || "-"}
-                      {!roleStatus.hasCorrectRole && (
-                        <Badge
-                          variant="warning"
-                          className="ui-role-badge"
-                          title={`Should be: ${roleStatus.correctRole}`}
+                    <td className="ui-score-cell">
+                      <div className="ui-score-with-button">
+                        <div className="ui-score-value">{member.siege_score || 0}</div>
+                        <Button
+                          variant="info"
+                          size="md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddPoints(member);
+                          }}
+                          title="Add 2 points to Siege Score"
+                          disabled={isRefreshing}
+                          className="ui-add-points-btn"
                         >
-                          <FaExclamationTriangle />
-                        </Badge>
-                      )}
+                          {refreshing === `score-${member.wom_id}` ? (
+                            <div className="ui-button-spinner"></div>
+                          ) : (
+                            <>
+                              +2 Points
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="ui-role-cell">
+                      <div className="ui-role-with-button">
+                        <div className="ui-role-value ui-position-relative">
+                          {titleize(member.womrole) || "-"}
+                          {!roleStatus.hasCorrectRole && (
+                            <Badge
+                              variant="warning"
+                              className="ui-role-badge"
+                              title={`Should be: ${roleStatus.correctRole}`}
+                            >
+                              <FaExclamationTriangle />
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant="primary"
+                          size="md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleRankType(member);
+                          }}
+                          title="Switch between fighter and skiller rank"
+                          disabled={isRefreshing}
+                          className="ui-toggle-rank-btn"
+                        >
+                          {refreshing === `rank-${member.wom_id}` ? (
+                            <div className="ui-button-spinner"></div>
+                          ) : (
+                            <>
+                              <FaExchangeAlt /> Switch Rank
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </td>
                     <td className="ui-text-center">{member.ehb || 0}</td>
                     <td className="ui-text-center">
@@ -490,145 +554,126 @@ export default function AdminMemberTable({
                       {member.join_date
                         ? new Date(member.join_date).toLocaleDateString(
                             undefined,
-                            { year: "numeric", month: "long", day: "numeric" }
+                            { year: "numeric", month: "short", day: "numeric" }
                           )
                         : "-"}
                     </td>
                     <td>
                       <div className="ui-admin-actions-cell">
-                        {/* Core Admin Actions */}
-                        <Button
-                          variant="info"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddPoints(member);
-                          }}
-                          title="+2 Siege Score"
-                          disabled={isRefreshing}
-                        >
-                          {refreshing === `score-${member.wom_id}` ? (
-                            <div className="ui-button-spinner"></div>
-                          ) : (
-                            <>
-                              <FaPlus /> 2
-                            </>
-                          )}
-                        </Button>
+                        <div className="ui-action-button-group">
+                          <Button
+                            variant="success"
+                            size="md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              syncMemberWithWom(member);
+                            }}
+                            title="Sync with latest WOM data"
+                            disabled={isRefreshing}
+                            className="ui-action-button"
+                          >
+                            {refreshing === `sync-${member.wom_id}` ? (
+                              <div className="ui-button-spinner"></div>
+                            ) : (
+                              <>
+                                <FaSync /> Sync WOM
+                              </>
+                            )}
+                          </Button>
 
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleRankType(member);
-                          }}
-                          title="Switch fighter/skiller rank"
-                          disabled={isRefreshing}
-                        >
-                          {refreshing === `rank-${member.wom_id}` ? (
-                            <div className="ui-button-spinner"></div>
-                          ) : (
-                            <FaExchangeAlt />
-                          )}
-                        </Button>
+                          <Button
+                            variant="warning"
+                            size="md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditClick(member);
+                            }}
+                            title="Edit member details"
+                            disabled={isRefreshing}
+                            className="ui-action-button"
+                          >
+                            <FaEdit /> Edit
+                          </Button>
 
-                        <Button
-                          variant="success"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            syncMemberWithWom(member);
-                          }}
-                          title="Sync with latest WOM data"
-                          disabled={isRefreshing}
-                        >
-                          {refreshing === `sync-${member.wom_id}` ? (
-                            <div className="ui-button-spinner"></div>
-                          ) : (
-                            "Sync"
-                          )}
-                        </Button>
+                          <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleVisibility(member);
+                            }}
+                            title={
+                              member.hidden ? "Unhide member" : "Hide member"
+                            }
+                            disabled={isRefreshing}
+                            className="ui-action-button"
+                          >
+                            {refreshing === `visibility-${member.wom_id}` ? (
+                              <div className="ui-button-spinner"></div>
+                            ) : member.hidden ? (
+                              <>
+                                <FaEye /> Unhide
+                              </>
+                            ) : (
+                              <>
+                                <FaEyeSlash /> Hide
+                              </>
+                            )}
+                          </Button>
 
-                        <Button
-                          variant="warning"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditClick(member);
-                          }}
-                          title="Edit member"
-                          disabled={isRefreshing}
-                        >
-                          <FaEdit />
-                        </Button>
+                          {/* Runewatch whitelist button */}
+                          {member.runewatch_flagged &&
+                            !member.runewatch_whitelisted && (
+                              <Button
+                                variant="danger"
+                                size="md"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleWhitelistMember(member);
+                                }}
+                                title="Whitelist on Runewatch"
+                                disabled={isRefreshing}
+                                className="ui-action-button"
+                              >
+                                {refreshing === `whitelist-${member.wom_id}` ? (
+                                  <div className="ui-button-spinner"></div>
+                                ) : (
+                                  <>
+                                    <FaShieldAlt /> Whitelist
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                        </div>
 
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleVisibility(member);
-                          }}
-                          title={
-                            member.hidden ? "Unhide member" : "Hide member"
-                          }
-                          disabled={isRefreshing}
-                        >
-                          {refreshing === `visibility-${member.wom_id}` ? (
-                            <div className="ui-button-spinner"></div>
-                          ) : member.hidden ? (
-                            <FaEye />
-                          ) : (
-                            <FaEyeSlash />
-                          )}
-                        </Button>
-
-                        {/* Runewatch whitelist button */}
-                        {member.runewatch_flagged &&
-                          !member.runewatch_whitelisted && (
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleWhitelistMember(member);
-                              }}
-                              title="Whitelist on Runewatch"
-                              disabled={isRefreshing}
-                            >
-                              {refreshing === `whitelist-${member.wom_id}` ? (
-                                <div className="ui-button-spinner"></div>
-                              ) : (
-                                <FaShieldAlt />
-                              )}
-                            </Button>
-                          )}
-
-                        {/* Delete member button */}
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteClick(member);
-                          }}
-                          title="Delete member"
-                          disabled={isRefreshing}
-                        >
-                          <FaTrash />
-                        </Button>
+                        {/* Delete button - separate for safety */}
+                        <div className="ui-delete-button-container">
+                          <Button
+                            variant="danger"
+                            size="md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteClick(member);
+                            }}
+                            title="Delete member"
+                            disabled={isRefreshing}
+                            className="ui-delete-button"
+                          >
+                            <FaTrash /> Delete
+                          </Button>
+                        </div>
                       </div>
                     </td>
                   </tr>
 
-                  {/* Expanded row with details */}
+                  {/* Expanded row with details - no changes here */}
                   {isExpanded && (
                     <tr className="ui-expanded-details-row">
                       <td colSpan={7}>
                         <Card variant="dark">
                           <Card.Body>
                             <div className="ui-details-grid">
+                              {/* Existing expanded row content */}
                               {!roleStatus.hasCorrectRole && (
                                 <div className="ui-detail-item ui-role-mismatch-alert">
                                   <span className="ui-detail-label">

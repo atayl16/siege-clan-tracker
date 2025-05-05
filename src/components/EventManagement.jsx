@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useEvents } from '../hooks/useEvents';
-import { FaEdit, FaTrash, FaCalendarPlus, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
+import { 
+  FaEdit, 
+  FaTrash, 
+  FaCalendarPlus, 
+  FaExclamationTriangle, 
+  FaCalendarAlt,
+  FaCheck,
+  FaClock,
+  FaHourglass
+} from 'react-icons/fa';
 
 // Import UI components
 import Card from './ui/Card';
@@ -65,7 +74,6 @@ export default function EventManagement() {
     }
   };
 
-  // Add the missing handleDeleteEvent function
   const handleDeleteEvent = async () => {
     try {
       setActionError(null);
@@ -90,6 +98,65 @@ export default function EventManagement() {
     }
   };
 
+  // Helper function to format date and time
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    
+    const dateFormatted = date.toLocaleDateString(undefined, { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+    
+    const timeFormatted = date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    return (
+      <div className="ui-event-datetime">
+        <div className="ui-event-date">
+          <FaCalendarAlt className="ui-event-icon" /> {dateFormatted}
+        </div>
+        <div className="ui-event-time">
+          <FaClock className="ui-event-icon" /> {timeFormatted}
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to format event type
+  const formatEventType = (type) => {
+    const typeMap = {
+      bingo: "Bingo",
+      competition: "Competition",
+      meeting: "Meeting",
+      pvm: "PvM Event",
+      social: "Social",
+      other: "Other"
+    };
+    
+    return typeMap[type] || type;
+  };
+
+  // Helper function to determine event status
+  const getEventStatus = (event) => {
+    const now = new Date();
+    const startDate = new Date(event.start_date);
+    const endDate = new Date(event.end_date);
+    
+    if (now < startDate) {
+      return { label: "Upcoming", variant: "warning", icon: <FaHourglass /> };
+    } else if (now >= startDate && now <= endDate) {
+      return { label: "In Progress", variant: "success", icon: <FaClock /> };
+    } else {
+      return { label: "Completed", variant: "secondary", icon: <FaCheck /> };
+    }
+  };
+
   // Define event columns for the data table
   const eventColumns = [
     {
@@ -103,31 +170,37 @@ export default function EventManagement() {
               WOM
             </Badge>
           )}
+          <div className="ui-event-status">
+            {(() => {
+              const status = getEventStatus(row.original);
+              return (
+                <Badge variant={status.variant} className="ui-status-badge">
+                  {status.icon} {status.label}
+                </Badge>
+              );
+            })()}
+          </div>
         </div>
       ),
     },
     {
       accessor: 'type',
       Header: 'Type',
-      Cell: ({ value }) => <span className="ui-event-type">{value}</span>,
+      Cell: ({ value }) => (
+        <span className="ui-event-type">
+          {formatEventType(value)}
+        </span>
+      ),
     },
     {
       accessor: 'start_date',
-      Header: 'Start Date',
-      Cell: ({ value }) => (
-        <span className="ui-event-date">
-          {value ? new Date(value).toLocaleDateString() : 'N/A'}
-        </span>
-      ),
+      Header: 'Starts',
+      Cell: ({ value }) => formatDateTime(value),
     },
     {
       accessor: 'end_date',
-      Header: 'End Date',
-      Cell: ({ value }) => (
-        <span className="ui-event-date">
-          {value ? new Date(value).toLocaleDateString() : 'N/A'}
-        </span>
-      ),
+      Header: 'Ends',
+      Cell: ({ value }) => formatDateTime(value),
     },
     {
       accessor: 'actions',
@@ -139,6 +212,8 @@ export default function EventManagement() {
             size="sm"
             onClick={() => setEditingEvent(row.original)}
             icon={<FaEdit />}
+            className="ui-action-button"
+            title="Edit Event"
           >
             Edit
           </Button>
@@ -147,6 +222,8 @@ export default function EventManagement() {
             size="sm"
             onClick={() => setDeleteConfirm(row.original)}
             icon={<FaTrash />}
+            className="ui-action-button"
+            title="Delete Event"
           >
             Delete
           </Button>
@@ -254,7 +331,7 @@ export default function EventManagement() {
           {!events || events.length === 0 ? (
             <EmptyState
               title="No Events Found"
-              description="Create a new event or sync with Wise Old Man."
+              description="Create a new event to get started."
               icon={<FaCalendarAlt className="ui-empty-state-icon" />}
               action={
                 <Button
