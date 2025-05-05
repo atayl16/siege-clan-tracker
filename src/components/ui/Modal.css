@@ -1,4 +1,3 @@
- */
 .ui-modal-overlay {
   position: fixed;
   top: 0;
@@ -11,6 +10,7 @@
   align-items: center;
   z-index: 1000;
   padding: 1.25rem; /* 20px */
+  overflow-y: auto; /* Allow scrolling if modal is taller than viewport */
 }
 
 .ui-modal-container {
@@ -20,6 +20,8 @@
   overflow-y: auto;
   box-shadow: 0 0.3125rem 1.5625rem rgba(0, 0, 0, 0.5); /* 0 5px 25px */
   animation: ui-modal-fade-in 0.3s;
+  margin: auto; /* Center vertically if smaller than viewport */
+  position: relative; /* Ensure it's positioned correctly */
 }
 
 /* Modal sizes */
@@ -44,6 +46,10 @@
   align-items: center;
   padding: 1.25rem; /* 20px */
   border-bottom: 1px solid #444;
+  position: sticky; /* Keep header visible when scrolling */
+  top: 0;
+  background-color: #2a2a2a;
+  z-index: 1;
 }
 
 .ui-modal-title {
@@ -76,6 +82,42 @@
   gap: 0.9375rem; /* 15px */
 }
 
+/* Form elements inside modals */
+.ui-modal-container .ui-form-input,
+.ui-modal-container .ui-form-select,
+.ui-modal-container .ui-form-textarea {
+  background-color: #333;
+  border: 1px solid #444;
+  color: #e0e0e0;
+  width: 100%;
+}
+
+.ui-modal-container .ui-event-editor,
+.ui-modal-container .ui-member-editor {
+  padding: 0; /* Remove padding as the modal already has padding */
+}
+
+.ui-modal-container .ui-form-group {
+  margin-bottom: 1rem;
+}
+
+.ui-modal-container .ui-form-label {
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.ui-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  bottom: 0;
+  background-color: #2a2a2a;
+  z-index: 1;
+}
+
 @keyframes ui-modal-fade-in {
   from {
     opacity: 0;
@@ -84,6 +126,13 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Ensure modals can be seen on mobile when keyboard appears */
+@media (max-height: 600px) {
+  .ui-modal-container {
+    max-height: 85vh;
   }
 }
 

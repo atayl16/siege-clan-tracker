@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useEvents } from '../hooks/useEvents'; // Updated to use new hook
+import { useEvents } from '../hooks/useEvents';
 import { FaCalendar, FaClock, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 // Import UI components
@@ -40,8 +40,8 @@ export default function EventEditor({
 
       setEventData((prev) => ({
         ...prev,
-        start_date: today.toISOString(),
-        end_date: endTime.toISOString(),
+        start_date: today.toISOString().slice(0, 16),
+        end_date: endTime.toISOString().slice(0, 16),
       }));
     }
   }, [event]);
@@ -183,7 +183,104 @@ export default function EventEditor({
 
       <form onSubmit={handleSubmit} className="ui-event-form">
         {/* Form fields for event details */}
-        {/* ... */}
+        <div className="ui-form-group">
+          <label htmlFor="event-name">Event Name <span className="required">*</span></label>
+          <input
+            id="event-name"
+            name="name"
+            type="text"
+            className="ui-form-input"
+            value={eventData.name}
+            onChange={handleChange}
+            required
+            placeholder="Enter event name"
+          />
+        </div>
+
+        <div className="ui-form-group">
+          <label htmlFor="event-type">Event Type <span className="required">*</span></label>
+          <select
+            id="event-type"
+            name="type"
+            className="ui-form-select"
+            value={eventData.type}
+            onChange={handleChange}
+            required
+          >
+            <option value="bingo">Bingo</option>
+            <option value="competition">Competition</option>
+            <option value="meeting">Meeting</option>
+            <option value="pvm">PvM Event</option>
+            <option value="social">Social</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div className="ui-form-row">
+          <div className="ui-form-group">
+            <label htmlFor="event-start-date">Start Date & Time <span className="required">*</span></label>
+            <div className="ui-datetime-input">
+              <FaCalendar className="ui-input-icon" />
+              <input
+                id="event-start-date"
+                name="start_date"
+                type="datetime-local"
+                className="ui-form-input ui-date-input"
+                value={eventData.start_date}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="ui-form-hint">
+              Current timezone: {userTimezone || "Unknown"}
+            </div>
+          </div>
+
+          <div className="ui-form-group">
+            <label htmlFor="event-end-date">End Date & Time <span className="required">*</span></label>
+            <div className="ui-datetime-input">
+              <FaCalendar className="ui-input-icon" />
+              <input
+                id="event-end-date"
+                name="end_date"
+                type="datetime-local"
+                className="ui-form-input ui-date-input"
+                value={eventData.end_date}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="ui-form-group">
+          <label htmlFor="event-description">Description</label>
+          <textarea
+            id="event-description"
+            name="description"
+            className="ui-form-textarea"
+            value={eventData.description}
+            onChange={handleChange}
+            rows={4}
+            placeholder="Enter event description or instructions..."
+          />
+        </div>
+
+        <div className="ui-form-group ui-checkbox-group">
+          <label className="ui-checkbox-label">
+            <input
+              type="checkbox"
+              name="is_wom"
+              checked={eventData.is_wom}
+              onChange={handleChange}
+            />
+            <span>This is a Wise Old Man competition</span>
+          </label>
+          <div className="ui-form-hint">
+            Check this if the event is linked to a Wise Old Man competition
+          </div>
+        </div>
+
         <div className="ui-form-actions">
           <Button
             type="submit"

@@ -191,60 +191,60 @@
   border-left: 0.25rem solid #dc3545; /* 4px */
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .ui-form-row {
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .ui-form-col {
-    width: 100%;
-  }
-  
-  .ui-form-actions {
-    flex-direction: column;
-    gap: 0.625rem; /* 10px */
-  }
-  
-  .ui-form-actions button {
-    width: 100%;
-  }
-  
-  .ui-time-presets {
-    flex-direction: column;
-  }
-  
-  .ui-time-presets button {
-    width: 100%;
-  }
+/* Add these styles to the bottom of your existing EventEditor.css file */
+
+/* Additional styles for the editor inside a modal */
+.ui-modal .ui-event-editor .ui-section-title {
+  margin-top: 0; /* Remove top margin inside modal */
 }
 
-@media (max-width: 576px) {
-  .ui-event-editor {
-    padding: 0.625rem 0; /* 10px */
-  }
-  
-  .ui-section-title {
-    font-size: 1.125rem; /* 18px */
-  }
-  
-  .ui-form-label {
-    font-size: 0.875rem; /* 14px */
-  }
-  
-  .ui-form-input,
-  .ui-form-select,
-  .ui-form-textarea {
-    padding: 0.5rem 0.75rem; /* 8px 12px */
-    font-size: 0.875rem; /* 14px */
-  }
-  
-  .ui-time-picker {
-    padding: 0.625rem; /* 10px */
-  }
-  
-  .ui-timezone-note {
-    font-size: 0.8125rem; /* 13px */
-  }
+.ui-modal .ui-form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #bbbbbb;
+  font-weight: 500;
+}
+
+.ui-modal .ui-datetime-input {
+  position: relative;
+}
+
+.ui-modal .ui-input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #777;
+}
+
+.ui-modal .ui-date-input {
+  padding-left: 2.25rem;
+}
+
+.ui-modal .ui-form-hint {
+  font-size: 0.8125rem;
+  color: #777;
+  margin-top: 0.25rem;
+}
+
+.ui-modal .required {
+  color: #dc3545;
+  margin-left: 0.25rem;
+}
+
+.ui-modal .ui-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.ui-modal .ui-checkbox-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Ensure the form doesn't overflow the modal */
+.ui-modal .ui-event-form {
+  padding-bottom: 0.5rem;
 }
