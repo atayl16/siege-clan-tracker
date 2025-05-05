@@ -326,7 +326,7 @@ export default function EventManagement() {
             </Button>
           </div>
         </Card.Header>
-
+        
         <Card.Body>
           {!events || events.length === 0 ? (
             <EmptyState
@@ -347,13 +347,60 @@ export default function EventManagement() {
               }
             />
           ) : (
-            <DataTable
-              columns={eventColumns}
-              data={events || []}
-              keyField="id"
-              emptyMessage="No events found"
-              className="ui-events-table"
-            />
+            <table className="ui-events-table">
+              <thead>
+                <tr>
+                  <th>Event Name</th>
+                  <th>Type</th>
+                  <th>Starts</th>
+                  <th>Ends</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map(event => (
+                  <tr key={event.id}>
+                    <td>
+                      <div className="ui-event-name">
+                        {event.name}
+                        {event.is_wom && (
+                          <Badge variant="info" className="ui-event-tag">
+                            WOM
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td>{formatEventType(event.type)}</td>
+                    <td>{formatDateTime(event.start_date)}</td>
+                    <td>{formatDateTime(event.end_date)}</td>
+                    <td>
+                      <div className="ui-event-actions">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setEditingEvent(event)}
+                          icon={<FaEdit />}
+                          className="ui-action-button"
+                          title="Edit Event"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => setDeleteConfirm(event)}
+                          icon={<FaTrash />}
+                          className="ui-action-button"
+                          title="Delete Event"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </Card.Body>
       </Card>
