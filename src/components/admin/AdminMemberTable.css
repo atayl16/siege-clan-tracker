@@ -25,6 +25,18 @@
   z-index: 10;
 }
 
+.ui-table-header-cell {
+  text-align: center !important;
+  vertical-align: middle;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ui-table th {
+  /* Override any default styling */
+  text-align: center !important;
+}
+
 .ui-table th {
   background-color: #222;
   position: sticky;

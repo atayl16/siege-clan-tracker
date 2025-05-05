@@ -347,24 +347,23 @@ export default function AdminMemberTable({
         updated_at: new Date().toISOString(),
       };
   
-      if (window.confirm(`Update ${member.name} with latest WOM data?`)) {
-        await updateMember(updatedData);
+      // Removed confirmation dialog - execute sync immediately
+      await updateMember(updatedData);
   
-        // Show success message
-        const successToast = document.createElement("div");
-        successToast.className = "update-success-toast";
-        successToast.textContent = `Updated ${member.name} with fresh WOM data`;
-        document.body.appendChild(successToast);
+      // Show success message
+      const successToast = document.createElement("div");
+      successToast.className = "update-success-toast";
+      successToast.textContent = `Updated ${member.name} with fresh WOM data`;
+      document.body.appendChild(successToast);
   
+      setTimeout(() => {
+        successToast.classList.add("toast-fade-out");
         setTimeout(() => {
-          successToast.classList.add("toast-fade-out");
-          setTimeout(() => {
-            document.body.removeChild(successToast);
-          }, 300);
-        }, 2000);
+          document.body.removeChild(successToast);
+        }, 300);
+      }, 2000);
   
-        onRefresh && onRefresh();
-      }
+      onRefresh && onRefresh();
     } catch (err) {
       console.error("Error syncing member:", err);
       alert(`Failed to sync: ${err.message}`);
@@ -409,13 +408,13 @@ export default function AdminMemberTable({
         <table className="ui-table">
           <thead>
             <tr>
-              <th>Player Name</th>
-              <th className="ui-text-center ui-score-column">Siege Score</th>
-              <th className="ui-text-center ui-role-column">WOM Role</th>
-              <th className="ui-text-center">EHB</th>
-              <th className="ui-text-center">Clan XP</th>
-              <th className="ui-text-center">Joined</th>
-              <th className="ui-text-center">Actions</th>
+              <th className="ui-text-center ui-table-header-cell">Player Name</th>
+              <th className="ui-text-center ui-table-header-cell ui-score-column">Siege Score</th>
+              <th className="ui-text-center ui-table-header-cell ui-role-column">WOM Role</th>
+              <th className="ui-text-center ui-table-header-cell">EHB</th>
+              <th className="ui-text-center ui-table-header-cell">Clan XP</th>
+              <th className="ui-text-center ui-table-header-cell">Joined</th>
+              <th className="ui-text-center ui-table-header-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -477,7 +476,9 @@ export default function AdminMemberTable({
                     </td>
                     <td className="ui-score-cell">
                       <div className="ui-score-with-button">
-                        <div className="ui-score-value">{member.siege_score || 0}</div>
+                        <div className="ui-score-value">
+                          {member.siege_score || 0}
+                        </div>
                         <Button
                           variant="info"
                           size="md"
@@ -492,9 +493,7 @@ export default function AdminMemberTable({
                           {refreshing === `score-${member.wom_id}` ? (
                             <div className="ui-button-spinner"></div>
                           ) : (
-                            <>
-                              +2 Points
-                            </>
+                            <>+2 Points</>
                           )}
                         </Button>
                       </div>
@@ -520,7 +519,11 @@ export default function AdminMemberTable({
                             e.stopPropagation();
                             handleToggleRankType(member);
                           }}
-                          title={isSkiller ? "Switch to fighter rank" : "Switch to skiller rank"}
+                          title={
+                            isSkiller
+                              ? "Switch to fighter rank"
+                              : "Switch to skiller rank"
+                          }
                           disabled={isRefreshing}
                           className="ui-toggle-rank-btn"
                         >
@@ -528,13 +531,16 @@ export default function AdminMemberTable({
                             <div className="ui-button-spinner"></div>
                           ) : (
                             <>
-                              <FaExchangeAlt /> {isSkiller ? "Fighter" : "Skiller"}
+                              <FaExchangeAlt />{" "}
+                              {isSkiller ? "Fighter" : "Skiller"}
                             </>
                           )}
                         </Button>
                       </div>
                     </td>
-                    <td className="ui-text-center">{member.ehb || 0}</td>
+                    <td className="ui-text-center">
+                      {Math.floor(member.ehb) || 0}
+                    </td>
                     <td className="ui-text-center">
                       {Number(
                         (parseInt(member.current_xp) || 0) -
@@ -683,10 +689,12 @@ export default function AdminMemberTable({
                                   </span>
                                 </div>
                               )}
-                              
+
                               {/* New additional buttons section in expanded row */}
                               <div className="ui-detail-item ui-expanded-actions">
-                                <span className="ui-detail-label">Add Siege Points:</span>
+                                <span className="ui-detail-label">
+                                  Add Siege Points:
+                                </span>
                                 <div className="ui-points-button-group">
                                   <Button
                                     variant="info"
@@ -723,9 +731,11 @@ export default function AdminMemberTable({
                                   </Button>
                                 </div>
                               </div>
-                              
+
                               <div className="ui-detail-item ui-expanded-actions">
-                                <span className="ui-detail-label">Member Actions:</span>
+                                <span className="ui-detail-label">
+                                  Member Actions:
+                                </span>
                                 <div className="ui-member-action-buttons">
                                   <Button
                                     variant="warning"
@@ -739,7 +749,7 @@ export default function AdminMemberTable({
                                   >
                                     <FaEdit /> Edit Member
                                   </Button>
-                                  
+
                                   <Button
                                     variant="secondary"
                                     size="sm"
@@ -747,10 +757,15 @@ export default function AdminMemberTable({
                                       e.stopPropagation();
                                       handleToggleVisibility(member);
                                     }}
-                                    title={member.hidden ? "Unhide member" : "Hide member"}
+                                    title={
+                                      member.hidden
+                                        ? "Unhide member"
+                                        : "Hide member"
+                                    }
                                     disabled={isRefreshing}
                                   >
-                                    {refreshing === `visibility-${member.wom_id}` ? (
+                                    {refreshing ===
+                                    `visibility-${member.wom_id}` ? (
                                       <div className="ui-button-spinner"></div>
                                     ) : member.hidden ? (
                                       <>
@@ -762,7 +777,7 @@ export default function AdminMemberTable({
                                       </>
                                     )}
                                   </Button>
-                                  
+
                                   <Button
                                     variant="danger"
                                     size="sm"
