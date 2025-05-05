@@ -41,7 +41,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         wom_name: member.wom_name || "",
         wom_id: member.wom_id || "",
         womrole: member.womrole || "",
-        ehb: member.ehb || 0,
+        ehb: Math.floor(member.ehb) || 0, // Floor the EHB value to remove decimals
         current_xp: member.current_xp || 0,
         current_lvl: member.current_lvl || 0,
         first_xp: member.first_xp || 0,
@@ -121,15 +121,30 @@ export default function MemberEditor({ member, onSave, onCancel }) {
       console.log("Submitting member data:", memberData);
   
       // Use the hook's updateMember method
-      const result = await updateMember(memberData);
-      console.log("Update result:", result);
+      let result;
+      try {
+        result = await updateMember(memberData);
+        console.log("Update result:", result);
+      } catch (updateError) {
+        throw updateError;
+      }
   
       // Refresh the members data
       await refreshMembers();
   
-      // Call the onSave callback with the updated data
+      // Create a safe result object that always has the required fields
+      const safeResult = result && typeof result === 'object'
+        ? { ...memberData, ...result }
+        : memberData;
+  
+      // Make sure the final object has a wom_id
+      if (!safeResult.wom_id) {
+        safeResult.wom_id = memberData.wom_id;
+      }
+  
+      // Call the onSave callback with the safe data
       if (typeof onSave === 'function') {
-        onSave(result || memberData);
+        onSave(safeResult);
       } else {
         console.warn("onSave is not a function");
       }
