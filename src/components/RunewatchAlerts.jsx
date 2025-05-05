@@ -114,12 +114,10 @@ export default function RunewatchAlerts({ previewMode = false }) {
 
     try {
       // Update the member using the new hook
-      await updateMember({
-        ...memberToWhitelist,
-        runewatch_whitelisted: true,
-        runewatch_whitelist_reason: whitelistReason,
-      });
-
+      await whitelistRunewatchMember(
+        memberToWhitelist.wom_id,
+        whitelistReason || "Manually whitelisted by admin"
+      );
       // Refresh data from context instead of managing local state
       await refreshMembers();
 
