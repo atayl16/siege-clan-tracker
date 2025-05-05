@@ -273,37 +273,131 @@ async function syncWomMembers() {
       }
       
       if (nameMatch) {
-        // Update member with new WOM ID (name change case)
-        console.log(`Updating ${memberName} with new WOM ID: ${nameMatch.wom_id}`);
+        // *** NEW CODE: Check if this WOM ID already exists in our database ***
+        const duplicateCheck = existingMembers.find(m => m.wom_id === nameMatch.wom_id);
         
-        // Get current name history or initialize empty array
-        const nameHistory = member.name_history || [];
-        
-        // Add current name to history if not already there
-        if (member.name && !nameHistory.includes(member.name)) {
-          nameHistory.push(member.name);
+        if (duplicateCheck) {
+          console.log(`Found duplicate record situation: "${memberName}" (ID: ${member.wom_id}) and "${duplicateCheck.name}" (ID: ${duplicateCheck.wom_id})`);
+          
+          // Determine which record to keep - prefer the one with most recent activity
+          const oldRecord = member;
+          const newRecord = duplicateCheck;
+          
+          console.log(`Merging records for name change: "${oldRecord.name}" → "${newRecord.name}"`);
+          
+          // Merge important data from old record to new record
+          const mergeData = {};
+          
+          // Take the older join_date if available
+          if (oldRecord.join_date && (!newRecord.join_date || new Date(oldRecord.join_date) < new Date(newRecord.join_date))) {
+            mergeData.join_date = oldRecord.join_date;
+          }
+          
+          // Take the lower first_xp/first_lvl if available
+          if (oldRecord.first_xp !== undefined && (newRecord.first_xp === undefined || oldRecord.first_xp < newRecord.first_xp)) {
+            mergeData.first_xp = oldRecord.first_xp;
+          }
+          
+          if (oldRecord.first_lvl !== undefined && (newRecord.first_lvl === undefined || oldRecord.first_lvl < newRecord.first_lvl)) {
+            mergeData.first_lvl = oldRecord.first_lvl;
+          }
+          
+          // Merge name histories
+          let combinedHistory = newRecord.name_history || [];
+          
+          // Add old name if not in history
+          if (oldRecord.name && !combinedHistory.includes(oldRecord.name)) {
+            combinedHistory.push(oldRecord.name);
+          }
+          
+          // Add all names from old record's history that aren't in the new history
+          if (oldRecord.name_history && Array.isArray(oldRecord.name_history)) {
+            oldRecord.name_history.forEach(name => {
+              if (!combinedHistory.includes(name)) {
+                combinedHistory.push(name);
+              }
+            });
+          }
+          
+          if (combinedHistory.length > 0) {
+            mergeData.name_history = combinedHistory;
+          }
+          
+          // Apply any noteworthy notes
+          if (oldRecord.notes && oldRecord.notes.trim()) {
+            mergeData.notes = (newRecord.notes ? newRecord.notes + "\n\n" : "") + 
+                              `Previous notes from ${oldRecord.name}: ${oldRecord.notes}`;
+          }
+          
+          // Add any other fields that should be preserved
+          
+          console.log(`Merging data from old record: ${JSON.stringify(mergeData)}`);
+          
+          // Update the new record with merged data
+          if (Object.keys(mergeData).length > 0) {
+            const { error: mergeError } = await supabase
+              .from('members')
+              .update({
+                ...mergeData,
+                updated_at: new Date().toISOString()
+              })
+              .eq('wom_id', newRecord.wom_id);
+            
+            if (mergeError) {
+              console.error(`Error merging data for "${newRecord.name}":`, mergeError);
+              errorCount++;
+            } else {
+              console.log(`Successfully merged data to "${newRecord.name}"`);
+            }
+          }
+          
+          // Delete the old record since we've merged its data to the new one
+          const { error: deleteError } = await supabase
+            .from('members')
+            .delete()
+            .eq('wom_id', oldRecord.wom_id);
+          
+          if (deleteError) {
+            console.error(`Error deleting old record "${oldRecord.name}":`, deleteError);
+            errorCount++;
+          } else {
+            console.log(`Successfully deleted old record "${oldRecord.name}" after merging`);
+            nameUpdatesCount++;
+          }
         }
-        
-        const { error: updateError } = await supabase
-          .from('members')
-          .update({
-            wom_id: nameMatch.wom_id,
-            wom_name: nameMatch.wom_name,
-            name: nameMatch.display_name,
-            name_history: nameHistory,
-            updated_at: new Date().toISOString()
-          })
-          .eq('wom_id', member.wom_id);
-        
-        if (updateError) {
-          console.error(`Error updating "${memberName}" with new WOM ID:`, updateError);
-          errorCount++;
-        } else {
-          console.log(`Successfully updated "${memberName}" → "${nameMatch.display_name}"`);
-          nameUpdatesCount++;
+        else {
+          // Original code for updating the member with new WOM ID (when no duplicate exists)
+          console.log(`Updating ${memberName} with new WOM ID: ${nameMatch.wom_id}`);
+          
+          // Get current name history or initialize empty array
+          const nameHistory = member.name_history || [];
+          
+          // Add current name to history if not already there
+          if (member.name && !nameHistory.includes(member.name)) {
+            nameHistory.push(member.name);
+          }
+          
+          const { error: updateError } = await supabase
+            .from('members')
+            .update({
+              wom_id: nameMatch.wom_id,
+              wom_name: nameMatch.wom_name,
+              name: nameMatch.display_name,
+              name_history: nameHistory,
+              updated_at: new Date().toISOString()
+            })
+            .eq('wom_id', member.wom_id);
+          
+          if (updateError) {
+            console.error(`Error updating "${memberName}" with new WOM ID:`, updateError);
+            errorCount++;
+          } else {
+            console.log(`Successfully updated "${memberName}" → "${nameMatch.display_name}"`);
+            nameUpdatesCount++;
+          }
         }
       } else {
-        // Mark member as inactive (left clan case)
+        // Mark member as inactive (left clan case) - unchanged from your original code
         console.log(`Member "${memberName}" not found in WOM group - marking as inactive`);
         
         const { error: deactivateError } = await supabase

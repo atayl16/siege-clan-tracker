@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useGroupBossStats } from "../hooks/useGroupStats";
 import { FaSkull, FaTimes } from "react-icons/fa";
-import MetricIcon from "../components/MetricIcon"; // Import MetricIcon
+import MetricIcon from "../components/MetricIcon";
 import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
 import "./BossStatsPage.css";
@@ -88,9 +88,9 @@ export default function BossStatsPage() {
           {viewMode === "bosses" ? (
             // Bosses Table
             filteredData.bosses && filteredData.bosses.length > 0 ? (
-              <div className="ui-stats-wrapper">
-                <div className="ui-table-container">
-                  <table className="ui-table">
+              <div className="boss-stats-wrapper">
+                <div className="boss-table-container">
+                  <table className="boss-table">
                     <thead>
                       <tr>
                         <th>Boss</th>
@@ -101,20 +101,20 @@ export default function BossStatsPage() {
                     </thead>
                     <tbody>
                       {filteredData.bosses.map((boss, index) => (
-                        <tr key={index} className="ui-stats-row">
-                          <td className="ui-boss-name">
-                            <span className="ui-boss-icon">
+                        <tr key={index} className="boss-stats-row">
+                          <td className="boss-name">
+                            <span className="boss-icon">
                               <MetricIcon metric={boss.metric || boss.displayName} />
                             </span>
                             {boss.displayName}
                           </td>
-                          <td className="ui-player-name">
+                          <td className="boss-player-name">
                             {boss.player ? boss.player.displayName : "N/A"}
                           </td>
-                          <td className="ui-boss-kills">
+                          <td className="boss-kills">
                             {boss.kills.toLocaleString()}
                           </td>
-                          <td className="ui-boss-rank">
+                          <td className="boss-rank">
                             {boss.rank.toLocaleString()}
                           </td>
                         </tr>
@@ -124,16 +124,16 @@ export default function BossStatsPage() {
                 </div>
               </div>
             ) : (
-              <div className="ui-empty-message">
+              <div className="boss-empty-message">
                 <p>No boss kills found{searchTerm ? " matching your search" : ""}</p>
               </div>
             )
           ) : (
             // Activities Table
             filteredData.activities && filteredData.activities.length > 0 ? (
-              <div className="ui-stats-wrapper">
-                <div className="ui-table-container">
-                  <table className="ui-table">
+              <div className="boss-stats-wrapper">
+                <div className="boss-table-container">
+                  <table className="boss-table">
                     <thead>
                       <tr>
                         <th>Activity</th>
@@ -144,20 +144,20 @@ export default function BossStatsPage() {
                     </thead>
                     <tbody>
                       {filteredData.activities.map((activity, index) => (
-                        <tr key={index} className="ui-stats-row">
-                          <td className="ui-activity-name">
-                            <span className="ui-activity-icon">
+                        <tr key={index} className="boss-stats-row">
+                          <td className="boss-activity-name">
+                            <span className="boss-activity-icon">
                               <MetricIcon metric={activity.metric || activity.displayName} />
                             </span>
                             {activity.displayName}
                           </td>
-                          <td className="ui-player-name">
+                          <td className="boss-player-name">
                             {activity.player ? activity.player.displayName : "N/A"}
                           </td>
-                          <td className="ui-activity-score">
+                          <td className="boss-activity-score">
                             {activity.score.toLocaleString()}
                           </td>
-                          <td className="ui-activity-rank">
+                          <td className="boss-activity-rank">
                             {activity.rank.toLocaleString()}
                           </td>
                         </tr>
@@ -167,7 +167,7 @@ export default function BossStatsPage() {
                 </div>
               </div>
             ) : (
-              <div className="ui-empty-message">
+              <div className="boss-empty-message">
                 <p>No activities found{searchTerm ? " matching your search" : ""}</p>
               </div>
             )

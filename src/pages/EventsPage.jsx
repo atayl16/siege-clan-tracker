@@ -69,19 +69,19 @@ export default function EventsPage() {
 
       <div className="ui-content-header">
         <h2>Clan Events</h2>
-        <div className="ui-events-filters-container">
-          <div className="ui-search-input-wrapper">
-            <FaSearch className="ui-search-icon" />
+        <div className="event-filters-container">
+          <div className="event-search-input-wrapper">
+            <FaSearch className="event-search-icon" />
             <input
               type="text"
-              className="ui-search-input"
+              className="event-search-input"
               placeholder="Search events..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
               <button
-                className="ui-clear-search"
+                className="event-clear-search"
                 onClick={() => setSearchTerm("")}
               >
                 <FaTimes />
@@ -92,25 +92,25 @@ export default function EventsPage() {
       </div>
 
       {/* Event Types Info Section */}
-      <div className="ui-section-container ui-events-info-container">
+      <div className="ui-section-container event-info-container">
         <div
-          className="ui-events-info-header"
+          className="event-info-header"
           onClick={() => setShowInfo(!showInfo)}
         >
-          <FaInfoCircle className="ui-events-info-icon" />
+          <FaInfoCircle className="event-info-icon" />
           <h3>About Our Events</h3>
           {showInfo ? <FaChevronUp /> : <FaChevronDown />}
         </div>
         {showInfo && (
-          <div className="ui-events-info-content">
+          <div className="event-info-content">
             <p>
               We encourage our clan members to enjoy different play styles, hang
               out with each other and most of all have fun! To help this, we
               host regular events, including:
             </p>
 
-            <div className="ui-events-types-grid">
-              <div className="ui-event-type-card">
+            <div className="event-types-grid">
+              <div className="event-type-card">
                 <h4>SotW</h4>
                 <p>
                   Skill of the Week - A competition to gain the most XP in a
@@ -118,7 +118,7 @@ export default function EventsPage() {
                 </p>
               </div>
 
-              <div className="ui-event-type-card">
+              <div className="event-type-card">
                 <h4>BotW</h4>
                 <p>
                   Boss of the Week - A competition to get the most kills at a
@@ -126,7 +126,7 @@ export default function EventsPage() {
                 </p>
               </div>
 
-              <div className="ui-event-type-card">
+              <div className="event-type-card">
                 <h4>Raids</h4>
                 <p>
                   We host regular raid events including group raids, learner
@@ -134,7 +134,7 @@ export default function EventsPage() {
                 </p>
               </div>
 
-              <div className="ui-event-type-card">
+              <div className="event-type-card">
                 <h4>Bingo/Tile Races</h4>
                 <p>
                   Teams compete to complete tasks on a bingo board within a time
@@ -142,7 +142,7 @@ export default function EventsPage() {
                 </p>
               </div>
 
-              <div className="ui-event-type-card">
+              <div className="event-type-card">
                 <h4>Member-run Events</h4>
                 <p>
                   Short events (1-2 hours) organized by clan members, such as
@@ -154,7 +154,7 @@ export default function EventsPage() {
         )}
       </div>
 
-      <StatGroup className="ui-events-summary">
+      <StatGroup className="event-summary">
         <StatGroup.Stat
           label="Active"
           value={

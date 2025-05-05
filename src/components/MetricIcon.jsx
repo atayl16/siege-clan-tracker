@@ -1,7 +1,22 @@
-import React from "react";
-import { BossIcon, SkillIcon, ActivityIcon, RaidIcon, OldSchoolIcon } from "./OsrsIcons";
+import React, { useState, useEffect, memo, useRef } from "react";
+import {
+  BossIcon,
+  SkillIcon,
+  ActivityIcon,
+  RaidIcon,
+  OldSchoolIcon,
+} from "./OsrsIcons";
 
-const MetricIcon = ({ metric }) => {
+// Global icon cache shared across all instances
+const iconCache = {};
+
+// The main component, memoized to prevent unnecessary re-renders
+const MetricIcon = memo(({ metric }) => {
+  // Track if this specific instance has been rendered before
+  const [isRendered, setIsRendered] = useState(false);
+  const componentRef = useRef(null);
+
+  // Lists of metric types
   const bossMetrics = [
     "abyssal_sire",
     "alchemical_hydra",
@@ -101,25 +116,72 @@ const MetricIcon = ({ metric }) => {
     "toa",
   ];
 
-  if (bossMetrics.includes(metric)) {
-    return <BossIcon boss={metric} />;
+  // Mark as rendered when component mounts
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure we're not blocking the main thread
+    const frame = requestAnimationFrame(() => {
+      if (!isRendered) {
+        setIsRendered(true);
+      }
+    });
+    
+    return () => cancelAnimationFrame(frame);
+  }, [isRendered]);
+
+  // Get the icon component from cache or determine which one to use
+  const getIconComponent = () => {
+    // If we already computed this icon type, return from cache
+    if (iconCache[metric]) {
+      return iconCache[metric];
+    }
+
+    // Determine icon type
+    let iconComponent;
+    
+    if (bossMetrics.includes(metric)) {
+      iconComponent = <BossIcon boss={metric} />;
+    } else if (raidMetrics.includes(metric)) {
+      iconComponent = <RaidIcon raid={metric} />;
+    } else if (activityMetrics.includes(metric)) {
+      iconComponent = <ActivityIcon type={metric} />;
+    } else if (metric) {
+      const skillName = metric.charAt(0).toUpperCase() + metric.slice(1);
+      iconComponent = <SkillIcon skill={skillName} />;
+    } else {
+      iconComponent = <OldSchoolIcon />;
+    }
+    
+    // Cache the result for future use
+    iconCache[metric] = iconComponent;
+    return iconComponent;
+  };
+
+  // Display a simple placeholder while calculating the first render
+  if (!isRendered) {
+    return (
+      <div 
+        ref={componentRef}
+        className="metric-icon-placeholder" 
+        style={{ 
+          width: '24px', 
+          height: '24px', 
+          display: 'inline-block',
+          backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          borderRadius: '4px'
+        }}
+      />
+    );
   }
 
-  if (raidMetrics.includes(metric)) {
-    return <RaidIcon raid={metric} />;
-  }
+  // Get icon from cache or compute it
+  return (
+    <div className="metric-icon-wrapper">
+      {getIconComponent()}
+    </div>
+  );
+});
 
-  if (activityMetrics.includes(metric)) {
-    return <ActivityIcon type={metric} />;
-  }
-
-  if (metric) {
-    const skillName = metric.charAt(0).toUpperCase() + metric.slice(1);
-    return <SkillIcon skill={skillName} />;
-  }
-
-  // Default to the OsrsIcon if no match is found
-  return <OldSchoolIcon />;
-};
+// Add display name for debugging
+MetricIcon.displayName = 'MetricIcon';
 
 export default MetricIcon;

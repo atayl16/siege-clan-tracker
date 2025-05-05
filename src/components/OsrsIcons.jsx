@@ -271,3 +271,175 @@ export const BossIcon = ({ boss }) => {
 export const OldSchoolIcon = () => {
   return <img src={OsrsIcon} alt="Old School RuneScape Icon" />;
 }
+
+// Helper constants for preloading - list of most commonly viewed icons
+const POPULAR_BOSSES = [
+  "vorkath", "zulrah", "alchemical_hydra", "chambers_of_xeric", 
+  "tombs_of_amascut", "theatre_of_blood", "nex", "phantom_muspah",
+  "tztok_jad", "corporeal_beast"
+];
+
+const POPULAR_SKILLS = [
+  "Attack", "Strength", "Defence", "Hitpoints", "Ranged", "Magic", "Prayer", "Slayer"
+];
+
+const POPULAR_ACTIVITIES = [
+  "clue_scrolls_all", "league_points", "guardians_of_the_rift"
+];
+
+/**
+ * Preloads common metric icons to improve performance
+ * Can be called directly from BackgroundLoader
+ * @param {Object} options Configuration options for preloading
+ * @param {number} options.delayBetweenIcons Milliseconds between each icon load (default: 50)
+ * @param {boolean} options.logLoading Whether to log loading progress (default: true)
+ * @returns {Promise<void>} Promise that resolves when preloading completes
+ */
+export const preloadMetricIcons = ({ 
+  delayBetweenIcons = 50, 
+  logLoading = true 
+} = {}) => {
+  // Icon mapping for preloading
+  const iconMappings = {
+    // Boss icons - highest priority
+    boss: {
+      keys: POPULAR_BOSSES,
+      mapping: {
+        vorkath: VorkathIcon,
+        zulrah: ZulrahIcon,
+        alchemical_hydra: AlchemicalHydraIcon,
+        chambers_of_xeric: ChambersOfXericIcon,
+        tombs_of_amascut: TombsOfAmascutIcon,
+        theatre_of_blood: TheatreOfBloodIcon,
+        nex: NexIcon,
+        phantom_muspah: PhantomMuspahIcon,
+        tztok_jad: TzTokJadIcon,
+        corporeal_beast: CorporealBeastIcon
+      }
+    },
+    
+    // Skill icons - medium priority
+    skill: {
+      keys: POPULAR_SKILLS,
+      mapping: {
+        Attack: AttackIcon,
+        Strength: StrengthIcon,
+        Defence: DefenceIcon,
+        Hitpoints: HitpointsIcon,
+        Ranged: RangedIcon,
+        Magic: MagicIcon,
+        Prayer: PrayerIcon,
+        Slayer: SlayerIcon
+      }
+    },
+    
+    // Activity icons - lower priority
+    activity: {
+      keys: POPULAR_ACTIVITIES,
+      mapping: {
+        clue_scrolls_all: MasterClueIcon,
+        league_points: LeaguesIcon,
+        guardians_of_the_rift: GuardiansOfTheRiftIcon
+      }
+    }
+  };
+
+  if (logLoading) {
+    console.log("Preloading metric icons...");
+  }
+
+  return new Promise((resolve) => {
+    let totalIconsToLoad = 0;
+    let loadedIcons = 0;
+    
+    // Count total icons to load
+    Object.values(iconMappings).forEach(category => {
+      totalIconsToLoad += category.keys.length;
+    });
+    
+    const onIconLoaded = () => {
+      loadedIcons++;
+      if (loadedIcons === totalIconsToLoad) {
+        if (logLoading) {
+          console.log(`Preloaded all ${totalIconsToLoad} metric icons successfully`);
+        }
+        resolve();
+      }
+    };
+    
+    // Process each category in sequence (bosses first, then skills, then activities)
+    const loadCategory = (categoryKey, startDelay = 0) => {
+      const category = iconMappings[categoryKey];
+      
+      category.keys.forEach((key, index) => {
+        const delay = startDelay + (index * delayBetweenIcons);
+        
+        setTimeout(() => {
+          try {
+            const iconPath = category.mapping[key];
+            if (iconPath) {
+              const img = new Image();
+              img.onload = () => {
+                if (logLoading) {
+                  console.log(`Preloaded ${categoryKey} icon: ${key}`);
+                }
+                onIconLoaded();
+              };
+              img.onerror = () => {
+                console.error(`Failed to preload ${categoryKey} icon: ${key}`);
+                onIconLoaded();
+              };
+              img.src = iconPath;
+            } else {
+              console.warn(`No icon mapping found for ${categoryKey}: ${key}`);
+              onIconLoaded();
+            }
+          } catch (err) {
+            console.error(`Error preloading ${categoryKey} icon ${key}:`, err);
+            onIconLoaded();
+          }
+        }, delay);
+      });
+      
+      // Return the delay after this category finishes
+      return startDelay + (category.keys.length * delayBetweenIcons) + 100;
+    };
+    
+    // Start loading each category in sequence
+    let nextDelay = 0;
+    nextDelay = loadCategory('boss', nextDelay);
+    nextDelay = loadCategory('skill', nextDelay);
+    loadCategory('activity', nextDelay);
+  });
+};
+
+// Additional direct exports of icon mappings to allow more flexibility in BackgroundLoader
+export const bossIconMap = {
+  vorkath: VorkathIcon,
+  zulrah: ZulrahIcon,
+  alchemical_hydra: AlchemicalHydraIcon,
+  chambers_of_xeric: ChambersOfXericIcon,
+  tombs_of_amascut: TombsOfAmascutIcon,
+  theatre_of_blood: TheatreOfBloodIcon,
+  nex: NexIcon,
+  phantom_muspah: PhantomMuspahIcon,
+  tztok_jad: TzTokJadIcon,
+  corporeal_beast: CorporealBeastIcon
+};
+
+export const skillIconMap = {
+  Attack: AttackIcon,
+  Strength: StrengthIcon,
+  Defence: DefenceIcon,
+  Hitpoints: HitpointsIcon,
+  Ranged: RangedIcon,
+  Magic: MagicIcon,
+  Prayer: PrayerIcon,
+  Slayer: SlayerIcon
+};
+
+export const activityIconMap = {
+  clue_scrolls_all: MasterClueIcon,
+  league_points: LeaguesIcon,
+  guardians_of_the_rift: GuardiansOfTheRiftIcon
+};

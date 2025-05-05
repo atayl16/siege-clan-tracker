@@ -56,3 +56,7 @@ export default async (request, _context) => {
     });
   }
 };
+
+export const config = {
+  path: "/api/users",
+};

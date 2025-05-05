@@ -6,9 +6,12 @@ import {
   Route,
   useLocation
 } from "react-router-dom";
+
+import BackgroundLoader from "./utils/BackgroundLoader";
+
 import { AuthProvider } from "./context/AuthContext";
-import { DataProvider } from "./context/DataContext-OLD";
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { DataProvider } from "./context/DataContext";
+
 import RegistrationForm from "./pages/RegistrationForm";
 import Login from "./components/Login";
 import AdminPage from "./pages/AdminPage";
@@ -21,12 +24,15 @@ import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import NewMembers from "./pages/NewMembers";
+import ForgotPassword from "./components/ForgotPassword";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
-import ProtectedRoute from "./components/ProtectedRoute";
-import ForgotPassword from "./components/ForgotPassword";
 import SeasonalFavicon from "./utils/seasonalIcons";
+
 import "./styles/App.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 
 function App() {
   // Create a wrapper component to check the current route
@@ -117,6 +123,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <DataProvider>
+        <BackgroundLoader />
         <AuthProvider>
           <Router>
             <AppContent />
