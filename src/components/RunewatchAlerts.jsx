@@ -14,7 +14,13 @@ export default function RunewatchAlerts({ previewMode = false }) {
   const [error, setError] = useState(null);
 
   // Use the new hook to fetch members
-  const { members, loading, error: membersError, refreshMembers, updateMember } = useMembers();
+  const {
+    members,
+    loading,
+    error: membersError,
+    refreshMembers,
+    whitelistRunewatchMember,
+  } = useMembers();
 
   // Filter reported members
   const reportedMembers = React.useMemo(() => {

@@ -281,25 +281,26 @@ export default function AdminMemberTable({
     }
   };
 
-  // 4. Whitelist a member on runewatch
+  // 4. Whitelist a member on runewatch  
   const handleWhitelistMember = async (member) => {
     try {
       setRefreshing(`whitelist-${member.wom_id}`);
-
+  
       const reason = prompt("Enter reason for whitelisting:");
       if (!reason) {
         setRefreshing(null);
         return; // User cancelled
       }
-
-      await fetchers.supabase.whitelistRunewatchMember(member.wom_id, reason);
-
+  
+      // Use the new function from the hook
+      await whitelistRunewatchMember(member.wom_id, reason);
+  
       // Show success message
       const successToast = document.createElement("div");
       successToast.className = "update-success-toast";
       successToast.textContent = `Whitelisted ${member.name} on Runewatch`;
       document.body.appendChild(successToast);
-
+  
       // Remove the toast after 2 seconds
       setTimeout(() => {
         successToast.classList.add("toast-fade-out");
@@ -307,7 +308,7 @@ export default function AdminMemberTable({
           document.body.removeChild(successToast);
         }, 300);
       }, 2000);
-
+  
       onRefresh && onRefresh();
     } catch (err) {
       console.error("Error whitelisting member:", err);

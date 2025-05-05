@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
-import { useMembers } from "../hooks/useMembers"; // Updated hook
-import { useClaimRequests } from "../hooks/useClaimRequests"; // New hook
+import { useData } from "../context/DataContext";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
@@ -10,10 +9,6 @@ import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import EventManagement from "../components/EventManagement";
 import RunewatchAlerts from "../components/RunewatchAlerts";
-import GenerateClaimCode from "../components/GenerateClaimCode";
-import ClaimRequestManager from "../components/ClaimRequestManager";
-import ClaimRequestsPreview from "../components/ClaimRequestsPreview";
-import AdminUserManager from "../components/admin/AdminUserManager";
 
 // UI Components
 import Button from "../components/ui/Button";
@@ -30,9 +25,7 @@ import {
   FaCheck, 
   FaBell, 
   FaUsers, 
-  FaCalendarAlt, 
-  FaUserCog, 
-  FaKey, 
+  FaCalendarAlt,
   FaExclamationTriangle 
 } from "react-icons/fa";
 
@@ -49,10 +42,9 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
-  const [userSubTab, setUserSubTab] = useState("requests");
   const searchInputRef = useRef(null);
 
-  // Use new hooks
+  // Use DataContext hooks for all data access
   const {
     members,
     loading: membersLoading,
@@ -60,12 +52,7 @@ export default function AdminPage() {
     refreshMembers,
     updateMember,
     deleteMember,
-  } = useMembers();
-
-  const {
-    claimRequests: pendingRequests,
-    refreshClaimRequests,
-  } = useClaimRequests();
+  } = useData();
 
   // Calculate and set alerts count whenever members data changes
   useEffect(() => {
@@ -409,7 +396,7 @@ export default function AdminPage() {
         </div>
       </Modal>
 
-      {/* Admin Tabs */}
+      {/* Admin Tabs - Simplified to only include Alerts, Members, and Events */}
       <Tabs activeTab={activeTab} onChange={setActiveTab} className="admin-tabs">
         <Tabs.Tab 
           tabId="alerts" 
@@ -440,35 +427,8 @@ export default function AdminPage() {
                     onRankUpdate={() => {
                       refreshMembers();
                     }}
-                    previewMode={true}
+                    previewMode={false}
                   />
-                </Card.Body>
-              </Card>
-
-              {/* Pending Claims */}
-              <Card className="alert-section" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaKey className="alert-icon" />
-                    Pending Player Claims
-                  </h3>
-                </Card.Header>
-                <Card.Body className="alert-section-content">
-                  {pendingRequests?.length > 0 ? (
-                    <ClaimRequestsPreview
-                      count={pendingRequests.length}
-                      onViewAllClick={() => {
-                        setActiveTab("users");
-                        setUserSubTab("requests");
-                      }}
-                      onRequestProcessed={refreshRequests}
-                    />
-                  ) : (
-                    <div className="ui-no-alerts">
-                      <FaCheck className="ui-success-icon" />
-                      <span>No pending claim requests</span>
-                    </div>
-                  )}
                 </Card.Body>
               </Card>
 
@@ -480,7 +440,7 @@ export default function AdminPage() {
                   </h3>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
-                  <RunewatchAlerts previewMode={true} />
+                  <RunewatchAlerts previewMode={false} />
                 </Card.Body>
               </Card>
             </div>
@@ -567,46 +527,6 @@ export default function AdminPage() {
             </div>
             <div className="events-management-container">
               <EventManagement />
-            </div>
-          </div>
-        </Tabs.Tab>
-
-        <Tabs.Tab 
-          tabId="users" 
-          label="Users" 
-          icon={<FaUserCog />} 
-        >
-          <div className="tab-content users-content">
-            <div className="content-header">
-              <h2>User Management</h2>
-            </div>
-
-            <div className="users-management-container">
-              <Tabs activeTab={userSubTab} onChange={setUserSubTab} className="users-tabs">
-                <Tabs.Tab tabId="requests" label="Claim Requests">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <ClaimRequestManager />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-                
-                <Tabs.Tab tabId="codes" label="Claim Codes">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <GenerateClaimCode />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-                
-                <Tabs.Tab tabId="admins" label="Admin Users">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <AdminUserManager />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-            </Tabs>
             </div>
           </div>
         </Tabs.Tab>

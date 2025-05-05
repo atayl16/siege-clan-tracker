@@ -8,9 +8,11 @@ import { useMembers } from "../hooks/useMembers";
 import { useClaimRequests } from "../hooks/useClaimRequests";
 import { useEvents } from "../hooks/useEvents";
 import { useRaces } from "../hooks/useRaces";
-import { useUsers } from "../hooks/useUsers";import { useUserGoals } from "../hooks/useUserGoals";
+import { useUsers } from "../hooks/useUsers";
+import { useUserGoals } from "../hooks/useUserGoals";
 
 const DataContext = createContext({});
+
 export function DataProvider({ children }) {
   return (
     <DataContext.Provider
@@ -32,4 +34,5 @@ export function DataProvider({ children }) {
     </DataContext.Provider>
   );
 }
+
 export const useData = () => useContext(DataContext);

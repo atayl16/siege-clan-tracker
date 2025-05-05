@@ -65,24 +65,31 @@ export function AuthProvider({ children }) {
       // Hash the provided credentials
       const usernameHash = await sha256(username.trim().toLowerCase());
       const passwordHash = await sha256(password);
-  
+      
       // Try admin login first
-      if (
-        usernameHash === ADMIN_EMAIL_HASH &&
-        passwordHash === ADMIN_PASSWORD_HASH
-      ) {
+      if (usernameHash === ADMIN_EMAIL_HASH && passwordHash === ADMIN_PASSWORD_HASH) {
         localStorage.setItem("adminAuth", "true");
+        // Add the flag for service role access
+        localStorage.setItem("useServiceRole", "true");
         setIsAuthenticated(true);
-        
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: "admin@siege-clan-tracker.com",
-          password: password
+
+        // Create a mock admin user for UI purposes
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: "admin",
+            username: "admin",
+            is_admin: true,
+            created_at: new Date().toISOString(),
+          })
+        );
+
+        setUser({
+          id: "admin",
+          username: "admin",
+          is_admin: true,
         });
-        
-        if (authError) {
-          console.warn("Admin auth session creation failed:", authError);
-        }
-        
+
         return { success: true, isAdmin: true };
       }
   
@@ -464,6 +471,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
+    localStorage.removeItem("useServiceRole");
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);
