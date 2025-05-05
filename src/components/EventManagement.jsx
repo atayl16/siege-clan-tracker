@@ -65,7 +65,95 @@ export default function EventManagement() {
     }
   };
 
-  // Rest of the functions remain the same...
+  // Add the missing handleDeleteEvent function
+  const handleDeleteEvent = async () => {
+    try {
+      setActionError(null);
+      
+      if (!deleteConfirm || !deleteConfirm.id) {
+        setActionError("Cannot delete event: Missing event ID");
+        return;
+      }
+      
+      // Use the deleteEvent function from the hook
+      await deleteEvent(deleteConfirm.id);
+      
+      // Clear the delete confirmation
+      setDeleteConfirm(null);
+      
+      // Refresh events data
+      refreshEvents();
+      
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      setActionError(`Failed to delete event: ${err.message}`);
+    }
+  };
+
+  // Define event columns for the data table
+  const eventColumns = [
+    {
+      accessor: 'name',
+      Header: 'Event Name',
+      Cell: ({ row }) => (
+        <div className="ui-event-name">
+          {row.original.name}
+          {row.original.is_wom && (
+            <Badge variant="info" className="ui-event-tag">
+              WOM
+            </Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessor: 'type',
+      Header: 'Type',
+      Cell: ({ value }) => <span className="ui-event-type">{value}</span>,
+    },
+    {
+      accessor: 'start_date',
+      Header: 'Start Date',
+      Cell: ({ value }) => (
+        <span className="ui-event-date">
+          {value ? new Date(value).toLocaleDateString() : 'N/A'}
+        </span>
+      ),
+    },
+    {
+      accessor: 'end_date',
+      Header: 'End Date',
+      Cell: ({ value }) => (
+        <span className="ui-event-date">
+          {value ? new Date(value).toLocaleDateString() : 'N/A'}
+        </span>
+      ),
+    },
+    {
+      accessor: 'actions',
+      Header: 'Actions',
+      Cell: ({ row }) => (
+        <div className="ui-event-actions">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setEditingEvent(row.original)}
+            icon={<FaEdit />}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setDeleteConfirm(row.original)}
+            icon={<FaTrash />}
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   if (loading && (!events || events.length === 0)) {
     return (
