@@ -141,32 +141,55 @@ export default function AdminMemberTable({
   // Function implementations - Updated to take a pointValue parameter
   const handleAddPoints = async (member, pointValue = 2) => {
     try {
+      // Add validation to ensure wom_id exists
+      if (!member.wom_id) {
+        console.error("Cannot update member without wom_id:", member);
+        alert("Cannot update: Member ID is missing");
+        return;
+      }
+  
       setRefreshing(`score-${member.wom_id}`);
-      const newScore = (parseInt(member.siege_score) || 0) + pointValue;
-
+      
+      // Parse the current score with better error handling
+      const currentScore = parseInt(member.siege_score) || 0;
+      const newScore = currentScore + pointValue;
+      
+      console.log("Updating score:", {
+        memberId: member.wom_id,
+        name: member.name,
+        currentScore,
+        pointValue,
+        newScore
+      });
+  
       await updateMember({
         wom_id: member.wom_id,
         siege_score: newScore,
       });
-
+  
       // Show success message
       const successToast = document.createElement("div");
       successToast.className = "update-success-toast";
       successToast.textContent = `Added ${pointValue} points to ${member.name}`;
       document.body.appendChild(successToast);
-
+  
       setTimeout(() => {
         successToast.classList.add("toast-fade-out");
         setTimeout(() => {
           document.body.removeChild(successToast);
         }, 300);
       }, 2000);
-
-      // Refresh the members list after update
-      onRefresh && onRefresh();
+  
+      // Make sure we refresh the UI
+      if (onRefresh) {
+        console.log("Refreshing member list...");
+        onRefresh();
+      } else {
+        console.warn("onRefresh function is not available");
+      }
     } catch (err) {
       console.error("Error updating siege score:", err);
-      alert("Failed to update siege score");
+      alert(`Failed to update siege score: ${err.message}`);
     } finally {
       setRefreshing(null);
     }
