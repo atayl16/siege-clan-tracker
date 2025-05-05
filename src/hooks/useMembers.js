@@ -74,9 +74,12 @@ export function useMembers() {
       if (updateError) {
         throw updateError;
       }
+
+      console.log("Update response:", { data, error: updateError });
       
       // Refresh members list
-      fetchMembers();
+      await fetchMembers();
+      console.log("Members refreshed after update");
       return data[0];
     } catch (err) {
       console.error('Error updating member:', err);
