@@ -70,12 +70,6 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.ui-event-name {
-  display: block;
-  font-weight: 500;
-  color: var(--color-text, #e0e0e0);
-}
-
 /* Badge styling */
 .ui-badge {
   display: inline-block;
