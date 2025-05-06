@@ -196,12 +196,13 @@ async function syncWomMembers() {
                 playerData.latestSnapshot?.data?.computed?.ehb?.value || 0
               ),
               womrole: member.womrole,
+              build: member.build || playerData.type || "regular",
               siege_score: 0,
               active: true,
               join_date: playerData.registeredAt || new Date().toISOString(),
               name_history: [],
               updated_at: new Date().toISOString(),
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
             };
             
             const { error } = await supabase.from("members").insert([newMemberData]);
@@ -461,6 +462,17 @@ async function syncWomMembers() {
                 const womMember = womIdsMap.get(member.wom_id);
                 if (womMember.womrole !== undefined) {
                   updateData.womrole = womMember.womrole;
+                }
+                if (
+                  womMember.build !== undefined &&
+                  womMember.build !== member.build
+                ) {
+                  updateData.build = womMember.build;
+                  console.log(
+                    `Updating build for ${member.name}: ${
+                      member.build || "none"
+                    } → ${womMember.build}`
+                  );
                 }
               }
               
