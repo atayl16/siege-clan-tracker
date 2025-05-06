@@ -33,11 +33,6 @@
 }
 
 .ui-table th {
-  /* Override any default styling */
-  text-align: center !important;
-}
-
-.ui-table th {
   background-color: #222;
   position: sticky;
   top: 0;
