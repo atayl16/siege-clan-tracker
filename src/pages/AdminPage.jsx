@@ -110,7 +110,7 @@ export default function AdminPage() {
 
   // Filter members based on search term
   useEffect(() => {
-    if (!members) return;
+    if (!members || !members.length) return;
 
     if (!searchTerm.trim()) {
       setFilteredMembers(members);
@@ -127,20 +127,6 @@ export default function AdminPage() {
 
     setFilteredMembers(filtered);
   }, [searchTerm, members]);
-
-  // Make sure filteredMembers is properly initialized when members data is loaded
-  useEffect(() => {
-    if (members && members.length > 0) {
-      setFilteredMembers(members);
-    }
-  }, [members]);
-
-  // Focus search input when switching to members tab
-  useEffect(() => {
-    if (activeTab === "members" && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     if (members) {

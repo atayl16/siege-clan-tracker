@@ -2,7 +2,7 @@
 .admin-dashboard {
   display: flex;
   flex-direction: column;
-  width: 90%;
+  width: 85%;
   max-width: 112.5rem; /* 1800px */
   margin: 0 auto;
   padding: 1.25rem; /* 20px */
