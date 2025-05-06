@@ -1,9 +1,6 @@
-/* Base container */
-.ui-runewatch-alerts {
-  background-color: #2a2a2a;
-  border-radius: var(--border-radius-md, 0.5rem);
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+/* MAIN CONTAINER */
+.ui-runewatch-container {
+  height: 100%;
 }
 
 /* Header section */
@@ -11,7 +8,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+}
+
+.ui-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  color: var(--color-orange, #ff9800);
+  font-size: 1.25rem;
+}
+
+.ui-alerts-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  margin-left: 0.5rem;
 }
 
 /* Icon animation */
@@ -48,10 +61,15 @@
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid #444;
+  transition: background-color 0.2s;
 }
 
 .ui-reported-member-item:last-child {
   border-bottom: none;
+}
+
+.ui-reported-member-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ui-reported-member-name {
@@ -59,29 +77,10 @@
   color: #e0e0e0;
 }
 
+/* Rest of the CSS remains the same */
 /* Whitelist modal */
 .ui-whitelist-modal {
   padding: 0.5rem 0;
-}
-
-.ui-form-textarea {
-  width: 100%;
-  min-height: 6rem;
-  padding: 0.75rem;
-  background-color: #333;
-  border: 1px solid #555;
-  border-radius: var(--border-radius-sm, 0.25rem);
-  color: #e0e0e0;
-  font-family: inherit;
-  font-size: 1rem;
-  resize: vertical;
-  margin-top: 0.5rem;
-}
-
-.ui-form-textarea:focus {
-  outline: none;
-  border-color: var(--color-orange, #ff9800);
-  box-shadow: 0 0 0 0.1875rem rgba(255, 152, 0, 0.25);
 }
 
 /* Icons */
@@ -114,7 +113,7 @@
   font-weight: 500;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments - match RankAlerts */
 @media (max-width: 768px) {
   .ui-reported-member-item {
     flex-direction: column;
@@ -125,5 +124,18 @@
   
   .ui-reported-member-name {
     margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  
+  .ui-reported-member-item button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-runewatch-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 }

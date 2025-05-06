@@ -42,7 +42,7 @@ export default function AdminPage() {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [notification, setNotification] = useState(null);
   const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") || "alerts"
+    searchParams.get("tab") || "members"
   );
   const [alertsCount, setAlertsCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState(
@@ -62,36 +62,36 @@ export default function AdminPage() {
     deleteMember,
   } = useData();
 
-    const handleTabChange = (tabId) => {
-      setActiveTab(tabId);
-      // Update URL with new tab
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("tab", tabId);
-      setSearchParams(newParams);
-    };
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    // Update URL with new tab
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("tab", tabId);
+    setSearchParams(newParams);
+  };
 
-    // Update URL when search term changes
-    const handleSearchChange = (e) => {
-      const value = e.target.value;
-      setSearchTerm(value);
+  // Update URL when search term changes
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
 
-      // Update URL with search term
-      const newParams = new URLSearchParams(searchParams);
-      if (value) {
-        newParams.set("search", value);
-      } else {
-        newParams.delete("search");
-      }
-      setSearchParams(newParams);
-    };
-
-    // Clear search and update URL
-    const handleSearchClear = () => {
-      setSearchTerm("");
-      const newParams = new URLSearchParams(searchParams);
+    // Update URL with search term
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set("search", value);
+    } else {
       newParams.delete("search");
-      setSearchParams(newParams);
-    };
+    }
+    setSearchParams(newParams);
+  };
+
+  // Clear search and update URL
+  const handleSearchClear = () => {
+    setSearchTerm("");
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("search");
+    setSearchParams(newParams);
+  };
 
   // Calculate and set alerts count whenever members data changes
   useEffect(() => {
@@ -172,7 +172,9 @@ export default function AdminPage() {
     } catch (err) {
       setNotification({
         type: "error",
-        message: `Failed to delete ${member.name || member.wom_name}: ${err.message}`,
+        message: `Failed to delete ${member.name || member.wom_name}: ${
+          err.message
+        }`,
       });
     }
   };
@@ -187,14 +189,18 @@ export default function AdminPage() {
 
       setNotification({
         type: "success",
-        message: `${updatedMember.name || updatedMember.wom_name} was successfully saved.`,
+        message: `${
+          updatedMember.name || updatedMember.wom_name
+        } was successfully saved.`,
       });
 
       refreshMembers();
     } catch (err) {
       setNotification({
         type: "error",
-        message: `Failed to save ${updatedMember.name || updatedMember.wom_name}: ${err.message}`,
+        message: `Failed to save ${
+          updatedMember.name || updatedMember.wom_name
+        }: ${err.message}`,
       });
     }
   };
@@ -203,9 +209,19 @@ export default function AdminPage() {
   const exportToCSV = () => {
     try {
       const headers = [
-        "Name", "WOM ID", "WOM Name", "Title", "WOM Role",
-        "Current Level", "Current XP", "Initial Level", "Initial XP",
-        "EHB", "Siege Score", "Join Date", "Updated At"
+        "Name",
+        "WOM ID",
+        "WOM Name",
+        "Title",
+        "WOM Role",
+        "Current Level",
+        "Current XP",
+        "Initial Level",
+        "Initial XP",
+        "EHB",
+        "Siege Score",
+        "Join Date",
+        "Updated At",
       ];
 
       const csvRows = [headers.join(",")];
@@ -238,9 +254,9 @@ export default function AdminPage() {
       const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
 
-      const fileName = `siege-members-${new Date()
-        .toISOString()
-        .split("T")[0]}.csv`;
+      const fileName = `siege-members-${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
 
       if (navigator.msSaveBlob) {
         navigator.msSaveBlob(blob, fileName);
@@ -319,7 +335,7 @@ export default function AdminPage() {
       />
     );
   }
-  
+
   return (
     <div className="admin-dashboard">
       <div className="dashboard-header">
@@ -335,7 +351,6 @@ export default function AdminPage() {
           >
             Add New Member
           </Button>
-
           {alertsCount > 0 && (
             <Button
               variant="danger"
@@ -447,56 +462,6 @@ export default function AdminPage() {
         onChange={handleTabChange}
         className="admin-tabs"
       >
-        <Tabs.Tab
-          tabId="alerts"
-          label="Alerts"
-          icon={<FaBell />}
-          badge={alertsCount > 0 ? alertsCount : null}
-        >
-          <div className="tab-content alerts-content">
-            <div className="content-header">
-              <h2>Action Items Dashboard</h2>
-              <p>All items requiring admin attention are shown here</p>
-            </div>
-
-            <div className="alerts-container">
-              {/* Rank Updates */}
-              <Card className="alert-section" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaBell className="alert-icon" />
-                    Rank Updates
-                    {alertsCount > 0 && (
-                      <span className="count-badge">{alertsCount}</span>
-                    )}
-                  </h3>
-                </Card.Header>
-                <Card.Body className="alert-section-content">
-                  <RankAlerts
-                    onRankUpdate={() => {
-                      refreshMembers();
-                    }}
-                    previewMode={false}
-                  />
-                </Card.Body>
-              </Card>
-
-              {/* Runewatch Alerts */}
-              <Card className="alert-section full-width" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaExclamationTriangle className="alert-icon" /> Runewatch
-                    Alerts
-                  </h3>
-                </Card.Header>
-                <Card.Body className="alert-section-content">
-                  <RunewatchAlerts previewMode={false} />
-                </Card.Body>
-              </Card>
-            </div>
-          </div>
-        </Tabs.Tab>
-
         <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
           <div className="tab-content members-content">
             <div className="content-header">
@@ -579,6 +544,56 @@ export default function AdminPage() {
             </div>
             <div className="events-management-container">
               <EventManagement />
+            </div>
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab
+          tabId="alerts"
+          label="Alerts"
+          icon={<FaBell />}
+          badge={alertsCount > 0 ? alertsCount : null}
+        >
+          <div className="tab-content alerts-content">
+            <div className="content-header">
+              <h2>Action Items Dashboard</h2>
+              <p>All items requiring admin attention are shown here</p>
+            </div>
+
+            <div className="alerts-container">
+              {/* Rank Updates - will be side by side */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header>
+                  <h3>
+                    <FaBell className="alert-icon" />
+                    Rank Updates
+                    {alertsCount > 0 && (
+                      <span className="count-badge">{alertsCount}</span>
+                    )}
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  <RankAlerts
+                    onRankUpdate={() => {
+                      refreshMembers();
+                    }}
+                    previewMode={false}
+                  />
+                </Card.Body>
+              </Card>
+
+              {/* Runewatch Alerts - will be side by side */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header>
+                  <h3>
+                    <FaExclamationTriangle className="alert-icon" /> Runewatch
+                    Alerts
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  <RunewatchAlerts previewMode={false} />
+                </Card.Body>
+              </Card>
             </div>
           </div>
         </Tabs.Tab>

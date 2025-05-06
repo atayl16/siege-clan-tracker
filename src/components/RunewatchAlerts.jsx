@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
+import { useMembers } from "../hooks/useMembers";
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Modal from './ui/Modal';
+import Badge from './ui/Badge';
 import { FaExclamationTriangle, FaCheck, FaSync, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import './RunewatchAlerts.css';
 
@@ -13,13 +14,14 @@ export default function RunewatchAlerts({ previewMode = false }) {
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
 
-  // Use the new hook to fetch members
+  // Use the members hook
   const {
     members,
     loading,
     error: membersError,
     refreshMembers,
     whitelistRunewatchMember,
+    updateMember
   } = useMembers();
 
   // Filter reported members
@@ -37,7 +39,7 @@ export default function RunewatchAlerts({ previewMode = false }) {
     }
   }, [membersError]);
 
-  // Implement the missing checkRunewatch function
+  // Implement the check Runewatch function
   const checkRunewatch = async () => {
     try {
       setCheckingRunewatch(true);
@@ -65,7 +67,7 @@ export default function RunewatchAlerts({ previewMode = false }) {
         return;
       }
       
-      // Check each member against Runewatch (assuming you have an API endpoint)
+      // Check each member against Runewatch
       const checkedMembers = [];
       
       for (const member of membersToCheck) {
@@ -74,7 +76,7 @@ export default function RunewatchAlerts({ previewMode = false }) {
           const data = await response.json();
           
           if (data.reported) {
-            // Update the member using the new hook
+            // Update the member using the hook
             await updateMember({
               ...member,
               runewatch_reported: true,
@@ -113,12 +115,12 @@ export default function RunewatchAlerts({ previewMode = false }) {
     if (!memberToWhitelist) return;
 
     try {
-      // Update the member using the new hook
+      // Update the member using the hook
       await whitelistRunewatchMember(
         memberToWhitelist.wom_id,
         whitelistReason || "Manually whitelisted by admin"
       );
-      // Refresh data from context instead of managing local state
+      // Refresh data from context
       await refreshMembers();
 
       // Show success notification
@@ -174,9 +176,20 @@ export default function RunewatchAlerts({ previewMode = false }) {
     );
   }
 
+  // Main return - restructured to match RankAlerts
   return (
-    <div className="ui-runewatch-alerts">
-      <div className="ui-runewatch-header">
+    <Card variant="dark" className="ui-runewatch-container">
+      <Card.Header className="ui-runewatch-header">
+        <h3 className="ui-card-title">
+          <FaExclamationTriangle className="ui-warning-icon" />
+          RuneWatch Alerts
+          {reportedMembers.length > 0 && (
+            <Badge variant="warning" className="ui-alerts-count">
+              {reportedMembers.length}
+            </Badge>
+          )}
+        </h3>
+        
         <Button
           variant="secondary"
           onClick={checkRunewatch}
@@ -185,49 +198,43 @@ export default function RunewatchAlerts({ previewMode = false }) {
         >
           {checkingRunewatch ? "Checking..." : "Check RuneWatch"}
         </Button>
-      </div>
-
-      {error && (
-        <div className="ui-message ui-message-error">
-          <FaExclamationTriangle className="ui-message-icon" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {notification && (
-        <div
-          className={`ui-message ${
-            notification.type === "success"
-              ? "ui-message-success"
-              : notification.type === "warning" 
-              ? "ui-message-warning" 
-              : notification.type === "info"
-              ? "ui-message-info"
-              : "ui-message-error"
-          }`}
-        >
-          {notification.type === "success" ? (
-            <FaCheck className="ui-message-icon" />
-          ) : (
+      </Card.Header>
+      
+      <Card.Body>
+        {error && (
+          <div className="ui-message ui-message-error">
             <FaExclamationTriangle className="ui-message-icon" />
-          )}
-          <span>{notification.message}</span>
-        </div>
-      )}
+            <span>{error}</span>
+          </div>
+        )}
 
-      {reportedMembers.length === 0 ? (
-        <div className="ui-no-alerts">
-          <FaCheck className="ui-success-icon" /> No reported clan members found
-        </div>
-      ) : (
-        <Card variant="dark" className="ui-reported-members-card">
-          <Card.Header>
-            <h3 className="ui-card-title">
-              <FaExclamationTriangle className="ui-warning-icon" />
-              Reported Clan Members
-            </h3>
-          </Card.Header>
-          <Card.Body>
+        {notification && (
+          <div
+            className={`ui-message ${
+              notification.type === "success"
+                ? "ui-message-success"
+                : notification.type === "warning" 
+                ? "ui-message-warning" 
+                : notification.type === "info"
+                ? "ui-message-info"
+                : "ui-message-error"
+            }`}
+          >
+            {notification.type === "success" ? (
+              <FaCheck className="ui-message-icon" />
+            ) : (
+              <FaExclamationTriangle className="ui-message-icon" />
+            )}
+            <span>{notification.message}</span>
+          </div>
+        )}
+
+        {reportedMembers.length === 0 ? (
+          <div className="ui-no-alerts">
+            <FaCheck className="ui-success-icon" /> No reported clan members found
+          </div>
+        ) : (
+          <>
             <div className="ui-message ui-message-warning">
               <FaExclamationTriangle className="ui-message-icon" />
               <span>
@@ -252,9 +259,9 @@ export default function RunewatchAlerts({ previewMode = false }) {
                 </li>
               ))}
             </ul>
-          </Card.Body>
-        </Card>
-      )}
+          </>
+        )}
+      </Card.Body>
 
       {/* Whitelist Modal */}
       <Modal
@@ -295,6 +302,6 @@ export default function RunewatchAlerts({ previewMode = false }) {
           </Modal.Footer>
         </div>
       </Modal>
-    </div>
+    </Card>
   );
 }
