@@ -23,7 +23,7 @@ import EmptyState from "../components/ui/EmptyState";
 import { 
   FaDownload, 
   FaEraser, 
-  FaCheck, 
+  FaSync, 
   FaBell, 
   FaUsers, 
   FaCalendarAlt,
