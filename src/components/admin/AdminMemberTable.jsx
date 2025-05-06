@@ -70,6 +70,16 @@ export default function AdminMemberTable({
     });
   }, [members, group]);
 
+  const isAdmin = (member) => {
+    const role = (member.womrole || "").toLowerCase();
+    return (
+      role.includes("admin") ||
+      role.includes("moderator") ||
+      role.includes("owner") ||
+      role.includes("mod")
+    );
+  };
+
   // Calculate the correct role
   const calculateCorrectRole = (member) => {
     const womRole = (member.womrole || "").toLowerCase();
@@ -442,30 +452,32 @@ export default function AdminMemberTable({
                             </Badge>
                           )}
                         </div>
-                        <Button
-                          variant="primary"
-                          size="md"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleRankType(member);
-                          }}
-                          title={
-                            isSkiller
-                              ? "Switch to fighter rank"
-                              : "Switch to skiller rank"
-                          }
-                          disabled={isRefreshing}
-                          className="ui-toggle-rank-btn"
-                        >
-                          {refreshing === `rank-${member.wom_id}` ? (
-                            <div className="ui-button-spinner"></div>
-                          ) : (
-                            <>
-                              <FaExchangeAlt />{" "}
-                              {isSkiller ? "Fighter" : "Skiller"}
-                            </>
-                          )}
-                        </Button>
+                        {!isAdmin(member) && (
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleRankType(member);
+                            }}
+                            title={
+                              isSkiller
+                                ? "Switch to fighter rank"
+                                : "Switch to skiller rank"
+                            }
+                            disabled={isRefreshing}
+                            className="ui-toggle-rank-btn"
+                          >
+                            {refreshing === `rank-${member.wom_id}` ? (
+                              <div className="ui-button-spinner"></div>
+                            ) : (
+                              <>
+                                <FaExchangeAlt />{" "}
+                                {isSkiller ? "Fighter" : "Skiller"}
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </td>
                     <td className="ui-text-center">
