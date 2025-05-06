@@ -51,7 +51,6 @@ export default function AdminPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
   const searchInputRef = useRef(null);
-  const [checkRunewatchFn, setCheckRunewatchFn] = useState(null);
   const [checkingRunewatch, setCheckingRunewatch] = useState(false);
   const [runewatchAlertCount, setRunewatchAlertCount] = useState(0);
 
@@ -598,26 +597,9 @@ export default function AdminPage() {
                       </Badge>
                     )}
                   </h3>
-                  <Button
-                    variant="secondary"
-                    onClick={() => checkRunewatchFn && checkRunewatchFn()}
-                    disabled={checkingRunewatch}
-                    icon={
-                      <FaSync
-                        className={checkingRunewatch ? "ui-icon-spin" : ""}
-                      />
-                    }
-                  >
-                    {checkingRunewatch ? "Checking..." : "Check RuneWatch"}
-                  </Button>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
-                  <RunewatchAlerts
-                    onCheckRunewatch={(fn) => setCheckRunewatchFn(fn)}
-                    onCheckingChange={(checking) =>
-                      setCheckingRunewatch(checking)
-                    }
-                  />
+                  <RunewatchAlerts />
                 </Card.Body>
               </Card>
             </div>

@@ -5,8 +5,7 @@ import Modal from './ui/Modal';
 import { FaExclamationTriangle, FaCheck, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import './RunewatchAlerts.css';
 
-export default function RunewatchAlerts({ onCheckRunewatch, onCheckingChange }) {
-  const [checkingRunewatch, setCheckingRunewatch] = useState(false);
+export default function RunewatchAlerts() {
   const [whitelistReason, setWhitelistReason] = useState("");
   const [memberToWhitelist, setMemberToWhitelist] = useState(null);
   const [notification, setNotification] = useState(null);
@@ -36,87 +35,6 @@ export default function RunewatchAlerts({ onCheckRunewatch, onCheckingChange }) 
       setError(`Error loading members: ${membersError.message}`);
     }
   }, [membersError]);
-
-  // Implement the check Runewatch function
-  const checkRunewatch = useCallback(async () => {
-    try {
-      setCheckingRunewatch(true);
-      if (onCheckingChange) onCheckingChange(true);
-      setError(null);
-      
-      // Guard if no members
-      if (!members || members.length === 0) {
-        setNotification({
-          type: "warning",
-          message: "No members to check"
-        });
-        return;
-      }
-      
-      // Get all members that aren't already reported or whitelisted
-      const membersToCheck = members.filter(
-        m => !m.runewatch_reported && !m.runewatch_whitelisted
-      );
-      
-      if (membersToCheck.length === 0) {
-        setNotification({
-          type: "info",
-          message: "All members have already been checked"
-        });
-        return;
-      }
-      
-      // Check each member against Runewatch
-      const checkedMembers = [];
-      
-      for (const member of membersToCheck) {
-        try {
-          const response = await fetch(`/api/runewatch?rsn=${encodeURIComponent(member.name || member.wom_name)}`);
-          const data = await response.json();
-          
-          if (data.reported) {
-            // Update the member using the hook
-            await updateMember({
-              ...member,
-              runewatch_reported: true,
-              runewatch_report_data: data,
-              runewatch_checked_at: new Date().toISOString(),
-            });
-            
-            checkedMembers.push(member);
-          }
-        } catch (err) {
-          console.error(`Error checking ${member.name || member.wom_name}:`, err);
-        }
-      }
-      
-      // Refresh the members list
-      await refreshMembers();
-      
-      setNotification({
-        type: "success",
-        message: `${checkedMembers.length} members found on Runewatch`
-      });
-      
-      // Auto-dismiss after 5 seconds
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-    } catch (err) {
-      console.error("Error checking Runewatch:", err);
-      setError(`Failed to check Runewatch: ${err.message}`);
-    } finally {
-      setCheckingRunewatch(false);
-      if (onCheckingChange) onCheckingChange(false);
-    }
-  }, [members, refreshMembers, updateMember, onCheckingChange]);
-
-  // Expose checkRunewatch to parent component
-  useEffect(() => {
-    if (onCheckRunewatch) {
-      onCheckRunewatch(checkRunewatch);
-    }
-  }, [checkRunewatch, onCheckRunewatch]);
 
   const handleWhitelist = async () => {
     if (!memberToWhitelist) return;
