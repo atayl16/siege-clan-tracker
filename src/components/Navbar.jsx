@@ -87,7 +87,7 @@ export default function Navbar() {
 
           <Link
             to="/bosses"
-            className={location.pathname === "/leaderboard" ? "active" : ""}
+            className={location.pathname === "/bosses" ? "active" : ""}
           >
             Hall of Fame
           </Link>

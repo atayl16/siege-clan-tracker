@@ -1,19 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
-import { useMembers } from "../hooks/useMembers"; // Updated hook
-import { useClaimRequests } from "../hooks/useClaimRequests"; // New hook
+import { useData } from "../context/DataContext";
+import { useSearchParams } from "react-router-dom";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
-import EventManagement from "../components/EventManagement";
 import RunewatchAlerts from "../components/RunewatchAlerts";
-import GenerateClaimCode from "../components/GenerateClaimCode";
-import ClaimRequestManager from "../components/ClaimRequestManager";
-import ClaimRequestsPreview from "../components/ClaimRequestsPreview";
-import AdminUserManager from "../components/admin/AdminUserManager";
 
 // UI Components
 import Button from "../components/ui/Button";
@@ -27,32 +22,36 @@ import EmptyState from "../components/ui/EmptyState";
 import { 
   FaDownload, 
   FaEraser, 
-  FaCheck, 
   FaBell, 
   FaUsers, 
-  FaCalendarAlt, 
-  FaUserCog, 
-  FaKey, 
   FaExclamationTriangle 
 } from "react-icons/fa";
 
 import "./AdminPage.css";
 
 export default function AdminPage() {
+  const [searchParams, setSearchParams] = useSearchParams(); // Use search params hook
   const { isAuthenticated, isAdmin } = useAuth();
+
+  // Initialize state from URL parameters or defaults
   const [selectedMember, setSelectedMember] = useState(null);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [activeTab, setActiveTab] = useState("alerts");
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "members"
+  );
   const [alertsCount, setAlertsCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
-  const [userSubTab, setUserSubTab] = useState("requests");
   const searchInputRef = useRef(null);
+  const [runewatchAlertCount, setRunewatchAlertCount] = useState(0);
 
-  // Use new hooks
+
+  // Use DataContext hooks for all data access
   const {
     members,
     loading: membersLoading,
@@ -60,12 +59,38 @@ export default function AdminPage() {
     refreshMembers,
     updateMember,
     deleteMember,
-  } = useMembers();
+  } = useData();
 
-  const {
-    claimRequests: pendingRequests,
-    refreshClaimRequests,
-  } = useClaimRequests();
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    // Update URL with new tab
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("tab", tabId);
+    setSearchParams(newParams);
+  };
+
+  // Update URL when search term changes
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    // Update URL with search term
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set("search", value);
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
+  };
+
+  // Clear search and update URL
+  const handleSearchClear = () => {
+    setSearchTerm("");
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("search");
+    setSearchParams(newParams);
+  };
 
   // Calculate and set alerts count whenever members data changes
   useEffect(() => {
@@ -80,7 +105,7 @@ export default function AdminPage() {
 
   // Filter members based on search term
   useEffect(() => {
-    if (!members) return;
+    if (!members || !members.length) return;
 
     if (!searchTerm.trim()) {
       setFilteredMembers(members);
@@ -98,19 +123,14 @@ export default function AdminPage() {
     setFilteredMembers(filtered);
   }, [searchTerm, members]);
 
-  // Make sure filteredMembers is properly initialized when members data is loaded
   useEffect(() => {
-    if (members && members.length > 0) {
-      setFilteredMembers(members);
+    if (members) {
+      const reportedMembers = members.filter(
+        (m) => m.runewatch_reported && !m.runewatch_whitelisted
+      );
+      setRunewatchAlertCount(reportedMembers.length);
     }
   }, [members]);
-
-  // Focus search input when switching to members tab
-  useEffect(() => {
-    if (activeTab === "members" && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [activeTab]);
 
   // Handle deleting a member
   const handleDeleteMember = async (member) => {
@@ -146,7 +166,9 @@ export default function AdminPage() {
     } catch (err) {
       setNotification({
         type: "error",
-        message: `Failed to delete ${member.name || member.wom_name}: ${err.message}`,
+        message: `Failed to delete ${member.name || member.wom_name}: ${
+          err.message
+        }`,
       });
     }
   };
@@ -161,14 +183,18 @@ export default function AdminPage() {
 
       setNotification({
         type: "success",
-        message: `${updatedMember.name || updatedMember.wom_name} was successfully saved.`,
+        message: `${
+          updatedMember.name || updatedMember.wom_name
+        } was successfully saved.`,
       });
 
       refreshMembers();
     } catch (err) {
       setNotification({
         type: "error",
-        message: `Failed to save ${updatedMember.name || updatedMember.wom_name}: ${err.message}`,
+        message: `Failed to save ${
+          updatedMember.name || updatedMember.wom_name
+        }: ${err.message}`,
       });
     }
   };
@@ -177,9 +203,19 @@ export default function AdminPage() {
   const exportToCSV = () => {
     try {
       const headers = [
-        "Name", "WOM ID", "WOM Name", "Title", "WOM Role",
-        "Current Level", "Current XP", "Initial Level", "Initial XP",
-        "EHB", "Siege Score", "Join Date", "Updated At"
+        "Name",
+        "WOM ID",
+        "WOM Name",
+        "Title",
+        "WOM Role",
+        "Current Level",
+        "Current XP",
+        "Initial Level",
+        "Initial XP",
+        "EHB",
+        "Siege Score",
+        "Join Date",
+        "Updated At",
       ];
 
       const csvRows = [headers.join(",")];
@@ -212,9 +248,9 @@ export default function AdminPage() {
       const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
 
-      const fileName = `siege-members-${new Date()
-        .toISOString()
-        .split("T")[0]}.csv`;
+      const fileName = `siege-members-${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
 
       if (navigator.msSaveBlob) {
         navigator.msSaveBlob(blob, fileName);
@@ -293,7 +329,7 @@ export default function AdminPage() {
       />
     );
   }
-  
+
   return (
     <div className="admin-dashboard">
       <div className="dashboard-header">
@@ -309,7 +345,6 @@ export default function AdminPage() {
           >
             Add New Member
           </Button>
-
           {alertsCount > 0 && (
             <Button
               variant="danger"
@@ -323,9 +358,15 @@ export default function AdminPage() {
       </div>
 
       {notification && (
-        <div className={`ui-notification ${notification.type === 'success' ? 'ui-notification-success' : 'ui-notification-error'}`}>
+        <div
+          className={`ui-notification ${
+            notification.type === "success"
+              ? "ui-notification-success"
+              : "ui-notification-error"
+          }`}
+        >
           <span>{notification.message}</span>
-          <button 
+          <button
             className="ui-notification-close"
             onClick={() => setNotification(null)}
           >
@@ -409,84 +450,12 @@ export default function AdminPage() {
         </div>
       </Modal>
 
-      {/* Admin Tabs */}
-      <Tabs activeTab={activeTab} onChange={setActiveTab} className="admin-tabs">
-        <Tabs.Tab 
-          tabId="alerts" 
-          label="Alerts" 
-          icon={<FaBell />} 
-          badge={alertsCount > 0 ? alertsCount : null}
-        >
-          <div className="tab-content alerts-content">
-            <div className="content-header">
-              <h2>Action Items Dashboard</h2>
-              <p>All items requiring admin attention are shown here</p>
-            </div>
-
-            <div className="alerts-container">
-              {/* Rank Updates */}
-              <Card className="alert-section" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaBell className="alert-icon" />
-                    Rank Updates
-                    {alertsCount > 0 && (
-                      <span className="count-badge">{alertsCount}</span>
-                    )}
-                  </h3>
-                </Card.Header>
-                <Card.Body className="alert-section-content">
-                  <RankAlerts
-                    onRankUpdate={() => {
-                      refreshMembers();
-                    }}
-                    previewMode={true}
-                  />
-                </Card.Body>
-              </Card>
-
-              {/* Pending Claims */}
-              <Card className="alert-section" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaKey className="alert-icon" />
-                    Pending Player Claims
-                  </h3>
-                </Card.Header>
-                <Card.Body className="alert-section-content">
-                  {pendingRequests?.length > 0 ? (
-                    <ClaimRequestsPreview
-                      count={pendingRequests.length}
-                      onViewAllClick={() => {
-                        setActiveTab("users");
-                        setUserSubTab("requests");
-                      }}
-                      onRequestProcessed={refreshRequests}
-                    />
-                  ) : (
-                    <div className="ui-no-alerts">
-                      <FaCheck className="ui-success-icon" />
-                      <span>No pending claim requests</span>
-                    </div>
-                  )}
-                </Card.Body>
-              </Card>
-
-              {/* Runewatch Alerts */}
-              <Card className="alert-section full-width" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaExclamationTriangle className="alert-icon" /> Runewatch Alerts
-                  </h3>
-                </Card.Header>
-                <Card.Body className="alert-section-content">
-                  <RunewatchAlerts previewMode={true} />
-                </Card.Body>
-              </Card>
-            </div>
-          </div>
-        </Tabs.Tab>
-
+      {/* Admin Tabs - Simplified to only include Alerts, Members, and Events */}
+      <Tabs
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        className="admin-tabs"
+      >
         <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
           <div className="tab-content members-content">
             <div className="content-header">
@@ -495,8 +464,8 @@ export default function AdminPage() {
               <div className="admin-toolbar">
                 <SearchInput
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClear={() => setSearchTerm("")}
+                  onChange={handleSearchChange}
+                  onClear={handleSearchClear}
                   placeholder="Search members by name, WOM name, or role..."
                   ref={searchInputRef}
                   className="search-container"
@@ -512,7 +481,9 @@ export default function AdminPage() {
             ) : membersError ? (
               <div className="ui-error-container">
                 <FaExclamationTriangle className="ui-error-icon" />
-                <div className="ui-error-message">{membersError.message || String(membersError)}</div>
+                <div className="ui-error-message">
+                  {membersError.message || String(membersError)}
+                </div>
               </div>
             ) : (
               <>
@@ -560,53 +531,62 @@ export default function AdminPage() {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab tabId="events" label="Events" icon={<FaCalendarAlt />}>
-          <div className="tab-content events-content">
-            <div className="content-header">
-              <h2>Event Management</h2>
-            </div>
-            <div className="events-management-container">
-              <EventManagement />
-            </div>
-          </div>
-        </Tabs.Tab>
-
-        <Tabs.Tab 
-          tabId="users" 
-          label="Users" 
-          icon={<FaUserCog />} 
+        <Tabs.Tab
+          tabId="alerts"
+          label="Alerts"
+          icon={<FaBell />}
+          badge={
+            alertsCount + runewatchAlertCount > 0
+              ? alertsCount + runewatchAlertCount
+              : null
+          }
         >
-          <div className="tab-content users-content">
+          <div className="tab-content alerts-content">
             <div className="content-header">
-              <h2>User Management</h2>
+              <h2>Action Items Dashboard</h2>
+              <p>All items requiring admin attention are shown here</p>
             </div>
 
-            <div className="users-management-container">
-              <Tabs activeTab={userSubTab} onChange={setUserSubTab} className="users-tabs">
-                <Tabs.Tab tabId="requests" label="Claim Requests">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <ClaimRequestManager />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-                
-                <Tabs.Tab tabId="codes" label="Claim Codes">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <GenerateClaimCode />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-                
-                <Tabs.Tab tabId="admins" label="Admin Users">
-                  <Card className="action-card" variant="dark">
-                    <Card.Body>
-                      <AdminUserManager />
-                    </Card.Body>
-                  </Card>
-                </Tabs.Tab>
-            </Tabs>
+            <div className="alerts-container">
+              {/* Rank Updates - with header in AdminPage */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header className="ui-rank-alerts-header">
+                  <h3 className="ui-rank-alerts-title">
+                    <FaBell className="alert-icon" />
+                    Rank Updates
+                    {alertsCount > 0 && (
+                      <Badge variant="warning" pill className="ui-alerts-count">
+                        {alertsCount}
+                      </Badge>
+                    )}
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  <RankAlerts
+                    onRankUpdate={() => {
+                      refreshMembers();
+                    }}
+                  />
+                </Card.Body>
+              </Card>
+
+              {/* Runewatch Alerts - with header in AdminPage */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header className="ui-runewatch-header">
+                  <h3 className="ui-card-title">
+                    <FaExclamationTriangle className="alert-icon" />
+                    RuneWatch Alerts
+                    {runewatchAlertCount > 0 && (
+                      <Badge variant="warning" className="ui-alerts-count">
+                        {runewatchAlertCount}
+                      </Badge>
+                    )}
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  <RunewatchAlerts />
+                </Card.Body>
+              </Card>
             </div>
           </div>
         </Tabs.Tab>

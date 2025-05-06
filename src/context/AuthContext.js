@@ -65,24 +65,69 @@ export function AuthProvider({ children }) {
       // Hash the provided credentials
       const usernameHash = await sha256(username.trim().toLowerCase());
       const passwordHash = await sha256(password);
-  
+      
       // Try admin login first
-      if (
-        usernameHash === ADMIN_EMAIL_HASH &&
-        passwordHash === ADMIN_PASSWORD_HASH
-      ) {
+      if (usernameHash === ADMIN_EMAIL_HASH && passwordHash === ADMIN_PASSWORD_HASH) {
         localStorage.setItem("adminAuth", "true");
+        // Add the flag for service role access
+        localStorage.setItem("useServiceRole", "true");
         setIsAuthenticated(true);
-        
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: "admin@siege-clan-tracker.com",
-          password: password
+      
+        // Create a mock admin user for UI purposes
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: "admin",
+            username: "admin",
+            is_admin: true,
+            created_at: new Date().toISOString(),
+          })
+        );
+      
+        setUser({
+          id: "admin",
+          username: "admin",
+          is_admin: true,
         });
-        
-        if (authError) {
-          console.warn("Admin auth session creation failed:", authError);
+      
+        // NEW CODE: Try to create a Supabase auth session for the admin
+        try {
+          // First check if we have a pre-configured admin account
+          const adminEmail = "admin@siegeclan.org"; // Use consistent email
+          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: adminEmail,
+            password: passwordHash // Use the same password hash
+          });
+      
+          if (signInError) {
+            console.log("Admin auth not found, creating...");
+            // If sign-in fails, try to create the account
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: adminEmail,
+              password: passwordHash
+            });
+      
+            if (!signUpError) {
+              console.log("Admin auth created successfully");
+            } else {
+              console.error("Failed to create admin auth:", signUpError);
+            }
+          } else {
+            console.log("Admin authenticated with Supabase");
+          }
+          
+          // Now call the function to register this user as admin
+          const { error: rpcError } = await supabase.rpc('register_admin_user');
+          if (rpcError) {
+            console.error("Error registering admin in database:", rpcError);
+          } else {
+            console.log("Admin registered in database successfully");
+          }
+        } catch (authError) {
+          console.error("Error setting up admin authentication:", authError);
+          // Continue anyway - the hard-coded admin should still work
         }
-        
+      
         return { success: true, isAdmin: true };
       }
   
@@ -464,6 +509,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
+    localStorage.removeItem("useServiceRole");
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);

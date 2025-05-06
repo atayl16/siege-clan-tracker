@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
+import React, { useState, useEffect, useCallback } from 'react';
+import { useMembers } from "../hooks/useMembers";
 import Button from './ui/Button';
-import Card from './ui/Card';
 import Modal from './ui/Modal';
-import { FaExclamationTriangle, FaCheck, FaSync, FaShieldAlt, FaTimes } from 'react-icons/fa';
+import { FaExclamationTriangle, FaCheck, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import './RunewatchAlerts.css';
 
-export default function RunewatchAlerts({ previewMode = false }) {
-  const [checkingRunewatch, setCheckingRunewatch] = useState(false);
+export default function RunewatchAlerts() {
   const [whitelistReason, setWhitelistReason] = useState("");
   const [memberToWhitelist, setMemberToWhitelist] = useState(null);
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
 
-  // Use the new hook to fetch members
-  const { members, loading, error: membersError, refreshMembers, updateMember } = useMembers();
+  // Use the members hook
+  const {
+    members,
+    loading,
+    error: membersError,
+    refreshMembers,
+    whitelistRunewatchMember,
+    updateMember
+  } = useMembers();
 
   // Filter reported members
   const reportedMembers = React.useMemo(() => {
@@ -31,90 +36,16 @@ export default function RunewatchAlerts({ previewMode = false }) {
     }
   }, [membersError]);
 
-  // Implement the missing checkRunewatch function
-  const checkRunewatch = async () => {
-    try {
-      setCheckingRunewatch(true);
-      setError(null);
-      
-      // Guard if no members
-      if (!members || members.length === 0) {
-        setNotification({
-          type: "warning",
-          message: "No members to check"
-        });
-        return;
-      }
-      
-      // Get all members that aren't already reported or whitelisted
-      const membersToCheck = members.filter(
-        m => !m.runewatch_reported && !m.runewatch_whitelisted
-      );
-      
-      if (membersToCheck.length === 0) {
-        setNotification({
-          type: "info",
-          message: "All members have already been checked"
-        });
-        return;
-      }
-      
-      // Check each member against Runewatch (assuming you have an API endpoint)
-      const checkedMembers = [];
-      
-      for (const member of membersToCheck) {
-        try {
-          const response = await fetch(`/api/runewatch?rsn=${encodeURIComponent(member.name || member.wom_name)}`);
-          const data = await response.json();
-          
-          if (data.reported) {
-            // Update the member using the new hook
-            await updateMember({
-              ...member,
-              runewatch_reported: true,
-              runewatch_report_data: data,
-              runewatch_checked_at: new Date().toISOString(),
-            });
-            
-            checkedMembers.push(member);
-          }
-        } catch (err) {
-          console.error(`Error checking ${member.name || member.wom_name}:`, err);
-        }
-      }
-      
-      // Refresh the members list
-      await refreshMembers();
-      
-      setNotification({
-        type: "success",
-        message: `${checkedMembers.length} members found on Runewatch`
-      });
-      
-      // Auto-dismiss after 5 seconds
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-    } catch (err) {
-      console.error("Error checking Runewatch:", err);
-      setError(`Failed to check Runewatch: ${err.message}`);
-    } finally {
-      setCheckingRunewatch(false);
-    }
-  };
-
   const handleWhitelist = async () => {
     if (!memberToWhitelist) return;
 
     try {
-      // Update the member using the new hook
-      await updateMember({
-        ...memberToWhitelist,
-        runewatch_whitelisted: true,
-        runewatch_whitelist_reason: whitelistReason,
-      });
-
-      // Refresh data from context instead of managing local state
+      // Update the member using the hook
+      await whitelistRunewatchMember(
+        memberToWhitelist.wom_id,
+        whitelistReason || "Manually whitelisted by admin"
+      );
+      // Refresh data from context
       await refreshMembers();
 
       // Show success notification
@@ -148,41 +79,9 @@ export default function RunewatchAlerts({ previewMode = false }) {
     );
   }
 
-  // For preview mode, show a simplified version with just the alert count
-  if (previewMode) {
-    return (
-      <div className="ui-runewatch-preview">
-        {reportedMembers.length === 0 ? (
-          <div className="ui-no-alerts">
-            <FaCheck className="ui-success-icon" /> No reported clan members
-            found
-          </div>
-        ) : (
-          <div className="ui-preview-alerts">
-            <FaExclamationTriangle className="ui-warning-icon" />
-            <span>
-              {reportedMembers.length} member
-              {reportedMembers.length !== 1 ? "s" : ""} reported on RuneWatch
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  }
-
+  // Main return - content only, no card or header
   return (
-    <div className="ui-runewatch-alerts">
-      <div className="ui-runewatch-header">
-        <Button
-          variant="secondary"
-          onClick={checkRunewatch}
-          disabled={checkingRunewatch}
-          icon={<FaSync className={checkingRunewatch ? "ui-icon-spin" : ""} />}
-        >
-          {checkingRunewatch ? "Checking..." : "Check RuneWatch"}
-        </Button>
-      </div>
-
+    <div className="ui-runewatch-content">
       {error && (
         <div className="ui-message ui-message-error">
           <FaExclamationTriangle className="ui-message-icon" />
@@ -216,40 +115,32 @@ export default function RunewatchAlerts({ previewMode = false }) {
           <FaCheck className="ui-success-icon" /> No reported clan members found
         </div>
       ) : (
-        <Card variant="dark" className="ui-reported-members-card">
-          <Card.Header>
-            <h3 className="ui-card-title">
-              <FaExclamationTriangle className="ui-warning-icon" />
-              Reported Clan Members
-            </h3>
-          </Card.Header>
-          <Card.Body>
-            <div className="ui-message ui-message-warning">
-              <FaExclamationTriangle className="ui-message-icon" />
-              <span>
-                The following clan members have been reported on RuneWatch
-              </span>
-            </div>
+        <>
+          <div className="ui-message ui-message-warning">
+            <FaExclamationTriangle className="ui-message-icon" />
+            <span>
+              The following clan members have been reported on RuneWatch
+            </span>
+          </div>
 
-            <ul className="ui-reported-members-list">
-              {reportedMembers.map((member) => (
-                <li key={member.wom_id} className="ui-reported-member-item">
-                  <div className="ui-reported-member-name">
-                    {member.name || member.wom_name}
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setMemberToWhitelist(member)}
-                    icon={<FaShieldAlt />}
-                  >
-                    Whitelist
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </Card.Body>
-        </Card>
+          <ul className="ui-reported-members-list">
+            {reportedMembers.map((member) => (
+              <li key={member.wom_id} className="ui-reported-member-item">
+                <div className="ui-reported-member-name">
+                  {member.name || member.wom_name}
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setMemberToWhitelist(member)}
+                  icon={<FaShieldAlt />}
+                >
+                  Whitelist
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       {/* Whitelist Modal */}

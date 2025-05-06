@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useGroupBossStats } from "../hooks/useGroupStats";
-import { FaSkull, FaTimes } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 import MetricIcon from "../components/MetricIcon";
 import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
@@ -64,7 +64,6 @@ export default function BossStatsPage() {
 
       <div className="ui-content-header">
         <h2>
-          <FaSkull className="ui-icon-margin" /> 
           Clan {viewMode === "bosses" ? "Boss Kills" : "Activities"}
         </h2>
         <div className="ui-actions-container">

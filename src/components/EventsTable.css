@@ -70,12 +70,6 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.ui-event-name {
-  display: block;
-  font-weight: 500;
-  color: var(--color-text, #e0e0e0);
-}
-
 /* Badge styling */
 .ui-badge {
   display: inline-block;
@@ -194,20 +188,38 @@
   color: var(--color-orange, #ff9800);
 }
 
+/* Add this rule to ensure first column is left-aligned */
+.ui-table th:first-child,
+.ui-table td:first-child {
+  text-align: left;
+}
+
+/* Fix the event name display - already has display: flex but needs adjustments */
 .ui-event-name {
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* Ensure left alignment within flex container */
+  width: 100%; /* Take up full width of cell */
 }
 
+/* Ensure icon is properly sized and positioned */
 .ui-event-skill-icon {
   margin-right: 8px;
   display: flex;
   align-items: center;
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  width: 24px;
+  height: 24px;
 }
 
-.ui-event-skill-icon img {
-  width: 20px;
-  height: 20px;
+
+.ui-event-skill-icon img,
+.ui-event-skill-icon svg {
+  width: 100%;
+  height: 100%;
+  max-width: 24px;
+  max-height: 24px;
+  object-fit: contain;
 }
 
 /* Mobile optimizations */

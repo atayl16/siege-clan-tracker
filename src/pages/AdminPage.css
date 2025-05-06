@@ -2,7 +2,7 @@
 .admin-dashboard {
   display: flex;
   flex-direction: column;
-  width: 90%;
+  width: 85%;
   max-width: 112.5rem; /* 1800px */
   margin: 0 auto;
   padding: 1.25rem; /* 20px */
@@ -309,6 +309,33 @@
   max-width: 500px;
 }
 
+/* Ensure the modal gets focus */
+.ui-modal:focus {
+  outline: none;
+}
+
+/* Animation for modal entrance */
+.ui-modal-enter {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.ui-modal-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 200ms, transform 200ms;
+}
+
+.ui-modal-exit {
+  opacity: 1;
+}
+
+.ui-modal-exit-active {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 200ms, transform 200ms;
+}
+
 /* Animation keyframes */
 @keyframes fadeIn {
   from {
@@ -380,5 +407,18 @@
   
   .content-header h2 {
     font-size: 1.3rem;
+  }
+}
+
+.alerts-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 991px) {
+  .alerts-container {
+    grid-template-columns: 1fr;
   }
 }

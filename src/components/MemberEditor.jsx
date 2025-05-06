@@ -41,7 +41,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         wom_name: member.wom_name || "",
         wom_id: member.wom_id || "",
         womrole: member.womrole || "",
-        ehb: member.ehb || 0,
+        ehb: Math.floor(member.ehb) || 0, // Floor the EHB value to remove decimals
         current_xp: member.current_xp || 0,
         current_lvl: member.current_lvl || 0,
         first_xp: member.first_xp || 0,
@@ -69,9 +69,15 @@ export default function MemberEditor({ member, onSave, onCancel }) {
   
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    
+    // For number inputs, convert them all to integers (whole numbers)
+    const processedValue = type === 'number' 
+      ? (value === '' ? 0 : Math.floor(parseFloat(value))) // Use Math.floor to ensure whole numbers
+      : value;
+      
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? (value === '' ? 0 : parseInt(value, 10)) : value
+      [name]: processedValue
     }));
   };
   
@@ -86,22 +92,62 @@ export default function MemberEditor({ member, onSave, onCancel }) {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
+  
     try {
-      // Prepare data for submission
+      // Ensure we have a wom_id before proceeding
+      if (!formData.wom_id) {
+        throw new Error("Member ID (WOM ID) is required for updates");
+      }
+      
+      // Prepare data for submission with proper type conversions
       const memberData = {
         ...formData,
+        wom_id: String(formData.wom_id).trim(), // Ensure wom_id is a clean string
+        // Convert all numeric fields to integers
+        siege_score: Math.floor(Number(formData.siege_score)) || 0,
+        ehb: Math.floor(Number(formData.ehb)) || 0, // Ensure EHB is an integer
+        current_xp: Number(formData.current_xp) || 0,
+        current_lvl: Math.floor(Number(formData.current_lvl)) || 0,
+        first_xp: Number(formData.first_xp) || 0,
+        first_lvl: Math.floor(Number(formData.first_lvl)) || 0,
         updated_at: new Date().toISOString(),
       };
-
-      // Use the new hook's updateMember method
-      const result = await updateMember(memberData);
-
+  
+      // Double check that wom_id is present after processing
+      if (!memberData.wom_id) {
+        throw new Error("WOM ID is empty or invalid after processing");
+      }
+  
+      console.log("Submitting member data:", memberData);
+  
+      // Use the hook's updateMember method
+      let result;
+      try {
+        result = await updateMember(memberData);
+        console.log("Update result:", result);
+      } catch (updateError) {
+        throw updateError;
+      }
+  
       // Refresh the members data
-      refreshMembers();
-
-      // Call the onSave callback with the updated data
-      onSave(result || memberData);
+      await refreshMembers();
+  
+      // Create a safe result object that always has the required fields
+      const safeResult = result && typeof result === 'object'
+        ? { ...memberData, ...result }
+        : memberData;
+  
+      // Make sure the final object has a wom_id
+      if (!safeResult.wom_id) {
+        safeResult.wom_id = memberData.wom_id;
+      }
+  
+      // Call the onSave callback with the safe data
+      if (typeof onSave === 'function') {
+        onSave(safeResult);
+      } else {
+        console.warn("onSave is not a function");
+      }
     } catch (err) {
       console.error("Error saving member:", err);
       setError(
