@@ -8,7 +8,6 @@ import { useSearchParams } from "react-router-dom";
 import AdminMemberTable from "../components/admin/AdminMemberTable";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
-import EventManagement from "../components/EventManagement";
 import RunewatchAlerts from "../components/RunewatchAlerts";
 
 // UI Components
@@ -23,10 +22,8 @@ import EmptyState from "../components/ui/EmptyState";
 import { 
   FaDownload, 
   FaEraser, 
-  FaSync, 
   FaBell, 
   FaUsers, 
-  FaCalendarAlt,
   FaExclamationTriangle 
 } from "react-icons/fa";
 
@@ -51,7 +48,6 @@ export default function AdminPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
   const searchInputRef = useRef(null);
-  const [checkingRunewatch, setCheckingRunewatch] = useState(false);
   const [runewatchAlertCount, setRunewatchAlertCount] = useState(0);
 
 
@@ -532,17 +528,6 @@ export default function AdminPage() {
                 </div>
               </>
             )}
-          </div>
-        </Tabs.Tab>
-
-        <Tabs.Tab tabId="events" label="Events" icon={<FaCalendarAlt />}>
-          <div className="tab-content events-content">
-            <div className="content-header">
-              <h2>Event Management</h2>
-            </div>
-            <div className="events-management-container">
-              <EventManagement />
-            </div>
           </div>
         </Tabs.Tab>
 
