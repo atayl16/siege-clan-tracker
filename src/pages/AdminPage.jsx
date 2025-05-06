@@ -51,6 +51,10 @@ export default function AdminPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
   const searchInputRef = useRef(null);
+  const [checkRunewatchFn, setCheckRunewatchFn] = useState(null);
+  const [checkingRunewatch, setCheckingRunewatch] = useState(false);
+  const [runewatchAlertCount, setRunewatchAlertCount] = useState(0);
+
 
   // Use DataContext hooks for all data access
   const {
@@ -137,6 +141,15 @@ export default function AdminPage() {
       searchInputRef.current.focus();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (members) {
+      const reportedMembers = members.filter(
+        (m) => m.runewatch_reported && !m.runewatch_whitelisted
+      );
+      setRunewatchAlertCount(reportedMembers.length);
+    }
+  }, [members]);
 
   // Handle deleting a member
   const handleDeleteMember = async (member) => {
@@ -552,7 +565,11 @@ export default function AdminPage() {
           tabId="alerts"
           label="Alerts"
           icon={<FaBell />}
-          badge={alertsCount > 0 ? alertsCount : null}
+          badge={
+            alertsCount + runewatchAlertCount > 0
+              ? alertsCount + runewatchAlertCount
+              : null
+          }
         >
           <div className="tab-content alerts-content">
             <div className="content-header">
@@ -561,14 +578,16 @@ export default function AdminPage() {
             </div>
 
             <div className="alerts-container">
-              {/* Rank Updates - will be side by side */}
+              {/* Rank Updates - with header in AdminPage */}
               <Card className="alert-section" variant="dark">
-                <Card.Header>
-                  <h3>
+                <Card.Header className="ui-rank-alerts-header">
+                  <h3 className="ui-rank-alerts-title">
                     <FaBell className="alert-icon" />
                     Rank Updates
                     {alertsCount > 0 && (
-                      <span className="count-badge">{alertsCount}</span>
+                      <Badge variant="warning" pill className="ui-alerts-count">
+                        {alertsCount}
+                      </Badge>
                     )}
                   </h3>
                 </Card.Header>
@@ -577,21 +596,42 @@ export default function AdminPage() {
                     onRankUpdate={() => {
                       refreshMembers();
                     }}
-                    previewMode={false}
                   />
                 </Card.Body>
               </Card>
 
-              {/* Runewatch Alerts - will be side by side */}
+              {/* Runewatch Alerts - with header in AdminPage */}
               <Card className="alert-section" variant="dark">
-                <Card.Header>
-                  <h3>
-                    <FaExclamationTriangle className="alert-icon" /> Runewatch
-                    Alerts
+                <Card.Header className="ui-runewatch-header">
+                  <h3 className="ui-card-title">
+                    <FaExclamationTriangle className="alert-icon" />
+                    RuneWatch Alerts
+                    {runewatchAlertCount > 0 && (
+                      <Badge variant="warning" className="ui-alerts-count">
+                        {runewatchAlertCount}
+                      </Badge>
+                    )}
                   </h3>
+                  <Button
+                    variant="secondary"
+                    onClick={() => checkRunewatchFn && checkRunewatchFn()}
+                    disabled={checkingRunewatch}
+                    icon={
+                      <FaSync
+                        className={checkingRunewatch ? "ui-icon-spin" : ""}
+                      />
+                    }
+                  >
+                    {checkingRunewatch ? "Checking..." : "Check RuneWatch"}
+                  </Button>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
-                  <RunewatchAlerts previewMode={false} />
+                  <RunewatchAlerts
+                    onCheckRunewatch={(fn) => setCheckRunewatchFn(fn)}
+                    onCheckingChange={(checking) =>
+                      setCheckingRunewatch(checking)
+                    }
+                  />
                 </Card.Body>
               </Card>
             </div>

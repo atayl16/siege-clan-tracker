@@ -3,6 +3,10 @@
   height: 100%;
 }
 
+.ui-runewatch-content {
+  height: 100%;
+}
+
 /* Header section */
 .ui-runewatch-header {
   display: flex;

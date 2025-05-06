@@ -409,3 +409,16 @@
     font-size: 1.3rem;
   }
 }
+
+.alerts-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 991px) {
+  .alerts-container {
+    grid-template-columns: 1fr;
+  }
+}
