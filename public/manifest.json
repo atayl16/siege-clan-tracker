@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Siege Clan",
+  "name": "Siege Clan Tracker",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,18 +8,27 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "icons/android-chrome-192x192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "icons/android-chrome-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/members",
+  "scope": "/",
+  "description": "Siege Clan Tracker is an app that allows you to track your rank in the clan.",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "any",
+  "theme_color": "#111111",
+  "background_color": "#36393f"
 }
