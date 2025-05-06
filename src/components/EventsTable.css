@@ -194,20 +194,26 @@
   color: var(--color-orange, #ff9800);
 }
 
+/* Add this rule to ensure first column is left-aligned */
+.ui-table th:first-child,
+.ui-table td:first-child {
+  text-align: left;
+}
+
+/* Fix the event name display - already has display: flex but needs adjustments */
 .ui-event-name {
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* Ensure left alignment within flex container */
+  width: 100%; /* Take up full width of cell */
 }
 
+/* Ensure icon is properly sized and positioned */
 .ui-event-skill-icon {
   margin-right: 8px;
   display: flex;
   align-items: center;
-}
-
-.ui-event-skill-icon img {
-  width: 20px;
-  height: 20px;
+  flex-shrink: 0; /* Prevent icon from shrinking */
 }
 
 /* Mobile optimizations */
