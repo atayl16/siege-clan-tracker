@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
-import { verifyUser } from "./../lib/auth-helper.js";
 
 export default async (request, _context) => {
   // Get environment variables
@@ -7,6 +6,8 @@ export default async (request, _context) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   try {
+    console.log("Starting claim-requests Edge Function...");
+    
     // Initialize Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
@@ -27,45 +28,94 @@ export default async (request, _context) => {
       });
     }
     
-    // Verify user if token provided
+    console.log(`Processing request for user: ${userId}`);
+    
+    // Check if user is admin - use a simpler query to avoid potential join issues
     let isAdmin = false;
-    if (token) {
-      const user = await verifyUser(supabase, token);
-      isAdmin = user?.is_admin === true;
+    try {
+      const { data: user, error: userError } = await supabase
+        .from("users")
+        .select("is_admin")
+        .eq("id", userId)
+        .single();
+      
+      if (userError) {
+        console.log(`Error checking admin status: ${userError.message}`);
+      } else {
+        isAdmin = user?.is_admin === true;
+        console.log(`User is admin: ${isAdmin}`);
+      }
+    } catch (e) {
+      console.error(`Exception checking admin status: ${e.message}`);
     }
     
-    // Start building the query
-    let query = supabase.from("claim_requests").select(`
-        *,
-        requester:user_id(username)
-      `);
+    // Get claim requests - use a basic query without joins
+    let query = supabase.from("claim_requests").select("*");
     
-    // If not admin, only show the user's own requests
+    // Filter by user_id if not admin
     if (!isAdmin) {
       query = query.eq("user_id", userId);
     }
     
-    // Execute the query with ordering
-    const { data, error } = await query.order("created_at", { ascending: false });
+    // Execute the query
+    console.log("Executing claim requests query...");
+    const { data: requests, error: requestsError } = await query.order("created_at", { ascending: false });
     
-    if (error) throw error;
+    if (requestsError) {
+      console.error(`Error fetching requests: ${requestsError.message}`);
+      throw requestsError;
+    }
     
-    const transformedData = (data || []).map((item) => ({
-      ...item,
-      username: item.requester?.username || null,
+    console.log(`Found ${requests?.length || 0} claim requests`);
+    
+    // If no requests, return empty array
+    if (!requests || requests.length === 0) {
+      return new Response(JSON.stringify([]), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    // Get usernames separately for better error isolation
+    const userIds = [...new Set(requests.map(req => req.user_id))];
+    
+    const userMap = {};
+    try {
+      const { data: users, error: usersError } = await supabase
+        .from("users")
+        .select("id, username")
+        .in("id", userIds);
+      
+      if (usersError) {
+        console.error(`Error fetching usernames: ${usersError.message}`);
+      } else if (users) {
+        users.forEach(user => {
+          userMap[user.id] = user.username;
+        });
+      }
+    } catch (e) {
+      console.error(`Exception fetching usernames: ${e.message}`);
+    }
+    
+    // Add username to each request
+    const enrichedRequests = requests.map(req => ({
+      ...req,
+      username: userMap[req.user_id] || null
     }));
-
-    console.log(
-      `Retrieved ${transformedData?.length || 0} claim requests for user ${userId}`
-    );
     
-    return new Response(JSON.stringify(transformedData || []), {
+    console.log("Successfully processed claim requests");
+    
+    return new Response(JSON.stringify(enrichedRequests), {
       headers: { "Content-Type": "application/json" },
     });
     
   } catch (error) {
-    console.error("Function error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error(`Claim requests function error: ${error.message}`);
+    console.error(error.stack);
+    
+    return new Response(JSON.stringify({ 
+      error: error.message || "Internal server error",
+      details: error.stack 
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
