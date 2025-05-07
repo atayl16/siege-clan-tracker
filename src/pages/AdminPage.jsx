@@ -79,7 +79,7 @@ export default function AdminPage() {
     loading: claimRequestsLoading,
     error: claimRequestsError,
     refresh: refreshClaimRequests,
-    processRequest,
+    processClaimRequest,
   } = useClaimRequests();
 
   const handleTabChange = (tabId) => {
@@ -113,12 +113,12 @@ export default function AdminPage() {
     setSearchParams(newParams);
   };
 
-  const processClaimRequest = async () => {
+  const handleProcessClaim = async () => {
     if (!currentClaimRequest || !claimAction) return;
 
     setProcessingClaimId(currentClaimRequest.id);
     try {
-      await processRequest(
+      await processClaimRequest(
         currentClaimRequest.id,
         claimAction,
         claimNotes,
@@ -889,7 +889,7 @@ export default function AdminPage() {
             <Modal.Footer>
               <Button
                 variant={claimAction === "approved" ? "success" : "danger"}
-                onClick={processClaimRequest}
+                onClick={handleProcessClaim}
                 disabled={processingClaimId === currentClaimRequest.id}
               >
                 {processingClaimId === currentClaimRequest.id
