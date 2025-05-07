@@ -33,7 +33,9 @@
     Cache-Control = "no-store, max-age=0"
 
 [dev]
-  command = "npm start"
-  targetPort = 3001
+  framework = "#auto"
+  autoLaunch = true
   port = 8888
-  framework = "#custom"
+  targetPort = 3000
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"

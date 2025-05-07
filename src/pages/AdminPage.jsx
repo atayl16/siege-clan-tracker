@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
 import { useData } from "../context/DataContext";
 import { useSearchParams } from "react-router-dom";
+import { useClaimRequests } from "../hooks/useClaimRequests";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
@@ -17,14 +18,21 @@ import Modal from "../components/ui/Modal";
 import Tabs from "../components/ui/Tabs";
 import SearchInput from "../components/ui/SearchInput";
 import EmptyState from "../components/ui/EmptyState";
+import Badge from "../components/ui/Badge";
 
 // Icons
-import { 
-  FaDownload, 
-  FaEraser, 
-  FaBell, 
-  FaUsers, 
-  FaExclamationTriangle 
+import {
+  FaDownload,
+  FaEraser,
+  FaBell,
+  FaUsers,
+  FaUserTag,
+  FaUserPlus,
+  FaExclamationTriangle,
+  FaCheck,
+  FaTimes,
+  FaUser,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 import "./AdminPage.css";
@@ -50,6 +58,11 @@ export default function AdminPage() {
   const searchInputRef = useRef(null);
   const [runewatchAlertCount, setRunewatchAlertCount] = useState(0);
 
+  const [processingClaimId, setProcessingClaimId] = useState(null);
+  const [claimAction, setClaimAction] = useState(null);
+  const [claimNotes, setClaimNotes] = useState("");
+  const [showClaimNotesModal, setShowClaimNotesModal] = useState(false);
+  const [currentClaimRequest, setCurrentClaimRequest] = useState(null);
 
   // Use DataContext hooks for all data access
   const {
@@ -60,6 +73,14 @@ export default function AdminPage() {
     updateMember,
     deleteMember,
   } = useData();
+
+  const {
+    requests: claimRequests,
+    loading: claimRequestsLoading,
+    error: claimRequestsError,
+    refresh: refreshClaimRequests,
+    processRequest,
+  } = useClaimRequests();
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -90,6 +111,66 @@ export default function AdminPage() {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete("search");
     setSearchParams(newParams);
+  };
+
+  const processClaimRequest = async () => {
+    if (!currentClaimRequest || !claimAction) return;
+
+    setProcessingClaimId(currentClaimRequest.id);
+    try {
+      await processRequest(
+        currentClaimRequest.id,
+        claimAction,
+        claimNotes,
+        currentClaimRequest.user_id,
+        currentClaimRequest.wom_id
+      );
+
+      setNotification({
+        type: "success",
+        message: `Request ${
+          claimAction === "approved" ? "approved" : "denied"
+        } successfully`,
+      });
+
+      refreshClaimRequests();
+      setShowClaimNotesModal(false);
+    } catch (err) {
+      setNotification({
+        type: "error",
+        message: `Failed to process claim: ${err.message}`,
+      });
+    } finally {
+      setProcessingClaimId(null);
+    }
+  };
+
+  const handleReleaseClaim = async (memberId, memberName) => {
+    if (
+      !confirm(`Are you sure you want to release the claim for ${memberName}?`)
+    ) {
+      return;
+    }
+
+    try {
+      // Update the member to remove the claimed_by field
+      await updateMember({
+        wom_id: memberId,
+        claimed_by: null,
+      });
+
+      setNotification({
+        type: "success",
+        message: `Released claim for ${memberName}`,
+      });
+
+      refreshMembers();
+    } catch (err) {
+      setNotification({
+        type: "error",
+        message: `Failed to release claim: ${err.message}`,
+      });
+    }
   };
 
   // Calculate and set alerts count whenever members data changes
@@ -309,6 +390,14 @@ export default function AdminPage() {
         message: `Failed to reset scores: ${err.message}`,
       });
     }
+  };
+  
+  const handleClaimAction = (request, action) => {
+    console.log("Processing claim request:", request);
+    setCurrentClaimRequest(request);
+    setClaimAction(action);
+    setClaimNotes("");
+    setShowClaimNotesModal(true);
   };
 
   if (!isAuthenticated || !isAdmin()) {
@@ -548,7 +637,7 @@ export default function AdminPage() {
             </div>
 
             <div className="alerts-container">
-              {/* Rank Updates - with header in AdminPage */}
+              {/* Rank Updates */}
               <Card className="alert-section" variant="dark">
                 <Card.Header className="ui-rank-alerts-header">
                   <h3 className="ui-rank-alerts-title">
@@ -570,7 +659,7 @@ export default function AdminPage() {
                 </Card.Body>
               </Card>
 
-              {/* Runewatch Alerts - with header in AdminPage */}
+              {/* Runewatch Alerts */}
               <Card className="alert-section" variant="dark">
                 <Card.Header className="ui-runewatch-header">
                   <h3 className="ui-card-title">
@@ -587,10 +676,238 @@ export default function AdminPage() {
                   <RunewatchAlerts />
                 </Card.Body>
               </Card>
+
+              {/* Claim Requests */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header className="ui-claims-header">
+                  <h3 className="ui-card-title">
+                    <FaUserPlus className="alert-icon" />
+                    Player Claim Requests
+                    {claimRequests?.filter((r) => r.status === "pending")
+                      .length > 0 && (
+                      <Badge variant="warning" className="ui-alerts-count">
+                        {
+                          (claimRequests || []).filter(
+                            (r) => r.status === "pending"
+                          ).length
+                        }
+                      </Badge>
+                    )}
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  {claimRequestsLoading ? (
+                    <div className="ui-loading-indicator">
+                      <div className="ui-loading-spinner"></div>
+                      <div className="ui-loading-text">
+                        Loading claim requests...
+                      </div>
+                    </div>
+                  ) : claimRequestsError ? (
+                    <div className="ui-error-message">
+                      <FaExclamationTriangle className="ui-error-icon" />
+                      Error loading claim requests:{" "}
+                      {claimRequestsError.message || claimRequestsError}
+                    </div>
+                  ) : !claimRequests ||
+                    claimRequests?.filter((r) => r.status === "pending")
+                      .length === 0 ? (
+                    <div className="ui-no-alerts">
+                      <FaCheck className="ui-success-icon" />
+                      <span>No pending claim requests</span>
+                    </div>
+                  ) : (
+                    <div className="ui-claim-requests-list">
+                      {claimRequests
+                        .filter((r) => r.status === "pending")
+                        .map((request) => (
+                          <div
+                            key={request.id}
+                            className="ui-claim-request-item"
+                          >
+                            <div className="ui-claim-request-info">
+                              <div className="ui-claim-request-name">
+                                <strong>{request.rsn}</strong>
+                              </div>
+                              <div className="ui-claim-request-details">
+                                <div>
+                                  <FaUser className="ui-icon-left" />
+                                  <span>Requested by: </span>
+                                  <strong>
+                                    {request.username ||
+                                      (request.requester &&
+                                        request.requester.username) ||
+                                      "Unknown User"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <FaCalendarAlt className="ui-icon-left" />
+                                  <span>
+                                    {new Date(
+                                      request.created_at
+                                    ).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                {request.message && (
+                                  <div className="ui-claim-request-message">
+                                    <em>"{request.message}"</em>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="ui-claim-request-actions">
+                              <Button
+                                variant="success"
+                                size="sm"
+                                onClick={() =>
+                                  handleClaimAction(request, "approved")
+                                }
+                                disabled={processingClaimId === request.id}
+                              >
+                                <FaCheck className="ui-icon-left" />
+                                Approve
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() =>
+                                  handleClaimAction(request, "denied")
+                                }
+                                disabled={processingClaimId === request.id}
+                              >
+                                <FaTimes className="ui-icon-left" />
+                                Deny
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+
+              {/* Claimed Members Management */}
+              <Card className="alert-section" variant="dark">
+                <Card.Header className="ui-claimed-members-header">
+                  <h3 className="ui-card-title">
+                    <FaUserTag className="alert-icon" />
+                    Claimed Members
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  {membersLoading ? (
+                    <div className="ui-loading-indicator">
+                      <div className="ui-loading-spinner"></div>
+                      <div className="ui-loading-text">Loading members...</div>
+                    </div>
+                  ) : membersError ? (
+                    <div className="ui-error-message">
+                      <FaExclamationTriangle className="ui-error-icon" />
+                      Error loading members:{" "}
+                      {membersError.message || membersError}
+                    </div>
+                  ) : (
+                    <div className="ui-claimed-members-list">
+                      {members
+                        .filter((m) => m.claimed_by)
+                        .map((member) => (
+                          <div
+                            key={member.wom_id}
+                            className="ui-claimed-member-item"
+                          >
+                            <div className="ui-claimed-member-info">
+                              <div className="ui-claimed-member-name">
+                                <strong>{member.name}</strong>
+                              </div>
+                              <div className="ui-claimed-member-details">
+                                <span>Claimed by: </span>
+                                <strong>
+                                  {member.claimed_by_username ||
+                                    member.claimed_by}
+                                </strong>
+                              </div>
+                            </div>
+                            <div className="ui-claimed-member-actions">
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                onClick={() =>
+                                  handleReleaseClaim(member.wom_id, member.name)
+                                }
+                              >
+                                <FaTimes className="ui-icon-left" />
+                                Release Claim
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      {members.filter((m) => m.claimed_by).length === 0 && (
+                        <div className="ui-no-alerts">
+                          <span>No members have been claimed yet</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
             </div>
           </div>
         </Tabs.Tab>
       </Tabs>
+
+      {/* Claim Notes Modal */}
+      <Modal
+        isOpen={showClaimNotesModal}
+        onClose={() => setShowClaimNotesModal(false)}
+        title={
+          claimAction === "approved"
+            ? "Approve Claim Request"
+            : "Deny Claim Request"
+        }
+      >
+        {currentClaimRequest && (
+          <div className="ui-claim-notes-modal">
+            <p>
+              <strong>Player:</strong> {currentClaimRequest.rsn}
+            </p>
+            <p>
+              <strong>Requested by:</strong>{" "}
+              {currentClaimRequest.username || "Unknown"}
+            </p>
+
+            <div className="ui-form-group">
+              <label className="ui-form-label">Admin Notes (Optional):</label>
+              <textarea
+                className="ui-form-textarea"
+                value={claimNotes}
+                onChange={(e) => setClaimNotes(e.target.value)}
+                placeholder="Add optional notes about your decision (visible to user)"
+                rows={3}
+              />
+            </div>
+
+            <Modal.Footer>
+              <Button
+                variant={claimAction === "approved" ? "success" : "danger"}
+                onClick={processClaimRequest}
+                disabled={processingClaimId === currentClaimRequest.id}
+              >
+                {processingClaimId === currentClaimRequest.id
+                  ? "Processing..."
+                  : claimAction === "approved"
+                  ? "Approve Request"
+                  : "Deny Request"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowClaimNotesModal(false)}
+              >
+                Cancel
+              </Button>
+            </Modal.Footer>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

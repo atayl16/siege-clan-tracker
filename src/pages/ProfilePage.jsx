@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated hook
-import { useRaces } from "../hooks/useRaces"; // Updated hook
+import { useClaimRequests } from "../hooks/useClaimRequests";
+import { useRaces } from "../hooks/useRaces";
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
@@ -87,8 +87,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       refreshUserClaims();
+      refreshRaces(); // Also refresh races data
     }
-  }, [user, refreshUserClaims]);
+  }, [user, refreshUserClaims, refreshRaces]);
 
   // Update goals effect
   useEffect(() => {

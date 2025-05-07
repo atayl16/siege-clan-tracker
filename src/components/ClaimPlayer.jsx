@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useClaimRequests } from "../hooks/useClaimRequests"; // New hook for claim requests
-import { useMembers } from "../hooks/useMembers"; // New hook for members
+import { useClaimRequests } from "../hooks/useClaimRequests";
+import { useMembers } from "../hooks/useMembers";
 import { FaCheck, FaTimes, FaClock, FaInfoCircle } from "react-icons/fa";
 
 // Import UI components
@@ -22,6 +22,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("code");
+  const [showMyRequests, setShowMyRequests] = useState(false);
 
   const { user, claimPlayer } = useAuth();
 
@@ -44,10 +45,16 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   // Get fresh data when switching tabs
   useEffect(() => {
     if (activeTab === "request" && user) {
-      refreshAvailableMembers();
+      if (typeof refreshAvailableMembers === "function") {
+        refreshAvailableMembers();
+      }
     }
     if (activeTab === "my-requests" && user) {
-      refreshRequests();
+      if (typeof refreshRequests === "function") {
+        refreshRequests();
+        // Force a long timeout to ensure data is loaded
+        setTimeout(() => setShowMyRequests(true), 1000);
+      }
     }
   }, [activeTab, user, refreshAvailableMembers, refreshRequests]);
 
@@ -106,7 +113,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
     setLoading(true);
     try {
-      // Use the new createClaimRequest method
       await createClaimRequest({
         user_id: user.id,
         wom_id: parseInt(selectedMember, 10),
@@ -121,7 +127,12 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
       });
       setSelectedMember("");
       setMessage("");
-      refreshRequests();
+
+      // Set a longer timeout before changing tabs
+      setTimeout(() => {
+        refreshRequests();
+        setActiveTab("my-requests");
+      }, 1500);
     } catch (err) {
       console.error("Error creating claim request:", err);
       setError(`Request failed: ${err.message}`);
@@ -290,7 +301,17 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                 <div className="ui-loading-spinner"></div>
                 <div className="ui-loading-text">Loading your requests...</div>
               </div>
-            ) : userRequests?.length === 0 ? (
+            ) : !userRequests ? (
+              <EmptyState
+                title="No Data Available"
+                description="Unable to load your claim requests"
+                action={
+                  <Button variant="secondary" onClick={refreshRequests}>
+                    Try Again
+                  </Button>
+                }
+              />
+            ) : userRequests.length === 0 ? (
               <EmptyState
                 title="No Requests Yet"
                 description="You haven't submitted any player claim requests yet"

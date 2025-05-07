@@ -1,53 +1,68 @@
-// Import Supabase with ES modules syntax
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
+import { verifyUser } from "./../lib/auth-helper.js";
 
 export default async (request, _context) => {
-  // Get environment variables with Deno.env.get()
+  // Get environment variables
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  console.log("Fetching claim request data from Supabase...");
-
-  // Cache for 15 minutes (900 seconds)
-  const TTL = 9000;
-
-  // Handle conditional requests
-  const ifNoneMatch = request.headers.get("If-None-Match");
-  const etag = `W/"claim-requests-${new Date().toISOString().split("T")[0]}"`;
-
-  if (ifNoneMatch === etag) {
-    return new Response(null, {
-      status: 304,
-      headers: {
-        ETag: etag,
-        "Cache-Control": `public, max-age=${TTL}`,
-        "CDN-Cache-Control": `public, max-age=${TTL}`,
-      },
-    });
-  }
 
   try {
     // Initialize Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // Get only necessary fields instead of '*'
-    const { data, error } = await supabase
-      .from("claim_requests")
-      .select("*") // Fetch all columns from the members table
-      .order("rsn"); // Order by name
-
+    
+    // Get auth token from header
+    const token = request.headers.get("Authorization")?.split(" ")[1];
+    
+    // Get user ID from query parameters as fallback
+    const url = new URL(request.url);
+    const queryUserId = url.searchParams.get("userId");
+    
+    // Use either token or query parameter
+    const userId = token || queryUserId;
+    
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "User ID required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    // Verify user if token provided
+    let isAdmin = false;
+    if (token) {
+      const user = await verifyUser(supabase, token);
+      isAdmin = user?.is_admin === true;
+    }
+    
+    // Start building the query
+    let query = supabase.from("claim_requests").select(`
+        *,
+        requester:user_id(username)
+      `);
+    
+    // If not admin, only show the user's own requests
+    if (!isAdmin) {
+      query = query.eq("user_id", userId);
+    }
+    
+    // Execute the query with ordering
+    const { data, error } = await query.order("created_at", { ascending: false });
+    
     if (error) throw error;
+    
+    const transformedData = (data || []).map((item) => ({
+      ...item,
+      username: item.requester?.username || null,
+    }));
 
-    // Return with caching headers and ETag
-    return new Response(JSON.stringify(data), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": `public, max-age=${TTL}`,
-        "CDN-Cache-Control": `public, max-age=${TTL}`,
-        "Netlify-Cache-Tag": "supabase-members",
-        ETag: etag,
-      },
+    console.log(
+      `Retrieved ${transformedData?.length || 0} claim requests for user ${userId}`
+    );
+    
+    return new Response(JSON.stringify(transformedData || []), {
+      headers: { "Content-Type": "application/json" },
     });
+    
   } catch (error) {
     console.error("Function error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
