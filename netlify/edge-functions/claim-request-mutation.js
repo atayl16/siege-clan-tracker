@@ -121,11 +121,20 @@ export default async (request, _context) => {
             .eq("id", originalRequest.user_id)
             .single();
                       
-          // Update the member
+          // Add this logging before the update operation
+          
+          console.log("Original request user_id:", originalRequest.user_id);
+          console.log("Original request user_id type:", typeof originalRequest.user_id);
+          
+          // Try explicitly formatting as UUID
+          const userIdUUID = originalRequest.user_id;
+          console.log("Formatted user_id:", userIdUUID);
+          
+          // Then use it in your update
           const { error: memberError } = await supabase
             .from("members")
             .update({
-              claimed_by: originalRequest.user_id, // UUID type matches user_id
+              claimed_by: userIdUUID,
               claimed_by_username: userData?.username || null,
               updated_at: new Date().toISOString()
             })
