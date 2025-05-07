@@ -644,10 +644,21 @@ export default function AdminPage() {
                     <FaBell className="alert-icon" />
                     Rank Updates
                     {alertsCount > 0 && (
-                      <Badge variant="warning" pill className="ui-alerts-count">
+                      <Badge variant="warning" className="ui-alerts-count">
                         {alertsCount}
                       </Badge>
                     )}
+                    {claimRequests &&
+                      claimRequests.filter((r) => r.status === "pending")
+                        .length > 0 && (
+                        <Badge variant="warning" className="ui-alerts-count">
+                          {
+                            (claimRequests || []).filter(
+                              (r) => r.status === "pending"
+                            ).length
+                          }
+                        </Badge>
+                      )}
                   </h3>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
@@ -710,7 +721,8 @@ export default function AdminPage() {
                       {claimRequestsError.message || claimRequestsError}
                     </div>
                   ) : !claimRequests ||
-                    claimRequests?.filter((r) => r.status === "pending")
+                    claimRequests.length === 0 ||
+                    claimRequests.filter((r) => r.status === "pending")
                       .length === 0 ? (
                     <div className="ui-no-alerts">
                       <FaCheck className="ui-success-icon" />

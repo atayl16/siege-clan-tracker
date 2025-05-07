@@ -96,18 +96,45 @@ export default async (request, _context) => {
           .select();
           
         if (updateError) throw updateError;
-        
+                
         // If approved, update the member's claimed_by field
         if (status === "approved") {
+          // First, get the member to check if it exists
+          const { data: memberData, error: fetchMemberError } = await supabase
+            .from("members")
+            .select("wom_id")
+            .eq("wom_id", originalRequest.wom_id)
+            .single();
+            
+          if (fetchMemberError) {
+            throw new Error(`Member lookup failed: ${fetchMemberError.message}`);
+          }
+          
+          if (!memberData) {
+            throw new Error(`Member with ID ${originalRequest.wom_id} not found`);
+          }
+          
+          // Get username for claimed_by_username field
+          const { data: userData } = await supabase
+            .from("users")
+            .select("username")
+            .eq("id", originalRequest.user_id)
+            .single();
+            
+          // Update the member
           const { error: memberError } = await supabase
             .from("members")
             .update({
-              claimed_by: originalRequest.user_id,
+              claimed_by: originalRequest.user_id, // Store UUID as text
+              claimed_by_username: userData?.username || null,
               updated_at: new Date().toISOString()
             })
             .eq("wom_id", originalRequest.wom_id);
             
-          if (memberError) throw memberError;
+          if (memberError) {
+            console.error("Member update error:", memberError);
+            throw new Error(`Failed to update member: ${memberError.message}`);
+          }
         }
         
         return new Response(JSON.stringify({ success: true, data: updatedRequest[0] }), {
