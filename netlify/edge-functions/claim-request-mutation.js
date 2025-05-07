@@ -55,41 +55,62 @@ export default async (request, _context) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-      
+            
       case "process": {
-        // Only admins can process requests
+        // Check admin privileges
         if (!user.is_admin) {
-          return new Response(JSON.stringify({ error: "Access denied" }), {
+          return new Response(JSON.stringify({ error: "Only admins can process requests" }), {
             status: 403,
             headers: { "Content-Type": "application/json" },
           });
         }
         
-        // Update the request status
-        const { data: processedRequest, error: processError } = await supabase
+        const { id, status, admin_notes } = claimData;
+        
+        if (!id || !status) {
+          return new Response(JSON.stringify({ error: "Missing required fields" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        
+        // Get the original request
+        const { data: originalRequest, error: fetchError } = await supabase
+          .from("claim_requests")
+          .select("*")
+          .eq("id", id)
+          .single();
+          
+        if (fetchError) throw fetchError;
+        
+        // Update the request - REMOVE processed_at, use updated_at instead
+        const { data: updatedRequest, error: updateError } = await supabase
           .from("claim_requests")
           .update({
-            status: claimData.status,
-            admin_notes: claimData.admin_notes,
-            processed_at: new Date().toISOString(),
-            admin_user_id: user.id
+            status: status,
+            admin_notes: admin_notes,
+            admin_user_id: user.id,
+            updated_at: new Date().toISOString() // Use updated_at to track when processed
           })
-          .eq("id", claimData.id)
+          .eq("id", id)
           .select();
           
-        if (processError) throw processError;
+        if (updateError) throw updateError;
         
         // If approved, update the member's claimed_by field
-        if (claimData.status === "approved" && processedRequest[0]) {
+        if (status === "approved") {
           const { error: memberError } = await supabase
             .from("members")
-            .update({ claimed_by: processedRequest[0].user_id })
-            .eq("wom_id", processedRequest[0].wom_id);
+            .update({
+              claimed_by: originalRequest.user_id,
+              updated_at: new Date().toISOString()
+            })
+            .eq("wom_id", originalRequest.wom_id);
             
           if (memberError) throw memberError;
         }
         
-        return new Response(JSON.stringify({ success: true, data: processedRequest[0] }), {
+        return new Response(JSON.stringify({ success: true, data: updatedRequest[0] }), {
           headers: { "Content-Type": "application/json" },
         });
       }
