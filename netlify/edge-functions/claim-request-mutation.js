@@ -96,53 +96,46 @@ export default async (request, _context) => {
           .select();
           
         if (updateError) throw updateError;
-                
+                        
         // If approved, update the member's claimed_by field
         if (status === "approved") {
-          // First, get the member to check if it exists
-          const { data: memberData, error: fetchMemberError } = await supabase
-            .from("members")
-            .select("wom_id")
-            .eq("wom_id", originalRequest.wom_id)
-            .single();
+          try {
+            // Get username for claimed_by_username field
+            const { data: userData } = await supabase
+              .from("users")
+              .select("username")
+              .eq("id", originalRequest.user_id)
+              .single();
             
-          if (fetchMemberError) {
-            throw new Error(`Member lookup failed: ${fetchMemberError.message}`);
-          }
-          
-          if (!memberData) {
-            throw new Error(`Member with ID ${originalRequest.wom_id} not found`);
-          }
-          
-          // Get username for claimed_by_username field
-          const { data: userData } = await supabase
-            .from("users")
-            .select("username")
-            .eq("id", originalRequest.user_id)
-            .single();
-                      
-          // Add this logging before the update operation
-          
-          console.log("Original request user_id:", originalRequest.user_id);
-          console.log("Original request user_id type:", typeof originalRequest.user_id);
-          
-          // Try explicitly formatting as UUID
-          const userIdUUID = originalRequest.user_id;
-          console.log("Formatted user_id:", userIdUUID);
-          
-          // Then use it in your update
-          const { error: memberError } = await supabase
-            .from("members")
-            .update({
-              claimed_by: userIdUUID,
-              claimed_by_username: userData?.username || null,
-              updated_at: new Date().toISOString()
-            })
-            .eq("wom_id", originalRequest.wom_id);
+            // First try updating only the username and updated_at to avoid the UUID issue
+            const { error: baseUpdateError } = await supabase
+              .from("members")
+              .update({
+                claimed_by_username: userData?.username || null
+                // No need to set updated_at - your trigger will handle this
+              })
+              .eq("wom_id", originalRequest.wom_id);
+              
+            if (baseUpdateError) {
+              throw new Error(`Failed to update member username: ${baseUpdateError.message}`);
+            }
             
-          if (memberError) {
-            console.error("Member update error:", memberError);
-            throw new Error(`Failed to update member: ${memberError.message}`);
+            // Then update the UUID field using raw SQL to avoid type conversion issues
+            const { error: uuidUpdateError } = await supabase.rpc(
+              'set_member_claim',
+              { 
+                p_wom_id: originalRequest.wom_id,
+                p_user_id: originalRequest.user_id
+              }
+            );
+              
+            if (uuidUpdateError) {
+              console.error("UUID update error:", uuidUpdateError);
+              throw new Error(`Failed to set claim: ${uuidUpdateError.message}`);
+            }
+          } catch (error) {
+            console.error("Error in claim approval process:", error);
+            throw error;
           }
         }
         
