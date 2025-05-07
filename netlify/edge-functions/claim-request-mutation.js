@@ -96,7 +96,7 @@ export default async (request, _context) => {
           .select();
           
         if (updateError) throw updateError;
-                
+        
         // If approved, update the member's claimed_by field
         if (status === "approved") {
           // First, get the member to check if it exists
@@ -121,11 +121,11 @@ export default async (request, _context) => {
             .eq("id", originalRequest.user_id)
             .single();
             
-          // Update the member
+          // Update the member - convert the UUID to string to prevent type error
           const { error: memberError } = await supabase
             .from("members")
             .update({
-              claimed_by: originalRequest.user_id, // Store UUID as text
+              claimed_by: originalRequest.user_id.toString(), // Convert UUID to string
               claimed_by_username: userData?.username || null,
               updated_at: new Date().toISOString()
             })
