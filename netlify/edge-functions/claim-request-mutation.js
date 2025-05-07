@@ -96,7 +96,7 @@ export default async (request, _context) => {
           .select();
           
         if (updateError) throw updateError;
-                        
+        
         // If approved, update the member's claimed_by field
         if (status === "approved") {
           try {
@@ -107,31 +107,22 @@ export default async (request, _context) => {
               .eq("id", originalRequest.user_id)
               .single();
             
-            // First try updating only the username and updated_at to avoid the UUID issue
-            const { error: baseUpdateError } = await supabase
+            console.log("Attempting direct update for member:", originalRequest.wom_id);
+            console.log("User ID type:", typeof originalRequest.user_id);
+            console.log("User ID value:", originalRequest.user_id);
+            
+            // Update everything in one go - bypass the RPC completely
+            const { error: memberError } = await supabase
               .from("members")
               .update({
+                claimed_by: originalRequest.user_id,
                 claimed_by_username: userData?.username || null
-                // No need to set updated_at - your trigger will handle this
               })
               .eq("wom_id", originalRequest.wom_id);
               
-            if (baseUpdateError) {
-              throw new Error(`Failed to update member username: ${baseUpdateError.message}`);
-            }
-            
-            // Then update the UUID field using raw SQL to avoid type conversion issues
-            const { error: uuidUpdateError } = await supabase.rpc(
-              'set_member_claim',
-              { 
-                p_wom_id: originalRequest.wom_id,
-                p_user_id: originalRequest.user_id
-              }
-            );
-              
-            if (uuidUpdateError) {
-              console.error("UUID update error:", uuidUpdateError);
-              throw new Error(`Failed to set claim: ${uuidUpdateError.message}`);
+            if (memberError) {
+              console.error("Member update error:", memberError);
+              throw new Error(`Failed to update member: ${memberError.message}`);
             }
           } catch (error) {
             console.error("Error in claim approval process:", error);
