@@ -107,22 +107,28 @@ export default async (request, _context) => {
               .eq("id", originalRequest.user_id)
               .single();
             
-            console.log("Attempting direct update for member:", originalRequest.wom_id);
-            console.log("User ID type:", typeof originalRequest.user_id);
-            console.log("User ID value:", originalRequest.user_id);
+            // Get the user_id from either claimData or originalRequest
+            const userIdToUse = claimData.user_id || originalRequest.user_id;
+            const womIdToUse = claimData.wom_id || originalRequest.wom_id;
             
-            // Update everything in one go - bypass the RPC completely
-            const { error: memberError } = await supabase
-              .from("members")
-              .update({
-                claimed_by: originalRequest.user_id,
-                claimed_by_username: userData?.username || null
-              })
-              .eq("wom_id", originalRequest.wom_id);
-              
-            if (memberError) {
-              console.error("Member update error:", memberError);
-              throw new Error(`Failed to update member: ${memberError.message}`);
+            console.log("User ID to use:", userIdToUse);
+            console.log("WOM ID to use:", womIdToUse);
+            
+            // Use raw SQL to bypass type conversion issues
+            const { data, error: sqlError } = await supabase.rpc(
+              'execute_sql', 
+              { 
+                sql: `UPDATE members SET 
+                      claimed_by = '${userIdToUse}'::uuid, 
+                      claimed_by_username = ${userData?.username ? `'${userData.username}'` : 'NULL'},
+                      updated_at = NOW()
+                      WHERE wom_id = ${womIdToUse}` 
+              }
+            );
+            
+            if (sqlError) {
+              console.error("SQL error:", sqlError);
+              throw new Error(`SQL error: ${sqlError.message}`);
             }
           } catch (error) {
             console.error("Error in claim approval process:", error);

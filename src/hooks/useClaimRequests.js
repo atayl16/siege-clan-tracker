@@ -126,6 +126,7 @@ export function useClaimRequests() {
         throw new Error("You must be logged in to process a claim request");
       }
 
+      // Include the userData explicitly in the request
       const response = await fetch("/api/claim-request-mutation", {
         method: "POST",
         headers: {
@@ -138,33 +139,36 @@ export function useClaimRequests() {
             id: requestId,
             status,
             admin_notes: adminNotes,
+            // Add these explicitly to ensure they're passed correctly
+            user_id: userId,
+            wom_id: womId,
           },
         }),
       });
 
-      // Check for HTML responses
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("text/html")) {
-        throw new Error("API endpoint returned HTML instead of JSON");
-      }
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to process claim request");
-      }
-
-      // Refresh the claim requests data
-      await mutate();
-
-      return result.data;
-    } catch (err) {
-      console.error("Process claim request error:", err);
-      setMutationError(err.message);
-      throw err;
-    } finally {
-      setMutationLoading(false);
+    // Check for HTML responses
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      throw new Error("API endpoint returned HTML instead of JSON");
     }
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to process claim request");
+    }
+
+    // Refresh the claim requests data
+    await mutate();
+
+    return result.data;
+  } catch (err) {
+    console.error("Process claim request error:", err);
+    setMutationError(err.message);
+    throw err;
+  } finally {
+    setMutationLoading(false);
+  }
   };
 
   // Fetch user's claims with improved error handling (wrapped in useCallback)
