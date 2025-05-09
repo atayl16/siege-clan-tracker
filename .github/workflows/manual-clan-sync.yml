@@ -1,4 +1,11 @@
-name: Manual Clan Data Sync
+name: Clan Data Sync
+run-name: >-
+  ${{ github.event.inputs.job_to_run == 'wom-sync' && 'WOM Sync' ||
+      github.event.inputs.job_to_run == 'wom-events' && 'WOM Events Sync' ||
+      github.event.inputs.job_to_run == 'runewatch' && 'RuneWatch Check' ||
+      github.event.inputs.job_to_run == 'anniversaries' && 'Anniversary Notifications' ||
+      github.event.inputs.job_to_run == 'all' && 'All Sync Tasks' ||
+      'Manual Clan Data Sync' }}
 
 on:
   workflow_dispatch:
