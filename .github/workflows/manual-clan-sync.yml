@@ -1,4 +1,4 @@
-name: Clan Data Sync
+name: Manual Clan Data Sync
 run-name: >-
   ${{ github.event.inputs.job_to_run == 'wom-sync' && 'WOM Sync' ||
       github.event.inputs.job_to_run == 'wom-events' && 'WOM Events Sync' ||
