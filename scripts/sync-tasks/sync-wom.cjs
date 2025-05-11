@@ -157,7 +157,6 @@ async function syncWomMembers() {
       
       membersToUpdate = activeMembers
         .filter((_, index) => Math.floor(index / bucketSize) === bucketIndex)
-        .slice(0, 25); // Limit to 25 members per run
       
       console.log(`Updating subset of members (bucket ${bucketIndex+1}/4): ${membersToUpdate.length} members`);
     }
