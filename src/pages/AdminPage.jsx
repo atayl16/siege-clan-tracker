@@ -17,6 +17,7 @@ import Modal from "../components/ui/Modal";
 import Tabs from "../components/ui/Tabs";
 import SearchInput from "../components/ui/SearchInput";
 import EmptyState from "../components/ui/EmptyState";
+import Badge from "../components/ui/Badge";
 
 // Icons
 import { 
