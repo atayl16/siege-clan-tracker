@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { useGroupAchievements } from "../hooks/useGroupAchievements";
-import { FaTrophy, FaTimes, FaSearch } from "react-icons/fa";
+import { FaExclamationTriangle } from "react-icons/fa";
 import MetricIcon from "../components/MetricIcon";
 import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import SearchInput from "../components/ui/SearchInput";
 import "./AchievementsPage.css";
 
@@ -35,18 +36,22 @@ export default function AchievementsPage() {
       )}
 
       {error && (
-        <div className="ui-error-container">
-          <div className="ui-error-icon">
-            <FaTimes />
-          </div>
-          <div className="ui-error-message">
-            <h3>Error Loading Achievements</h3>
-            <p>{error.message || "Failed to load achievements"}</p>
-            <Button onClick={() => window.location.reload()} variant="danger">
+        <Card className="ui-section-container ui-message-card">
+          <Card.Body className="ui-centered-message">
+            <div className="ui-message-icon-large">
+              <FaExclamationTriangle className="ui-warning-icon" />
+            </div>
+            <h3>Unable to Load Achievements</h3>
+            <p>We're having trouble connecting to the achievements service right now. Please try again later.</p>
+            <Button 
+              variant="primary" 
+              onClick={() => window.location.reload()} 
+              className="ui-retry-button"
+            >
               Try Again
             </Button>
-          </div>
-        </div>
+          </Card.Body>
+        </Card>
       )}
 
       <div className="ui-content-header">

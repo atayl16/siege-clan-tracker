@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { useGroupBossStats } from "../hooks/useGroupStats";
-import { FaTimes } from "react-icons/fa";
+import { FaExclamationTriangle } from "react-icons/fa";
 import MetricIcon from "../components/MetricIcon";
 import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
+import Card from "../components/ui/Card";
 import "./BossStatsPage.css";
 
 export default function BossStatsPage() {
@@ -48,18 +49,22 @@ export default function BossStatsPage() {
       )}
 
       {error && (
-        <div className="ui-error-container">
-          <div className="ui-error-icon">
-            <FaTimes />
-          </div>
-          <div className="ui-error-message">
-            <h3>Error Loading Clan Stats</h3>
-            <p>{error.message || "Failed to load stats data"}</p>
-            <Button onClick={() => window.location.reload()} variant="danger">
+        <Card className="ui-section-container ui-message-card">
+          <Card.Body className="ui-centered-message">
+            <div className="ui-message-icon-large">
+              <FaExclamationTriangle className="ui-warning-icon" />
+            </div>
+            <h3>Unable to Load Clan Stats</h3>
+            <p>We're having trouble connecting to the stats service right now. Please try again later.</p>
+            <Button 
+              variant="primary" 
+              onClick={() => window.location.reload()} 
+              className="ui-retry-button"
+            >
               Try Again
             </Button>
-          </div>
-        </div>
+          </Card.Body>
+        </Card>
       )}
 
       <div className="ui-content-header">
