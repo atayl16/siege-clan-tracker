@@ -178,6 +178,21 @@ async function syncWomMembers() {
         
         await Promise.all(batch.map(async (member) => {
           try {
+            console.log(
+              `Requesting WOM update for new member ${member.wom_name}`
+            );
+            try {
+              await fetchWithRetry(
+                `${WOM_API_BASE}/players/${member.wom_name}/update`,
+                { method: "POST" }
+              );
+              // Add a small delay to allow WOM to process the update
+              await delay(2000);
+            } catch (updateErr) {
+              console.log(
+                `Couldn't update ${member.wom_name}: ${updateErr.message}`
+              );
+            }
             console.log(`Fetching data for new member ${member.wom_name}`);
             const playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
             
