@@ -124,22 +124,41 @@ export default function ProfilePage() {
       </div>
     );
   }
-
+  
   const renderRacesTabContent = () => {
     if (racesLoading) {
       return <LoadingIndicator />;
     }
-
+  
     if (showCreateRace) {
+      // User must have claimed characters to see this
+      if (userClaims.length === 0) {
+        return (
+          <div className="races-empty-container">
+            <EmptyState
+              icon={<FaUser />}
+              title="Claim a Character"
+              description="You need to claim at least one character before creating races."
+              action={
+                <Button variant="primary" onClick={() => setActiveTab("requests")}>
+                  Claim a Character
+                </Button>
+              }
+            />
+          </div>
+        );
+      }
+      
       return (
         <CreateRace
           userId={user?.id}
+          userClaims={userClaims}
           onCreated={handleCreatedRace}
           onCancel={() => setShowCreateRace(false)}
         />
       );
     }
-
+  
     if (!userCharacterRaces || userCharacterRaces.length === 0) {
       return (
         <div className="races-empty-container">
@@ -148,24 +167,40 @@ export default function ProfilePage() {
             title="No Races Yet"
             description="Your characters aren't participating in any races yet."
             action={
-              <Button variant="primary" onClick={() => setShowCreateRace(true)}>
-                Create a Race
-              </Button>
+              userClaims.length > 0 ? (
+                <Button variant="primary" onClick={() => setShowCreateRace(true)}>
+                  Create a Race
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={() => setActiveTab("requests")}>
+                  Claim a Character First
+                </Button>
+              )
             }
           />
         </div>
       );
     }
-
+  
     return (
       <>
         <div className="tab-header">
           <h2>Your Race Progress</h2>
-          <Button variant="primary" onClick={() => setShowCreateRace(true)}>
-            Create New Race
-          </Button>
+          {userClaims.length > 0 ? (
+            <Button variant="primary" onClick={() => setShowCreateRace(true)}>
+              Create New Race
+            </Button>
+          ) : (
+            <Button 
+              variant="secondary" 
+              onClick={() => setActiveTab("requests")}
+              title="You need to claim a character first"
+            >
+              Claim Character to Create Races
+            </Button>
+          )}
         </div>
-
+  
         <div className="ui-races-grid profile-races">
           {userCharacterRaces.map((race) => (
             <RaceCard
@@ -209,7 +244,7 @@ export default function ProfilePage() {
           {userClaims.length === 0 ? (
             <EmptyState
               title="No Characters Yet"
-              description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
+              description="You haven't claimed any characters yet."
               icon={<FaUser />}
             />
           ) : (
@@ -287,8 +322,14 @@ export default function ProfilePage() {
             </div>
           ) : userClaims.length === 0 ? (
             <EmptyState
+              icon={<FaUser />}
               title="No Characters to Track"
               description="You need to claim a character before setting goals."
+              action={
+                <Button variant="primary" onClick={() => setActiveTab("requests")}>
+                  Claim a Character
+                </Button>
+              }
             />
           ) : (
             <CardGrid>
@@ -304,7 +345,82 @@ export default function ProfilePage() {
         </Tabs.Tab>
 
         <Tabs.Tab tabId="races" label="Races" icon={<FaTrophy />}>
-          <div className="player-races-section">{renderRacesTabContent()}</div>
+          <div className="tab-header">
+            <h2>Your Race Progress</h2>
+            {userClaims.length > 0 && (
+              <Button 
+                variant="primary" 
+                onClick={() => setShowCreateRace(!showCreateRace)}
+              >
+                {showCreateRace ? "Cancel" : "Create Race"}
+              </Button>
+            )}
+          </div>
+          
+          <div className="player-races-section">
+            {(() => {
+              if (racesLoading) {
+                return <LoadingIndicator />;
+              }
+            
+              // If user has no characters, show this message
+              if (userClaims.length === 0) {
+                return (
+                  <EmptyState
+                    icon={<FaUser />}
+                    title="Claim a Character"
+                    description="You need to claim at least one character before creating races."
+                    action={
+                      <Button variant="primary" onClick={() => setActiveTab("requests")}>
+                        Claim a Character
+                      </Button>
+                    }
+                  />
+                );
+              }
+              
+              // User has characters and is creating a race
+              if (showCreateRace) {
+                return (
+                  <CreateRace
+                    userId={user?.id}
+                    userClaims={userClaims}
+                    onCreated={handleCreatedRace}
+                    onCancel={() => setShowCreateRace(false)}
+                  />
+                );
+              }
+            
+              // User has characters but no races
+              if (!userCharacterRaces || userCharacterRaces.length === 0) {
+                return (
+                  <EmptyState
+                    icon={<FaTrophy />}
+                    title="No Races Yet"
+                    description="Your characters aren't participating in any races yet."
+                    action={
+                      <Button variant="primary" onClick={() => setShowCreateRace(true)}>
+                        Create a Race
+                      </Button>
+                    }
+                  />
+                );
+              }
+            
+              // User has races, show them
+              return (
+                <div className="ui-races-grid profile-races">
+                  {userCharacterRaces.map((race) => (
+                    <RaceCard
+                      key={race.id}
+                      race={race}
+                      isOwner={race.creator_id === user?.id}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
         </Tabs.Tab>
 
         <Tabs.Tab tabId="requests" label="Requests" icon={<FaClock />}>

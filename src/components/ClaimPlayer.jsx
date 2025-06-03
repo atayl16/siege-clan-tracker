@@ -286,9 +286,9 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab tabId="my-requests" label="View My Requests">
+        <Tabs.Tab tabId="my-requests" label="View Requests">
           <div className="ui-claim-tab-content">
-            <h2 className="ui-claim-heading">My Claim Requests</h2>
+            <h2 className="ui-claim-heading">Claim Requests</h2>
             {requestsError && (
               <div className="ui-error-message">
                 <FaTimes className="ui-error-icon" />
