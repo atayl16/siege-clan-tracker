@@ -536,11 +536,7 @@ export default function AdminPage() {
           tabId="alerts"
           label="Alerts"
           icon={<FaBell />}
-          badge={
-            alertsCount + runewatchAlertCount > 0
-              ? alertsCount + runewatchAlertCount
-              : null
-          }
+          badge={runewatchAlertCount > 0 ? runewatchAlertCount : null}
         >
           <div className="tab-content alerts-content">
             <div className="content-header">
