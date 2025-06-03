@@ -436,3 +436,35 @@
     gap: 0.625rem;
   }
 }
+
+.ui-alternative-rank-info {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #aaa;
+  padding: 2px 5px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.ui-alternative-rank-info strong {
+  color: #fff;
+}
+
+.ui-correct-role-suggestion {
+  margin-top: 3px;
+  font-size: 0.85rem;
+  color: #ffcc00;
+  display: flex;
+  align-items: center;
+}
+
+.ui-arrow {
+  font-weight: bold;
+  margin: 0 4px;
+}
+
+.ui-role-badge {
+  margin-left: 5px;
+  vertical-align: middle;
+}

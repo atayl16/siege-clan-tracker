@@ -3,17 +3,13 @@ import { useData } from "../../context/DataContext";
 import {
   FaEdit,
   FaTrash,
-  FaPlus,
-  FaExchangeAlt,
   FaExclamationTriangle,
   FaEye,
   FaEyeSlash,
   FaChevronDown,
   FaChevronUp,
-  FaSync,
 } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
-import { useCallback } from "react";
 
 // Import UI components
 import Button from "../ui/Button";
@@ -148,6 +144,48 @@ export default function AdminMemberTable({
     return { hasCorrectRole: true, currentType: isSkiller ? "skiller" : isFighter ? "fighter" : "unknown" };
   };
 
+  const calculateAlternativeRank = (member) => {
+    const womRole = (member.womrole || "").toLowerCase();
+    const isSkiller =
+      womRole.includes("opal") ||
+      womRole.includes("sapphire") ||
+      womRole.includes("emerald") ||
+      womRole.includes("ruby") ||
+      womRole.includes("diamond") ||
+      womRole.includes("dragonstone") ||
+      womRole.includes("onyx") ||
+      womRole.includes("zenyte");
+  
+    // If they're currently a skiller, calculate fighter rank
+    if (isSkiller) {
+      const ehb = parseInt(member.ehb) || 0;
+  
+      if (ehb >= 1500) return "Tzkal";
+      else if (ehb >= 1300) return "Monarch";
+      else if (ehb >= 1100) return "Senator";
+      else if (ehb >= 900) return "Executive";
+      else if (ehb >= 700) return "Superior";
+      else if (ehb >= 500) return "Supervisor";
+      else if (ehb >= 300) return "Leader";
+      else if (ehb >= 100) return "Prefect";
+      else return "Mentor";
+    } 
+    // If they're currently a fighter, calculate skiller rank
+    else {
+      const clanXp =
+        (parseInt(member.current_xp) || 0) - (parseInt(member.first_xp) || 0);
+  
+      if (clanXp >= 500000000) return "Zenyte";
+      else if (clanXp >= 150000000) return "Onyx";
+      else if (clanXp >= 90000000) return "Dragonstone";
+      else if (clanXp >= 40000000) return "Diamond";
+      else if (clanXp >= 15000000) return "Ruby";
+      else if (clanXp >= 8000000) return "Emerald";
+      else if (clanXp >= 3000000) return "Sapphire";
+      else return "Opal";
+    }
+  };
+
   // Function implementations - Updated to take a pointValue parameter
   const handleAddPoints = async (member, pointValue = 2) => {
     try {
@@ -213,100 +251,6 @@ export default function AdminMemberTable({
     } catch (err) {
       console.error("Error toggling visibility:", err);
       alert("Failed to update visibility");
-    } finally {
-      setRefreshing(null);
-    }
-  };
-  
-  const handleToggleRankType = async (member) => {
-    try {
-      // Determine new rank type logic...
-      const newRankType = calculateNewRankType(member);
-      
-      if (window.confirm(`Change ${member.name}'s rank type to ${newRankType}?`)) {
-        setRefreshing(`rank-${member.wom_id}`);
-        await changeMemberRank(member, newRankType);
-        onRefresh && onRefresh();
-      }
-    } catch (err) {
-      console.error("Error toggling rank type:", err);
-      alert("Failed to update rank type");
-    } finally {
-      setRefreshing(null);
-    }
-  };
-
-  const syncMemberWithWom = async (member) => {
-    try {
-      setRefreshing(`sync-${member.wom_id}`);
-  
-      // First fetch fresh data from WOM API
-      console.log("Fetching fresh WOM data...");
-      
-      // Add a try/catch specifically for the refreshWomData call
-      try {
-        if (typeof refreshWomData === 'function') {
-          await refreshWomData();
-        } else {
-          console.warn("refreshWomData is not a function, skipping refresh step");
-        }
-      } catch (refreshError) {
-        console.warn("Error refreshing WOM data:", refreshError);
-        // Continue with the process anyway since it seems to work
-      }
-  
-      // Get the latest data after refresh
-      const womMembership = group?.memberships?.find(
-        (m) => m.player?.id === member.wom_id
-      );
-  
-      if (!womMembership || !womMembership.player) {
-        throw new Error("Member not found in WOM group data");
-      }
-  
-      const womPlayer = womMembership.player;
-      const womRole = womMembership.role;
-  
-      console.log("Found member in WOM data:", {
-        name: womPlayer.displayName,
-        role: womRole,
-        ehb: womPlayer.ehb,
-      });
-  
-      const updatedData = {
-        wom_id: member.wom_id,
-        name: member.name, // Preserve name
-        current_xp:
-          womPlayer.latestSnapshot?.data?.skills?.overall?.experience ||
-          member.current_xp,
-        current_lvl:
-          womPlayer.latestSnapshot?.data?.skills?.overall?.level ||
-          member.current_lvl,
-        ehb: womPlayer.ehb || member.ehb,
-        womrole: womRole || member.womrole,
-        updated_at: new Date().toISOString(),
-      };
-  
-      // Removed confirmation dialog - execute sync immediately
-      await updateMember(updatedData);
-  
-      // Show success message
-      const successToast = document.createElement("div");
-      successToast.className = "update-success-toast";
-      successToast.textContent = `Updated ${member.name} with fresh WOM data`;
-      document.body.appendChild(successToast);
-  
-      setTimeout(() => {
-        successToast.classList.add("toast-fade-out");
-        setTimeout(() => {
-          document.body.removeChild(successToast);
-        }, 300);
-      }, 2000);
-  
-      onRefresh && onRefresh();
-    } catch (err) {
-      console.error("Error syncing member:", err);
-      alert(`Failed to sync: ${err.message}`);
     } finally {
       setRefreshing(null);
     }
@@ -443,40 +387,30 @@ export default function AdminMemberTable({
                         <div className="ui-role-value ui-position-relative">
                           {titleize(member.womrole) || "-"}
                           {!roleStatus.hasCorrectRole && (
-                            <Badge
-                              variant="warning"
-                              className="ui-role-badge"
-                              title={`Should be: ${roleStatus.correctRole}`}
-                            >
-                              <FaExclamationTriangle />
-                            </Badge>
+                            <>
+                              <Badge
+                                variant="warning"
+                                className="ui-role-badge"
+                                title={`Should be: ${titleize(roleStatus.correctRole)}`}
+                              >
+                                <FaExclamationTriangle />
+                              </Badge>
+                              <div className="ui-correct-role-suggestion">
+                                <span className="ui-arrow">→</span> {titleize(roleStatus.correctRole)}
+                              </div>
+                            </>
                           )}
                         </div>
                         {!isAdmin(member) && (
-                          <Button
-                            variant="primary"
-                            size="md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleRankType(member);
-                            }}
-                            title={
-                              isSkiller
-                                ? "Switch to fighter rank"
-                                : "Switch to skiller rank"
-                            }
-                            disabled={isRefreshing}
-                            className="ui-toggle-rank-btn"
+                          <div
+                            className="ui-alternative-rank-info"
+                            title={`Player would be this rank if switched to ${isSkiller ? "fighter" : "skiller"} type`}
                           >
-                            {refreshing === `rank-${member.wom_id}` ? (
-                              <div className="ui-button-spinner"></div>
-                            ) : (
-                              <>
-                                <FaExchangeAlt />{" "}
-                                {isSkiller ? "Fighter" : "Skiller"}
-                              </>
-                            )}
-                          </Button>
+                            <small>
+                              {isSkiller ? "Fighter: " : "Skiller: "}
+                              <strong>{calculateAlternativeRank(member)}</strong>
+                            </small>
+                          </div>
                         )}
                       </div>
                     </td>
@@ -498,25 +432,6 @@ export default function AdminMemberTable({
                         : "-"}
                     </td>
                     <td className="ui-text-center">
-                      <Button
-                        variant="success"
-                        size="md"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          syncMemberWithWom(member);
-                        }}
-                        title="Sync with latest WOM data"
-                        disabled={isRefreshing}
-                        className="ui-action-button"
-                      >
-                        {refreshing === `sync-${member.wom_id}` ? (
-                          <div className="ui-button-spinner"></div>
-                        ) : (
-                          <>
-                            <FaSync /> Sync
-                          </>
-                        )}
-                      </Button>
                     </td>
                   </tr>
 
