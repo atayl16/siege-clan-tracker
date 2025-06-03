@@ -336,25 +336,6 @@ export default function AdminPage() {
       <div className="dashboard-header">
         <h1>Clan Administration</h1>
         <div className="admin-actions">
-          <Button
-            variant="primary"
-            onClick={() => {
-              setSelectedMember(null);
-              setIsAddingMember(true);
-            }}
-            icon="+"
-          >
-            Add New Member
-          </Button>
-          {alertsCount > 0 && (
-            <Button
-              variant="danger"
-              onClick={() => setActiveTab("alerts")}
-              icon={<FaBell />}
-            >
-              {alertsCount} Rank Alert{alertsCount !== 1 ? "s" : ""}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -551,11 +532,6 @@ export default function AdminPage() {
                   <h3 className="ui-rank-alerts-title">
                     <FaBell className="alert-icon" />
                     Rank Updates
-                    {alertsCount > 0 && (
-                      <Badge variant="warning" pill className="ui-alerts-count">
-                        {alertsCount}
-                      </Badge>
-                    )}
                   </h3>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
