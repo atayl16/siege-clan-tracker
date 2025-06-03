@@ -3,17 +3,13 @@ import { useData } from "../../context/DataContext";
 import {
   FaEdit,
   FaTrash,
-  FaPlus,
-  FaExchangeAlt,
   FaExclamationTriangle,
   FaEye,
   FaEyeSlash,
   FaChevronDown,
   FaChevronUp,
-  FaSync,
 } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
-import { useCallback } from "react";
 
 // Import UI components
 import Button from "../ui/Button";
@@ -259,100 +255,6 @@ export default function AdminMemberTable({
       setRefreshing(null);
     }
   };
-  
-  const handleToggleRankType = async (member) => {
-    try {
-      // Determine new rank type logic...
-      const newRankType = calculateNewRankType(member);
-      
-      if (window.confirm(`Change ${member.name}'s rank type to ${newRankType}?`)) {
-        setRefreshing(`rank-${member.wom_id}`);
-        await changeMemberRank(member, newRankType);
-        onRefresh && onRefresh();
-      }
-    } catch (err) {
-      console.error("Error toggling rank type:", err);
-      alert("Failed to update rank type");
-    } finally {
-      setRefreshing(null);
-    }
-  };
-
-  const syncMemberWithWom = async (member) => {
-    try {
-      setRefreshing(`sync-${member.wom_id}`);
-  
-      // First fetch fresh data from WOM API
-      console.log("Fetching fresh WOM data...");
-      
-      // Add a try/catch specifically for the refreshWomData call
-      try {
-        if (typeof refreshWomData === 'function') {
-          await refreshWomData();
-        } else {
-          console.warn("refreshWomData is not a function, skipping refresh step");
-        }
-      } catch (refreshError) {
-        console.warn("Error refreshing WOM data:", refreshError);
-        // Continue with the process anyway since it seems to work
-      }
-  
-      // Get the latest data after refresh
-      const womMembership = group?.memberships?.find(
-        (m) => m.player?.id === member.wom_id
-      );
-  
-      if (!womMembership || !womMembership.player) {
-        throw new Error("Member not found in WOM group data");
-      }
-  
-      const womPlayer = womMembership.player;
-      const womRole = womMembership.role;
-  
-      console.log("Found member in WOM data:", {
-        name: womPlayer.displayName,
-        role: womRole,
-        ehb: womPlayer.ehb,
-      });
-  
-      const updatedData = {
-        wom_id: member.wom_id,
-        name: member.name, // Preserve name
-        current_xp:
-          womPlayer.latestSnapshot?.data?.skills?.overall?.experience ||
-          member.current_xp,
-        current_lvl:
-          womPlayer.latestSnapshot?.data?.skills?.overall?.level ||
-          member.current_lvl,
-        ehb: womPlayer.ehb || member.ehb,
-        womrole: womRole || member.womrole,
-        updated_at: new Date().toISOString(),
-      };
-  
-      // Removed confirmation dialog - execute sync immediately
-      await updateMember(updatedData);
-  
-      // Show success message
-      const successToast = document.createElement("div");
-      successToast.className = "update-success-toast";
-      successToast.textContent = `Updated ${member.name} with fresh WOM data`;
-      document.body.appendChild(successToast);
-  
-      setTimeout(() => {
-        successToast.classList.add("toast-fade-out");
-        setTimeout(() => {
-          document.body.removeChild(successToast);
-        }, 300);
-      }, 2000);
-  
-      onRefresh && onRefresh();
-    } catch (err) {
-      console.error("Error syncing member:", err);
-      alert(`Failed to sync: ${err.message}`);
-    } finally {
-      setRefreshing(null);
-    }
-  };
 
   // Sort members
   const sortedMembers = useMemo(() => {
@@ -530,25 +432,6 @@ export default function AdminMemberTable({
                         : "-"}
                     </td>
                     <td className="ui-text-center">
-                      <Button
-                        variant="success"
-                        size="md"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          syncMemberWithWom(member);
-                        }}
-                        title="Sync with latest WOM data"
-                        disabled={isRefreshing}
-                        className="ui-action-button"
-                      >
-                        {refreshing === `sync-${member.wom_id}` ? (
-                          <div className="ui-button-spinner"></div>
-                        ) : (
-                          <>
-                            <FaSync /> Sync
-                          </>
-                        )}
-                      </Button>
                     </td>
                   </tr>
 
