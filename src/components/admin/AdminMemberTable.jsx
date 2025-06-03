@@ -148,6 +148,48 @@ export default function AdminMemberTable({
     return { hasCorrectRole: true, currentType: isSkiller ? "skiller" : isFighter ? "fighter" : "unknown" };
   };
 
+  const calculateAlternativeRank = (member) => {
+    const womRole = (member.womrole || "").toLowerCase();
+    const isSkiller =
+      womRole.includes("opal") ||
+      womRole.includes("sapphire") ||
+      womRole.includes("emerald") ||
+      womRole.includes("ruby") ||
+      womRole.includes("diamond") ||
+      womRole.includes("dragonstone") ||
+      womRole.includes("onyx") ||
+      womRole.includes("zenyte");
+  
+    // If they're currently a skiller, calculate fighter rank
+    if (isSkiller) {
+      const ehb = parseInt(member.ehb) || 0;
+  
+      if (ehb >= 1500) return "Tzkal";
+      else if (ehb >= 1300) return "Monarch";
+      else if (ehb >= 1100) return "Senator";
+      else if (ehb >= 900) return "Executive";
+      else if (ehb >= 700) return "Superior";
+      else if (ehb >= 500) return "Supervisor";
+      else if (ehb >= 300) return "Leader";
+      else if (ehb >= 100) return "Prefect";
+      else return "Mentor";
+    } 
+    // If they're currently a fighter, calculate skiller rank
+    else {
+      const clanXp =
+        (parseInt(member.current_xp) || 0) - (parseInt(member.first_xp) || 0);
+  
+      if (clanXp >= 500000000) return "Zenyte";
+      else if (clanXp >= 150000000) return "Onyx";
+      else if (clanXp >= 90000000) return "Dragonstone";
+      else if (clanXp >= 40000000) return "Diamond";
+      else if (clanXp >= 15000000) return "Ruby";
+      else if (clanXp >= 8000000) return "Emerald";
+      else if (clanXp >= 3000000) return "Sapphire";
+      else return "Opal";
+    }
+  };
+
   // Function implementations - Updated to take a pointValue parameter
   const handleAddPoints = async (member, pointValue = 2) => {
     try {
@@ -443,40 +485,30 @@ export default function AdminMemberTable({
                         <div className="ui-role-value ui-position-relative">
                           {titleize(member.womrole) || "-"}
                           {!roleStatus.hasCorrectRole && (
-                            <Badge
-                              variant="warning"
-                              className="ui-role-badge"
-                              title={`Should be: ${roleStatus.correctRole}`}
-                            >
-                              <FaExclamationTriangle />
-                            </Badge>
+                            <>
+                              <Badge
+                                variant="warning"
+                                className="ui-role-badge"
+                                title={`Should be: ${titleize(roleStatus.correctRole)}`}
+                              >
+                                <FaExclamationTriangle />
+                              </Badge>
+                              <div className="ui-correct-role-suggestion">
+                                <span className="ui-arrow">→</span> {titleize(roleStatus.correctRole)}
+                              </div>
+                            </>
                           )}
                         </div>
                         {!isAdmin(member) && (
-                          <Button
-                            variant="primary"
-                            size="md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleRankType(member);
-                            }}
-                            title={
-                              isSkiller
-                                ? "Switch to fighter rank"
-                                : "Switch to skiller rank"
-                            }
-                            disabled={isRefreshing}
-                            className="ui-toggle-rank-btn"
+                          <div
+                            className="ui-alternative-rank-info"
+                            title={`Player would be this rank if switched to ${isSkiller ? "fighter" : "skiller"} type`}
                           >
-                            {refreshing === `rank-${member.wom_id}` ? (
-                              <div className="ui-button-spinner"></div>
-                            ) : (
-                              <>
-                                <FaExchangeAlt />{" "}
-                                {isSkiller ? "Fighter" : "Skiller"}
-                              </>
-                            )}
-                          </Button>
+                            <small>
+                              {isSkiller ? "Fighter: " : "Skiller: "}
+                              <strong>{calculateAlternativeRank(member)}</strong>
+                            </small>
+                          </div>
                         )}
                       </div>
                     </td>
