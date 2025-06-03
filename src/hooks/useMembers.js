@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAdminSupabaseClient } from '../utils/supabaseClient';
+import { mutate } from 'swr';
 
 export function useMembers() {
   const [members, setMembers] = useState(null);
@@ -227,6 +228,7 @@ export function useMembers() {
     loading,
     error,
     refreshMembers: fetchMembers,
+    refresh: mutate,
     createMember,
     updateMember,
     deleteMember,

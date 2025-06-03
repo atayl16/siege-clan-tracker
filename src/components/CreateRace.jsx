@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { FaPlus, FaTimes, FaGlobe, FaLock } from 'react-icons/fa';
-import { useRaces } from '../hooks/useRaces'; // Updated to use new hook
-import MemberSelector from './MemberSelector';
-import MetricSelector from './MetricSelector';
-import './CreateRace.css';
+import React, { useState, useEffect } from "react";
+import { FaPlus, FaTimes, FaGlobe, FaLock } from "react-icons/fa";
+import { useRaces } from "../hooks/useRaces";
+import { useClaimRequests } from "../hooks/useClaimRequests";
+import MemberSelector from "./MemberSelector";
+import MetricSelector from "./MetricSelector";
+import "./CreateRace.css";
 
-import Button from './ui/Button';
-import Card from './ui/Card';
+import Button from "./ui/Button";
+import Card from "./ui/Card";
 
 export default function CreateRace({ userId, onCreated, onCancel }) {
   const [title, setTitle] = useState("");
@@ -25,7 +26,14 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const { createRace } = useRaces(); // Use the new hook
+  const { createRace } = useRaces();
+  const { userClaims, refreshUserClaims } = useClaimRequests();
+
+  useEffect(() => {
+    if (userId) {
+      refreshUserClaims(userId);
+    }
+  }, [userId, refreshUserClaims]);
 
   const handleAddParticipant = () => {
     setParticipants([
@@ -80,6 +88,16 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
       return;
     }
 
+    const userClaimIds = userClaims.map((claim) => claim.wom_id);
+    const hasUserClaim = participants.some((p) =>
+      userClaimIds.includes(parseInt(p.playerId, 10))
+    );
+
+    if (!hasUserClaim) {
+      setError("You must include at least one of your own claimed characters");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -109,6 +127,20 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (
+      userClaims?.length === 1 &&
+      participants.length > 0 &&
+      !participants[0].playerId
+    ) {
+      const claim = userClaims[0];
+      handleSelectPlayer(0, {
+        wom_id: claim.wom_id,
+        name: claim.members?.name || claim.rsn,
+      });
+    }
+  }, [userClaims]);
 
   return (
     <Card className="ui-race-form">
@@ -201,6 +233,8 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
                 <MemberSelector
                   selectedMemberId={participant.playerId}
                   onMemberSelect={(player) => handleSelectPlayer(index, player)}
+                  userClaimedMembers={userClaims} // Pass the user's claims
+                  highlightUserClaims={true}
                 />
               </div>
 

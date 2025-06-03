@@ -106,6 +106,51 @@ export default function Navbar() {
             Achievements
           </Link>
         </div>
+        
+        <div className="navbar-auth">
+          {isLoggedIn ? (
+            <>
+              <Link
+                to="/profile"
+                className={location.pathname === "/profile" ? "active" : ""}
+              >
+                Profile
+              </Link>
+              
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={location.pathname === "/admin" ? "active" : ""}
+                >
+                  Admin
+                </Link>
+              )}
+              
+              <button 
+                onClick={logout} 
+                className="navbar-logout"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className={location.pathname === "/login" ? "active" : ""}
+              >
+                Login
+              </Link>
+              
+              <Link
+                to="/register"
+                className={location.pathname === "/register" ? "active" : ""}
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );

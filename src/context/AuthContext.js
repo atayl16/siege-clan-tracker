@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
+import { v4 as uuidv4 } from "uuid";
 
 const AuthContext = createContext();
 
@@ -94,10 +95,6 @@ export function AuthProvider({ children }) {
         try {
           // First check if we have a pre-configured admin account
           const adminEmail = "admin@siegeclan.org"; // Use consistent email
-          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: adminEmail,
-            password: passwordHash // Use the same password hash
-          });
       
           if (signInError) {
             console.log("Admin auth not found, creating...");
@@ -144,17 +141,7 @@ export function AuthProvider({ children }) {
   
       // Verify password
       const inputPasswordHash = await sha256(password);
-      if (data.password_hash === inputPasswordHash) {
-        // CRITICAL: Create a proper Supabase session
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@example.com`,
-          password: password
-        });
-        
-        if (authError) {
-          console.warn("Supabase auth error, trying to create session:", authError);
-        }
-        
+      if (data.password_hash === inputPasswordHash) {        
         localStorage.setItem("userId", data.id);
         localStorage.setItem("user", JSON.stringify(data));
         setUser(data);
@@ -181,10 +168,7 @@ export function AuthProvider({ children }) {
     try {
       console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
       
-      // For master admin, we'll need to use a different approach
-      // since we can't use headers() method
-      
-      // Update the user record in the database
+      // First update the users table
       const { data, error } = await supabase
         .from("users")
         .update({ is_admin: makeAdmin })
@@ -192,34 +176,33 @@ export function AuthProvider({ children }) {
         .select();
   
       if (error) {
-        console.error("Error updating admin status:", error);
+        console.error("Error updating admin status in users table:", error);
         return { error: error.message || "Failed to update admin status" };
       }
       
-      console.log("Admin update response:", data);
-      
-      // Verify the update was successful
-      if (!data || data.length === 0) {
-        console.error("No rows were updated");
-        
-        // Special handling for master admin
-        if (localStorage.getItem("adminAuth") === "true") {
-          // Try a direct SQL approach for master admin
-          const { error: directError } = await supabase
-            .rpc('admin_set_user_admin_status', { 
-              target_user_id: userId,
-              is_admin_value: makeAdmin 
-            });
-            
-          if (directError) {
-            console.error("Direct admin update failed:", directError);
-            return { error: directError.message };
-          }
+      // Now update the admins table
+      if (makeAdmin) {
+        // Add to admins table if promoting
+        const { error: insertError } = await supabase
+          .from("admins")
+          .insert([{ id: userId }])
+          .select();
           
-          return { success: true };
+        if (insertError) {
+          console.error("Error adding to admins table:", insertError);
+          return { error: insertError.message || "Failed to add admin record" };
         }
-        
-        return { error: "No changes were made" };
+      } else {
+        // Remove from admins table if demoting
+        const { error: deleteError } = await supabase
+          .from("admins")
+          .delete()
+          .eq("id", userId);
+          
+        if (deleteError) {
+          console.error("Error removing from admins table:", deleteError);
+          return { error: deleteError.message || "Failed to remove admin record" };
+        }
       }
       
       return { success: true, data: data[0] };
@@ -273,66 +256,55 @@ export function AuthProvider({ children }) {
       return 0;
     }
   };
-
+  
   // Fetch a user's claimed players
   const fetchUserClaims = async (userId) => {
     console.log("Fetching claims for user ID:", userId);
-    console.log("User ID type:", typeof userId);
+    
+    if (!userId) {
+      console.log("No user ID provided for fetching claims");
+      setUserClaims([]);
+      return;
+    }
+    
     try {
-      // Use the RPC function that's working correctly
-      const { data: claimsData, error: claimsError } = await supabase.rpc(
-        "get_user_claims",
-        {
-          user_id_param: userId,
-        }
-      );
-
+      // Query directly without using RPC
+      const { data: claimsData, error: claimsError } = await supabase
+        .from("members")
+        .select("wom_id, name, current_lvl, ehb, siege_score, updated_at, claimed_by")
+        .eq("claimed_by", userId);
+  
       console.log("Claims query result:", { claimsData, claimsError });
-
+  
       if (claimsError) {
         console.error("Claims fetch error:", claimsError);
-        throw claimsError;
+        setUserClaims([]);
+        return;
       }
-
+  
       if (!claimsData || claimsData.length === 0) {
         setUserClaims([]);
         return;
       }
-
-      // Get the member details
-      const womIds = claimsData.map((claim) => claim.wom_id);
-
-      const { data: membersData, error: membersError } = await supabase
-        .from("members")
-        .select("wom_id, name, current_lvl, ehb, siege_score")
-        .in("wom_id", womIds);
-
-      if (membersError) {
-        console.error("Error fetching member details:", membersError);
-        return;
-      }
-
-      // Create a map for quick lookups
-      const membersMap = {};
-      membersData.forEach((member) => {
-        membersMap[member.wom_id] = member;
-      });
-
-      // Combine the data
-      const combinedClaims = claimsData.map((claim) => ({
-        ...claim,
-        members: membersMap[claim.wom_id] || {
-          name: "Unknown Player",
-          title: null, // Default title value
-          current_lvl: 3,
-          ehb: 0,
-          siege_score: 0,
-        },
+  
+      // Transform the data to match expected format
+      const transformedClaims = claimsData.map(member => ({
+        wom_id: member.wom_id,
+        user_id: member.claimed_by,
+        claimed_at: member.updated_at,
+        members: {
+          name: member.name,
+          current_lvl: member.current_lvl,
+          ehb: member.ehb,
+          siege_score: member.siege_score,
+          wom_id: member.wom_id
+        }
       }));
-
-      setUserClaims(combinedClaims);
+  
+      setUserClaims(transformedClaims);
     } catch (err) {
       console.error("Failed to fetch user claims:", err);
+      setUserClaims([]);
     }
   };
 
@@ -350,26 +322,18 @@ export function AuthProvider({ children }) {
         return { error: "Username already taken" };
       }
   
-      // First create the user in auth system
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@example.com`,
-        password: password,
-      });
-  
-      if (authError) {
-        console.error("Auth registration error:", authError);
-        return { error: authError.message || "Registration failed" };
-      }
-  
+      // Generate a new UUID for the user
+      const userId = uuidv4();
+      
       // Hash password
       const passwordHash = await sha256(password);
       
-      // Create user record
-      const { error } = await supabase
+      // Create user record with the generated UUID
+      const { data, error } = await supabase
         .from("users")
         .insert([
           {
-            id: authData.user.id,
+            id: userId,
             username: username.trim().toLowerCase(),
             password_hash: passwordHash,
             is_admin: false,
@@ -386,9 +350,9 @@ export function AuthProvider({ children }) {
       const created_at = new Date().toISOString();
       
       // Store user in local storage and state
-      localStorage.setItem("userId", authData.user.id);
+      localStorage.setItem("userId", userId);
       localStorage.setItem("user", JSON.stringify({
-        id: authData.user.id,
+        id: userId,
         username: username.trim().toLowerCase(),
         is_admin: false,
         created_at: created_at,
@@ -396,7 +360,7 @@ export function AuthProvider({ children }) {
       }));
       
       setUser({
-        id: authData.user.id,
+        id: userId,
         username: username.trim().toLowerCase(),
         is_admin: false,
         created_at: created_at,
