@@ -567,7 +567,7 @@ async function processCompetitionResults(competitionId) {
     // Calculate places and points based on the progressive groups
     let currentPlace = 1;
     const pointsData = [];
-    const memberUpdates = [];
+    let memberUpdates = [];
 
     // OPTIMIZATION: Gather all usernames first to minimize database queries
     const allUsernames = validParticipants.map(p => 
@@ -658,6 +658,19 @@ async function processCompetitionResults(competitionId) {
       // Increment place counter for next group
       currentPlace++;
     } // End of progress groups loop
+
+    // Deduplicate and merge points for each member
+    const dedupedUpdatesMap = new Map();
+    for (const update of memberUpdates) {
+      if (dedupedUpdatesMap.has(update.wom_id)) {
+        const existing = dedupedUpdatesMap.get(update.wom_id);
+        existing.pointsToAward += update.pointsToAward;
+        existing.newScore = existing.oldScore + existing.pointsToAward;
+      } else {
+        dedupedUpdatesMap.set(update.wom_id, { ...update });
+      }
+    }
+    memberUpdates = Array.from(dedupedUpdatesMap.values());
 
     // Now execute the transaction if we have members to award points to
     if (memberUpdates.length > 0) {
