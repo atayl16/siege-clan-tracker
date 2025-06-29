@@ -30,4 +30,3 @@ npm run dev
 
 ## Author
 Made by Alisha Taylor (@atayl16)
-```
