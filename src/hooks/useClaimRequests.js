@@ -1,5 +1,4 @@
 import useSWR from "swr";
-import claimRequests from "../../netlify/edge-functions/claim-requests";
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
