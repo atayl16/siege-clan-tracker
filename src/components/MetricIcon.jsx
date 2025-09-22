@@ -39,6 +39,7 @@ const MetricIcon = memo(({ metric }) => {
     "dagannoth_rex",
     "dagannoth_supreme",
     "deranged_archaeologist",
+    "doom_of_mokhaiotl",
     "duke_sucellus",
     "general_graardor",
     "giant_mole",
@@ -81,6 +82,7 @@ const MetricIcon = memo(({ metric }) => {
     "vetion",
     "vorkath",
     "wintertodt",
+    "yama",
     "zalcano",
     "zulrah",
   ];

@@ -67,6 +67,7 @@ import DagannothPrimeIcon from "../assets/images/bosses/Dagannoth_Prime.png";
 import DagannothRexIcon from "../assets/images/bosses/Dagannoth_Rex.png";
 import DagannothSupremeIcon from "../assets/images/bosses/Dagannoth_Supreme.png";
 import DerangedArchaeologistIcon from "../assets/images/bosses/Deranged_Archaeologist.png";
+import DoomIcon from "../assets/images/bosses/Doom.png";
 import DukeSucellusIcon from "../assets/images/bosses/Duke_Sucellus.png";
 import GeneralGraardorIcon from "../assets/images/bosses/General_Graardor.png";
 import GiantMoleIcon from "../assets/images/bosses/Giant_Mole.png";
@@ -105,6 +106,7 @@ import VenenatisIcon from "../assets/images/bosses/Venenatis.png";
 import VetionIcon from "../assets/images/bosses/Vet'ion.png";
 import VorkathIcon from "../assets/images/bosses/Vorkath.png";
 import WintertodtIcon from "../assets/images/bosses/Howling_Snow_Storm.gif";
+import YamaIcon from "../assets/images/bosses/Yama.png";
 import ZalcanoIcon from "../assets/images/bosses/Zalcano.png";
 import ZulrahIcon from "../assets/images/bosses/Zulrah.png";
 
@@ -219,6 +221,7 @@ export const BossIcon = ({ boss }) => {
     dagannoth_rex: DagannothRexIcon,
     dagannoth_supreme: DagannothSupremeIcon,
     deranged_archaeologist: DerangedArchaeologistIcon,
+    doom_of_mokhaiotl: DoomIcon,
     duke_sucellus: DukeSucellusIcon,
     general_graardor: GeneralGraardorIcon,
     giant_mole: GiantMoleIcon,
@@ -261,6 +264,7 @@ export const BossIcon = ({ boss }) => {
     vetion: VetionIcon,
     vorkath: VorkathIcon,
     wintertodt: WintertodtIcon,
+    yama: YamaIcon,
     zalcano: ZalcanoIcon,
     zulrah: ZulrahIcon,
   };
