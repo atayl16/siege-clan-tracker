@@ -180,49 +180,41 @@ export function AuthProvider({ children }) {
   const toggleAdminStatus = async (userId, makeAdmin) => {
     try {
       console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
-      
-      // For master admin, we'll need to use a different approach
-      // since we can't use headers() method
-      
-      // Update the user record in the database
-      const { data, error } = await supabase
-        .from("users")
-        .update({ is_admin: makeAdmin })
-        .eq("id", userId)
-        .select();
-  
-      if (error) {
+
+      // Get auth token from session - required for edge function authentication
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Missing Supabase session token for admin request');
+      }
+
+      const authHeaders = {
+        'Authorization': `Bearer ${session.access_token}`
+      };
+
+      // Call Netlify edge function instead of direct Supabase
+      const response = await fetch('/.netlify/functions/admin-toggle-user-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          userId,
+          isAdmin: makeAdmin
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
         console.error("Error updating admin status:", error);
-        return { error: error.message || "Failed to update admin status" };
+        return { error: error.error || "Failed to update admin status" };
       }
-      
-      console.log("Admin update response:", data);
-      
-      // Verify the update was successful
-      if (!data || data.length === 0) {
-        console.error("No rows were updated");
-        
-        // Special handling for master admin
-        if (localStorage.getItem("adminAuth") === "true") {
-          // Try a direct SQL approach for master admin
-          const { error: directError } = await supabase
-            .rpc('admin_set_user_admin_status', { 
-              target_user_id: userId,
-              is_admin_value: makeAdmin 
-            });
-            
-          if (directError) {
-            console.error("Direct admin update failed:", directError);
-            return { error: directError.message };
-          }
-          
-          return { success: true };
-        }
-        
-        return { error: "No changes were made" };
-      }
-      
-      return { success: true, data: data[0] };
+
+      const result = await response.json();
+      console.log("Edge function admin update response:", result);
+
+      return { success: true, data: result.data };
     } catch (error) {
       console.error("Error toggling admin status:", error);
       return { error: "Failed to update admin status: " + error.message };
@@ -260,7 +252,6 @@ export function AuthProvider({ children }) {
     if (!userId) return 0;
 
     try {
-      // Make sure claim_requests table has user_id as UUID
       const { error, count } = await supabase
         .from("claim_requests")
         .select("id", { count: "exact", head: true })

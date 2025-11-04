@@ -10,6 +10,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.js'],
     include: ['**/*.{test,spec}.{js,jsx}'],
+    exclude: [
+      'node_modules/',
+      'src/setupTests.js',
+      'netlify/edge-functions/**',
+    ],
     css: true,
     coverage: {
       reporter: ['text', 'json', 'html'],
