@@ -142,4 +142,17 @@ Both PRs follow the same security model:
 
 The stabilization fixes in PR #36 work seamlessly with the staging database setup from PR #37. The edge functions will automatically use the correct database (production or staging) based on Netlify's environment variable configuration.
 
-No code changes are required - just environment variable configuration in Netlify dashboard as described above.
+### Integration Updates
+
+To ensure full compatibility after PR #37 is merged:
+
+1. ✅ **package.json scripts** - PR #36 now includes all staging-related scripts from PR #37:
+   - `staging:export` - Export production data
+   - `staging:seed` - Seed staging database
+   - `staging:refresh` - One-command refresh of staging data
+
+2. ✅ **Admin RPC Functions Migration** - PR #36 provides the migration file that PR #37 expects
+
+3. ✅ **CORS Configuration** - Edge functions automatically allow `.netlify.app` domains for preview deployments
+
+No additional code changes are required - just environment variable configuration in Netlify dashboard as described above.

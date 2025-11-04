@@ -33,10 +33,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
     "netlify:dev": "netlify dev",
     "netlify:build": "netlify build",
     "netlify:deploy": "netlify deploy",
-    "test:ui": "vitest --ui"
+    "staging:export": "node scripts/staging/export-production-data.js",
+    "staging:seed": "node scripts/staging/seed-staging-database.js",
+    "staging:refresh": "./scripts/staging/refresh-staging.sh"
   },
   "eslintConfig": {
     "extends": [
