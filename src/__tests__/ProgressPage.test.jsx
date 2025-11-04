@@ -11,5 +11,5 @@ test.skip('renders ProgressPage without crashing', () => {
       </AuthProvider>
     </MemoryRouter>
   );
-  expect(screen.getAllByText(/progress/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/progress/i)).toBeInTheDocument();
 }); 

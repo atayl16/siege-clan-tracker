@@ -12,9 +12,14 @@ vi.mock('../context/AuthContext', () => ({
 }));
 
 let getMockDataContext;
+let getMockUseUsers;
 
 vi.mock('../context/DataContext', () => ({
   useData: () => getMockDataContext(),
+}));
+
+vi.mock('../hooks/useUsers', () => ({
+  useUsers: () => getMockUseUsers(),
 }));
 
 const defaultMock = {
@@ -32,7 +37,7 @@ const defaultMock = {
   error: undefined,
   usersLoading: false,
   usersError: null,
-  refresh: vi.fn(),
+  refreshMembers: vi.fn(),
   searchResults: [],
   searchLoading: false,
   searchError: undefined,
@@ -55,14 +60,12 @@ const defaultMock = {
 };
 
 test('renders AdminUserManager and displays a user', () => {
-  vi.mock('../hooks/useUsers', () => ({
-    useUsers: () => ({
-      users: [{ id: 1, username: 'adminuser', is_admin: true, created_at: new Date().toISOString() }],
-      loading: false,
-      error: undefined,
-      refresh: vi.fn(),
-    }),
-  }));
+  getMockUseUsers = () => ({
+    users: [{ id: 1, username: 'adminuser', is_admin: true, created_at: new Date().toISOString() }],
+    loading: false,
+    error: undefined,
+    refreshMembers: vi.fn(),
+  });
   getMockDataContext = () => ({ ...defaultMock });
   render(<AdminUserManager />);
   expect(screen.getByText('adminuser')).toBeInTheDocument();
@@ -70,14 +73,12 @@ test('renders AdminUserManager and displays a user', () => {
 });
 
 test('renders error message when usersError is a string', () => {
-  vi.mock('../hooks/useUsers', () => ({
-    useUsers: () => ({
-      users: [{ id: 1, username: 'testuser', is_admin: false, created_at: new Date().toISOString() }],
-      loading: false,
-      error: undefined,
-      refresh: vi.fn(),
-    }),
-  }));
+  getMockUseUsers = () => ({
+    users: [{ id: 1, username: 'testuser', is_admin: false, created_at: new Date().toISOString() }],
+    loading: false,
+    error: undefined,
+    refreshMembers: vi.fn(),
+  });
   getMockDataContext = () => ({
     ...defaultMock,
     users: [{ id: 1, username: 'testuser', is_admin: false, created_at: new Date().toISOString() }],
@@ -85,7 +86,7 @@ test('renders error message when usersError is a string', () => {
     searchError: undefined,
   });
   render(<AdminUserManager />);
-  
+
   // Use a more flexible approach to find the error message
   expect(screen.getByText(/Failed to load users/)).toBeInTheDocument();
 }); 

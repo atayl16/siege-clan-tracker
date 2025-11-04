@@ -8,5 +8,5 @@ test('renders LeaderboardPage without crashing', () => {
       <LeaderboardPage />
     </MemoryRouter>
   );
-  expect(screen.getAllByText(/leaderboard/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/leaderboard/i)).toBeInTheDocument();
 }); 

@@ -7,15 +7,15 @@ test('navigates between main pages using the navbar', async () => {
 
   // Click Members link
   await userEvent.click(screen.getByRole('link', { name: /members/i }));
-  expect(screen.getAllByText(/members/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/members/i)).toBeInTheDocument();
 
   // Click Events link
   await userEvent.click(screen.getByRole('link', { name: /events/i }));
-  expect(screen.getAllByText(/event/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/event/i)).toBeInTheDocument();
 
   // Click Leaderboard link
   await userEvent.click(screen.getByRole('link', { name: /leaderboard/i }));
-  expect(screen.getAllByText(/leaderboard/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/leaderboard/i)).toBeInTheDocument();
 
   // Add more navigation checks as needed
 }); 

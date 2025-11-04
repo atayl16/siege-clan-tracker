@@ -9,5 +9,5 @@ test('renders EventsPage without crashing', () => {
     </MemoryRouter>
   );
   // There may be multiple elements with 'event', so check that at least one exists
-  expect(screen.getAllByText(/event/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/event/i)).toBeInTheDocument();
 }); 

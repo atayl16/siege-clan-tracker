@@ -38,5 +38,5 @@ test('renders ClaimRequestManager and displays a claim request', async () => {
   );
   await userEvent.click(screen.getByRole('button', { name: /pending/i }));
   expect(await screen.findByText('TestRSN')).toBeInTheDocument();
-  expect(screen.getAllByText(/pending/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/pending/i)).toBeInTheDocument();
 }); 

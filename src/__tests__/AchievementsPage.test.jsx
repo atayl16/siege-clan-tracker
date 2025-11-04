@@ -8,5 +8,5 @@ test('renders AchievementsPage without crashing', () => {
       <AchievementsPage />
     </MemoryRouter>
   );
-  expect(screen.getAllByText(/achievement/i).length).toBeGreaterThan(0);
+  expect(screen.getByText(/achievement/i)).toBeInTheDocument();
 }); 

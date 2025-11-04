@@ -60,35 +60,38 @@ export function useMembers() {
     if (!memberData || !memberData.wom_id) {
       throw new Error('Missing member WOM ID for update');
     }
-    
+
     try {
-      const client = getAdminSupabaseClient();
-      
       // CONVERT DATA TYPES - ensure siege_score is a number
       if (memberData.siege_score !== undefined) {
         memberData.siege_score = Number(memberData.siege_score);
       }
-      
+
       console.log("Attempting to update member:", memberData);
-      
-      // Try direct RPC call instead of table update
-      const { data, error: updateError } = await client.rpc(
-        'admin_update_member',
-        { 
-          member_id: memberData.wom_id,
-          updated_data: memberData
-        }
-      );
-      
-      if (updateError) {
-        throw updateError;
+
+      // Call Netlify edge function instead of direct Supabase
+      const response = await fetch('/.netlify/functions/admin-update-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: memberData.wom_id,
+          updatedData: memberData
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update member');
       }
-      
-      console.log("RPC update response:", data);
-      
+
+      const result = await response.json();
+      console.log("Edge function update response:", result);
+
       // Refresh members list
       await fetchMembers();
-      return data || memberData;
+      return result.data || memberData;
     } catch (err) {
       console.error('Error updating member:', err);
       throw err;
@@ -100,19 +103,22 @@ export function useMembers() {
     if (!womId) {
       throw new Error('Missing WOM ID for deletion');
     }
-    
+
     try {
-      const client = getAdminSupabaseClient();
-      
-      const { error: deleteError } = await client
-        .from('members')
-        .delete()
-        .eq('wom_id', womId);
-      
-      if (deleteError) {
-        throw deleteError;
+      // Call Netlify edge function instead of direct Supabase
+      const response = await fetch('/.netlify/functions/admin-delete-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ womId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete member');
       }
-      
+
       // Refresh members list
       fetchMembers();
       return true;
@@ -157,28 +163,35 @@ export function useMembers() {
     if (!member || !member.wom_id) {
       throw new Error('Missing member WOM ID for visibility toggle');
     }
-    
+
     try {
-      const client = getAdminSupabaseClient();
       const newVisibility = !member.hidden;
-      
+
       console.log(`Attempting to ${newVisibility ? 'hide' : 'unhide'} member:`, member.name);
-      
-      const { data, error } = await client.rpc(
-        'admin_toggle_member_visibility',
-        { 
-          member_id: member.wom_id,
-          is_hidden: newVisibility
-        }
-      );
-      
-      if (error) throw error;
-      
-      console.log("RPC toggle visibility response:", data);
-      
+
+      // Call Netlify edge function instead of direct Supabase
+      const response = await fetch('/.netlify/functions/admin-toggle-member-visibility', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: member.wom_id,
+          isHidden: newVisibility
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to toggle member visibility');
+      }
+
+      const result = await response.json();
+      console.log("Edge function toggle visibility response:", result);
+
       // Refresh members list
       await fetchMembers();
-      return data;
+      return result.data;
     } catch (err) {
       console.error('Error toggling member visibility:', err);
       throw err;

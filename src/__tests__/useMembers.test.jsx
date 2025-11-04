@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 // Mock getAdminSupabaseClient BEFORE importing the hook
 vi.mock('../utils/supabaseClient', () => ({
   getAdminSupabaseClient: () => ({
