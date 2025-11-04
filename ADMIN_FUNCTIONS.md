@@ -127,9 +127,13 @@ In your Netlify environment variables, set:
 ```bash
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com
 ```
 
-**IMPORTANT**: The service role key should ONLY be set in Netlify environment variables, NEVER in client-side code or committed to git.
+**IMPORTANT**:
+- The service role key should ONLY be set in Netlify environment variables, NEVER in client-side code or committed to git
+- `ALLOWED_ORIGINS` should be a comma-separated list of allowed domains for CORS
+- For local development, the functions default to `http://localhost:5173,http://localhost:8888`
 
 ### 2. Required RPC Functions
 
@@ -206,6 +210,7 @@ Create a `.env` file in the root directory:
 ```bash
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8888
 ```
 
 **IMPORTANT**: Add `.env` to `.gitignore` to prevent committing secrets!
@@ -266,14 +271,34 @@ If you see "permission denied" errors:
 2. Check that RPC functions have `SECURITY DEFINER` set
 3. Ensure RLS policies allow the required operations
 
+## Authentication & Authorization
+
+All admin edge functions implement the following security measures:
+
+### JWT Token Validation
+- Requires `Authorization: Bearer <token>` header with valid Supabase JWT
+- Validates JWT using `supabase.auth.getUser(token)`
+- Returns 401 Unauthorized for invalid/missing tokens
+
+### Admin Privilege Check
+- Checks `is_admin` flag in users table
+- Requires `supabase_auth_id` field to link Supabase auth user to application user
+- Returns 403 Forbidden for non-admin users
+
+### CORS Protection
+- Validates request origin against ALLOWED_ORIGINS environment variable
+- Set `ALLOWED_ORIGINS` in Netlify environment: `https://your-domain.com,https://www.your-domain.com`
+- Defaults to localhost for development if not set
+
 ## Security Best Practices
 
 1. **Never expose the service role key**: Only use it in edge functions/backend code
-2. **Validate inputs**: Always validate and sanitize user inputs in edge functions
+2. **Validate inputs**: All edge functions validate and sanitize user inputs
 3. **Use RPC functions**: Prefer RPC functions over direct table updates for complex operations
 4. **Log admin actions**: Consider adding audit logging for admin operations
 5. **Rate limiting**: Implement rate limiting for admin endpoints if needed
-6. **Authentication**: Always verify user is admin before calling admin endpoints
+6. **Authentication**: JWT validation ensures only authenticated admins can access endpoints
+7. **Environment variables**: Always set ALLOWED_ORIGINS in production to restrict access
 
 ## Additional Resources
 
