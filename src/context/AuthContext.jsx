@@ -260,7 +260,6 @@ export function AuthProvider({ children }) {
     if (!userId) return 0;
 
     try {
-      // Make sure claim_requests table has user_id as UUID
       const { error, count } = await supabase
         .from("claim_requests")
         .select("id", { count: "exact", head: true })
