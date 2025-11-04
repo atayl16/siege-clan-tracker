@@ -48,16 +48,16 @@ supabase db push
 ```
 
 This will:
-- Create the 4 admin RPC functions
 - Set up all RLS policies
 - Enable RLS on all tables
 
 You should see output like:
 ```
-Applying migration 20250104000001_create_admin_rpc_functions.sql...
-Applying migration 20250104000002_setup_rls_policies.sql...
+Applying migration 20250104000003_rls_policies_simplified.sql...
 Finished supabase db push.
 ```
+
+Note: Admin RPC functions will be added later by PR #36.
 
 ## ✅ Step 5: Verify Setup
 
@@ -103,9 +103,8 @@ You'll need these for Netlify environment variables:
 - Go to Supabase Dashboard
 - SQL Editor (left sidebar)
 - Create a new query
-- Copy/paste contents of `supabase/migrations/20250104000001_create_admin_rpc_functions.sql`
+- Copy/paste contents of `supabase/migrations/20250104000003_rls_policies_simplified.sql`
 - Click Run
-- Repeat for the second migration file
 
 ## After Successful Setup
 

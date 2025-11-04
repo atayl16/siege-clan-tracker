@@ -5,8 +5,7 @@ This directory contains database migrations and setup scripts for the Siege Clan
 ## Files
 
 - **migrations/** - SQL migration files (version controlled)
-  - `20250104000001_create_admin_rpc_functions.sql` - Creates 4 admin RPC functions
-  - `20250104000002_setup_rls_policies.sql` - Sets up Row Level Security policies
+  - `20250104000003_rls_policies_simplified.sql` - Sets up Row Level Security policies
 
 - **SETUP_GUIDE.md** - Comprehensive setup instructions with troubleshooting
 - **QUICK_SETUP.sh** - Automated setup script for quick deployment
@@ -59,15 +58,6 @@ This will:
 
 ## What Gets Created
 
-### RPC Functions (4 total)
-
-These functions allow admin operations to bypass RLS:
-
-1. **admin_update_member** - Update member data
-2. **admin_delete_member** - Remove members
-3. **admin_toggle_member_visibility** - Hide/show members
-4. **admin_toggle_user_admin** - Manage admin privileges
-
 ### RLS Policies
 
 Security policies for 8 tables:
@@ -82,21 +72,17 @@ Security policies for 8 tables:
 
 ## Verification
 
-After setup, verify everything worked:
+After setup, verify RLS is enabled:
 
 ```bash
-# Check functions exist
-supabase db execute --query "
-SELECT routine_name FROM information_schema.routines
-WHERE routine_schema = 'public' AND routine_name LIKE 'admin_%';
-"
-
 # Check RLS enabled
 supabase db execute --query "
 SELECT tablename, rowsecurity FROM pg_tables
 WHERE schemaname = 'public' AND tablename IN ('members', 'users');
 "
 ```
+
+Note: Admin RPC functions will be added by PR #36.
 
 ## Troubleshooting
 
@@ -111,14 +97,14 @@ Common issues:
 
 After successful setup:
 
-1. ✅ Verify all 4 RPC functions were created
-2. ✅ Verify RLS is enabled on all tables
-3. ✅ Update Netlify environment variables:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SUPABASE_ANON_KEY`
-4. ✅ Test edge functions in PR #36
-5. ✅ Test admin operations in production
+1. ✅ Verify RLS is enabled on all tables
+2. ✅ Update Netlify environment variables (for staging):
+   - `SUPABASE_URL` (staging URL)
+   - `SUPABASE_SERVICE_ROLE_KEY` (staging key)
+   - `SUPABASE_ANON_KEY` (staging key)
+3. ✅ Merge PR #36 (which will add admin RPC functions)
+4. ✅ Test edge functions with staging database
+5. ✅ Apply migrations to production after testing
 
 ## Backup
 

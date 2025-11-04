@@ -36,11 +36,9 @@ Apply both migration files in order:
 ```bash
 # Apply RPC functions migration
 supabase db push --include-all
-
-# Or apply specific files if you prefer:
-# supabase db execute --file supabase/migrations/20250104000001_create_admin_rpc_functions.sql
-# supabase db execute --file supabase/migrations/20250104000002_setup_rls_policies.sql
 ```
+
+Note: Admin RPC functions will be added later by PR #36.
 
 ## Step 3: Verify the Setup
 

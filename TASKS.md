@@ -522,8 +522,9 @@ Create a PR called "documentation-improvements" with these changes.
    ```
 
 **Files:**
-- Migration 1: `supabase/migrations/20250104000001_create_admin_rpc_functions.sql`
-- Migration 2: `supabase/migrations/20250104000002_setup_rls_policies.sql`
+- Migration: `supabase/migrations/20250104000003_rls_policies_simplified.sql`
+
+**Note:** Admin RPC functions will be added by PR #36.
 
 ---
 

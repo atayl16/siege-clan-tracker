@@ -90,7 +90,7 @@ supabase link --project-ref YOUR-STAGING-PROJECT-REF
 ### 3.2 Apply Migrations to Staging
 
 ```bash
-# Apply all migrations (creates tables, RLS, RPC functions)
+# Apply all migrations (creates RLS policies)
 supabase db push
 ```
 
