@@ -181,16 +181,16 @@ export function AuthProvider({ children }) {
     try {
       console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
 
-      // Get auth token from session
+      // Get auth token from session - required for edge function authentication
       const { data: { session } } = await supabase.auth.getSession();
-      const authHeaders = {};
 
-      if (session?.access_token) {
-        authHeaders['Authorization'] = `Bearer ${session.access_token}`;
-      } else if (localStorage.getItem("adminAuth") === "true") {
-        // Fallback for admin users not using Supabase auth
-        authHeaders['Authorization'] = 'Bearer admin-placeholder-token';
+      if (!session?.access_token) {
+        throw new Error('Missing Supabase session token for admin request');
       }
+
+      const authHeaders = {
+        'Authorization': `Bearer ${session.access_token}`
+      };
 
       // Call Netlify edge function instead of direct Supabase
       const response = await fetch('/.netlify/functions/admin-toggle-user-admin', {

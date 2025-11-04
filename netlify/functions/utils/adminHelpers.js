@@ -2,9 +2,11 @@
  * Shared utilities for admin edge functions
  */
 
+const { createClient } = require('@supabase/supabase-js');
+
 // CORS headers configuration
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
   : ['http://localhost:5173', 'http://localhost:8888']; // Development defaults
 
 /**
@@ -16,8 +18,11 @@ function getCorsHeaders(requestOrigin) {
   const isAllowedOrigin = ALLOWED_ORIGINS.includes(requestOrigin) ||
                           requestOrigin?.endsWith('.netlify.app');
 
+  // Defensive check for empty ALLOWED_ORIGINS
+  const fallbackOrigin = ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS[0] : 'http://localhost:5173';
+
   return {
-    'Access-Control-Allow-Origin': isAllowedOrigin ? requestOrigin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': isAllowedOrigin ? requestOrigin : fallbackOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
@@ -39,21 +44,21 @@ function handlePreflight(event) {
 }
 
 /**
- * Validate that the request has proper authentication
- * Note: This is a basic check. In production, you should validate JWT tokens
- * or use Supabase auth to verify the user is actually an admin.
+ * Validate that the request has proper authentication and admin privileges
  *
  * @param {Object} event - Netlify function event
- * @returns {Object|null} Error response if invalid, null if valid
+ * @returns {Promise<Object|null>} Error response if invalid, null if valid
  */
-function validateAuth(event) {
+async function validateAuth(event) {
+  const origin = event.headers.origin || event.headers.Origin;
+
   // Check for Authorization header
   const authHeader = event.headers.authorization || event.headers.Authorization;
 
   if (!authHeader) {
     return {
       statusCode: 401,
-      headers: getCorsHeaders(event.headers.origin || event.headers.Origin),
+      headers: getCorsHeaders(origin),
       body: JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
     };
   }
@@ -62,17 +67,59 @@ function validateAuth(event) {
   if (!authHeader.startsWith('Bearer ')) {
     return {
       statusCode: 401,
-      headers: getCorsHeaders(event.headers.origin || event.headers.Origin),
+      headers: getCorsHeaders(origin),
       body: JSON.stringify({ error: 'Unauthorized: Invalid authorization format' }),
     };
   }
 
-  // TODO: In production, validate the JWT token here using Supabase
-  // const token = authHeader.replace('Bearer ', '');
-  // const { data: user, error } = await supabase.auth.getUser(token);
-  // if (error || !user?.app_metadata?.is_admin) { return 401; }
+  // Validate the JWT token using Supabase
+  try {
+    const token = authHeader.replace('Bearer ', '');
 
-  return null; // Valid
+    // Create Supabase client with service role key
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // Verify the JWT token
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      console.error('JWT validation failed:', error?.message || 'No user found');
+      return {
+        statusCode: 401,
+        headers: getCorsHeaders(origin),
+        body: JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+      };
+    }
+
+    // Check if user has admin privileges in the database
+    const { data: userData, error: dbError } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('supabase_auth_id', user.id)
+      .single();
+
+    if (dbError || !userData || !userData.is_admin) {
+      console.error('Admin check failed:', dbError?.message || 'User not admin');
+      return {
+        statusCode: 403,
+        headers: getCorsHeaders(origin),
+        body: JSON.stringify({ error: 'Forbidden: Admin access required' }),
+      };
+    }
+
+    // Valid admin user
+    return null;
+  } catch (validationError) {
+    console.error('Auth validation error:', validationError);
+    return {
+      statusCode: 401,
+      headers: getCorsHeaders(origin),
+      body: JSON.stringify({ error: 'Unauthorized: Token validation failed' }),
+    };
+  }
 }
 
 /**

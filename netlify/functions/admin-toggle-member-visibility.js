@@ -36,7 +36,7 @@ exports.handler = async function(event, context) {
     }
 
     // Validate authentication
-    const authError = validateAuth(event);
+    const authError = await validateAuth(event);
     if (authError) {
       return authError;
     }

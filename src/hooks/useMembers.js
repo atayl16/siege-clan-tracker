@@ -4,29 +4,25 @@ import { supabase } from '../supabaseClient';
 
 /**
  * Get auth headers for admin API calls
- * TODO: Implement proper JWT token validation on the server side
+ * Requires valid Supabase session token - validated by edge functions
  */
 async function getAuthHeaders() {
   // Check if user is logged in as admin
   const isAdmin = localStorage.getItem("adminAuth") === "true";
 
   if (!isAdmin) {
-    return {};
+    throw new Error('Admin authentication required');
   }
 
   // Get the current session token from Supabase
   const { data: { session } } = await supabase.auth.getSession();
 
-  if (session?.access_token) {
-    return {
-      'Authorization': `Bearer ${session.access_token}`,
-    };
+  if (!session?.access_token) {
+    throw new Error('Missing Supabase session token for admin request');
   }
 
-  // Fallback: use a placeholder token (will work with current server validation)
-  // This should be replaced with proper authentication
   return {
-    'Authorization': 'Bearer admin-placeholder-token',
+    'Authorization': `Bearer ${session.access_token}`,
   };
 }
 
