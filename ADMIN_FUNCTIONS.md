@@ -124,7 +124,7 @@ For these edge functions to work properly, you need to ensure the following:
 ### 1. Service Role Key Configuration
 
 In your Netlify environment variables, set:
-```
+```bash
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
@@ -203,7 +203,7 @@ npm install -g netlify-cli
 ### 2. Set Up Environment Variables
 
 Create a `.env` file in the root directory:
-```
+```bash
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```

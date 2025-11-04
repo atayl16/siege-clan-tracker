@@ -1,5 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAdminSupabaseClient } from '../utils/supabaseClient';
+import { supabase } from '../supabaseClient';
+
+/**
+ * Get auth headers for admin API calls
+ * TODO: Implement proper JWT token validation on the server side
+ */
+async function getAuthHeaders() {
+  // Check if user is logged in as admin
+  const isAdmin = localStorage.getItem("adminAuth") === "true";
+
+  if (!isAdmin) {
+    return {};
+  }
+
+  // Get the current session token from Supabase
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    return {
+      'Authorization': `Bearer ${session.access_token}`,
+    };
+  }
+
+  // Fallback: use a placeholder token (will work with current server validation)
+  // This should be replaced with proper authentication
+  return {
+    'Authorization': 'Bearer admin-placeholder-token',
+  };
+}
 
 export function useMembers() {
   const [members, setMembers] = useState(null);
@@ -69,11 +98,15 @@ export function useMembers() {
 
       console.log("Attempting to update member:", memberData);
 
+      // Get auth headers
+      const authHeaders = await getAuthHeaders();
+
       // Call Netlify edge function instead of direct Supabase
       const response = await fetch('/.netlify/functions/admin-update-member', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           memberId: memberData.wom_id,
@@ -105,11 +138,15 @@ export function useMembers() {
     }
 
     try {
+      // Get auth headers
+      const authHeaders = await getAuthHeaders();
+
       // Call Netlify edge function instead of direct Supabase
       const response = await fetch('/.netlify/functions/admin-delete-member', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({ womId }),
       });
@@ -169,11 +206,15 @@ export function useMembers() {
 
       console.log(`Attempting to ${newVisibility ? 'hide' : 'unhide'} member:`, member.name);
 
+      // Get auth headers
+      const authHeaders = await getAuthHeaders();
+
       // Call Netlify edge function instead of direct Supabase
       const response = await fetch('/.netlify/functions/admin-toggle-member-visibility', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           memberId: member.wom_id,

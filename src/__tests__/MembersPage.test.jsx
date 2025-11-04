@@ -8,7 +8,7 @@ vi.mock('../hooks/useMembers', () => ({
     members: [{ id: 1, name: 'Test Member' }],
     loading: false,
     error: null,
-    refresh: vi.fn(),
+    refreshMembers: vi.fn(),
   }),
 }));
 

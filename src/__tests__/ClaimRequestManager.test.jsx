@@ -4,23 +4,21 @@ import { MemoryRouter } from 'react-router-dom';
 import ClaimRequestManager from '../components/ClaimRequestManager';
 import { vi } from 'vitest';
 
-let mockRequests = [];
+const mockUseClaimRequests = vi.fn();
 
 vi.mock('../hooks/useClaimRequests', () => ({
-  useClaimRequests: () => ({
-    requests: mockRequests,
+  useClaimRequests: () => mockUseClaimRequests(),
+}));
+
+test('renders ClaimRequestManager without crashing (empty state)', () => {
+  mockUseClaimRequests.mockReturnValue({
+    requests: [],
     loading: false,
     error: null,
     refresh: vi.fn(),
-  }),
-}));
+    processRequest: vi.fn(),
+  });
 
-afterEach(() => {
-  mockRequests = [];
-});
-
-test('renders ClaimRequestManager without crashing (empty state)', () => {
-  mockRequests = [];
   render(
     <MemoryRouter>
       <ClaimRequestManager />
@@ -30,13 +28,27 @@ test('renders ClaimRequestManager without crashing (empty state)', () => {
 });
 
 test('renders ClaimRequestManager and displays a claim request', async () => {
-  mockRequests = [{ id: 1, rsn: 'TestRSN', status: 'pending' }];
+  mockUseClaimRequests.mockReturnValue({
+    requests: [{
+      id: 1,
+      rsn: 'TestRSN',
+      status: 'pending',
+      username: 'testuser',
+      created_at: new Date().toISOString(),
+      user_id: 1
+    }],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    processRequest: vi.fn(),
+  });
+
   render(
     <MemoryRouter>
       <ClaimRequestManager />
     </MemoryRouter>
   );
-  await userEvent.click(screen.getByRole('button', { name: /pending/i }));
+
   expect(await screen.findByText('TestRSN')).toBeInTheDocument();
   expect(screen.getByText(/pending/i)).toBeInTheDocument();
-}); 
+});
