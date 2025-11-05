@@ -39,6 +39,7 @@ export function validateApiKey(request) {
 
   // If no API key is configured in environment, allow request (backward compatibility)
   if (!expectedKey) {
+    console.warn('⚠️  API_KEY not configured - allowing unauthenticated access. This should only occur in development.');
     return { valid: true, reason: 'no-key-configured' };
   }
 
