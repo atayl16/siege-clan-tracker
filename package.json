@@ -35,7 +35,10 @@
     "test:coverage": "vitest run --coverage",
     "netlify:dev": "netlify dev",
     "netlify:build": "netlify build",
-    "netlify:deploy": "netlify deploy"
+    "netlify:deploy": "netlify deploy",
+    "staging:export": "node scripts/staging/export-production-data.js",
+    "staging:seed": "node scripts/staging/seed-staging-database.js",
+    "staging:refresh": "./scripts/staging/refresh-staging.sh"
   },
   "eslintConfig": {
     "extends": [

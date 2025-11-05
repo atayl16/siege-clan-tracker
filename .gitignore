@@ -27,3 +27,8 @@ yarn-error.log*
 .netlify
 .env
 .env.*
+
+# Staging seed data (contains production data)
+supabase/staging-seeds/*.json
+supabase/production-*.sql
+supabase/backup-*.sql
