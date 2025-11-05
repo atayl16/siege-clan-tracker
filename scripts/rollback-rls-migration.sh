@@ -4,6 +4,25 @@
 
 set -e
 
+# Validate required CLI tools are installed
+check_command() {
+  if ! command -v "$1" &> /dev/null; then
+    echo "❌ Error: '$1' is not installed or not in PATH"
+    echo "   Please install and ensure it's available before running this script"
+    echo ""
+    if [ "$1" = "supabase" ]; then
+      echo "   Install with: brew install supabase/tap/supabase"
+    elif [ "$1" = "psql" ]; then
+      echo "   Install with: brew install postgresql"
+    fi
+    exit 1
+  fi
+}
+
+# Check for required tools
+check_command "supabase"
+check_command "psql"
+
 echo "⚠️  RLS Migration Rollback Script"
 echo "=================================="
 echo ""

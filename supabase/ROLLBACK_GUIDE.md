@@ -9,11 +9,12 @@ If you need to rollback the RLS policies migration:
 ```
 
 The script will:
-1. Ask which database (staging or production)
-2. Confirm the rollback (especially for production)
-3. Drop all RLS policies
-4. Disable RLS on all tables
-5. Mark the migration as reverted
+1. Validate required tools are installed (supabase CLI, psql)
+2. Ask which database (staging or production)
+3. Confirm the rollback (especially for production)
+4. Drop all RLS policies
+5. Disable RLS on all tables
+6. Mark the migration as reverted
 
 ## Manual Rollback
 

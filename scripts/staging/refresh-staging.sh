@@ -5,6 +5,22 @@
 
 set -e  # Exit on error
 
+# Validate required CLI tools are installed
+check_command() {
+  if ! command -v "$1" &> /dev/null; then
+    echo "❌ Error: '$1' is not installed or not in PATH"
+    echo "   Please install and ensure it's available before running this script"
+    echo ""
+    if [ "$1" = "node" ]; then
+      echo "   Install with: brew install node"
+    fi
+    exit 1
+  fi
+}
+
+# Check for required tools
+check_command "node"
+
 echo "=========================================="
 echo "Staging Database Refresh"
 echo "=========================================="
