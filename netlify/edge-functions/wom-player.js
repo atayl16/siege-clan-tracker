@@ -12,13 +12,24 @@ export default async (request, _context) => {
     if (!playerId) {
       return new Response(
         JSON.stringify({ error: "Missing player ID" }),
-        { 
+        {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         }
       );
     }
-    
+
+    // Validate that player ID is numeric
+    if (!/^\d+$/.test(playerId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid player ID: must be numeric" }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     // Fetch player data from WOM API
     const womResponse = await fetch(`https://api.wiseoldman.net/v2/players/${playerId}`, {
       headers: { 'User-Agent': 'Siege-Clan-Tracker/1.0' }

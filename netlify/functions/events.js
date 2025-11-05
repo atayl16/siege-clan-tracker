@@ -9,7 +9,7 @@ const supabase = createClient(
 exports.handler = async (event, context) => {
   // Set CORS headers for all responses
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siegeclan.com',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };

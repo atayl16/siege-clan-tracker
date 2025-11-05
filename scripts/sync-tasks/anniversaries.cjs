@@ -43,8 +43,15 @@ async function main() {
   // Calculate years for each member
   const anniversaries = members.map(member => {
     const joinDate = new Date(member.join_date);
-    const years = today.getFullYear() - joinDate.getFullYear();
-    
+    let years = today.getFullYear() - joinDate.getFullYear();
+
+    // Check if the anniversary has actually occurred this year
+    // If today's month/day is before the join date month/day, subtract a year
+    if (today.getMonth() < joinDate.getMonth() ||
+        (today.getMonth() === joinDate.getMonth() && today.getDate() < joinDate.getDate())) {
+      years--;
+    }
+
     // Only include if it's at least 1 year
     if (years >= 1) {
       return {

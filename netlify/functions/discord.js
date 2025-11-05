@@ -1,14 +1,42 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
+  // CORS headers for all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siegeclan.com',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json'
+  };
+
+  // Handle OPTIONS request (CORS preflight)
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: ''
+    };
+  }
+
   try {
-    // Parse request body
-    const body = JSON.parse(event.body);
+    // Parse request body with error handling
+    let body;
+    try {
+      body = JSON.parse(event.body);
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' })
+      };
+    }
+
     const { type, memberId, memberName, years } = body;
-    
+
     if (!type || !memberId || !memberName) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Missing required fields' })
       };
     }
@@ -19,13 +47,14 @@ exports.handler = async function(event, context) {
     if (!webhookUrl) {
       return {
         statusCode: 500,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Discord webhook URL not configured' })
       };
     }
-    
+
     // Create webhook message based on type
     let message = {};
-    
+
     if (type === 'anniversary') {
       message = {
         embeds: [{
@@ -43,40 +72,44 @@ exports.handler = async function(event, context) {
     } else {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Invalid message type' })
       };
     }
-    
+
     // For local development, just return success without actually sending
     if (process.env.NODE_ENV === 'development') {
       return {
         statusCode: 200,
-        body: JSON.stringify({ 
-          success: true, 
+        headers: corsHeaders,
+        body: JSON.stringify({
+          success: true,
           message: 'Development mode - message not actually sent',
           data: message
         })
       };
     }
-    
+
     // Send to Discord
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(message)
     });
-    
+
     if (!response.ok) {
       throw new Error(`Discord responded with status: ${response.status}`);
     }
-    
+
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({ success: true, message: 'Sent to Discord' })
     };
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: error.message })
     };
   }
