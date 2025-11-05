@@ -1,32 +1,43 @@
+import { supabase } from "../supabaseClient";
+
 /**
  * Admin API Helper Functions
  *
  * These functions call admin edge functions that use service role privileges.
- * All functions require an admin token stored in localStorage.
+ * Authentication is done via JWT tokens from Supabase auth session.
+ * No secrets are stored in the client or localStorage.
  */
 
 /**
- * Get admin token from localStorage
+ * Get the current user's JWT token from Supabase session
+ * @returns {Promise<string|null>} JWT token or null if not authenticated
  */
-function getAdminToken() {
-  return localStorage.getItem("adminToken");
+async function getAuthToken() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (error || !session) {
+    return null;
+  }
+
+  return session.access_token;
 }
 
 /**
  * Make authenticated admin API request
+ * Automatically includes JWT token for authentication
  */
 async function adminRequest(endpoint, options = {}) {
-  const adminToken = getAdminToken();
+  const authToken = await getAuthToken();
 
-  if (!adminToken) {
-    throw new Error("Admin token not found. Please log in as admin.");
+  if (!authToken) {
+    throw new Error("Not authenticated. Please log in as admin.");
   }
 
   const response = await fetch(endpoint, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      "x-admin-token": adminToken,
+      "Authorization": `Bearer ${authToken}`,
       ...options.headers,
     },
   });
@@ -92,17 +103,7 @@ export async function toggleUserAdmin(userId, isAdmin) {
 }
 
 /**
- * Generate and store admin token on login
- * This should be called after successful admin authentication
- * @param {string} token - Admin token to store
+ * Note: No token management functions needed!
+ * Authentication is handled automatically via Supabase JWT tokens.
+ * Tokens are managed by Supabase auth session and never stored in localStorage.
  */
-export function setAdminToken(token) {
-  localStorage.setItem("adminToken", token);
-}
-
-/**
- * Clear admin token on logout
- */
-export function clearAdminToken() {
-  localStorage.removeItem("adminToken");
-}

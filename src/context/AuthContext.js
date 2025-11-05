@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
-import { setAdminToken, clearAdminToken } from "../utils/adminApi";
 
 const AuthContext = createContext();
 
@@ -74,14 +73,8 @@ export function AuthProvider({ children }) {
         localStorage.setItem("useServiceRole", "true");
         setIsAuthenticated(true);
 
-        // Set admin token for API requests (from environment variable)
-        // The admin token is used to authenticate admin edge function calls
-        const adminSecret = import.meta.env.VITE_ADMIN_SECRET;
-        if (adminSecret) {
-          setAdminToken(adminSecret);
-        } else {
-          console.warn("VITE_ADMIN_SECRET not configured - admin operations may fail");
-        }
+        // Note: No admin token needed! Authentication uses JWT tokens from Supabase auth.
+        // Admin status is verified server-side by checking the users table.
 
         // Create a mock admin user for UI purposes
         localStorage.setItem(
@@ -492,7 +485,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
     localStorage.removeItem("useServiceRole");
-    clearAdminToken(); // Clear admin token for edge function auth
+    // Note: No need to clear tokens - Supabase auth handles session cleanup
+    supabase.auth.signOut(); // Sign out from Supabase auth
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);

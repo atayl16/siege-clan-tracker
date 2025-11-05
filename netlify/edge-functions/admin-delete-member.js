@@ -1,57 +1,31 @@
-// Import Supabase with ES modules syntax
-import { createClient } from "https://esm.sh/@supabase/supabase-js";
+import {
+  validateAdminRequest,
+  createServiceRoleClient,
+  handlePreflight,
+  adminErrorResponse,
+  getAdminCorsHeaders,
+} from "./_shared/admin-auth.js";
 
 /**
  * Admin Edge Function: Delete Member
  * Deletes a member using service role privileges
+ * Authenticates using JWT tokens - no secrets exposed to client
  */
 export default async (request, _context) => {
-  // Handle CORS preflight
+  // Handle preflight requests
   if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-        "Access-Control-Allow-Headers": "Content-Type, x-admin-token",
-        "Access-Control-Allow-Methods": "DELETE, OPTIONS",
-      },
-    });
+    return handlePreflight();
   }
 
   if (request.method !== "DELETE") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-      },
-    });
+    return adminErrorResponse("Method not allowed", 405);
   }
 
   try {
-    // Validate admin token
-    const adminToken = request.headers.get("x-admin-token");
-    const expectedToken = Deno.env.get("ADMIN_SECRET");
-
-    if (!expectedToken) {
-      console.warn("ADMIN_SECRET not configured - admin operations disabled");
-      return new Response(JSON.stringify({ error: "Admin operations not configured" }), {
-        status: 503,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-        },
-      });
-    }
-
-    if (adminToken !== expectedToken) {
-      return new Response(JSON.stringify({ error: "Unauthorized: Invalid admin token" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-        },
-      });
+    // Validate that the request comes from an authenticated admin
+    const authResult = await validateAdminRequest(request);
+    if (!authResult.valid) {
+      return adminErrorResponse(authResult.error || "Unauthorized", 401);
     }
 
     // Parse request body
@@ -59,20 +33,11 @@ export default async (request, _context) => {
     const { womId } = body;
 
     if (!womId) {
-      return new Response(JSON.stringify({ error: "Missing required field: womId" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-        },
-      });
+      return adminErrorResponse("Missing required field: womId", 400);
     }
 
-    // Initialize Supabase client with SERVICE_ROLE_KEY
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-    );
+    // Initialize Supabase client with service role privileges
+    const supabase = createServiceRoleClient();
 
     // Call the admin_delete_member RPC function
     const { data, error } = await supabase.rpc("admin_delete_member", {
@@ -81,31 +46,19 @@ export default async (request, _context) => {
 
     if (error) {
       console.error("Error deleting member:", error);
-      return new Response(JSON.stringify({ error: error.message || "Failed to delete member" }), {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-        },
-      });
+      return adminErrorResponse(error.message || "Failed to delete member", 500);
     }
 
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
+        ...getAdminCorsHeaders(),
       },
     });
   } catch (error) {
     console.error("Admin delete member error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com",
-      },
-    });
+    return adminErrorResponse("Internal server error", 500);
   }
 };
 
