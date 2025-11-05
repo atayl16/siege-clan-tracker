@@ -30,7 +30,14 @@ export default async (request, _context) => {
     }
 
     // Parse request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.warn("Invalid JSON payload:", parseError);
+      return adminErrorResponse("Invalid JSON payload", 400);
+    }
+
     const { userId, isAdmin } = body;
 
     if (userId === undefined || isAdmin === undefined) {

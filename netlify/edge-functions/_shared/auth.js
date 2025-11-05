@@ -4,6 +4,38 @@
  */
 
 /**
+ * Constant-time string comparison to prevent timing attacks
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {boolean} True if strings are equal
+ */
+function constantTimeEqual(a, b) {
+  // Handle null/undefined
+  if (!a || !b) {
+    return false;
+  }
+
+  // Length check first (safe to leak length info)
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  // Use TextEncoder to convert strings to Uint8Array
+  const encoder = new TextEncoder();
+  const bufferA = encoder.encode(a);
+  const bufferB = encoder.encode(b);
+
+  // XOR all bytes and accumulate the result
+  let result = 0;
+  for (let i = 0; i < bufferA.length; i++) {
+    result |= bufferA[i] ^ bufferB[i];
+  }
+
+  // Return true only if all bits are zero
+  return result === 0;
+}
+
+/**
  * Check if request is from same origin
  */
 function isSameOrigin(request) {
@@ -42,8 +74,8 @@ export function validateApiKey(request) {
     return { valid: true, reason: 'no-key-configured' };
   }
 
-  // Validate API key
-  if (apiKey === expectedKey) {
+  // Validate API key using constant-time comparison to prevent timing attacks
+  if (constantTimeEqual(apiKey, expectedKey)) {
     return { valid: true, reason: 'valid-api-key' };
   }
 
