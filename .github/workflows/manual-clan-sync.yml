@@ -1,11 +1,5 @@
 name: Manual Clan Data Sync
-run-name: >-
-  ${{ github.event.inputs.job_to_run == 'wom-sync' && 'WOM Sync' ||
-      github.event.inputs.job_to_run == 'wom-events' && 'WOM Events Sync' ||
-      github.event.inputs.job_to_run == 'runewatch' && 'RuneWatch Check' ||
-      github.event.inputs.job_to_run == 'anniversaries' && 'Anniversary Notifications' ||
-      github.event.inputs.job_to_run == 'all' && 'All Sync Tasks' ||
-      'Manual Clan Data Sync' }}
+run-name: Manual Sync - ${{ inputs.job_to_run }}
 
 on:
   workflow_dispatch:
@@ -28,60 +22,73 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run WOM Sync
-        if: ${{ github.event.inputs.job_to_run == 'wom-sync' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        if: ${{ inputs.job_to_run == 'wom-sync' || inputs.job_to_run == 'all' }}
         run: node scripts/sync-tasks/sync-wom.cjs
-        continue-on-error: true
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
-          WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
-          
-      - name: Run WOM Events Sync
-        if: ${{ github.event.inputs.job_to_run == 'wom-events' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
-        run: node scripts/sync-tasks/wom-events.cjs
-        continue-on-error: true
+        continue-on-error: false
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
-          
+
+      - name: Run WOM Events Sync
+        if: ${{ inputs.job_to_run == 'wom-events' || inputs.job_to_run == 'all' }}
+        run: node scripts/sync-tasks/wom-events.cjs
+        continue-on-error: false
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+          WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
+
       - name: Run RuneWatch Check
-        if: ${{ github.event.inputs.job_to_run == 'runewatch' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        if: ${{ inputs.job_to_run == 'runewatch' || inputs.job_to_run == 'all' }}
         run: node scripts/sync-tasks/runewatch-check.cjs
-        continue-on-error: true
+        continue-on-error: false
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      
+
       - name: Run Anniversary Notifications
-        if: ${{ github.event.inputs.job_to_run == 'anniversaries' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        if: ${{ inputs.job_to_run == 'anniversaries' || inputs.job_to_run == 'all' }}
         run: node scripts/sync-tasks/anniversaries.cjs
-        continue-on-error: true
+        continue-on-error: false
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_ANNIVERSARY_WEBHOOK_URL: ${{ secrets.DISCORD_ANNIVERSARY_WEBHOOK_URL }}
-      
-      # Optional summary step to report overall status
+
       - name: Summary
+        if: success()
         run: |
-          echo "🔍 Daily clan sync process completed"
-          if [[ "${{ github.event.inputs.job_to_run }}" != "" ]]; then
-            echo "Executed job: ${{ github.event.inputs.job_to_run }}"
-          else
-            echo "Ran all jobs via scheduled execution"
-          fi
+          echo "✅ Manual clan sync process completed successfully"
+          echo "Executed job: ${{ inputs.job_to_run }}"
+
+      - name: Notify Discord on Failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d "{\"embeds\": [{
+              \"title\": \"❌ Manual Clan Sync Failed\",
+              \"description\": \"The manual clan sync workflow has failed. Check GitHub Actions for details.\",
+              \"color\": 15158332,
+              \"fields\": [
+                {\"name\": \"Workflow\", \"value\": \"Manual Clan Data Sync\", \"inline\": true},
+                {\"name\": \"Job\", \"value\": \"${{ inputs.job_to_run }}\", \"inline\": true},
+                {\"name\": \"Run ID\", \"value\": \"${{ github.run_id }}\", \"inline\": true}
+              ],
+              \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }]}" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}

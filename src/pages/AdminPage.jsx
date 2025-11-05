@@ -9,6 +9,7 @@ import AdminMemberTable from "../components/admin/AdminMemberTable";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import RunewatchAlerts from "../components/RunewatchAlerts";
+import ClaimRequestManager from "../components/ClaimRequestManager";
 
 // UI Components
 import Button from "../components/ui/Button";
@@ -20,12 +21,13 @@ import EmptyState from "../components/ui/EmptyState";
 import Badge from "../components/ui/Badge";
 
 // Icons
-import { 
-  FaDownload, 
-  FaEraser, 
-  FaBell, 
-  FaUsers, 
-  FaExclamationTriangle 
+import {
+  FaDownload,
+  FaEraser,
+  FaBell,
+  FaUsers,
+  FaExclamationTriangle,
+  FaClipboardCheck
 } from "react-icons/fa";
 
 import "./AdminPage.css";
@@ -561,6 +563,22 @@ export default function AdminPage() {
                 </Card.Body>
               </Card>
             </div>
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab
+          tabId="claim-requests"
+          label="Claim Requests"
+          icon={<FaClipboardCheck />}
+        >
+          <div className="tab-content">
+            <div className="content-header">
+              <h2>Pending Character Claims</h2>
+              <p style={{ color: '#888', marginTop: '0.5rem' }}>
+                Review and approve member character claims
+              </p>
+            </div>
+            <ClaimRequestManager />
           </div>
         </Tabs.Tab>
       </Tabs>

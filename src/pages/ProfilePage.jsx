@@ -334,20 +334,10 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="account-field">
-                <label>Email Address</label>
-                <div className="field-value">{user.email || "Coming Soon"}</div>
-              </div>
-
-              <div className="account-field">
-                <label>Discord Name</label>
-                <div className="field-value">{"Coming Soon"}</div>
-              </div>
-
-              <div className="account-actions">
-                <Button variant="secondary" disabled>
-                  Change Password (Coming Soon)
-                </Button>
+              <div className="account-info-note">
+                <p style={{ color: '#888', fontStyle: 'italic', marginTop: '1rem' }}>
+                  Email and Discord integration features are not yet implemented.
+                </p>
               </div>
             </Card.Body>
           </Card>
