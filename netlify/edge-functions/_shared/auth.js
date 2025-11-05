@@ -5,34 +5,26 @@
 
 /**
  * Constant-time string comparison to prevent timing attacks
+ * Processes all bytes regardless of length or null values to prevent timing side-channels
  * @param {string} a - First string
  * @param {string} b - Second string
  * @returns {boolean} True if strings are equal
  */
 function constantTimeEqual(a, b) {
-  // Handle null/undefined
-  if (!a || !b) {
-    return false;
-  }
-
-  // Length check first (safe to leak length info)
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  // Use TextEncoder to convert strings to Uint8Array
   const encoder = new TextEncoder();
-  const bufferA = encoder.encode(a);
-  const bufferB = encoder.encode(b);
+  const bufferA = encoder.encode(typeof a === "string" ? a : "");
+  const bufferB = encoder.encode(typeof b === "string" ? b : "");
 
-  // XOR all bytes and accumulate the result
-  let result = 0;
-  for (let i = 0; i < bufferA.length; i++) {
-    result |= bufferA[i] ^ bufferB[i];
+  const maxLength = Math.max(bufferA.length, bufferB.length);
+  let mismatch = bufferA.length === bufferB.length ? 0 : 1;
+
+  for (let i = 0; i < maxLength; i++) {
+    const byteA = bufferA[i] ?? 0;
+    const byteB = bufferB[i] ?? 0;
+    mismatch |= byteA ^ byteB;
   }
 
-  // Return true only if all bits are zero
-  return result === 0;
+  return mismatch === 0;
 }
 
 /**

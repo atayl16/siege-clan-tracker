@@ -17,9 +17,37 @@ function getValidatedAllowedOrigin() {
     throw new Error('ALLOWED_ORIGIN cannot be set to wildcard "*". This bypasses CORS protection.');
   }
 
-  // Additional validation: ensure it's a proper origin format
-  const validOriginPattern = /^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?$/;
-  if (!validOriginPattern.test(allowedOrigin)) {
+  // Additional validation: ensure it's a proper origin format using URL constructor
+  try {
+    const url = new URL(allowedOrigin);
+
+    // Validate protocol
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      throw new Error(`Invalid ALLOWED_ORIGIN protocol: ${allowedOrigin}. Must use http or https.`);
+    }
+
+    // Ensure no credentials
+    if (url.username || url.password) {
+      throw new Error(`Invalid ALLOWED_ORIGIN format: ${allowedOrigin}. Must not contain credentials.`);
+    }
+
+    // Validate port if present
+    if (url.port) {
+      const portNum = parseInt(url.port, 10);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        throw new Error(`Invalid ALLOWED_ORIGIN port: ${allowedOrigin}. Port must be between 1 and 65535.`);
+      }
+    }
+
+    // Ensure no path, query, or fragment (must be origin only)
+    if ((url.pathname !== '/' && url.pathname !== '') || url.search || url.hash) {
+      throw new Error(`Invalid ALLOWED_ORIGIN format: ${allowedOrigin}. Must be an origin without path, query, or fragment.`);
+    }
+  } catch (err) {
+    // Re-throw with formatted message if it's already our error, otherwise generic error
+    if (err.message.includes('Invalid ALLOWED_ORIGIN')) {
+      throw err;
+    }
     throw new Error(`Invalid ALLOWED_ORIGIN format: ${allowedOrigin}. Must be a valid origin (e.g., https://example.com)`);
   }
 
