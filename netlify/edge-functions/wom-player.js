@@ -1,6 +1,20 @@
-import { getCorsHeaders } from './_shared/auth.js';
+import { validateApiKey, unauthorizedResponse, getCorsHeaders } from './_shared/auth.js';
 
 export default async (request, _context) => {
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: getCorsHeaders()
+    });
+  }
+
+  // Validate API key for authentication
+  const authResult = validateApiKey(request);
+  if (!authResult.valid) {
+    return unauthorizedResponse();
+  }
+
   // Use Deno.env.get() for environment variables
   const TTL = 600; // Cache for 10 minutes
 
