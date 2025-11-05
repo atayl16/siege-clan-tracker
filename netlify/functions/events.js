@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { getCorsHeaders } = require('./_shared/cors');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -7,12 +8,8 @@ const supabase = createClient(
 );
 
 exports.handler = async (event, context) => {
-  // Set CORS headers for all responses
-  const headers = {
-    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siegeclan.com',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
+  // Set CORS headers for all responses with wildcard validation
+  const headers = getCorsHeaders();
 
   // Handle OPTIONS request (CORS preflight)
   if (event.httpMethod === 'OPTIONS') {
