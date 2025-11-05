@@ -9,7 +9,7 @@ exports.handler = async function(event, context) {
   try {
     // Set CORS headers
     const headers = {
-      'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siegeclan.com',
+      'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siege-clan.com',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Content-Type': 'application/json'
     };
@@ -40,7 +40,7 @@ exports.handler = async function(event, context) {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siegeclan.com'
+        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://siege-clan.com'
       },
       body: JSON.stringify({ error: error.message }),
     };

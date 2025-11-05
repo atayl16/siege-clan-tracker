@@ -10,7 +10,7 @@
  * @throws {Error} If ALLOWED_ORIGIN is set to wildcard
  */
 function getValidatedAllowedOrigin() {
-  const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://siegeclan.com';
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://siege-clan.com';
 
   // Security check: prevent wildcard CORS
   if (allowedOrigin === '*') {

@@ -86,7 +86,7 @@ export function createServiceRoleClient() {
  * @returns {object} CORS headers
  */
 export function getAdminCorsHeaders() {
-  const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN") || "https://siegeclan.com";
+  const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN") || "https://siege-clan.com";
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "Content-Type, Authorization",

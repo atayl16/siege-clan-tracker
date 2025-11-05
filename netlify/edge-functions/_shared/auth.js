@@ -9,7 +9,7 @@
 function isSameOrigin(request) {
   const origin = request.headers.get('Origin');
   const referer = request.headers.get('Referer');
-  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://siegeclan.com';
+  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://siege-clan.com';
 
   // Check origin header
   if (origin && origin === allowedOrigin) {
@@ -60,7 +60,7 @@ export function unauthorizedResponse() {
       status: 401,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://siegeclan.com',
+        'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://siege-clan.com',
         'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
       }
@@ -73,7 +73,7 @@ export function unauthorizedResponse() {
  */
 export function getCorsHeaders() {
   return {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://siegeclan.com',
+    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://siege-clan.com',
     'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
   };
