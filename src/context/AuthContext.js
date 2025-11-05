@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
+import { setAdminToken, clearAdminToken } from "../utils/adminApi";
 
 const AuthContext = createContext();
 
@@ -72,7 +73,16 @@ export function AuthProvider({ children }) {
         // Add the flag for service role access
         localStorage.setItem("useServiceRole", "true");
         setIsAuthenticated(true);
-      
+
+        // Set admin token for API requests (from environment variable)
+        // The admin token is used to authenticate admin edge function calls
+        const adminSecret = import.meta.env.VITE_ADMIN_SECRET;
+        if (adminSecret) {
+          setAdminToken(adminSecret);
+        } else {
+          console.warn("VITE_ADMIN_SECRET not configured - admin operations may fail");
+        }
+
         // Create a mock admin user for UI purposes
         localStorage.setItem(
           "user",
@@ -83,7 +93,7 @@ export function AuthProvider({ children }) {
             created_at: new Date().toISOString(),
           })
         );
-      
+
         setUser({
           id: "admin",
           username: "admin",
@@ -176,56 +186,28 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Add a function to promote/demote admin users  
+  // Add a function to promote/demote admin users
+  // Now uses admin edge function for proper service role access
   const toggleAdminStatus = async (userId, makeAdmin) => {
     try {
       console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
-      
-      // For master admin, we'll need to use a different approach
-      // since we can't use headers() method
-      
-      // Update the user record in the database
-      const { data, error } = await supabase
-        .from("users")
-        .update({ is_admin: makeAdmin })
-        .eq("id", userId)
-        .select();
-  
-      if (error) {
-        console.error("Error updating admin status:", error);
-        return { error: error.message || "Failed to update admin status" };
+
+      // Import the admin API function dynamically to avoid circular dependencies
+      const { toggleUserAdmin } = await import("../utils/adminApi");
+
+      // Call the admin edge function
+      const result = await toggleUserAdmin(userId, makeAdmin);
+
+      if (result.success) {
+        console.log("Admin status updated successfully:", result.data);
+        return { success: true, data: result.data };
+      } else {
+        console.error("Failed to update admin status:", result);
+        return { error: "Failed to update admin status" };
       }
-      
-      console.log("Admin update response:", data);
-      
-      // Verify the update was successful
-      if (!data || data.length === 0) {
-        console.error("No rows were updated");
-        
-        // Special handling for master admin
-        if (localStorage.getItem("adminAuth") === "true") {
-          // Try a direct SQL approach for master admin
-          const { error: directError } = await supabase
-            .rpc('admin_set_user_admin_status', { 
-              target_user_id: userId,
-              is_admin_value: makeAdmin 
-            });
-            
-          if (directError) {
-            console.error("Direct admin update failed:", directError);
-            return { error: directError.message };
-          }
-          
-          return { success: true };
-        }
-        
-        return { error: "No changes were made" };
-      }
-      
-      return { success: true, data: data[0] };
     } catch (error) {
       console.error("Error toggling admin status:", error);
-      return { error: "Failed to update admin status: " + error.message };
+      return { error: error.message || "Failed to update admin status" };
     }
   };
   
@@ -510,6 +492,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
     localStorage.removeItem("useServiceRole");
+    clearAdminToken(); // Clear admin token for edge function auth
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);
