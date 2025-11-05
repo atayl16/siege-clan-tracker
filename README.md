@@ -8,7 +8,7 @@
 
 Siege Clan Tracker is a comprehensive clan management system for Old School RuneScape (OSRS). It provides real-time tracking of member statistics, boss kills, events, and achievements by integrating with the [WiseOldMan](https://wiseoldman.net) API.
 
-**Website:** [https://siegeclan.com](https://siegeclan.com)
+**Website:** [https://siege-clan.com](https://siege-clan.com)
 
 ### Key Features
 
@@ -72,16 +72,12 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-# Supabase
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-
-# Admin (for admin operations)
-VITE_ADMIN_SECRET=your-admin-secret
-
-# Optional: API Key (for external requests)
-VITE_API_KEY=your-api-key
+# Supabase (required)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
 ```
+
+**Note:** Do not add admin secrets or API keys to `.env` - these are configured server-side in Netlify environment variables for security.
 
 4. **Run development server**
 ```bash
@@ -112,8 +108,7 @@ siege-clan-tracker/
 │   ├── hooks/               # Custom React hooks
 │   ├── pages/               # Route components
 │   ├── utils/               # Utility functions
-│   │   ├── adminApi.js      # Admin API client
-│   │   └── supabaseClient.js # Supabase client
+│   │   └── adminApi.js      # Admin API client
 │   └── supabaseClient.js    # Supabase initialization
 ├── netlify/
 │   ├── functions/           # Serverless functions (Node.js)
@@ -158,10 +153,10 @@ siege-clan-tracker/
 
 ### Admin Architecture
 
-Admin operations use dedicated edge functions with service role privileges:
-- Updates, deletes, and visibility changes bypass RLS
-- Admin token authentication for security
-- See `ADMIN_ARCHITECTURE_TEST_PLAN.md` for details
+Admin operations use dedicated edge functions with JWT-based authentication:
+- Updates, deletes, and visibility changes bypass RLS using service role
+- JWT tokens authenticate admin requests (no secrets in client)
+- Admin-specific RPC functions handle privileged database operations
 
 ### Caching Strategy
 
@@ -172,21 +167,14 @@ Admin operations use dedicated edge functions with service role privileges:
 
 ## 📚 Documentation
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
-- **[SECURITY_FIXES_TEST_PLAN.md](SECURITY_FIXES_TEST_PLAN.md)** - Security improvements
-- **[ADMIN_ARCHITECTURE_TEST_PLAN.md](ADMIN_ARCHITECTURE_TEST_PLAN.md)** - Admin system design
-- **[WORKFLOW_FIXES_TEST_PLAN.md](WORKFLOW_FIXES_TEST_PLAN.md)** - GitHub Actions setup
-- **[CODE_CLEANUP_NOTES.md](CODE_CLEANUP_NOTES.md)** - Code cleanup details
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines and development standards
 
 ## 🔒 Environment Variables
 
 ### Frontend (.env)
 ```env
-VITE_SUPABASE_URL          # Supabase project URL
-VITE_SUPABASE_ANON_KEY     # Public anon key
-VITE_ADMIN_SECRET          # Admin token secret
-VITE_API_KEY               # Optional API key
+SUPABASE_URL               # Supabase project URL
+SUPABASE_ANON_KEY          # Public anon key (read-only access)
 ```
 
 ### Backend (Netlify)
