@@ -8,7 +8,7 @@ const supabase = createClient(
 
 exports.handler = async function(event, context) {
   try {
-    // Set CORS headers with wildcard validation
+    // Set CORS headers (validates and prevents wildcard origins)
     const headers = getCorsHeaders();
 
     // Handle preflight requests

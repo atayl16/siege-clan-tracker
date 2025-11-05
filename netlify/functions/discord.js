@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 const { getCorsHeaders } = require('./_shared/cors');
 
 exports.handler = async function(event, context) {
-  // CORS headers for all responses with wildcard validation
+  // CORS headers (validates and prevents wildcard origins)
   const corsHeaders = getCorsHeaders({
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   });

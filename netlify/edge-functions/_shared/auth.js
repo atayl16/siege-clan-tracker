@@ -4,6 +4,34 @@
  */
 
 /**
+ * Constant-time string comparison to prevent timing attacks
+ * @param {string} a - First string to compare
+ * @param {string} b - Second string to compare
+ * @returns {boolean} True if strings are equal
+ */
+function constantTimeEqual(a, b) {
+  // If lengths differ, still perform full comparison to avoid timing leak
+  if (typeof a !== 'string' || typeof b !== 'string') {
+    return false;
+  }
+
+  const aLen = a.length;
+  const bLen = b.length;
+  const maxLen = Math.max(aLen, bLen);
+
+  let result = aLen === bLen ? 0 : 1;
+
+  // Compare all bytes to prevent early exit timing attacks
+  for (let i = 0; i < maxLen; i++) {
+    const aChar = i < aLen ? a.charCodeAt(i) : 0;
+    const bChar = i < bLen ? b.charCodeAt(i) : 0;
+    result |= aChar ^ bChar;
+  }
+
+  return result === 0;
+}
+
+/**
  * Check if request is from same origin
  * Uses strict origin comparison to prevent host-shadowing attacks
  */
@@ -65,8 +93,8 @@ export function validateApiKey(request) {
     return { valid: true, reason: 'no-key-configured' };
   }
 
-  // Validate API key
-  if (apiKey === expectedKey) {
+  // Validate API key using constant-time comparison to prevent timing attacks
+  if (apiKey && constantTimeEqual(apiKey, expectedKey)) {
     return { valid: true, reason: 'valid-api-key' };
   }
 

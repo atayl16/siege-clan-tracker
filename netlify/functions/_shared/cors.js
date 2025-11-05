@@ -36,7 +36,7 @@ function getCorsHeaders(additionalHeaders = {}) {
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
     'Content-Type': 'application/json',
     ...additionalHeaders
   };

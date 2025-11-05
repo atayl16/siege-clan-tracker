@@ -1,20 +1,25 @@
+import { getCorsHeaders } from './_shared/auth.js';
+
 export default async (request, _context) => {
   // Use Deno.env.get() for environment variables
   const TTL = 600; // Cache for 10 minutes
 
   console.log("Fetching WOM player data...");
-  
+
   try {
     // Extract player ID from URL or query params
     const url = new URL(request.url);
     const playerId = url.searchParams.get('id');
-    
+
     if (!playerId) {
       return new Response(
         JSON.stringify({ error: "Missing player ID" }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCorsHeaders()
+          }
         }
       );
     }
@@ -25,7 +30,10 @@ export default async (request, _context) => {
         JSON.stringify({ error: "Invalid player ID: must be numeric" }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCorsHeaders()
+          }
         }
       );
     }
@@ -37,23 +45,27 @@ export default async (request, _context) => {
     
     if (!womResponse.ok) {
       return new Response(
-        JSON.stringify({ error: `WOM API Error: ${womResponse.status}` }), 
-        { 
+        JSON.stringify({ error: `WOM API Error: ${womResponse.status}` }),
+        {
           status: womResponse.status,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCorsHeaders()
+          }
         }
       );
     }
-    
+
     const data = await womResponse.json();
-    
+
     // Return with caching headers
     return new Response(JSON.stringify(data), {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': `public, max-age=${TTL}`,
         'CDN-Cache-Control': `public, max-age=${TTL}`,
-        'Netlify-Cache-Tag': `wom-player-${playerId}`
+        'Netlify-Cache-Tag': `wom-player-${playerId}`,
+        ...getCorsHeaders()
       }
     });
   } catch (error) {
@@ -61,7 +73,10 @@ export default async (request, _context) => {
       JSON.stringify({ error: `Failed to fetch player data: ${error.message}` }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders()
+        }
       }
     );
   }
