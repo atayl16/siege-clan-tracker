@@ -570,19 +570,23 @@ async function processCompetitionResults(competitionId) {
     let memberUpdates = [];
 
     // OPTIMIZATION: Gather all usernames first to minimize database queries
-    const allUsernames = validParticipants.map(p => 
+    const allUsernames = validParticipants.map(p =>
       p.player.username.toLowerCase()
     );
-    
+
     const allDisplayNames = validParticipants
       .filter(p => p.player.displayName)
       .map(p => p.player.displayName.toLowerCase());
-    
+
+    // Combine all names for a single query (remove duplicates)
+    const allNames = [...new Set([...allUsernames, ...allDisplayNames])];
+
     // Get all members matching these usernames in one query
+    // Using .in() filter which properly escapes values to prevent SQL injection
     const { data: memberMatches } = await supabase
       .from("members")
       .select("wom_id, wom_name, siege_score")
-      .or(`wom_name.in.(${allUsernames.map(u => `"${u}"`).join(',')}),wom_name.in.(${allDisplayNames.map(d => `"${d}"`).join(',')})`);
+      .in("wom_name", allNames);
     
     // Create a map for quick lookups
     const memberMap = new Map();
