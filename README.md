@@ -2,7 +2,7 @@
 
 > A modern web application for tracking Old School RuneScape clan member statistics, events, and achievements.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/your-badge-id/deploy-status)](https://app.netlify.com/sites/siegeclan/deploys)
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v3/monitor/28siu.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 
 ## 📖 Overview
 
