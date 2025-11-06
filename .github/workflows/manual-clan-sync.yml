@@ -75,20 +75,3 @@ jobs:
         run: |
           echo "✅ Manual clan sync process completed successfully"
           echo "Executed job: ${{ inputs.job_to_run }}"
-
-      - name: Notify Discord on Failure
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-            -d "{\"embeds\": [{
-              \"title\": \"❌ Manual Clan Sync Failed\",
-              \"description\": \"The manual clan sync workflow has failed. Check GitHub Actions for details.\",
-              \"color\": 15158332,
-              \"fields\": [
-                {\"name\": \"Workflow\", \"value\": \"Manual Clan Data Sync\", \"inline\": true},
-                {\"name\": \"Job\", \"value\": \"${{ inputs.job_to_run }}\", \"inline\": true},
-                {\"name\": \"Run ID\", \"value\": \"${{ github.run_id }}\", \"inline\": true}
-              ],
-              \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
-            }]}" \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}

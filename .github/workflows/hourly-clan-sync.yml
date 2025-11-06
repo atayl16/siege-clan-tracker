@@ -9,10 +9,10 @@ jobs:
   sync-data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: '18'
 
@@ -43,19 +43,3 @@ jobs:
           echo "✅ Hourly clan sync process completed successfully"
           echo "- WOM member data synced"
           echo "- WOM events data synced"
-
-      - name: Notify Discord on Failure
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-            -d "{\"embeds\": [{
-              \"title\": \"❌ Hourly Clan Sync Failed\",
-              \"description\": \"The hourly clan sync workflow has failed. Check GitHub Actions for details.\",
-              \"color\": 15158332,
-              \"fields\": [
-                {\"name\": \"Workflow\", \"value\": \"Hourly Clan Data Sync\", \"inline\": true},
-                {\"name\": \"Run ID\", \"value\": \"${{ github.run_id }}\", \"inline\": true}
-              ],
-              \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
-            }]}" \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
