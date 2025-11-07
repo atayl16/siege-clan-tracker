@@ -167,7 +167,23 @@ Admin operations use dedicated edge functions with JWT-based authentication:
 
 ## 📚 Documentation
 
+### Core Documentation
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines and development standards
+
+### Additional Documentation
+Comprehensive documentation is organized in the [`/docs`](docs/) directory:
+
+**Planning & Roadmap:**
+- **[Technical Debt](docs/planning/tech-debt.md)** - Code refactoring opportunities and cleanup tasks
+- **[Feature Suggestions](docs/planning/feature-suggestions.md)** - Proposed new features with implementation plans
+- **[Bugs & UX Issues](docs/planning/bugs-and-ux.md)** - Known bugs, reproduction steps, and fixes
+- **[Current Tasks](docs/planning/tasks.md)** - Work-in-progress and stabilization checklist
+
+**Setup Guides:**
+- **[Local Development Setup](docs/setup/local-setup.md)** - Development environment configuration
+- **[Staging Setup](docs/setup/staging-setup.md)** - Staging database and testing procedures
+
+See the [docs directory](docs/) for the complete documentation index.
 
 ## 🔒 Environment Variables
 
