@@ -1,9 +1,22 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
+  // Parse request body with error handling
+  let body;
   try {
-    // Parse request body
-    const body = JSON.parse(event.body);
+    body = JSON.parse(event.body);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Invalid JSON format' })
+      };
+    }
+    throw error; // Re-throw unexpected errors
+  }
+
+  try {
     const { type, memberId, memberName, years } = body;
     
     if (!type || !memberId || !memberName) {
