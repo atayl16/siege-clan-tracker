@@ -1,4 +1,12 @@
+import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+
 export default async (request, _context) => {
+  // Check authentication
+  const { authorized, reason } = checkAuth(request);
+  if (!authorized) {
+    return unauthorizedResponse(reason);
+  }
+
   // Use Deno.env.get() for environment variables
   const TTL = 600; // Cache for 10 minutes
 

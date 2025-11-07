@@ -1,11 +1,18 @@
 // Import Supabase with ES modules syntax
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
 
 export default async (request, _context) => {
+  // Check authentication
+  const { authorized, reason } = checkAuth(request);
+  if (!authorized) {
+    return unauthorizedResponse(reason);
+  }
+
   // Get environment variables with Deno.env.get()
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  
+
   console.log("Fetching members data from Supabase...");
 
   // Cache for 5 minutes (300 seconds)
