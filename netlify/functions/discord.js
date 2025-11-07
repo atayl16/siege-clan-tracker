@@ -1,10 +1,11 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
-  // Define CORS headers for all responses
+  // Define CORS headers for all responses with allowed origin
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://siege-clan.com';
   const headers = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
   };
 
   try {

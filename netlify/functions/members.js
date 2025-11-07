@@ -14,9 +14,10 @@ exports.handler = async function(event, context) {
   );
   
   try {
-    // Set CORS headers
+    // Set CORS headers with allowed origin
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://siege-clan.com';
     const headers = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': allowedOrigin,
       'Access-Control-Allow-Headers': 'Content-Type',
       'Content-Type': 'application/json'
     };
@@ -43,9 +44,10 @@ exports.handler = async function(event, context) {
       body: JSON.stringify(data),
     };
   } catch (error) {
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://siege-clan.com';
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': allowedOrigin },
       body: JSON.stringify({ error: error.message }),
     };
   }
