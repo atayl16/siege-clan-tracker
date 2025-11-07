@@ -8,17 +8,28 @@ export default async (request, _context) => {
     // Extract player ID from URL or query params
     const url = new URL(request.url);
     const playerId = url.searchParams.get('id');
-    
+
     if (!playerId) {
       return new Response(
         JSON.stringify({ error: "Missing player ID" }),
-        { 
+        {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         }
       );
     }
-    
+
+    // Validate player ID format (must be numeric)
+    if (!/^\d+$/.test(playerId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid player ID format" }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     // Fetch player data from WOM API
     const womResponse = await fetch(`https://api.wiseoldman.net/v2/players/${playerId}`, {
       headers: { 'User-Agent': 'Siege-Clan-Tracker/1.0' }
