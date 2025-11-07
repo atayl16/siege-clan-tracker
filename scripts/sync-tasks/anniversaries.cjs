@@ -43,8 +43,20 @@ async function main() {
   // Calculate years for each member
   const anniversaries = members.map(member => {
     const joinDate = new Date(member.join_date);
+
+    // Verify the anniversary date has actually occurred
+    // Check if today's month and day match the join date's month and day
+    const joinMonthDay = `${String(joinDate.getMonth() + 1).padStart(2, '0')}-${String(joinDate.getDate()).padStart(2, '0')}`;
+    const todayMonthDay = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    // The RPC function already filters by month-day, but we verify here for safety
+    if (joinMonthDay !== todayMonthDay) {
+      return null;
+    }
+
+    // Calculate years - safe now because we know it's the same month/day
     const years = today.getFullYear() - joinDate.getFullYear();
-    
+
     // Only include if it's at least 1 year
     if (years >= 1) {
       return {
