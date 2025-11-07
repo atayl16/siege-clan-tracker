@@ -44,7 +44,7 @@ export default async (request, _context) => {
         "Content-Type": "application/json",
         "Cache-Control": `public, max-age=${TTL}`,
         "CDN-Cache-Control": `public, max-age=${TTL}`,
-        "Netlify-Cache-Tag": "supabase-members",
+        "Netlify-Cache-Tag": "supabase-events",
         ETag: etag,
       },
     });
