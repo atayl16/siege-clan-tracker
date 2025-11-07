@@ -8,8 +8,8 @@ export default async (request, _context) => {
 
   console.log("Fetching user-goal data from Supabase...");
 
-  // Cache for 5 minutes
-  const TTL = 3000;
+  // Cache for 5 minutes (300 seconds)
+  const TTL = 300;
 
   // Handle conditional requests
   const ifNoneMatch = request.headers.get("If-None-Match");
