@@ -6,8 +6,8 @@
 [![CI](https://github.com/atayl16/siege-clan-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/atayl16/siege-clan-tracker/actions/workflows/ci.yml)
 [![Node Version](https://img.shields.io/badge/node-18%2B-brightgreen.svg)](https://nodejs.org)
 [![React Version](https://img.shields.io/badge/react-18.3-blue.svg)](https://reactjs.org)
-[![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fsiege-clan.com)](https://siege-clan.com)
+[![License](https://img.shields.io/badge/license-Public-brightgreen.svg)](LICENSE)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.siege-clan.com)](https://www.siege-clan.com)
 [![GitHub last commit](https://img.shields.io/github/last-commit/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/commits)
 [![GitHub issues](https://img.shields.io/github/issues/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/pulls)
@@ -16,7 +16,7 @@
 
 Siege Clan Tracker is a comprehensive clan management system for Old School RuneScape (OSRS). It provides real-time tracking of member statistics, boss kills, events, and achievements by integrating with the [WiseOldMan](https://wiseoldman.net) API.
 
-**Website:** [https://siege-clan.com](https://siege-clan.com)
+**Website:** [https://www.siege-clan.com](https://www.siege-clan.com)
 
 ### Key Features
 
@@ -277,7 +277,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## 📝 License
 
-This project is private and not licensed for public use.
+This project is open source and available for public use.
 
 ## 👤 Author
 
