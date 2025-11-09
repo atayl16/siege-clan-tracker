@@ -6,6 +6,34 @@
  */
 
 /**
+ * Constant-time string comparison to prevent timing attacks
+ *
+ * Timing attacks can occur when string comparison operations short-circuit
+ * on the first mismatch, allowing attackers to deduce parts of the secret
+ * by measuring response times.
+ *
+ * @param {string} a - First string to compare
+ * @param {string} b - Second string to compare
+ * @returns {boolean} True if strings are equal
+ */
+function constantTimeEqual(a, b) {
+  const encoder = new TextEncoder();
+  const bufferA = encoder.encode(typeof a === 'string' ? a : '');
+  const bufferB = encoder.encode(typeof b === 'string' ? b : '');
+
+  const maxLength = Math.max(bufferA.length, bufferB.length);
+  let mismatch = bufferA.length === bufferB.length ? 0 : 1;
+
+  for (let i = 0; i < maxLength; i++) {
+    const byteA = bufferA[i] ?? 0;
+    const byteB = bufferB[i] ?? 0;
+    mismatch |= byteA ^ byteB;
+  }
+
+  return mismatch === 0;
+}
+
+/**
  * Check if a request is authorized
  *
  * Authorization logic:
@@ -48,8 +76,8 @@ export function checkAuth(request) {
     };
   }
 
-  // Verify API key matches
-  if (apiKey !== expectedKey) {
+  // Verify API key matches using constant-time comparison
+  if (!apiKey || !constantTimeEqual(apiKey, expectedKey)) {
     return {
       authorized: false,
       reason: 'Invalid or missing API key'
