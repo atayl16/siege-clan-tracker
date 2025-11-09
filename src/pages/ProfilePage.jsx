@@ -284,7 +284,7 @@ export default function ProfilePage() {
               <div className="ui-loading-spinner"></div>
               <div className="ui-loading-text">Loading user data...</div>
             </div>
-          ) : userClaims.length === 0 ? (
+          ) : !userClaims || userClaims.length === 0 ? (
             <EmptyState
               title="No Characters to Track"
               description="You need to claim a character before setting goals."

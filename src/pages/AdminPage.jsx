@@ -206,6 +206,14 @@ export default function AdminPage() {
 
   // Export members to CSV
   const exportToCSV = () => {
+    if (!members || members.length === 0) {
+      setNotification({
+        type: "error",
+        message: "No members to export",
+      });
+      return;
+    }
+
     try {
       const headers = [
         "Name",
@@ -286,6 +294,14 @@ export default function AdminPage() {
       setNotification({
         type: "error",
         message: "Confirmation text doesn't match. Scores not reset.",
+      });
+      return;
+    }
+
+    if (!members || members.length === 0) {
+      setNotification({
+        type: "error",
+        message: "No members to reset scores for",
       });
       return;
     }

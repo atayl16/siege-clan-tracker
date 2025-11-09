@@ -27,7 +27,7 @@ async function getAuthHeaders() {
 }
 
 export function useMembers() {
-  const [members, setMembers] = useState(null);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

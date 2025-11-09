@@ -16,7 +16,7 @@ export function useUserGoals() {
     revalidateOnFocus: false,
   });
   return {
-    userGoals: data,
+    userGoals: data || [],
     loading: !data && !error,
     error,
     refresh: mutate,
