@@ -50,15 +50,20 @@ export const calculateNextLevel = (member) => {
   if (isSkiller) {
     // Calculate clan XP (current - initial) with safe parsing
     const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
-    
+
     // Find which rank range the member is in
-    for (const rank of SKILLER_RANKS) {
+    for (let i = 0; i < SKILLER_RANKS.length; i++) {
+      const rank = SKILLER_RANKS[i];
       if (clanXp >= rank.range[0] && clanXp < rank.range[1]) {
+        // Check if this is the last rank (max rank)
+        if (i === SKILLER_RANKS.length - 1) {
+          return 0; // Already at max rank
+        }
         // Return the XP needed to reach the next rank
         return rank.range[1] - clanXp;
       }
     }
-    
+
     // If they're at the highest rank already
     if (clanXp >= SKILLER_RANKS[SKILLER_RANKS.length - 1].range[0]) {
       return 0; // Already at max rank
@@ -66,15 +71,20 @@ export const calculateNextLevel = (member) => {
   } else if (isFighter) {
     // Use EHB for fighters with safe parsing
     const clanEhb = safeParseInt(member.ehb);
-    
+
     // Find which rank range the member is in
-    for (const rank of FIGHTER_RANKS) {
+    for (let i = 0; i < FIGHTER_RANKS.length; i++) {
+      const rank = FIGHTER_RANKS[i];
       if (clanEhb >= rank.range[0] && clanEhb < rank.range[1]) {
+        // Check if this is the last rank (max rank)
+        if (i === FIGHTER_RANKS.length - 1) {
+          return 0; // Already at max rank
+        }
         // Return the EHB needed to reach the next rank
         return rank.range[1] - clanEhb;
       }
     }
-    
+
     // If they're at the highest rank already
     if (clanEhb >= FIGHTER_RANKS[FIGHTER_RANKS.length - 1].range[0]) {
       return 0; // Already at max rank

@@ -17,6 +17,7 @@ test('renders RaceCard without crashing', () => {
       <RaceCard race={mockRace} />
     </MemoryRouter>
   );
-  expect(screen.getByText(/private/i)).toBeInTheDocument();
-  expect(screen.getByText(/created/i)).toBeInTheDocument();
+  // Use getAllByText since there may be multiple elements with these texts
+  expect(screen.getAllByText(/private/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/created/i).length).toBeGreaterThan(0);
 }); 
