@@ -1,7 +1,13 @@
 import useSWR from "swr";
 import { useMemo } from "react";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
+const fetcher = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+};
 
 function formatDisplayName(name) {
   return name

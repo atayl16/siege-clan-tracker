@@ -1,6 +1,12 @@
 import useSWR from "swr";
 
-const fetcher = (url) => fetch(url).then((r) => r.json());
+const fetcher = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+};
 
 export function useMetrics(playerId, metricType = null) {
   const { data, error } = useSWR(

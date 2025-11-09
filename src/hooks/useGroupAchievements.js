@@ -1,6 +1,12 @@
 import useSWR from "swr";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
+const fetcher = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+};
 
 export function useGroupAchievements(limit = null) {
   const { data, error, mutate } = useSWR("/api/wom-group-achievements", fetcher, {

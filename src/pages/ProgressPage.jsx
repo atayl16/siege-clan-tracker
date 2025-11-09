@@ -46,7 +46,7 @@ export default function ProgressPage() {
     refreshRaces();
   };
 
-  const filteredPublicRaces = (publicRaces || []).filter((race) => race.public === true);
+  // publicRaces already filtered in useRaces hook
   const publicGoals = (userGoals || []).filter((goal) => goal.public === true);
 
   // Content for different tabs
@@ -128,7 +128,7 @@ export default function ProgressPage() {
       case "publicRaces":
         if (racesLoading) return <LoadingIndicator />;
 
-        if (!filteredPublicRaces || filteredPublicRaces.length === 0) {
+        if (!publicRaces || publicRaces.length === 0) {
           return (
             <EmptyState
               icon={<FaTrophy />}
@@ -140,7 +140,7 @@ export default function ProgressPage() {
 
         return (
           <div className="ui-races-grid">
-            {filteredPublicRaces.map((race) => (
+            {publicRaces.map((race) => (
               <RaceCard
                 key={race.id}
                 race={race}
@@ -186,7 +186,7 @@ export default function ProgressPage() {
       id: "publicRaces",
       label: "Public Races",
       icon: <FaTrophy />,
-      count: filteredPublicRaces?.length || 0,
+      count: publicRaces?.length || 0,
     },
     {
       id: "publicGoals",
