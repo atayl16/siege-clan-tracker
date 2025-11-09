@@ -165,7 +165,7 @@ This PR intentionally does NOT include:
 
 Branch: `claude/add-tests-with-refactoring-pr-011CUpSX1HVT7YG2BzcsJH5C`
 
-Create PR at: https://github.com/atayl16/siege-clan-tracker/pull/new/claude/add-tests-with-refactoring-pr-011CUpSX1HVT7YG2BzcsJH5C
+Create PR at: <https://github.com/atayl16/siege-clan-tracker/pull/new/claude/add-tests-with-refactoring-pr-011CUpSX1HVT7YG2BzcsJH5C>
 
 ## Future Work
 

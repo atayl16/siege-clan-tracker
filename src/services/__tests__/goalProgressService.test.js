@@ -12,8 +12,8 @@ describe('goalProgressService', () => {
         expect(extractMetricData(undefined, 'skill', 'attack')).toBeNull();
       });
 
-      it('returns null for empty object playerData', () => {
-        expect(extractMetricData({}, 'skill', 'attack')).toBe(null);
+      it('returns default for empty object playerData', () => {
+        expect(extractMetricData({}, 'skill', 'attack')).toEqual({ experience: 0, level: 1, rank: 0 });
       });
     });
 
