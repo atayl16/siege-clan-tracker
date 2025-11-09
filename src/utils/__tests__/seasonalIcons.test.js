@@ -3,27 +3,21 @@ import { getSeasonalIcon } from '../seasonalIcons';
 
 describe('seasonalIcons', () => {
   describe('getSeasonalIcon', () => {
-    let originalDate;
-
     beforeEach(() => {
-      // Save original Date
-      originalDate = global.Date;
+      // Use vitest's built-in date mocking
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      // Restore original Date
-      global.Date = originalDate;
+      // Restore real timers
+      vi.useRealTimers();
     });
 
     const mockDate = (month) => {
-      // Mock Date constructor to return a specific month (0-indexed)
-      const mockDateInstance = new originalDate();
-      mockDateInstance.getMonth = () => month;
-
-      global.Date = vi.fn(() => mockDateInstance);
-      global.Date.now = originalDate.now;
-      global.Date.parse = originalDate.parse;
-      global.Date.UTC = originalDate.UTC;
+      // Use vitest's setSystemTime for robust date mocking
+      const year = 2024;
+      const day = 15;
+      vi.setSystemTime(new Date(year, month, day));
     };
 
     describe('October (Halloween season)', () => {
