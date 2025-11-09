@@ -41,6 +41,7 @@ export default async (request, _context) => {
     const { data, error } = await supabase
       .from('members')
       .select('*') // Fetch all columns from the members table
+      .is('left_date', null) // Filter out members who have left
       .order('name'); // Order by name
     
     if (error) throw error;
