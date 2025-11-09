@@ -8,7 +8,7 @@
  * - Edge cases in anniversary calculations
  */
 
-const { describe, it, expect, vi, beforeEach, afterEach } = require('vitest');
+import { describe, it, expect, vi } from 'vitest';
 
 describe('BUG-001 Follow-up: Anniversary Date Calculation', () => {
   describe('UTC Timezone Normalization', () => {
