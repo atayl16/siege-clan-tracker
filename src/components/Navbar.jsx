@@ -112,6 +112,13 @@ export default function Navbar() {
             Achievements
           </Link>
 
+          <Link
+            to="/progress"
+            className={location.pathname === "/progress" ? "active" : ""}
+          >
+            Races & Goals
+          </Link>
+
           {/* Divider */}
           <div className="navbar-divider"></div>
 
@@ -137,12 +144,20 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className={location.pathname === "/login" ? "active" : ""}
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className={location.pathname === "/login" ? "active" : ""}
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className={location.pathname === "/register" ? "active" : ""}
+              >
+                Register
+              </Link>
+            </>
           )}
         </div>
       </div>
