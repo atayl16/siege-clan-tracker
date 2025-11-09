@@ -3,6 +3,14 @@
 > A modern web application for tracking Old School RuneScape clan member statistics, events, and achievements.
 
 [![Better Stack Badge](https://uptime.betterstack.com/status-badges/v3/monitor/28siu.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
+[![CI](https://github.com/atayl16/siege-clan-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/atayl16/siege-clan-tracker/actions/workflows/ci.yml)
+[![Node Version](https://img.shields.io/badge/node-18%2B-brightgreen.svg)](https://nodejs.org)
+[![React Version](https://img.shields.io/badge/react-18.3-blue.svg)](https://reactjs.org)
+[![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fsiege-clan.com)](https://siege-clan.com)
+[![GitHub last commit](https://img.shields.io/github/last-commit/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/commits)
+[![GitHub issues](https://img.shields.io/github/issues/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/pulls)
 
 ## 📖 Overview
 
