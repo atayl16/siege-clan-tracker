@@ -59,10 +59,15 @@ export function checkAuth(request) {
       const originHostname = normalizeHostname(originUrl.hostname);
       const allowedHostname = normalizeHostname(allowedUrl.hostname);
 
-      // Match normalized hostnames (allows both www and non-www)
-      if (originHostname === allowedHostname &&
+      // Allow Netlify deploy previews and localhost
+      const isNetlifyDeploy = originHostname.endsWith('.netlify.app');
+      const isLocalhost = originHostname === 'localhost' || originHostname === '127.0.0.1';
+
+      // Match normalized hostnames (allows both www and non-www) OR Netlify deploys OR localhost
+      if (isNetlifyDeploy || isLocalhost ||
+          (originHostname === allowedHostname &&
           (originUrl.port || (originUrl.protocol === 'https:' ? '443' : '80')) ===
-          (allowedUrl.port || (allowedUrl.protocol === 'https:' ? '443' : '80'))) {
+          (allowedUrl.port || (allowedUrl.protocol === 'https:' ? '443' : '80')))) {
         return { authorized: true };
       }
     } catch (e) {
