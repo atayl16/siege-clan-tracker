@@ -102,9 +102,71 @@ COMMENT ON FUNCTION admin_change_member_rank(INTEGER, TEXT) IS
   'Admin function to change member rank/role. Uses SECURITY DEFINER to bypass RLS.';
 
 -- ============================================
+-- admin_delete_member
+-- ============================================
+-- Deletes a member with service role privileges
+-- Used by: netlify/edge-functions/admin-delete-member.js
+
+CREATE OR REPLACE FUNCTION admin_delete_member(
+  member_id INTEGER
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM members
+  WHERE wom_id = member_id;
+
+  -- Raise exception if member not found
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Member with wom_id % not found', member_id;
+  END IF;
+END;
+$$;
+
+COMMENT ON FUNCTION admin_delete_member(INTEGER) IS
+  'Admin function to delete member. Uses SECURITY DEFINER to bypass RLS. Called by admin edge functions.';
+
+-- ============================================
+-- admin_toggle_user_admin
+-- ============================================
+-- Toggles a user's admin status with service role privileges
+-- Used by: netlify/edge-functions/admin-toggle-user-admin.js
+
+CREATE OR REPLACE FUNCTION admin_toggle_user_admin(
+  user_id UUID,
+  is_admin BOOLEAN
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE users
+  SET
+    is_admin = admin_toggle_user_admin.is_admin,
+    updated_at = NOW()
+  WHERE supabase_auth_id = user_id;
+
+  -- Raise exception if user not found
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'User with supabase_auth_id % not found', user_id;
+  END IF;
+END;
+$$;
+
+COMMENT ON FUNCTION admin_toggle_user_admin(UUID, BOOLEAN) IS
+  'Admin function to toggle user admin status. Uses SECURITY DEFINER to bypass RLS. Called by admin edge functions.';
+
+-- ============================================
 -- Grant execute permissions to service_role
 -- ============================================
 
 GRANT EXECUTE ON FUNCTION admin_update_member(INTEGER, JSONB) TO service_role;
 GRANT EXECUTE ON FUNCTION admin_toggle_member_visibility(INTEGER, BOOLEAN) TO service_role;
 GRANT EXECUTE ON FUNCTION admin_change_member_rank(INTEGER, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION admin_delete_member(INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION admin_toggle_user_admin(UUID, BOOLEAN) TO service_role;

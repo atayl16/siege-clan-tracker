@@ -49,8 +49,8 @@ export default async (request, _context) => {
 
     // Call the admin_toggle_user_admin RPC function
     const { data, error } = await supabase.rpc("admin_toggle_user_admin", {
-      p_user_id: userId,
-      p_is_admin: isAdmin,
+      user_id: userId,
+      is_admin: isAdmin,
     });
 
     if (error) {

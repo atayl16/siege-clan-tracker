@@ -48,8 +48,8 @@ export default async (request, _context) => {
 
     // Call the admin_toggle_member_visibility RPC function
     const { data, error } = await supabase.rpc("admin_toggle_member_visibility", {
-      p_wom_id: womId,
-      p_hidden: hidden,
+      member_id: womId,
+      is_hidden: hidden,
     });
 
     if (error) {

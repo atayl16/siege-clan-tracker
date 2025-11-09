@@ -48,7 +48,7 @@ export default async (request, _context) => {
 
     // Call the admin_delete_member RPC function
     const { data, error } = await supabase.rpc("admin_delete_member", {
-      p_wom_id: womId,
+      member_id: womId,
     });
 
     if (error) {

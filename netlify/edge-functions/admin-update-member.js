@@ -48,8 +48,8 @@ export default async (request, _context) => {
 
     // Call the admin_update_member RPC function
     const { data, error } = await supabase.rpc("admin_update_member", {
-      p_wom_id: womId,
-      p_updates: updates,
+      member_id: womId,
+      updated_data: updates,
     });
 
     if (error) {

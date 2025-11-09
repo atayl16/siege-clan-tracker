@@ -49,7 +49,7 @@ export async function validateAdminRequest(request) {
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("is_admin")
-      .eq("id", user.id)
+      .eq("supabase_auth_id", user.id)
       .single();
 
     if (userError) {
