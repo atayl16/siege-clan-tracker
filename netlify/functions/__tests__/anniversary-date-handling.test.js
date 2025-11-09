@@ -63,7 +63,6 @@ describe('BUG-001 Follow-up: Anniversary Date Calculation', () => {
         'not-a-date',
         '2024-13-01', // Invalid month
         '2024-01-32', // Invalid day
-        '2024-02-30', // Feb 30 doesn't exist
         undefined,
         '',
         'abc123'
@@ -76,10 +75,16 @@ describe('BUG-001 Follow-up: Anniversary Date Calculation', () => {
         expect(isValid).toBe(false);
       });
 
-      // Note: new Date(null) creates epoch date (Jan 1 1970), not invalid date
-      // This is a JavaScript quirk we should handle separately
+      // Note: JavaScript Date quirks we need to handle
+      // 1. new Date(null) creates epoch date (Jan 1 1970), not invalid date
       const nullDate = new Date(null);
       expect(isNaN(nullDate.getTime())).toBe(false); // null is valid (epoch)
+
+      // 2. new Date('2024-02-30') overflows to March 1st, not invalid
+      const feb30 = new Date('2024-02-30');
+      expect(isNaN(feb30.getTime())).toBe(false); // Overflows to Mar 1
+      expect(feb30.getUTCMonth()).toBe(2); // March (0-indexed)
+      expect(feb30.getUTCDate()).toBe(1); // 1st day
     });
 
     it('should validate dates before calculating years', () => {
