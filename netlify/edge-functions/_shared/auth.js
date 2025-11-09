@@ -46,15 +46,21 @@ function constantTimeEqual(a, b) {
 export function checkAuth(request) {
   // Get origin from request headers
   const origin = request.headers.get('Origin') || request.headers.get('Referer');
-  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://siege-clan.com';
+  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://www.siege-clan.com';
 
   // Allow same-origin requests without API key
   if (origin) {
     try {
       const originUrl = new URL(origin);
       const allowedUrl = new URL(allowedOrigin);
-      // Exact hostname match (includes port if specified)
-      if (originUrl.hostname === allowedUrl.hostname &&
+
+      // Normalize hostnames by removing www. prefix for comparison
+      const normalizeHostname = (hostname) => hostname.replace(/^www\./, '');
+      const originHostname = normalizeHostname(originUrl.hostname);
+      const allowedHostname = normalizeHostname(allowedUrl.hostname);
+
+      // Match normalized hostnames (allows both www and non-www)
+      if (originHostname === allowedHostname &&
           (originUrl.port || (originUrl.protocol === 'https:' ? '443' : '80')) ===
           (allowedUrl.port || (allowedUrl.protocol === 'https:' ? '443' : '80'))) {
         return { authorized: true };
