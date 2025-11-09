@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 
 // Mock BackgroundLoader to prevent async operations that continue after tests
 // This prevents "window is not defined" errors when timers fire after teardown
-vi.mock('src/utils/BackgroundLoader', () => ({
+vi.mock('./utils/BackgroundLoader', () => ({
   default: () => null,
 }));
 
