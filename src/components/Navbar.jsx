@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getSeasonalIcon } from "../utils/seasonalIcons";
 import "./Navbar.css";
 
 export default function Navbar() {
   const location = useLocation();
-  const { isAdmin, logout, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAdmin, logout, isLoggedIn } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
   
   // Close mobile menu when changing routes
   useEffect(() => {
@@ -105,6 +111,39 @@ export default function Navbar() {
           >
             Achievements
           </Link>
+
+          {/* Divider */}
+          <div className="navbar-divider"></div>
+
+          {/* Auth Links */}
+          {isLoggedIn ? (
+            <>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={location.pathname === "/admin" ? "active" : ""}
+                >
+                  Admin
+                </Link>
+              )}
+              <Link
+                to="/profile"
+                className={location.pathname === "/profile" ? "active" : ""}
+              >
+                {user?.username || "Profile"}
+              </Link>
+              <button onClick={handleLogout} className="navbar-logout-btn">
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className={location.pathname === "/login" ? "active" : ""}
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </nav>
