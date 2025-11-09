@@ -1,7 +1,15 @@
-export default async (_request, _context) => {
+import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+
+export default async (request, _context) => {
+  // Check authentication
+  const { authorized, reason } = checkAuth(request);
+  if (!authorized) {
+    return unauthorizedResponse(reason);
+  }
+
   // Get WOM Group ID from environment using Deno.env.get()
   const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID") || '2928'; // Default from your code
-  
+
   // Cache for 30 minutes (1800 seconds)
   const TTL = 1800;
 
