@@ -28,11 +28,13 @@ async function sendAnniversaries() {
       const { data: feb28Members, error: error1 } = await supabase
         .from('members')
         .select('wom_id, name, wom_name, join_date')
+        .is('left_date', null)
         .filter('join_date::text', 'ilike', '%-02-28');
 
       const { data: feb29Members, error: error2 } = await supabase
         .from('members')
         .select('wom_id, name, wom_name, join_date')
+        .is('left_date', null)
         .filter('join_date::text', 'ilike', '%-02-29');
 
       if (error1 || error2) {
@@ -46,6 +48,7 @@ async function sendAnniversaries() {
       const { data: queryMembers, error } = await supabase
         .from('members')
         .select('wom_id, name, wom_name, join_date')
+        .is('left_date', null)
         .filter('join_date::text', 'ilike', `%-${monthDay}`);
 
       if (error) {
