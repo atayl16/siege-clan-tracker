@@ -5,6 +5,12 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Mock BackgroundLoader to prevent async operations that continue after tests
+// This prevents "window is not defined" errors when timers fire after teardown
+vi.mock('./utils/BackgroundLoader', () => ({
+  default: () => null,
+}));
+
 // Mock src/supabaseClient.js
 vi.mock('../supabaseClient', () => ({
   supabase: {
@@ -103,4 +109,3 @@ vi.mock('src/supabaseClient.js', () => ({
     rpc: vi.fn(),
   },
 }));
-

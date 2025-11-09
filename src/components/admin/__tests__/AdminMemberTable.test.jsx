@@ -18,10 +18,13 @@ vi.mock('../../ui/Badge', () => ({
   default: ({ children }) => <span>{children}</span>
 }));
 
-vi.mock('../../ui/Card', () => ({
-  default: ({ children }) => <div>{children}</div>,
-  Body: ({ children }) => <div>{children}</div>
-}));
+vi.mock('../../ui/Card', () => {
+  const MockCard = ({ children }) => <div>{children}</div>;
+  MockCard.Body = ({ children }) => <div>{children}</div>;
+  MockCard.Header = ({ children }) => <div>{children}</div>;
+  MockCard.Footer = ({ children }) => <div>{children}</div>;
+  return { default: MockCard };
+});
 
 /**
  * Test suite for AdminMemberTable
