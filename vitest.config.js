@@ -15,6 +15,10 @@ export default defineConfig({
       'src/setupTests.js',
       'netlify/edge-functions/**',
     ],
+    // Use node environment for netlify function tests (not jsdom)
+    environmentMatchGlobs: [
+      ['netlify/functions/**/*.test.js', 'node'],
+    ],
     css: true,
     coverage: {
       reporter: ['text', 'json', 'html'],
