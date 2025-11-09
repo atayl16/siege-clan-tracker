@@ -18,8 +18,8 @@ test('renders MembersPage without crashing', () => {
       <MembersPage />
     </MemoryRouter>
   );
-  // Adjust the text below to something you expect on the page
-  expect(screen.getByText(/members/i)).toBeInTheDocument();
+  // Use getAllByText since there are multiple elements with 'members'
+  expect(screen.getAllByText(/members/i).length).toBeGreaterThan(0);
 });
 
 test('renders MembersPage and displays a member', () => {

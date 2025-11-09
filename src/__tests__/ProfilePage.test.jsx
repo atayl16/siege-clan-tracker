@@ -11,5 +11,6 @@ test('renders ProfilePage without crashing', () => {
       </AuthProvider>
     </MemoryRouter>
   );
-  expect(screen.getByText(/profile/i)).toBeInTheDocument();
+  // Use getAllByText since there may be multiple elements with 'profile'
+  expect(screen.getAllByText(/profile/i).length).toBeGreaterThan(0);
 }); 
