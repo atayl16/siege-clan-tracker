@@ -21,8 +21,19 @@ export function checkAuth(request) {
   const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://siege-clan.com';
 
   // Allow same-origin requests without API key
-  if (origin && origin.includes(allowedOrigin.replace('https://', '').replace('http://', ''))) {
-    return { authorized: true };
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      const allowedUrl = new URL(allowedOrigin);
+      // Exact hostname match (includes port if specified)
+      if (originUrl.hostname === allowedUrl.hostname &&
+          (originUrl.port || (originUrl.protocol === 'https:' ? '443' : '80')) ===
+          (allowedUrl.port || (allowedUrl.protocol === 'https:' ? '443' : '80'))) {
+        return { authorized: true };
+      }
+    } catch (e) {
+      // Invalid URL format, fall through to API key check
+    }
   }
 
   // Cross-origin requests require API key

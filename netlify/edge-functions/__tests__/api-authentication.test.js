@@ -490,4 +490,138 @@ describe('BUG-006: API Key Authentication', () => {
       expect(result.reason).toBe('Invalid or missing API key');
     });
   });
+
+  describe('Security: Origin Validation Bypass Attacks', () => {
+    it('should block subdomain bypass attack', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'https://siege-clan.com');
+      Deno.env.set('API_KEY', FAKE_API_KEY);
+
+      // Attack: evil-siege-clan.com contains "siege-clan.com"
+      const attackRequest = new Request('https://api.siege-clan.com/api/members', {
+        headers: {
+          'Origin': 'https://evil-siege-clan.com'
+        }
+      });
+
+      const result = checkAuth(attackRequest);
+
+      expect(result.authorized).toBe(false); // ✅ Attack blocked
+      expect(result.reason).toBe('Invalid or missing API key');
+    });
+
+    it('should block subdomain suffix bypass attack', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'https://siege-clan.com');
+      Deno.env.set('API_KEY', FAKE_API_KEY);
+
+      // Attack: siege-clan.com.attacker.com contains "siege-clan.com"
+      const attackRequest = new Request('https://api.siege-clan.com/api/members', {
+        headers: {
+          'Origin': 'https://siege-clan.com.attacker.com'
+        }
+      });
+
+      const result = checkAuth(attackRequest);
+
+      expect(result.authorized).toBe(false); // ✅ Attack blocked
+      expect(result.reason).toBe('Invalid or missing API key');
+    });
+
+    it('should block query parameter bypass attack', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'https://siege-clan.com');
+      Deno.env.set('API_KEY', FAKE_API_KEY);
+
+      // Attack: attacker.com?q=siege-clan.com contains "siege-clan.com"
+      const attackRequest = new Request('https://api.siege-clan.com/api/members', {
+        headers: {
+          'Origin': 'https://attacker.com?q=siege-clan.com'
+        }
+      });
+
+      const result = checkAuth(attackRequest);
+
+      expect(result.authorized).toBe(false); // ✅ Attack blocked
+      expect(result.reason).toBe('Invalid or missing API key');
+    });
+
+    it('should block path-based bypass attack', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'https://siege-clan.com');
+      Deno.env.set('API_KEY', FAKE_API_KEY);
+
+      // Attack: attacker.com/siege-clan.com contains "siege-clan.com"
+      const attackRequest = new Request('https://api.siege-clan.com/api/members', {
+        headers: {
+          'Origin': 'https://attacker.com/siege-clan.com'
+        }
+      });
+
+      const result = checkAuth(attackRequest);
+
+      expect(result.authorized).toBe(false); // ✅ Attack blocked
+      expect(result.reason).toBe('Invalid or missing API key');
+    });
+
+    it('should allow exact hostname match with different protocol', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'https://siege-clan.com');
+
+      // Same hostname, just http instead of https (for localhost dev)
+      const request = new Request('http://siege-clan.com/api/members', {
+        headers: {
+          'Origin': 'http://siege-clan.com'
+        }
+      });
+
+      const result = checkAuth(request);
+
+      // Different protocol = different origin, should be blocked
+      expect(result.authorized).toBe(false);
+    });
+
+    it('should enforce exact port matching', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'http://localhost:3000');
+
+      // Same hostname and protocol, but different port
+      const request = new Request('http://localhost:8888/api/members', {
+        headers: {
+          'Origin': 'http://localhost:8080'
+        }
+      });
+
+      const result = checkAuth(request);
+
+      expect(result.authorized).toBe(false); // Different port = blocked
+    });
+
+    it('should allow exact port match', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'http://localhost:3000');
+
+      // Exact match: hostname AND port
+      const request = new Request('http://localhost:8888/api/members', {
+        headers: {
+          'Origin': 'http://localhost:3000'
+        }
+      });
+
+      const result = checkAuth(request);
+
+      expect(result.authorized).toBe(true); // ✅ Exact match allowed
+    });
+
+    it('should handle malformed origin gracefully', () => {
+      Deno.env.set('ALLOWED_ORIGIN', 'https://siege-clan.com');
+      Deno.env.set('API_KEY', FAKE_API_KEY);
+
+      // Malformed origin that would crash URL parser
+      const request = new Request('https://api.siege-clan.com/api/members', {
+        headers: {
+          'Origin': 'not-a-valid-url'
+        }
+      });
+
+      const result = checkAuth(request);
+
+      // Should fall through to API key check, not crash
+      expect(result.authorized).toBe(false);
+      expect(result.reason).toBe('Invalid or missing API key');
+    });
+  });
 });
