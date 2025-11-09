@@ -2,7 +2,8 @@ import { supabase } from "../supabaseClient";
 import { usePlayer } from "../hooks/usePlayer"; // New hook for fetching player data
 
 // Helper function to extract metric data from player data
-function extractMetricData(playerData, type, metric) {
+// Exported for testing
+export function extractMetricData(playerData, type, metric) {
   if (!playerData) return null;
 
   if (type === "skill") {
