@@ -333,22 +333,6 @@ export default function ProfilePage() {
                   {new Date(user.created_at).toLocaleDateString()}
                 </div>
               </div>
-
-              <div className="account-field">
-                <label>Email Address</label>
-                <div className="field-value">{user.email || "Coming Soon"}</div>
-              </div>
-
-              <div className="account-field">
-                <label>Discord Name</label>
-                <div className="field-value">{"Coming Soon"}</div>
-              </div>
-
-              <div className="account-actions">
-                <Button variant="secondary" disabled>
-                  Change Password (Coming Soon)
-                </Button>
-              </div>
             </Card.Body>
           </Card>
         </Tabs.Tab>
