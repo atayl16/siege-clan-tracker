@@ -74,7 +74,7 @@ export default function ProfilePage() {
     ? activeRaces.filter((race) => {
         if (race.creator_id === user?.id) return true;
 
-        const userCharacterIds = userClaims.map(
+        const userCharacterIds = (userClaims || []).map(
           (claim) => claim.members.wom_id
         );
         return race.participants?.some((participant) =>
@@ -92,7 +92,7 @@ export default function ProfilePage() {
 
   // Update goals effect
   useEffect(() => {
-    if (user && userClaims.length > 0) {
+    if (user && userClaims && userClaims.length > 0) {
       const updateGoals = async () => {
         try {
           for (const claim of userClaims) {
@@ -205,7 +205,7 @@ export default function ProfilePage() {
             </Button>
           </div>
 
-          {userClaims.length === 0 ? (
+          {!userClaims || userClaims.length === 0 ? (
             <EmptyState
               title="No Characters Yet"
               description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
