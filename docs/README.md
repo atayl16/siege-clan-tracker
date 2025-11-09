@@ -9,6 +9,8 @@ Planning and roadmap documentation for future development:
 
 - **[tech-debt.md](planning/tech-debt.md)** - Technical debt tracking, code refactoring opportunities, and cleanup tasks
 - **[feature-suggestions.md](planning/feature-suggestions.md)** - Proposed new features with implementation plans and priority matrix
+- **[bugs-and-ux.md](planning/bugs-and-ux.md)** - Known bugs, UX issues, reproduction steps, and fixes
+- **[tasks.md](planning/tasks.md)** - Current work-in-progress tasks and stabilization checklist
 
 ### Setup Guides (`/setup`)
 Development environment and deployment setup:
@@ -31,8 +33,10 @@ Additional documentation can be found in the repository root:
 3. Review [CONTRIBUTING.md](../CONTRIBUTING.md) for coding standards
 
 ### Planning Future Work
-1. Review [feature-suggestions.md](planning/feature-suggestions.md) for enhancement ideas
-2. See [tech-debt.md](planning/tech-debt.md) for refactoring opportunities
+1. Check [bugs-and-ux.md](planning/bugs-and-ux.md) for known issues
+2. Review [feature-suggestions.md](planning/feature-suggestions.md) for enhancement ideas
+3. See [tech-debt.md](planning/tech-debt.md) for refactoring opportunities
+4. Track progress in [tasks.md](planning/tasks.md)
 
 ### Deployment & Testing
 1. Set up staging with [staging-setup.md](setup/staging-setup.md)
@@ -44,6 +48,8 @@ Additional documentation can be found in the repository root:
 |----------|---------|----------|
 | [tech-debt.md](planning/tech-debt.md) | Technical debt & refactoring | Developers |
 | [feature-suggestions.md](planning/feature-suggestions.md) | New feature ideas | Product planning |
+| [bugs-and-ux.md](planning/bugs-and-ux.md) | Bug tracking & fixes | Developers, QA |
+| [tasks.md](planning/tasks.md) | Current work tracking | All team members |
 | [local-setup.md](setup/local-setup.md) | Development setup | New developers |
 | [staging-setup.md](setup/staging-setup.md) | Staging environment | DevOps, Testing |
 
