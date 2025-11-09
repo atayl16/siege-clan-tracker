@@ -50,5 +50,6 @@ test('renders ClaimRequestManager and displays a claim request', async () => {
   );
 
   expect(await screen.findByText('TestRSN')).toBeInTheDocument();
-  expect(screen.getByText(/pending/i)).toBeInTheDocument();
+  // Use getAllByText since there may be multiple elements with "pending"
+  expect(screen.getAllByText(/pending/i).length).toBeGreaterThan(0);
 });

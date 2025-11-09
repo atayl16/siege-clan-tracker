@@ -1,6 +1,7 @@
 // Helper function to titleize a string
 export const titleize = (str) => {
-  if (!str) return "-";
+  // Handle null, undefined, non-strings, and empty/whitespace strings
+  if (!str || typeof str !== 'string' || str.trim() === '') return "-";
   return str
     .toLowerCase()
     .split(" ")
