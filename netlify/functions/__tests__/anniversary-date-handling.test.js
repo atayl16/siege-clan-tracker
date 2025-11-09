@@ -130,44 +130,60 @@ describe('BUG-001 Follow-up: Anniversary Date Calculation', () => {
   });
 
   describe('Leap Year Policy', () => {
-    it('should only match Feb 29 anniversaries on leap years', () => {
+    it('should match Feb 29 anniversaries on Feb 29 in leap years', () => {
       const joinDate = new Date('2020-02-29T12:00:00Z'); // Leap year
 
       // Leap years: 2024, 2028, 2032
       const leapYear2024 = new Date('2024-02-29T12:00:00Z');
-      const nonLeapYear2023 = new Date('2023-02-28T12:00:00Z');
-      const nonLeapYear2025 = new Date('2025-02-28T12:00:00Z');
 
       const matchesLeapYear =
         joinDate.getUTCMonth() === leapYear2024.getUTCMonth() &&
         joinDate.getUTCDate() === leapYear2024.getUTCDate();
 
-      const matchesNonLeapYear2023 =
-        joinDate.getUTCMonth() === nonLeapYear2023.getUTCMonth() &&
-        joinDate.getUTCDate() === nonLeapYear2023.getUTCDate();
-
-      const matchesNonLeapYear2025 =
-        joinDate.getUTCMonth() === nonLeapYear2025.getUTCMonth() &&
-        joinDate.getUTCDate() === nonLeapYear2025.getUTCDate();
-
       expect(matchesLeapYear).toBe(true); // Feb 29 matches Feb 29
-      expect(matchesNonLeapYear2023).toBe(false); // Feb 29 doesn't match Feb 28
-      expect(matchesNonLeapYear2025).toBe(false); // Feb 29 doesn't match Feb 28
     });
 
-    it('should document that Feb 29 members miss 3 out of 4 anniversaries', () => {
-      // This test documents the policy
-      const feb29JoinDate = new Date('2020-02-29');
+    it('should celebrate Feb 29 anniversaries on Feb 28 in non-leap years', () => {
+      const joinDate = new Date('2020-02-29T12:00:00Z'); // Joined on leap day
+      const feb28_2023 = new Date('2023-02-28T12:00:00Z'); // Non-leap year
+      const feb28_2025 = new Date('2025-02-28T12:00:00Z'); // Non-leap year
 
-      // Years 2021-2024
+      const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+
+      // Check if we should celebrate on Feb 28
+      const joinMonthDay = '02-29';
+      const todayMonthDay = '02-28';
+
+      const shouldCelebrate2023 =
+        joinMonthDay === todayMonthDay ||
+        (joinMonthDay === '02-29' && todayMonthDay === '02-28' && !isLeapYear(2023));
+
+      const shouldCelebrate2025 =
+        joinMonthDay === todayMonthDay ||
+        (joinMonthDay === '02-29' && todayMonthDay === '02-28' && !isLeapYear(2025));
+
+      expect(shouldCelebrate2023).toBe(true); // Feb 29 celebrated on Feb 28
+      expect(shouldCelebrate2025).toBe(true); // Feb 29 celebrated on Feb 28
+    });
+
+    it('should celebrate Feb 29 members every year (not just leap years)', () => {
+      // This test documents the updated policy
+      const feb29JoinDate = new Date('2020-02-29');
+      const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+
+      // Years 2021-2024: they get celebrated every year now
       const anniversariesCount = [2021, 2022, 2023, 2024].filter(year => {
-        // Check if Feb 29 exists in that year
-        const testDate = new Date(`${year}-02-29`);
-        return !isNaN(testDate.getTime()) && testDate.getUTCDate() === 29;
+        // On leap years: Feb 29 exists
+        if (isLeapYear(year)) {
+          const testDate = new Date(`${year}-02-29`);
+          return !isNaN(testDate.getTime()) && testDate.getUTCDate() === 29;
+        }
+        // On non-leap years: celebrated on Feb 28
+        return true;
       }).length;
 
-      // Only 2024 is a leap year, so only 1 anniversary in 4 years
-      expect(anniversariesCount).toBe(1);
+      // All 4 years should have anniversaries (3 on Feb 28, 1 on Feb 29)
+      expect(anniversariesCount).toBe(4);
     });
 
     it('should identify leap years correctly', () => {
@@ -181,6 +197,28 @@ describe('BUG-001 Follow-up: Anniversary Date Calculation', () => {
       expect(isLeapYear(2100)).toBe(false); // Divisible by 100 but not 400
       expect(isLeapYear(2023)).toBe(false);
       expect(isLeapYear(2025)).toBe(false);
+    });
+
+    it('should NOT celebrate Feb 29 members on Feb 28 during a leap year', () => {
+      // In a leap year, Feb 29 members should only be celebrated on Feb 29, not Feb 28
+      const joinMonthDay = '02-29';
+      const todayMonthDay = '02-28';
+      const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+
+      const shouldCelebrate2024 =
+        joinMonthDay === todayMonthDay ||
+        (joinMonthDay === '02-29' && todayMonthDay === '02-28' && !isLeapYear(2024));
+
+      expect(shouldCelebrate2024).toBe(false); // Don't celebrate on Feb 28 in leap year
+    });
+
+    it('should celebrate regular Feb 28 members on Feb 28 regardless of leap year', () => {
+      const joinMonthDay = '02-28';
+      const todayMonthDay = '02-28';
+
+      const shouldCelebrate = joinMonthDay === todayMonthDay;
+
+      expect(shouldCelebrate).toBe(true); // Feb 28 members always celebrated on Feb 28
     });
   });
 

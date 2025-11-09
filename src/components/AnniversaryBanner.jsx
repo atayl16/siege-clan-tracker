@@ -14,13 +14,15 @@ export default function AnniversaryBanner() {
   }, []);
 
   // Filter members with anniversaries today
-  // Note: Members who joined on Feb 29 (leap day) will only have anniversaries
-  // on leap years. This is intentional to maintain exact date matching.
+  // Special handling: Feb 29 anniversaries are celebrated on Feb 28 in non-leap years
   const anniversaries = useMemo(() => {
     if (!members) return [];
 
     const currentDate = new Date();
     const currentYear = currentDate.getUTCFullYear();
+
+    // Check if it's a leap year
+    const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 
     return members
       .filter((member) => {
@@ -35,16 +37,26 @@ export default function AnniversaryBanner() {
         }
 
         const joinYear = joinDate.getUTCFullYear();
+        const joinMonth = joinDate.getUTCMonth() + 1;
+        const joinDay = joinDate.getUTCDate();
 
         // Check if it's the same month and day (anniversary) using UTC
         const isSameMonthAndDay =
-          joinDate.getUTCMonth() + 1 === today.month &&
-          joinDate.getUTCDate() === today.day;
+          joinMonth === today.month &&
+          joinDay === today.day;
+
+        // Special case: Feb 29 anniversaries on Feb 28 in non-leap years
+        const isFeb29OnFeb28 =
+          joinMonth === 2 && joinDay === 29 &&
+          today.month === 2 && today.day === 28 &&
+          !isLeapYear(currentYear);
+
+        const isAnniversaryToday = isSameMonthAndDay || isFeb29OnFeb28;
 
         // Exclude members who joined today (same year, month, and day)
         const isNotToday = !(isSameMonthAndDay && joinYear === currentYear);
 
-        return isSameMonthAndDay && isNotToday;
+        return isAnniversaryToday && isNotToday;
       })
       .map((member) => {
         const joinDate = new Date(member.join_date);

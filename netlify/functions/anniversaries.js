@@ -18,17 +18,43 @@ async function sendAnniversaries() {
     console.log(`Checking for anniversaries on month-day: ${monthDay}`);
 
     // Query members with anniversaries today
-    // Note: Members who joined on Feb 29 (leap day) will only have anniversaries
-    // on leap years. This is intentional to maintain exact date matching.
-    const { data: members, error } = await supabase
-      .from('members')
-      .select('wom_id, name, wom_name, join_date')
-      .filter('join_date::text', 'ilike', `%-${monthDay}`);
-    
-    if (error) {
-      throw new Error(`Supabase query failed: ${error.message}`);
+    // Special handling: On Feb 28 in non-leap years, also celebrate Feb 29 anniversaries
+    const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    const isFeb28NonLeap = monthDay === '02-28' && !isLeapYear(today.getUTCFullYear());
+
+    let members = [];
+    if (isFeb28NonLeap) {
+      // Fetch both Feb 28 and Feb 29 anniversaries
+      const { data: feb28Members, error: error1 } = await supabase
+        .from('members')
+        .select('wom_id, name, wom_name, join_date')
+        .filter('join_date::text', 'ilike', '%-02-28');
+
+      const { data: feb29Members, error: error2 } = await supabase
+        .from('members')
+        .select('wom_id, name, wom_name, join_date')
+        .filter('join_date::text', 'ilike', '%-02-29');
+
+      if (error1 || error2) {
+        throw new Error(`Supabase query failed: ${(error1 || error2).message}`);
+      }
+
+      members = [...(feb28Members || []), ...(feb29Members || [])];
+      console.log(`Feb 28 (non-leap year): celebrating both Feb 28 and Feb 29 anniversaries`);
+    } else {
+      // Normal query for today's date
+      const { data: queryMembers, error } = await supabase
+        .from('members')
+        .select('wom_id, name, wom_name, join_date')
+        .filter('join_date::text', 'ilike', `%-${monthDay}`);
+
+      if (error) {
+        throw new Error(`Supabase query failed: ${error.message}`);
+      }
+
+      members = queryMembers;
     }
-    
+
     if (!members || members.length === 0) {
       console.log('No anniversaries today.');
       return { success: true, message: 'No anniversaries today' };
@@ -50,7 +76,12 @@ async function sendAnniversaries() {
       const todayMonthDay = `${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
 
       // The database query already filters by month-day, but we verify here for safety
-      if (joinMonthDay !== todayMonthDay) {
+      // Special case: Feb 29 anniversaries are celebrated on Feb 28 in non-leap years
+      const isMatchingAnniversary =
+        joinMonthDay === todayMonthDay ||
+        (joinMonthDay === '02-29' && todayMonthDay === '02-28' && !isLeapYear(today.getUTCFullYear()));
+
+      if (!isMatchingAnniversary) {
         return null;
       }
 
