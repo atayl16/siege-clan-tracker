@@ -145,8 +145,8 @@ describe('stringUtils', () => {
       });
 
       it('handles empty object', () => {
-        // {} is truthy, so toString() will be called
-        expect(titleize({})).toBe('[object Object]');
+        // Non-string types should return '-'
+        expect(titleize({})).toBe('-');
       });
     });
   });
