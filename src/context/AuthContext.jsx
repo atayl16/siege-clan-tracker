@@ -45,12 +45,31 @@ export function AuthProvider({ children }) {
             }
             fetchUserClaims(data.id);
           } else {
-            logout();
+            // Session invalid - clear everything
+            localStorage.removeItem("adminAuth");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("user");
+            localStorage.removeItem("useServiceRole");
+            setUser(null);
+            setIsAuthenticated(false);
           }
         } catch (err) {
           console.error("Session check error:", err);
-          logout();
+          // Clear invalid session
+          localStorage.removeItem("adminAuth");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("user");
+          localStorage.removeItem("useServiceRole");
+          setUser(null);
+          setIsAuthenticated(false);
         }
+      } else {
+        // No userId - clear any stale data
+        localStorage.removeItem("adminAuth");
+        localStorage.removeItem("user");
+        localStorage.removeItem("useServiceRole");
+        setUser(null);
+        setIsAuthenticated(false);
       }
 
       setLoading(false);
@@ -504,19 +523,15 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);
+
+    // Sign out from Supabase auth as well
+    supabase.auth.signOut();
   };
 
-  const isAdmin = () => {
-    return isAuthenticated;
-  };
-
-  const isLoggedIn = () => {
-    return isAuthenticated || user !== null;
-  };
-
-  const isLoggedOut = () => {
-    return !isAuthenticated && user === null;
-  };
+  // Computed values instead of functions - more React-like
+  const isAdmin = user?.is_admin === true;
+  const isLoggedIn = user !== null;
+  const isLoggedOut = user === null;
 
   return (
     <AuthContext.Provider

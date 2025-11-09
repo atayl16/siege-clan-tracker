@@ -316,7 +316,7 @@ export default function AdminPage() {
     }
   };
 
-  if (!isAuthenticated || !isAdmin()) {
+  if (!isAdmin) {
     return (
       <EmptyState
         title="Access Restricted"
