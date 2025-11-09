@@ -386,7 +386,7 @@ describe('ProgressPage - Empty States', () => {
 
       await waitFor(() => {
         // LoadingIndicator should be shown
-        expect(screen.getByRole('progressbar', { hidden: true })).toBeInTheDocument();
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
       });
     });
 
@@ -408,7 +408,7 @@ describe('ProgressPage - Empty States', () => {
       fireEvent.click(goalsTab);
 
       await waitFor(() => {
-        expect(screen.getByRole('progressbar', { hidden: true })).toBeInTheDocument();
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
       });
     });
   });

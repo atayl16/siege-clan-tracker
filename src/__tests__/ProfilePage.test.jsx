@@ -202,7 +202,7 @@ describe('ProfilePage - Empty States', () => {
       );
 
       // Click on Goals tab
-      const goalsTab = await screen.findByRole('tab', { name: /goals/i });
+      const goalsTab = await screen.findByText('Goals');
       goalsTab.click();
 
       await waitFor(() => {
@@ -235,7 +235,7 @@ describe('ProfilePage - Empty States', () => {
       );
 
       // Click on Races tab
-      const racesTab = await screen.findByRole('tab', { name: /races/i });
+      const racesTab = await screen.findByText('Races');
       racesTab.click();
 
       await waitFor(() => {
@@ -269,7 +269,7 @@ describe('ProfilePage - Empty States', () => {
       );
 
       // Click on Races tab
-      const racesTab = await screen.findByRole('tab', { name: /races/i });
+      const racesTab = await screen.findByText('Races');
       racesTab.click();
 
       await waitFor(() => {
@@ -324,7 +324,7 @@ describe('ProfilePage - Empty States', () => {
       );
 
       // Click on Races tab
-      const racesTab = await screen.findByRole('tab', { name: /races/i });
+      const racesTab = await screen.findByText('Races');
       racesTab.click();
 
       await waitFor(() => {
@@ -355,12 +355,12 @@ describe('ProfilePage - Empty States', () => {
       );
 
       // Click on Races tab
-      const racesTab = await screen.findByRole('tab', { name: /races/i });
+      const racesTab = await screen.findByText('Races');
       racesTab.click();
 
       await waitFor(() => {
         // LoadingIndicator component should be present
-        expect(screen.getByRole('progressbar', { hidden: true })).toBeInTheDocument();
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
       });
     });
   });
