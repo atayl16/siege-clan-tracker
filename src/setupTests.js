@@ -2,18 +2,11 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
-
-// Only load testing-library/jest-dom in jsdom environment (not for node environment tests)
-if (typeof window !== 'undefined') {
-  await import('@testing-library/jest-dom');
-}
-
+import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-// Only mock Supabase client for jsdom environment (React component tests)
-if (typeof window !== 'undefined') {
-  // Mock src/supabaseClient.js
-  vi.mock('../supabaseClient', () => ({
+// Mock src/supabaseClient.js
+vi.mock('../supabaseClient', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(),
@@ -110,4 +103,3 @@ vi.mock('src/supabaseClient.js', () => ({
     rpc: vi.fn(),
   },
 }));
-}

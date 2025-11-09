@@ -8,7 +8,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/setupTests.js'],
     include: ['**/*.{test,spec}.{js,jsx}'],
     exclude: [
       'node_modules/',
@@ -16,9 +15,18 @@ export default defineConfig({
       'netlify/edge-functions/**',
     ],
     // Use node environment for netlify function tests (not jsdom)
+    // and use minimal setup file without React mocks
     environmentMatchGlobs: [
       ['netlify/functions/**/*.test.js', 'node'],
     ],
+    setupFiles: (filepath) => {
+      // Use minimal setup for netlify function tests (no React mocks)
+      if (filepath.includes('netlify/functions/')) {
+        return ['./netlify/functions/__tests__/setup.js'];
+      }
+      // Use React setup for component tests
+      return ['./src/setupTests.js'];
+    },
     css: true,
     coverage: {
       reporter: ['text', 'json', 'html'],
