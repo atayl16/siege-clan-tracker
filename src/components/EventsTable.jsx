@@ -17,7 +17,7 @@ export default function EventsTable({
 
   // Combine local events with WOM competitions
   const combinedEvents = useMemo(() => {
-    if (!includeWomCompetitions || !competitions) return events || [];
+    if (!includeWomCompetitions || !competitions || !Array.isArray(competitions)) return events || [];
 
     // Create a set of WOM IDs that are already in the database
     const existingWomIds = new Set();
