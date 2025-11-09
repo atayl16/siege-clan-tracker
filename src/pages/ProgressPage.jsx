@@ -46,8 +46,8 @@ export default function ProgressPage() {
     refreshRaces();
   };
 
-  const filteredPublicRaces = publicRaces.filter((race) => race.public === true);
-  const publicGoals = userGoals.filter((goal) => goal.public === true);
+  const filteredPublicRaces = (publicRaces || []).filter((race) => race.public === true);
+  const publicGoals = (userGoals || []).filter((goal) => goal.public === true);
 
   // Content for different tabs
   const renderTabContent = () => {
