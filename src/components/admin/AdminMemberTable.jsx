@@ -27,6 +27,7 @@ export default function AdminMemberTable({
     group,
     loading: womLoading,
     updateMember,
+    toggleMemberVisibility,
     refreshWomData,
   } = useData();
   const [expandedRow, setExpandedRow] = useState(null);

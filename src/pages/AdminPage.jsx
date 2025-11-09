@@ -6,6 +6,8 @@ import { useSearchParams } from "react-router-dom";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
+import AdminUserManager from "../components/admin/AdminUserManager";
+import ClaimRequestManager from "../components/ClaimRequestManager";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import RunewatchAlerts from "../components/RunewatchAlerts";
@@ -20,12 +22,14 @@ import EmptyState from "../components/ui/EmptyState";
 import Badge from "../components/ui/Badge";
 
 // Icons
-import { 
-  FaDownload, 
-  FaEraser, 
-  FaBell, 
-  FaUsers, 
-  FaExclamationTriangle 
+import {
+  FaDownload,
+  FaEraser,
+  FaBell,
+  FaUsers,
+  FaExclamationTriangle,
+  FaClipboardList,
+  FaUserShield
 } from "react-icons/fa";
 
 import "./AdminPage.css";
@@ -561,6 +565,28 @@ export default function AdminPage() {
                 </Card.Body>
               </Card>
             </div>
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="claim-requests" label="Claim Requests" icon={<FaClipboardList />}>
+          <div className="tab-content claim-requests-content">
+            <div className="content-header">
+              <h2>Claim Requests</h2>
+              <p>Manage user account claim requests</p>
+            </div>
+
+            <ClaimRequestManager />
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="user-management" label="User Management" icon={<FaUserShield />}>
+          <div className="tab-content user-management-content">
+            <div className="content-header">
+              <h2>User Management</h2>
+              <p>Manage admin users and permissions</p>
+            </div>
+
+            <AdminUserManager />
           </div>
         </Tabs.Tab>
       </Tabs>
