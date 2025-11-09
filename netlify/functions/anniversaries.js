@@ -11,13 +11,15 @@ async function sendAnniversaries() {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
     
-    // Get today's date in the format stored in your database
+    // Get today's date in UTC to ensure consistent timezone handling
     const today = new Date();
-    const monthDay = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
+    const monthDay = `${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
+
     console.log(`Checking for anniversaries on month-day: ${monthDay}`);
-    
+
     // Query members with anniversaries today
+    // Note: Members who joined on Feb 29 (leap day) will only have anniversaries
+    // on leap years. This is intentional to maintain exact date matching.
     const { data: members, error } = await supabase
       .from('members')
       .select('wom_id, name, wom_name, join_date')
@@ -36,18 +38,24 @@ async function sendAnniversaries() {
     const anniversaries = members.map(member => {
       const joinDate = new Date(member.join_date);
 
+      // Validate date is not invalid
+      if (isNaN(joinDate.getTime())) {
+        console.warn(`Invalid join_date for member ${member.wom_id}: ${member.join_date}`);
+        return null;
+      }
+
       // Verify the anniversary date has actually occurred
-      // Check if today's month and day match the join date's month and day
-      const joinMonthDay = `${String(joinDate.getMonth() + 1).padStart(2, '0')}-${String(joinDate.getDate()).padStart(2, '0')}`;
-      const todayMonthDay = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      // Check if today's month and day match the join date's month and day (using UTC)
+      const joinMonthDay = `${String(joinDate.getUTCMonth() + 1).padStart(2, '0')}-${String(joinDate.getUTCDate()).padStart(2, '0')}`;
+      const todayMonthDay = `${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
 
       // The database query already filters by month-day, but we verify here for safety
       if (joinMonthDay !== todayMonthDay) {
         return null;
       }
 
-      // Calculate years - safe now because we know it's the same month/day
-      const years = today.getFullYear() - joinDate.getFullYear();
+      // Calculate years using UTC for consistent timezone handling
+      const years = today.getUTCFullYear() - joinDate.getUTCFullYear();
 
       // Only include if it's at least 1 year
       return years >= 1 ? {

@@ -7,39 +7,48 @@ import "./AnniversaryBanner.css";
 export default function AnniversaryBanner() {
   const { members, loading } = useMembers();
 
-  // Calculate today's date (month and day)
+  // Calculate today's date (month and day) using UTC for consistent timezone handling
   const today = useMemo(() => {
     const now = new Date();
-    return { month: now.getMonth() + 1, day: now.getDate() };
+    return { month: now.getUTCMonth() + 1, day: now.getUTCDate() };
   }, []);
 
   // Filter members with anniversaries today
+  // Note: Members who joined on Feb 29 (leap day) will only have anniversaries
+  // on leap years. This is intentional to maintain exact date matching.
   const anniversaries = useMemo(() => {
     if (!members) return [];
-    
+
     const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    
+    const currentYear = currentDate.getUTCFullYear();
+
     return members
       .filter((member) => {
         if (!member.join_date) return false;
-        
+
         const joinDate = new Date(member.join_date);
-        const joinYear = joinDate.getFullYear();
-        
-        // Check if it's the same month and day (anniversary)
-        const isSameMonthAndDay = 
-          joinDate.getMonth() + 1 === today.month &&
-          joinDate.getDate() === today.day;
-          
+
+        // Validate date is not invalid
+        if (isNaN(joinDate.getTime())) {
+          console.warn(`Invalid join_date for member ${member.wom_id}: ${member.join_date}`);
+          return false;
+        }
+
+        const joinYear = joinDate.getUTCFullYear();
+
+        // Check if it's the same month and day (anniversary) using UTC
+        const isSameMonthAndDay =
+          joinDate.getUTCMonth() + 1 === today.month &&
+          joinDate.getUTCDate() === today.day;
+
         // Exclude members who joined today (same year, month, and day)
         const isNotToday = !(isSameMonthAndDay && joinYear === currentYear);
-        
+
         return isSameMonthAndDay && isNotToday;
       })
       .map((member) => {
         const joinDate = new Date(member.join_date);
-        const years = currentDate.getFullYear() - joinDate.getFullYear();
+        const years = currentDate.getUTCFullYear() - joinDate.getUTCFullYear();
         return { ...member, years };
       });
   }, [members, today]);
