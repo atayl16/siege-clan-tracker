@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@sentry/react": "^10.24.0",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.71.5",
     "@tanstack/react-query-devtools": "^5.71.5",

@@ -32,3 +32,6 @@ yarn-error.log*
 supabase/staging-seeds/*.json
 supabase/production-*.sql
 supabase/backup-*.sql
+
+# Local planning docs
+tasks.md
