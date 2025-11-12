@@ -35,7 +35,7 @@ jobs:
           node-version: '20'
           
       - name: Install dependencies
-        run: npm ci --omit=optional
+        run: npm ci --force
         
       - name: Run WOM Sync
         if: ${{ github.event.inputs.job_to_run == 'wom-sync' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}

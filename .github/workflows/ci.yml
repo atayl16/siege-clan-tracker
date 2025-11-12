@@ -22,7 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --omit=optional
+        run: npm ci --force
 
       - name: Run tests
         run: npm test
@@ -49,7 +49,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --omit=optional
+        run: npm ci --force
 
       - name: Check for linting errors
         run: npm run lint --if-present
