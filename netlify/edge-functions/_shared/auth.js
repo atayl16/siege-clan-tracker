@@ -37,49 +37,18 @@ function constantTimeEqual(a, b) {
  * Check if a request is authorized
  *
  * Authorization logic:
- * 1. Same-origin requests are always allowed (frontend accessing its own API)
- * 2. Cross-origin requests require valid API key in x-api-key header
+ * All requests require valid API key in x-api-key header
+ * No origin-based bypasses to prevent header spoofing attacks
  *
  * @param {Request} request - The incoming request
  * @returns {{ authorized: boolean, reason?: string }} Authorization result
  */
 export function checkAuth(request) {
-  // Get origin from request headers
-  const origin = request.headers.get('Origin') || request.headers.get('Referer');
-  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://www.siege-clan.com';
-
-  // Allow same-origin requests without API key
-  if (origin) {
-    try {
-      const originUrl = new URL(origin);
-      const allowedUrl = new URL(allowedOrigin);
-
-      // Normalize hostnames by removing www. prefix for comparison
-      const normalizeHostname = (hostname) => hostname.replace(/^www\./, '');
-      const originHostname = normalizeHostname(originUrl.hostname);
-      const allowedHostname = normalizeHostname(allowedUrl.hostname);
-
-      // Allow Netlify deploy previews and localhost
-      const isNetlifyDeploy = originHostname.endsWith('.netlify.app');
-      const isLocalhost = originHostname === 'localhost' || originHostname === '127.0.0.1';
-
-      // Match normalized hostnames (allows both www and non-www) OR Netlify deploys OR localhost
-      if (isNetlifyDeploy || isLocalhost ||
-          (originHostname === allowedHostname &&
-          (originUrl.port || (originUrl.protocol === 'https:' ? '443' : '80')) ===
-          (allowedUrl.port || (allowedUrl.protocol === 'https:' ? '443' : '80')))) {
-        return { authorized: true };
-      }
-    } catch (e) {
-      // Invalid URL format, fall through to API key check
-    }
-  }
-
-  // Cross-origin requests require API key
+  // All requests require API key - no origin-based bypass
   const apiKey = request.headers.get('x-api-key');
   const expectedKey = Deno.env.get('API_KEY');
 
-  // If no API key is configured, deny all cross-origin requests
+  // If no API key is configured, deny all requests
   if (!expectedKey) {
     return {
       authorized: false,

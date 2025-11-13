@@ -477,7 +477,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
@@ -487,7 +487,12 @@ export function AuthProvider({ children }) {
     setUserClaims([]);
 
     // Sign out from Supabase auth as well
-    supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if Supabase signOut fails
+    }
   };
 
   // Computed values instead of functions - more React-like

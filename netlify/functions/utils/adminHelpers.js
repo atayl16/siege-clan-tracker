@@ -15,8 +15,8 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
  * @returns {Object} CORS headers
  */
 function getCorsHeaders(requestOrigin) {
-  const isAllowedOrigin = ALLOWED_ORIGINS.includes(requestOrigin) ||
-                          requestOrigin?.endsWith('.netlify.app');
+  // Only allow explicitly listed origins - no wildcards
+  const isAllowedOrigin = ALLOWED_ORIGINS.includes(requestOrigin);
 
   // Defensive check for empty ALLOWED_ORIGINS
   const fallbackOrigin = ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS[0] : 'http://localhost:5173';
@@ -47,8 +47,7 @@ function handlePreflight(event) {
  * Validate that the request has proper authentication and admin privileges
  *
  * Authorization logic:
- * 1. Same-origin requests are always allowed (frontend accessing its own API)
- * 2. Cross-origin requests require valid JWT Bearer token
+ * All requests require valid JWT Bearer token - no origin-based bypass
  *
  * @param {Object} event - Netlify function event
  * @returns {Promise<Object|null>} Error response if invalid, null if valid
@@ -56,44 +55,7 @@ function handlePreflight(event) {
 async function validateAuth(event) {
   const origin = event.headers.origin || event.headers.Origin;
 
-  // Allow same-origin requests without authentication
-  // This matches the edge function authentication pattern
-  if (origin) {
-    try {
-      const originUrl = new URL(origin);
-      const originHostname = originUrl.hostname;
-
-      // Allow Netlify deploy previews and localhost
-      const isNetlifyDeploy = originHostname.endsWith('.netlify.app');
-      const isLocalhost = originHostname === 'localhost' || originHostname === '127.0.0.1';
-
-      if (isNetlifyDeploy || isLocalhost) {
-        console.log('Allowing same-origin request from:', origin);
-        return null;
-      }
-
-      // Check if origin matches production domain
-      const allowedOrigin = process.env.ALLOWED_ORIGIN || process.env.URL || 'https://www.siege-clan.com';
-      if (allowedOrigin) {
-        const allowedUrl = new URL(allowedOrigin);
-
-        // Normalize hostnames by removing www. prefix for comparison
-        const normalizeHostname = (hostname) => hostname.replace(/^www\./, '');
-        const normalizedOrigin = normalizeHostname(originHostname);
-        const normalizedAllowed = normalizeHostname(allowedUrl.hostname);
-
-        if (normalizedOrigin === normalizedAllowed) {
-          console.log('Allowing same-origin request from production domain:', origin);
-          return null;
-        }
-      }
-    } catch (e) {
-      // Invalid URL format, fall through to token check
-      console.error('Invalid origin URL format:', e);
-    }
-  }
-
-  // Cross-origin requests require Authorization header
+  // All requests require Authorization header - no origin-based bypass
   const authHeader = event.headers.authorization || event.headers.Authorization;
 
   if (!authHeader) {

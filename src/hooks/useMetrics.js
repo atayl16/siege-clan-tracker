@@ -1,17 +1,10 @@
 import useSWR from "swr";
-
-const fetcher = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
+import { jsonFetcher } from "../utils/fetchers";
 
 export function useMetrics(playerId, metricType = null) {
   const { data, error } = useSWR(
     playerId ? `/api/pwom-player?id=${playerId}` : null,
-    fetcher,
+    jsonFetcher,
     { refreshInterval: 300000, dedupingInterval: 60000 }
   );
 

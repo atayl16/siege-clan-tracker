@@ -1,16 +1,10 @@
 import useSWR from "swr";
+import { jsonFetcher } from "../utils/fetchers";
 
-const fetcher = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
 export function usePlayer(id) {
   const { data, error, mutate } = useSWR(
     id ? `/api/wom-player?id=${id}` : null,
-    fetcher,
+    jsonFetcher,
     {
       refreshInterval: 300000,
       dedupingInterval: 60000,

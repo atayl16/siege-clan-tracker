@@ -1,9 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Remove problematic Supabase auth creation for hardcoded admin\n\nThe hardcoded admin is a backdoor that should bypass Supabase auth\nentirely. Removed code that was trying to create a Supabase auth\nsession for the admin, which was causing login failures.\n\nResolves admin login issues where Supabase was rejecting the admin\nemail and causing database constraint errors.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Allow Netlify deploy previews and localhost in edge function auth\n\nUpdate checkAuth to allow requests from:\n- Netlify deploy preview URLs (*.netlify.app)\n- Localhost for local development\n- Production domain (existing behavior)\n\nResolves 401 errors when testing on deploy preview URLs.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(node scripts/staging/export-production-data.js:*)",
+      "Bash(npm install:*)",
+      "Bash(node scripts/staging/seed-staging-database.js:*)",
+      "Bash(supabase link:*)",
+      "Bash(cat:*)",
+      "Bash(supabase db push:*)",
+      "Bash(./supabase/verify-setup.sh:*)",
+      "Bash(echo:*)",
+      "Bash(npm run dev:staging:*)",
+      "Bash(npm start)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ci:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

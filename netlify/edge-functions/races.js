@@ -13,6 +13,71 @@ export default async (request, _context) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
+  // Initialize Supabase client
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Handle POST request to create a new race
+  if (request.method === "POST") {
+    try {
+      const raceData = await request.json();
+
+      // Validate required fields
+      if (!raceData.creator_id || !raceData.title || !raceData.participants) {
+        return new Response(
+          JSON.stringify({ error: "Missing required fields: creator_id, title, and participants" }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Insert the race
+      const { data: race, error: raceError } = await supabase
+        .from("races")
+        .insert([
+          {
+            creator_id: raceData.creator_id,
+            title: raceData.title,
+            description: raceData.description || null,
+            public: raceData.public || false,
+            end_date: raceData.end_date || null,
+          },
+        ])
+        .select()
+        .single();
+
+      if (raceError) throw raceError;
+
+      // Insert race participants
+      const participantsToInsert = raceData.participants.map((p) => ({
+        race_id: race.id,
+        wom_id: p.wom_id,
+        player_name: p.player_name,
+        metric: p.metric,
+        target_value: p.target_value,
+      }));
+
+      const { error: participantsError } = await supabase
+        .from("race_participants")
+        .insert(participantsToInsert);
+
+      if (participantsError) throw participantsError;
+
+      return new Response(JSON.stringify(race), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("Error creating race:", error);
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Handle GET request to fetch races
   console.log("Fetching races data from Supabase...");
 
   // Cache for 5 minutes
@@ -34,9 +99,6 @@ export default async (request, _context) => {
   }
 
   try {
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
     // Get only necessary fields instead of '*'
     const { data, error } = await supabase
       .from("races")

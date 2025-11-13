@@ -1,15 +1,8 @@
 import useSWR from "swr";
-
-const fetcher = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  return res.json();
-};
+import { jsonFetcher } from "../utils/fetchers";
 
 export function useRaces(userId) {
-  const { data, error, mutate } = useSWR("/api/races", fetcher, {
+  const { data, error, mutate } = useSWR("/api/races", jsonFetcher, {
     refreshInterval: 60000,
     dedupingInterval: 30000,
     revalidateOnMount: true,
@@ -23,6 +16,29 @@ export function useRaces(userId) {
 
   const publicRaces = data?.filter(race => race.public === true) || [];
 
+  // Function to create a new race
+  const createRace = async (raceData) => {
+    const res = await fetch("/api/races", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(raceData),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+    }
+
+    const newRace = await res.json();
+
+    // Revalidate the SWR cache to include the new race
+    mutate();
+
+    return newRace;
+  };
+
   return {
     races: data,
     activeRaces,
@@ -30,6 +46,7 @@ export function useRaces(userId) {
     loading: !data && !error,
     error,
     refreshRaces: mutate,
+    createRace,
   };
 }
 
