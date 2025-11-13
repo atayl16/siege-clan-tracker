@@ -32,6 +32,46 @@ export function useClaimRequests(userId) {
     return newRequest;
   };
 
+  // Function to process (approve/deny) a claim request
+  const processRequest = async (requestId, action, adminNotes, userId, womId) => {
+    try {
+      // Update the request status
+      const { error: updateError } = await supabase
+        .from("claim_requests")
+        .update({
+          status: action,
+          admin_notes: adminNotes || null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", requestId);
+
+      if (updateError) {
+        throw new Error(updateError.message || "Failed to update request status");
+      }
+
+      // If approved, create the player claim
+      if (action === "approved" && userId && womId) {
+        const { error: claimError } = await supabase
+          .from("player_claims")
+          .insert([{
+            user_id: userId,
+            wom_id: womId,
+          }]);
+
+        if (claimError) {
+          throw new Error(claimError.message || "Failed to create player claim");
+        }
+      }
+
+      // Refresh the data
+      mutate();
+      return true;
+    } catch (error) {
+      console.error("Error processing request:", error);
+      throw error;
+    }
+  };
+
   return {
     requests: data || [], // Export as "requests" for ClaimPlayer component
     claimRequests: data || [], // Keep for backwards compatibility
@@ -41,5 +81,6 @@ export function useClaimRequests(userId) {
     refresh: mutate,
     refreshUserClaims: mutate,
     createClaimRequest,
+    processRequest,
   };
 }

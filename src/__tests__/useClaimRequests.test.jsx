@@ -72,6 +72,15 @@ describe('useClaimRequests Hook', () => {
     });
   });
 
+  it('should export processRequest function', async () => {
+    const { result } = renderHook(() => useClaimRequests());
+
+    await waitFor(() => {
+      expect(result.current.processRequest).toBeDefined();
+      expect(typeof result.current.processRequest).toBe('function');
+    });
+  });
+
   it('should export loading state', async () => {
     const { result } = renderHook(() => useClaimRequests());
 
@@ -177,5 +186,16 @@ describe('useClaimRequests Hook', () => {
     expect(Array.isArray(result.current.requests)).toBe(true);
     expect(Array.isArray(result.current.claimRequests)).toBe(true);
     expect(Array.isArray(result.current.userClaims)).toBe(true);
+  });
+
+  it('should export all required functions for ClaimRequestManager', async () => {
+    const { result } = renderHook(() => useClaimRequests());
+
+    await waitFor(() => {
+      // Verify functions that ClaimRequestManager and ClaimRequestsPreview expect
+      expect(typeof result.current.createClaimRequest).toBe('function');
+      expect(typeof result.current.processRequest).toBe('function');
+      expect(typeof result.current.refresh).toBe('function');
+    });
   });
 });
