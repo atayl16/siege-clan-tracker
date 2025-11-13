@@ -32,6 +32,39 @@ export default async (request, _context) => {
         );
       }
 
+      // Validate participants array
+      if (!Array.isArray(raceData.participants) || raceData.participants.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "participants must be a non-empty array" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate each participant has required fields
+      for (const p of raceData.participants) {
+        if (!p.wom_id || !p.player_name || !p.metric || p.target_value === undefined) {
+          return new Response(
+            JSON.stringify({
+              error: "Each participant must have wom_id, player_name, metric, and target_value"
+            }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+
+        // Validate target_value is a positive number
+        if (typeof p.target_value !== 'number' || p.target_value <= 0) {
+          return new Response(
+            JSON.stringify({ error: "target_value must be a positive number" }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      // TODO: Add creator_id authorization check
+      // Currently, API key authentication doesn't provide user context.
+      // Consider extracting user ID from JWT token or custom header to verify
+      // that creator_id matches the authenticated user.
+
       // Insert the race
       const { data: race, error: raceError } = await supabase
         .from("races")
@@ -49,7 +82,7 @@ export default async (request, _context) => {
 
       if (raceError) throw raceError;
 
-      // Insert race participants
+      // Insert race participants with atomic rollback on failure
       const participantsToInsert = raceData.participants.map((p) => ({
         race_id: race.id,
         wom_id: p.wom_id,
@@ -62,7 +95,18 @@ export default async (request, _context) => {
         .from("race_participants")
         .insert(participantsToInsert);
 
-      if (participantsError) throw participantsError;
+      // If participants insertion fails, rollback the race creation
+      if (participantsError) {
+        console.error("Failed to insert participants, rolling back race:", participantsError);
+
+        // Delete the orphaned race
+        await supabase
+          .from("races")
+          .delete()
+          .eq("id", race.id);
+
+        throw new Error(`Failed to create race: ${participantsError.message}`);
+      }
 
       return new Response(JSON.stringify(race), {
         status: 201,
