@@ -1,9 +1,22 @@
 import useSWR from "swr";
-import { jsonFetcher } from "../utils/fetchers";
 import { supabase } from "../supabaseClient";
 
+// Fetcher function that queries Supabase directly
+const claimRequestsFetcher = async () => {
+  const { data, error } = await supabase
+    .from("claim_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch claim requests");
+  }
+
+  return data;
+};
+
 export function useClaimRequests(userId) {
-  const { data, error, mutate } = useSWR("/api/claim-requests", jsonFetcher, {
+  const { data, error, mutate } = useSWR("claim-requests", claimRequestsFetcher, {
     refreshInterval: 60000,
     dedupingInterval: 30000,
     revalidateOnMount: true,
