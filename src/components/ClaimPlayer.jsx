@@ -38,7 +38,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     members: availableMembers,
     loading: membersLoading,
     error: membersError,
-    refresh: refreshAvailableMembers,
+    refreshMembers: refreshAvailableMembers,
   } = useMembers();
 
   // Get fresh data when switching tabs
