@@ -33,6 +33,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run src/__tests__/*.integration.test.jsx",
     "netlify:dev": "netlify dev",
     "netlify:build": "netlify build",
     "netlify:deploy": "netlify deploy",
