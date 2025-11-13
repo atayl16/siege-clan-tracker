@@ -128,7 +128,7 @@ export function AuthProvider({ children }) {
       if (data.password_hash === inputPasswordHash) {
         // CRITICAL: Create a proper Supabase session
         const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@siegeclantracker.test`,
+          email: `${username.trim().toLowerCase()}@siege-clan.com`,
           password: password
         });
         
@@ -324,7 +324,7 @@ export function AuthProvider({ children }) {
   
       // First create the user in auth system
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@siegeclantracker.test`,
+        email: `${username.trim().toLowerCase()}@siege-clan.com`,
         password: password,
       });
   
