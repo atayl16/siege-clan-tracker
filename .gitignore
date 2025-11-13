@@ -35,3 +35,6 @@ supabase/backup-*.sql
 
 # Local planning docs
 tasks.md
+
+# AI specific files
+.claude/settings.local.json
