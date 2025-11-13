@@ -18,7 +18,13 @@
       "Bash(npm audit:*)",
       "Bash(npm run build:*)",
       "Bash(npm ci:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Change email domain to resolve registration validation error\n\nUpdated email domain from @example.com to @siegeclantracker.test to fix\nSupabase rejecting registrations. The @example.com domain is reserved/blocked\nby Supabase''s email validation. Also enabled email autoconfirm in local config.\n\nFixes registration error: \"Email address 'username@example.com' is invalid\"\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(npm test:*)",
+      "Bash(done)",
+      "Bash(git push:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [],
     "ask": []

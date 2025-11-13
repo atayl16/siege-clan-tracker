@@ -20,6 +20,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [userClaims, setUserClaims] = useState([]);
 
+  // Helper function to clear session data
+  const clearSession = () => {
+    localStorage.removeItem("adminAuth");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("user");
+    localStorage.removeItem("useServiceRole");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   // Load user session on initial render
   useEffect(() => {
     const checkSession = async () => {
@@ -46,30 +56,16 @@ export function AuthProvider({ children }) {
             fetchUserClaims(data.id);
           } else {
             // Session invalid - clear everything
-            localStorage.removeItem("adminAuth");
-            localStorage.removeItem("userId");
-            localStorage.removeItem("user");
-            localStorage.removeItem("useServiceRole");
-            setUser(null);
-            setIsAuthenticated(false);
+            clearSession();
           }
         } catch (err) {
           console.error("Session check error:", err);
           // Clear invalid session
-          localStorage.removeItem("adminAuth");
-          localStorage.removeItem("userId");
-          localStorage.removeItem("user");
-          localStorage.removeItem("useServiceRole");
-          setUser(null);
-          setIsAuthenticated(false);
+          clearSession();
         }
       } else {
         // No userId - clear any stale data
-        localStorage.removeItem("adminAuth");
-        localStorage.removeItem("user");
-        localStorage.removeItem("useServiceRole");
-        setUser(null);
-        setIsAuthenticated(false);
+        clearSession();
       }
 
       setLoading(false);
