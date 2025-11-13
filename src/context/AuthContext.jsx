@@ -118,17 +118,17 @@ export function AuthProvider({ children }) {
         .select("*")
         .eq("username", username.trim().toLowerCase())
         .single();
-  
+
       if (error) {
         return { error: "Invalid credentials" };
       }
-  
+
       // Verify password
       const inputPasswordHash = await sha256(password);
       if (data.password_hash === inputPasswordHash) {
         // CRITICAL: Create a proper Supabase session
         const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@example.com`,
+          email: `${username.trim().toLowerCase()}@siegeclantracker.test`,
           password: password
         });
         
@@ -324,7 +324,7 @@ export function AuthProvider({ children }) {
   
       // First create the user in auth system
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@example.com`,
+        email: `${username.trim().toLowerCase()}@siegeclantracker.test`,
         password: password,
       });
   
