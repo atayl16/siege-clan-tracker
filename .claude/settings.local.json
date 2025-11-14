@@ -24,7 +24,12 @@
       "Bash(npm test:*)",
       "Bash(done)",
       "Bash(git push:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(supabase migration:*)",
+      "Bash(supabase db execute:*)",
+      "Bash(supabase db psql:*)",
+      "Bash(supabase db pull:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

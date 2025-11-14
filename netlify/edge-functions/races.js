@@ -60,10 +60,33 @@ export default async (request, _context) => {
         }
       }
 
-      // TODO: Add creator_id authorization check
-      // Currently, API key authentication doesn't provide user context.
-      // Consider extracting user ID from JWT token or custom header to verify
-      // that creator_id matches the authenticated user.
+      // Authorization check: Verify creator_id matches authenticated user
+      // Try to get user from Authorization Bearer token
+      const authHeader = request.headers.get("Authorization");
+      let authenticatedUserId = null;
+
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY"));
+        const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+
+        if (!authError && user) {
+          authenticatedUserId = user.id;
+        }
+      }
+
+      // If no valid auth token or user ID doesn't match creator_id, deny
+      if (!authenticatedUserId || authenticatedUserId !== raceData.creator_id) {
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized: You can only create races for yourself"
+          }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
 
       // Insert the race
       const { data: race, error: raceError } = await supabase
@@ -83,12 +106,16 @@ export default async (request, _context) => {
       if (raceError) throw raceError;
 
       // Insert race participants with atomic rollback on failure
+      // Note: start_value and current_value will be populated by a background job
+      // that fetches current stats from WOM API. For now, initialize to 0.
       const participantsToInsert = raceData.participants.map((p) => ({
         race_id: race.id,
         wom_id: p.wom_id,
         player_name: p.player_name,
         metric: p.metric,
         target_value: p.target_value,
+        start_value: 0,
+        current_value: 0,
       }));
 
       const { error: participantsError } = await supabase

@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { jsonFetcher } from "../utils/fetchers";
+import { supabase } from "../supabaseClient";
 
 export function useRaces(userId) {
   const { data, error, mutate } = useSWR("/api/races", jsonFetcher, {
@@ -18,11 +19,22 @@ export function useRaces(userId) {
 
   // Function to create a new race
   const createRace = async (raceData) => {
+    // Get the current session token for authorization
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    // Add Authorization header if we have a token
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch("/api/races", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(raceData),
     });
 
