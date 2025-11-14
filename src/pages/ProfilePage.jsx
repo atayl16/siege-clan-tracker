@@ -55,12 +55,11 @@ function CharacterGoalCard({ claim, user }) {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, userClaims, fetchUserClaims } = useAuth();
   const [activeTab, setActiveTab] = useState("characters");
   const [showCreateRace, setShowCreateRace] = useState(false);
 
   // Use new hooks
-  const { userClaims, refreshUserClaims } = useClaimRequests(user?.id);
   const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id);
 
   // Handle creating a race
@@ -85,10 +84,10 @@ export default function ProfilePage() {
 
   // Fetch user claims when the user changes
   useEffect(() => {
-    if (user) {
-      refreshUserClaims();
+    if (user?.id) {
+      fetchUserClaims(user.id);
     }
-  }, [user, refreshUserClaims]);
+  }, [user?.id]);
 
   // Update goals effect
   useEffect(() => {
@@ -312,7 +311,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="claim-player-section">
-            <ClaimPlayer onRequestSubmitted={refreshUserClaims} />
+            <ClaimPlayer onRequestSubmitted={() => user?.id && fetchUserClaims(user.id)} />
           </div>
         </Tabs.Tab>
 

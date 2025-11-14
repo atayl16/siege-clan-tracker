@@ -31,16 +31,11 @@ const mockRace = {
 };
 
 let mockUseAuth = vi.fn();
-let mockUseClaimRequests = vi.fn();
 let mockUseRaces = vi.fn();
 
 // Mock all dependencies
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
-}));
-
-vi.mock('../hooks/useClaimRequests', () => ({
-  useClaimRequests: (userId) => mockUseClaimRequests(userId),
 }));
 
 vi.mock('../hooks/useRaces', () => ({
@@ -83,10 +78,10 @@ describe('ProfilePage - Empty States', () => {
 
   describe('Not Logged In State', () => {
     it('shows login prompt when user is not authenticated', () => {
-      mockUseAuth = vi.fn(() => ({ user: null }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: null,
         userClaims: [],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -109,10 +104,10 @@ describe('ProfilePage - Empty States', () => {
 
   describe('Empty Characters State', () => {
     it('shows empty state when user has no claimed characters', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -136,10 +131,10 @@ describe('ProfilePage - Empty States', () => {
     });
 
     it('shows empty state when userClaims is null', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: null,
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -159,10 +154,10 @@ describe('ProfilePage - Empty States', () => {
     });
 
     it('shows empty state when userClaims is undefined', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: undefined,
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -184,10 +179,10 @@ describe('ProfilePage - Empty States', () => {
 
   describe('Empty Goals State', () => {
     it('shows empty state in goals tab when user has no characters', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -217,10 +212,10 @@ describe('ProfilePage - Empty States', () => {
 
   describe('Empty Races State', () => {
     it('shows empty state when user has no races', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [mockClaim],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -251,10 +246,10 @@ describe('ProfilePage - Empty States', () => {
     });
 
     it('shows empty state when activeRaces is null', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [mockClaim],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: null,
@@ -280,10 +275,10 @@ describe('ProfilePage - Empty States', () => {
 
   describe('With Data States', () => {
     it('renders user profile with claimed characters', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [mockClaim],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
@@ -306,10 +301,10 @@ describe('ProfilePage - Empty States', () => {
     });
 
     it('renders user profile with active races', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [mockClaim],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [mockRace],
@@ -337,10 +332,10 @@ describe('ProfilePage - Empty States', () => {
 
   describe('Loading States', () => {
     it('shows loading indicator while races are loading', async () => {
-      mockUseAuth = vi.fn(() => ({ user: mockUser }));
-      mockUseClaimRequests = vi.fn(() => ({
+      mockUseAuth = vi.fn(() => ({
+        user: mockUser,
         userClaims: [mockClaim],
-        refreshUserClaims: vi.fn(),
+        fetchUserClaims: vi.fn(),
       }));
       mockUseRaces = vi.fn(() => ({
         activeRaces: [],
