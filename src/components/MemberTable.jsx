@@ -244,8 +244,8 @@ export default function MemberTable({ filteredMembers = null }) {
   const sortedMembers = useMemo(() => {
     if (!enhancedMembers) return [];
 
-    // Filter out hidden members
-    const visibleMembers = enhancedMembers.filter((member) => !member.hidden);
+    // Filter out hidden members and members who have left
+    const visibleMembers = enhancedMembers.filter((member) => !member.hidden && !member.left_date);
 
     // Then sort the visible members
     return [...visibleMembers].sort((a, b) => {
