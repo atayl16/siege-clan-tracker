@@ -284,7 +284,9 @@ describe('CreateRace Component', () => {
     });
 
     it('should disable submit button while submitting', async () => {
-      mockCreateRace.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+      mockCreateRace.mockImplementation(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      );
 
       render(
         <CreateRace
@@ -312,6 +314,10 @@ describe('CreateRace Component', () => {
 
       // Button should be disabled during submission
       expect(submitButton).toBeDisabled();
+
+      // Wait for the pending mutation to resolve before finishing the test
+      await waitFor(() => expect(mockCreateRace).toHaveBeenCalled());
+      await waitFor(() => expect(submitButton).not.toBeDisabled());
     });
   });
 
