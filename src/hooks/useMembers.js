@@ -51,6 +51,7 @@ export function useMembers() {
       const { data, error: fetchError } = await client
         .from('members')
         .select('*')
+        .is('left_date', null)
         .order('name');
       
       if (fetchError) {

@@ -5,9 +5,11 @@ vi.mock('../utils/supabaseClient', () => ({
   getAdminSupabaseClient: () => ({
     from: () => ({
       select: () => ({
-        order: () => Promise.resolve({
-          data: [{ id: 1, name: 'Test Member' }],
-          error: null,
+        is: () => ({
+          order: () => Promise.resolve({
+            data: [{ id: 1, name: 'Test Member' }],
+            error: null,
+          }),
         }),
       }),
     }),

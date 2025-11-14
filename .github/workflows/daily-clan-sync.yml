@@ -14,10 +14,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
           
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --force
               
       - name: Run Anniversary Notifications
         if: ${{ github.event.inputs.job_to_run == 'anniversaries' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}

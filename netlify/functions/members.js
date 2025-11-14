@@ -33,7 +33,8 @@ exports.handler = async function(event, context) {
     // Fetch data from Supabase
     const { data, error } = await supabase
       .from('members')
-      .select('*');
+      .select('*')
+      .is('left_date', null);
 
     if (error) throw error;
 
