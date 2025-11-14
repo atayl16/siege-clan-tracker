@@ -23,9 +23,9 @@ function calculateAnniversary(joinDate, currentDate = new Date()) {
   const join = new Date(joinDate);
   const today = new Date(currentDate);
 
-  // Get month-day for comparison (MM-DD format)
-  const joinMonthDay = `${String(join.getMonth() + 1).padStart(2, '0')}-${String(join.getDate()).padStart(2, '0')}`;
-  const todayMonthDay = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  // Get month-day for comparison (MM-DD format) using UTC to avoid timezone issues
+  const joinMonthDay = `${String(join.getUTCMonth() + 1).padStart(2, '0')}-${String(join.getUTCDate()).padStart(2, '0')}`;
+  const todayMonthDay = `${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
 
   // Not an anniversary if month/day don't match
   if (joinMonthDay !== todayMonthDay) {
@@ -33,7 +33,7 @@ function calculateAnniversary(joinDate, currentDate = new Date()) {
   }
 
   // Calculate years - safe now because we know it's the same month/day
-  let years = today.getFullYear() - join.getFullYear();
+  let years = today.getUTCFullYear() - join.getUTCFullYear();
 
   // Must be at least 1 year
   if (years < 1) {
