@@ -2,17 +2,23 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useRaces } from '../hooks/useRaces';
 import { supabase } from '../supabaseClient';
+import useSWR from 'swr';
 
-// Mock SWR
+// Create a mock mutate function that we can track
+const mockMutate = vi.fn();
+
+// Create a global state for SWR mock return values
+let mockSWRData = {
+  data: undefined,
+  error: undefined,
+  mutate: mockMutate,
+  isLoading: false,
+  isValidating: false,
+};
+
+// Mock SWR with proper implementation
 vi.mock('swr', () => ({
-  default: (key, fetcher, config) => {
-    const mockData = vi.mocked(global.fetch).mockResolvedValue;
-    return {
-      data: mockData ? JSON.parse(mockData) : undefined,
-      error: null,
-      mutate: vi.fn(),
-    };
-  },
+  default: vi.fn(() => mockSWRData),
 }));
 
 // Mock supabase
@@ -76,6 +82,11 @@ describe('useRaces Hook', () => {
       },
       error: null,
     });
+
+    // Reset SWR mock data to default state
+    mockSWRData.data = undefined;
+    mockSWRData.error = undefined;
+    mockSWRData.mutate = mockMutate;
   });
 
   afterEach(() => {
@@ -96,33 +107,29 @@ describe('useRaces Hook', () => {
     });
 
     it('should filter active races for creator', () => {
+      // Set mock data
+      mockSWRData.data = mockRaces;
+
       const { result } = renderHook(() => useRaces(mockUserId));
 
-      // Mock SWR data
-      result.current.races = mockRaces;
-
-      const activeRaces = mockRaces.filter(race =>
-        race.creator_id === mockUserId || race.participants?.some(p => p.user_id === mockUserId)
-      );
-
-      expect(activeRaces).toHaveLength(2);
-      expect(activeRaces[0].id).toBe(1); // Created by user
-      expect(activeRaces[1].id).toBe(3); // User is participant
+      expect(result.current.activeRaces).toHaveLength(2);
+      expect(result.current.activeRaces[0].id).toBe(1); // Created by user
+      expect(result.current.activeRaces[1].id).toBe(3); // User is participant
     });
 
     it('should filter public races', () => {
+      mockSWRData.data = mockRaces;
+
       const { result } = renderHook(() => useRaces(mockUserId));
 
-      result.current.races = mockRaces;
-
-      const publicRaces = mockRaces.filter(race => race.public === true);
-
-      expect(publicRaces).toHaveLength(1);
-      expect(publicRaces[0].id).toBe(2);
-      expect(publicRaces[0].public).toBe(true);
+      expect(result.current.publicRaces).toHaveLength(1);
+      expect(result.current.publicRaces[0].id).toBe(2);
+      expect(result.current.publicRaces[0].public).toBe(true);
     });
 
     it('should return empty arrays when no data', () => {
+      mockSWRData.data = undefined;
+
       const { result } = renderHook(() => useRaces(mockUserId));
 
       expect(result.current.activeRaces).toEqual([]);
@@ -130,9 +137,9 @@ describe('useRaces Hook', () => {
     });
 
     it('should return empty arrays when userId is null', () => {
-      const { result } = renderHook(() => useRaces(null));
+      mockSWRData.data = mockRaces;
 
-      result.current.races = mockRaces;
+      const { result } = renderHook(() => useRaces(null));
 
       expect(result.current.activeRaces).toEqual([]);
     });
@@ -238,12 +245,7 @@ describe('useRaces Hook', () => {
     });
 
     it('should call mutate after successful creation', async () => {
-      const mockMutate = vi.fn();
-      const { result } = renderHook(() => {
-        const hook = useRaces(mockUserId);
-        hook.refreshRaces = mockMutate;
-        return hook;
-      });
+      const { result } = renderHook(() => useRaces(mockUserId));
 
       const mockRaceData = {
         creator_id: mockUserId,
@@ -267,6 +269,9 @@ describe('useRaces Hook', () => {
 
   describe('Loading and Error States', () => {
     it('should indicate loading when data is not yet available', () => {
+      mockSWRData.data = undefined;
+      mockSWRData.error = undefined;
+
       const { result } = renderHook(() => useRaces(mockUserId));
 
       // SWR returns no data and no error initially
@@ -274,17 +279,19 @@ describe('useRaces Hook', () => {
     });
 
     it('should not indicate loading when data is available', () => {
-      const { result } = renderHook(() => useRaces(mockUserId));
+      mockSWRData.data = mockRaces;
+      mockSWRData.error = undefined;
 
-      result.current.races = mockRaces;
+      const { result } = renderHook(() => useRaces(mockUserId));
 
       expect(result.current.loading).toBe(false);
     });
 
     it('should not indicate loading when error occurs', () => {
-      const { result } = renderHook(() => useRaces(mockUserId));
+      mockSWRData.data = undefined;
+      mockSWRData.error = new Error('Failed to fetch');
 
-      result.current.error = new Error('Failed to fetch');
+      const { result } = renderHook(() => useRaces(mockUserId));
 
       expect(result.current.loading).toBe(false);
     });
