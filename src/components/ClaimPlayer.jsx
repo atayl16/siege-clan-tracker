@@ -39,7 +39,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     loading: membersLoading,
     error: membersError,
     refreshMembers: refreshAvailableMembers,
-  } = useMembers();
+  } = useMembers(true); // Exclude already-claimed members
 
   // Get fresh data when switching tabs
   useEffect(() => {

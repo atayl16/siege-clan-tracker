@@ -34,7 +34,7 @@ async function getAuthHeaders() {
   };
 }
 
-export function useMembers() {
+export function useMembers(excludeClaimed = false) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,21 +43,37 @@ export function useMembers() {
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Get the appropriate client based on admin status
       const client = getAdminSupabaseClient();
-      
+
       const { data, error: fetchError } = await client
         .from('members')
         .select('*')
         .is('left_date', null)
         .order('name');
-      
+
       if (fetchError) {
         throw fetchError;
       }
-      
+
+      // Filter out claimed members if requested
+      if (excludeClaimed) {
+        const { data: claimedPlayers, error: claimsError } = await client
+          .from('player_claims')
+          .select('wom_id');
+
+        if (claimsError) {
+          console.error('Error fetching claimed players:', claimsError);
+        } else {
+          const claimedIds = new Set(claimedPlayers.map(p => p.wom_id));
+          const availableMembers = data.filter(m => !claimedIds.has(m.wom_id));
+          setMembers(availableMembers);
+          return;
+        }
+      }
+
       setMembers(data);
     } catch (err) {
       console.error('Error fetching members:', err);
@@ -65,7 +81,7 @@ export function useMembers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [excludeClaimed]);
 
   // Create a new member
   const createMember = async (memberData) => {
