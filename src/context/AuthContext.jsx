@@ -34,7 +34,21 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const checkSession = async () => {
       // Try to restore session from storage
-      await supabase.auth.getSession();
+      const sessionResponse = await supabase.auth.getSession();
+      const session = sessionResponse?.data?.session;
+
+      // Check for hardcoded admin first
+      if (localStorage.getItem("adminAuth") === "true" && localStorage.getItem("useServiceRole") === "true") {
+        const adminUser = {
+          id: "admin",
+          username: "admin",
+          is_admin: true,
+        };
+        setUser(adminUser);
+        setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
 
       // Then proceed with your existing code...
       if (localStorage.getItem("userId")) {
@@ -63,6 +77,27 @@ export function AuthProvider({ children }) {
           // Clear invalid session
           clearSession();
         }
+      } else if (session) {
+        // Try to restore from Supabase session
+        try {
+          const { data, error } = await supabase
+            .from("users")
+            .select("*")
+            .eq("email", session.user.email)
+            .single();
+
+          if (data && !error) {
+            setUser(data);
+            localStorage.setItem("userId", data.id);
+            if (data.is_admin) {
+              setIsAuthenticated(true);
+              localStorage.setItem("adminAuth", "true");
+            }
+            fetchUserClaims(data.id);
+          }
+        } catch (err) {
+          console.error("Session restoration error:", err);
+        }
       } else {
         // No userId - clear any stale data
         clearSession();
@@ -72,6 +107,41 @@ export function AuthProvider({ children }) {
     };
 
     checkSession();
+
+    // Listen for auth state changes (only if available)
+    if (supabase.auth.onAuthStateChange) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          // User logged in via Supabase Auth
+          try {
+            const { data, error } = await supabase
+              .from("users")
+              .select("*")
+              .eq("email", session.user.email)
+              .single();
+
+            if (data && !error) {
+              setUser(data);
+              localStorage.setItem("userId", data.id);
+              if (data.is_admin) {
+                setIsAuthenticated(true);
+                localStorage.setItem("adminAuth", "true");
+              }
+              fetchUserClaims(data.id);
+            }
+          } catch (err) {
+            console.error("Auth state change error:", err);
+          }
+        } else if (localStorage.getItem("adminAuth") !== "true") {
+          // Only clear if not hardcoded admin
+          clearSession();
+        }
+      });
+
+      return () => {
+        subscription?.unsubscribe();
+      };
+    }
   }, []);
 
   // Admin login
