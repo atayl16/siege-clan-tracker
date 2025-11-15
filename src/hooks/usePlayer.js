@@ -1,9 +1,10 @@
 import useSWR from "swr";
-const fetcher = (url) => fetch(url).then((r) => r.json());
+import { jsonFetcher } from "../utils/fetchers";
+
 export function usePlayer(id) {
   const { data, error, mutate } = useSWR(
     id ? `/api/wom-player?id=${id}` : null,
-    fetcher,
+    jsonFetcher,
     {
       refreshInterval: 300000,
       dedupingInterval: 60000,

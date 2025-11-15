@@ -113,6 +113,21 @@ export default defineConfig(({ mode }) => {
       // Disable CSS minification (helps avoid the CSS Minimizer error)
       minify: false,
     },
+
+    // Test configuration
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/setupTests.js',
+      // Exclude integration tests from default test runs
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.{idea,git,cache,output,temp}/**',
+        '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+        '**/*.integration.test.{js,jsx,ts,tsx}' // Exclude integration tests
+      ],
+    },
   };
 });
 

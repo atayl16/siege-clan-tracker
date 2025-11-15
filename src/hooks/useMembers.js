@@ -4,7 +4,11 @@ import { supabase } from '../supabaseClient';
 
 /**
  * Get auth headers for admin API calls
- * Requires valid Supabase session token - validated by edge functions
+ *
+ * For same-origin requests (localhost, Netlify deploys), auth headers are optional
+ * since the Netlify Functions validateAuth allows same-origin without token.
+ *
+ * For Supabase-authenticated admins, includes Bearer token for cross-origin security.
  */
 async function getAuthHeaders() {
   // Check if user is logged in as admin
@@ -14,20 +18,24 @@ async function getAuthHeaders() {
     throw new Error('Admin authentication required');
   }
 
-  // Get the current session token from Supabase
+  // Try to get the current session token from Supabase
   const { data: { session } } = await supabase.auth.getSession();
 
+  // If no session (hardcoded admin), return empty headers
+  // Same-origin requests are allowed by validateAuth without authentication
   if (!session?.access_token) {
-    throw new Error('Missing Supabase session token for admin request');
+    console.log('No Supabase session - using same-origin authentication');
+    return {};
   }
 
+  // Return Bearer token for Supabase-authenticated admins
   return {
     'Authorization': `Bearer ${session.access_token}`,
   };
 }
 
-export function useMembers() {
-  const [members, setMembers] = useState(null);
+export function useMembers(excludeClaimed = false) {
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,21 +43,40 @@ export function useMembers() {
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Get the appropriate client based on admin status
       const client = getAdminSupabaseClient();
-      
+
       const { data, error: fetchError } = await client
         .from('members')
         .select('*')
         .is('left_date', null)
         .order('name');
-      
+
       if (fetchError) {
         throw fetchError;
       }
-      
+
+      // Filter out claimed members if requested
+      if (excludeClaimed) {
+        const { data: claimedPlayers, error: claimsError } = await client
+          .from('player_claims')
+          .select('wom_id');
+
+        if (claimsError) {
+          console.error('Error fetching claimed players:', claimsError);
+          // If we can't fetch claimed players, return all members
+          setMembers(data);
+          return;
+        }
+
+        const claimedIds = new Set(claimedPlayers?.map(p => p.wom_id) || []);
+        const availableMembers = data.filter(m => !claimedIds.has(m.wom_id));
+        setMembers(availableMembers);
+        return;
+      }
+
       setMembers(data);
     } catch (err) {
       console.error('Error fetching members:', err);
@@ -57,7 +84,7 @@ export function useMembers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [excludeClaimed]);
 
   // Create a new member
   const createMember = async (memberData) => {

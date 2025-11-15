@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
+import { useMembers } from "../hooks/useMembers";
 import { FaKey, FaCheckCircle, FaExclamationTriangle, FaCopy } from "react-icons/fa";
 
 // Import UI components
@@ -11,51 +12,15 @@ import FormInput from "./ui/FormInput";
 import "./GenerateClaimCode.css";
 
 export default function GenerateClaimCode() {
-  const [members, setMembers] = useState([]);
+  // Use the useMembers hook with excludeClaimed=true to get unclaimed members
+  const { members, loading: loadingMembers, error: membersError } = useMembers(true);
+
   const [loading, setLoading] = useState(false);
-  const [loadingMembers, setLoadingMembers] = useState(true);
   const [selectedMember, setSelectedMember] = useState("");
   const [expiryDays, setExpiryDays] = useState(30);
   const [generatedCode, setGeneratedCode] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
-  // Fetch available members
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        setLoadingMembers(true);
-        
-        // Get all members
-        const { data: allMembers, error: membersError } = await supabase
-          .from('members')
-          .select('wom_id, name')
-          .order('name');
-        
-        if (membersError) throw membersError;
-        
-        // Get already claimed players
-        const { data: claimedPlayers, error: claimsError } = await supabase
-          .from('player_claims')
-          .select('wom_id');
-          
-        if (claimsError) throw claimsError;
-        
-        // Filter out already claimed players
-        const claimedIds = new Set(claimedPlayers.map(p => p.wom_id));
-        const availableMembers = allMembers.filter(m => !claimedIds.has(m.wom_id));
-        
-        setMembers(availableMembers);
-      } catch (err) {
-        console.error("Error fetching members:", err);
-        setError("Failed to load members");
-      } finally {
-        setLoadingMembers(false);
-      }
-    };
-    
-    fetchMembers();
-  }, []);
 
   // Generate a random code
   const generateRandomCode = () => {
@@ -150,10 +115,10 @@ export default function GenerateClaimCode() {
         </Card.Header>
         
         <Card.Body>
-          {error && (
+          {(error || membersError) && (
             <div className="ui-message ui-message-error">
               <FaExclamationTriangle className="ui-message-icon" />
-              <span>{error}</span>
+              <span>{error || membersError?.message || "An error occurred"}</span>
             </div>
           )}
           
