@@ -116,7 +116,7 @@ export default function Navbar() {
             to="/progress"
             className={location.pathname === "/progress" ? "active" : ""}
           >
-            Races & Goals
+            Goals
           </Link>
 
           {/* Divider */}

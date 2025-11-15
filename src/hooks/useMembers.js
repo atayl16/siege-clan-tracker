@@ -5,10 +5,8 @@ import { supabase } from '../supabaseClient';
 /**
  * Get auth headers for admin API calls
  *
- * For same-origin requests (localhost, Netlify deploys), auth headers are optional
- * since the Netlify Functions validateAuth allows same-origin without token.
- *
- * For Supabase-authenticated admins, includes Bearer token for cross-origin security.
+ * Requires valid Supabase session token - validated by edge functions
+ * Admin must have a Supabase auth session to perform admin operations
  */
 async function getAuthHeaders() {
   // Check if user is logged in as admin
@@ -18,17 +16,14 @@ async function getAuthHeaders() {
     throw new Error('Admin authentication required');
   }
 
-  // Try to get the current session token from Supabase
+  // Get the current session token from Supabase
   const { data: { session } } = await supabase.auth.getSession();
 
-  // If no session (hardcoded admin), return empty headers
-  // Same-origin requests are allowed by validateAuth without authentication
   if (!session?.access_token) {
-    console.log('No Supabase session - using same-origin authentication');
-    return {};
+    throw new Error('Missing Supabase session token for admin request. Please log out and log back in.');
   }
 
-  // Return Bearer token for Supabase-authenticated admins
+  // Return Bearer token for admin operations
   return {
     'Authorization': `Bearer ${session.access_token}`,
   };
