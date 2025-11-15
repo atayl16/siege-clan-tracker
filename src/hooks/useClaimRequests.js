@@ -48,32 +48,33 @@ export function useClaimRequests(userId) {
   // Function to process (approve/deny) a claim request
   const processRequest = async (requestId, action, adminNotes, userId, womId) => {
     try {
-      // Update the request status
-      const { error: updateError } = await supabase
-        .from("claim_requests")
-        .update({
-          status: action,
-          admin_notes: adminNotes || null,
-          processed_at: new Date().toISOString(),
-        })
-        .eq("id", requestId);
+      // Call the edge function to process the request with service role
+      const API_KEY = import.meta.env.VITE_API_KEY;
 
-      if (updateError) {
-        throw new Error(updateError.message || "Failed to update request status");
+      const response = await fetch('/api/process-claim-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          requestId,
+          action,
+          adminNotes,
+          userId,
+          womId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to process request: ${response.status}`);
       }
 
-      // If approved, create the player claim
-      if (action === "approved" && userId && womId) {
-        const { error: claimError } = await supabase
-          .from("player_claims")
-          .insert([{
-            user_id: userId,
-            wom_id: womId,
-          }]);
+      const data = await response.json();
 
-        if (claimError) {
-          throw new Error(claimError.message || "Failed to create player claim");
-        }
+      if (!data.success) {
+        throw new Error("Failed to process request");
       }
 
       // Refresh the data
