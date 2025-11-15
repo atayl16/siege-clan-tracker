@@ -8,7 +8,8 @@ export function useMetrics(playerId, metricType = null) {
     { refreshInterval: 300000, dedupingInterval: 60000 }
   );
 
-  const loading = !error && !data;
+  // Only show loading if we have a playerId and are actually fetching
+  const loading = playerId && !error && !data;
 
   // Extract metrics by type
   const skills = data?.latestSnapshot?.data?.skills
