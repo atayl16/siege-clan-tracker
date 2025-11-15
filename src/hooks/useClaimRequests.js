@@ -3,22 +3,35 @@ import { supabase } from "../supabaseClient";
 
 // Fetcher function that queries Supabase directly
 const claimRequestsFetcher = async () => {
-  const { data, error } = await supabase
+  // Fetch claim requests
+  const { data: requests, error: requestsError } = await supabase
     .from("claim_requests")
-    .select("*, users!user_id(username)")
+    .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    throw new Error(error.message || "Failed to fetch claim requests");
+  if (requestsError) {
+    throw new Error(requestsError.message || "Failed to fetch claim requests");
   }
 
-  // Flatten the users object to username field for easier access
-  const flattenedData = data?.map(request => ({
+  // Fetch all users to get usernames
+  const { data: users, error: usersError } = await supabase
+    .from("users")
+    .select("id, username");
+
+  if (usersError) {
+    console.error("Error fetching users:", usersError);
+  }
+
+  // Create a map of user IDs to usernames
+  const userMap = new Map(users?.map(u => [u.id, u.username]) || []);
+
+  // Join the data
+  const enrichedRequests = requests?.map(request => ({
     ...request,
-    username: request.users?.username || null
+    username: userMap.get(request.user_id) || null
   }));
 
-  return flattenedData;
+  return enrichedRequests;
 };
 
 export function useClaimRequests(userId) {
