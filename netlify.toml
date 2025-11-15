@@ -4,11 +4,7 @@
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"  # Explicitly specify edge functions dir
 
-# Explicitly define edge functions
-[[edge_functions]]
-  path = "/api/wom-player"
-  function = "womPlayer"
-
+# Automatically map all edge functions in the folder
 [[edge_functions]]
   path = "/api/*"
   function = ":splat"
