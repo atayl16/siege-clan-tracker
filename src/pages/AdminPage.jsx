@@ -8,6 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import AdminMemberTable from "../components/admin/AdminMemberTable";
 import AdminUserManager from "../components/admin/AdminUserManager";
 import ClaimRequestManager from "../components/ClaimRequestManager";
+import GenerateClaimCode from "../components/GenerateClaimCode";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import RunewatchAlerts from "../components/RunewatchAlerts";
@@ -29,7 +30,8 @@ import {
   FaUsers,
   FaExclamationTriangle,
   FaClipboardList,
-  FaUserShield
+  FaUserShield,
+  FaKey
 } from "react-icons/fa";
 
 import "./AdminPage.css";
@@ -592,6 +594,17 @@ export default function AdminPage() {
             </div>
 
             <ClaimRequestManager />
+          </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="claim-codes" label="Generate Claim Codes" icon={<FaKey />}>
+          <div className="tab-content claim-codes-content">
+            <div className="content-header">
+              <h2>Generate Claim Codes</h2>
+              <p>Create claim codes for users to claim their OSRS characters</p>
+            </div>
+
+            <GenerateClaimCode />
           </div>
         </Tabs.Tab>
 
