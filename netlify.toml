@@ -7,7 +7,7 @@
 # Explicitly define edge functions
 [[edge_functions]]
   path = "/api/wom-player"
-  function = "wom-player"
+  function = "womPlayer"
 
 [[edge_functions]]
   path = "/api/*"
