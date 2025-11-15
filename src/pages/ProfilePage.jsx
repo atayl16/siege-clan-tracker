@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated hook
-import { useRaces } from "../hooks/useRaces"; // Updated hook
+// import { useRaces } from "../hooks/useRaces"; // Hidden until edge function issue resolved
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
@@ -19,8 +19,8 @@ import Tabs from "../components/ui/Tabs";
 import EmptyState from "../components/ui/EmptyState";
 import StatGroup from "../components/ui/StatGroup";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
-import RaceCard from "../components/RaceCard";
-import CreateRace from "../components/CreateRace";
+// import RaceCard from "../components/RaceCard"; // Hidden until edge function issue resolved
+// import CreateRace from "../components/CreateRace"; // Hidden until edge function issue resolved
 
 import "./ProfilePage.css";
 
@@ -57,11 +57,12 @@ function CharacterGoalCard({ claim, user }) {
 export default function ProfilePage() {
   const { user, userClaims, fetchUserClaims } = useAuth();
   const [activeTab, setActiveTab] = useState("characters");
-  const [showCreateRace, setShowCreateRace] = useState(false);
+  // const [showCreateRace, setShowCreateRace] = useState(false); // Hidden until edge function issue resolved
 
   // Use new hooks
-  const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id);
+  // const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id); // Hidden until edge function issue resolved
 
+  /* Hidden until edge function issue resolved
   // Handle creating a race
   const handleCreatedRace = () => {
     setShowCreateRace(false);
@@ -81,6 +82,7 @@ export default function ProfilePage() {
         );
       })
     : [];
+  */
 
   // Fetch user claims when the user changes
   useEffect(() => {
@@ -123,6 +125,7 @@ export default function ProfilePage() {
     );
   }
 
+  /* Hidden until edge function issue resolved
   const renderRacesTabContent = () => {
     if (racesLoading) {
       return <LoadingIndicator />;
@@ -176,6 +179,7 @@ export default function ProfilePage() {
       </>
     );
   };
+  */
 
   return (
     <div className="profile-container">
@@ -301,9 +305,11 @@ export default function ProfilePage() {
           )}
         </Tabs.Tab>
 
+        {/* Hidden until edge function issue resolved
         <Tabs.Tab tabId="races" label="Races" icon={<FaTrophy />}>
           <div className="player-races-section">{renderRacesTabContent()}</div>
         </Tabs.Tab>
+        */}
 
         <Tabs.Tab tabId="requests" label="Requests" icon={<FaClock />}>
           <div className="tab-header">
