@@ -3,7 +3,7 @@ import { jsonFetcher } from "../utils/fetchers";
 
 export function useMetrics(playerId, metricType = null) {
   const { data, error } = useSWR(
-    playerId ? `/api/pwom-player?id=${playerId}` : null,
+    playerId ? `/api/wom-player?id=${playerId}` : null,
     jsonFetcher,
     { refreshInterval: 300000, dedupingInterval: 60000 }
   );
