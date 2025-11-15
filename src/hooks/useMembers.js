@@ -66,12 +66,15 @@ export function useMembers(excludeClaimed = false) {
 
         if (claimsError) {
           console.error('Error fetching claimed players:', claimsError);
-        } else {
-          const claimedIds = new Set(claimedPlayers.map(p => p.wom_id));
-          const availableMembers = data.filter(m => !claimedIds.has(m.wom_id));
-          setMembers(availableMembers);
+          // If we can't fetch claimed players, return all members
+          setMembers(data);
           return;
         }
+
+        const claimedIds = new Set(claimedPlayers?.map(p => p.wom_id) || []);
+        const availableMembers = data.filter(m => !claimedIds.has(m.wom_id));
+        setMembers(availableMembers);
+        return;
       }
 
       setMembers(data);
