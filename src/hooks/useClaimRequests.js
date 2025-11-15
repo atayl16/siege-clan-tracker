@@ -5,14 +5,20 @@ import { supabase } from "../supabaseClient";
 const claimRequestsFetcher = async () => {
   const { data, error } = await supabase
     .from("claim_requests")
-    .select("*")
+    .select("*, users!user_id(username)")
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(error.message || "Failed to fetch claim requests");
   }
 
-  return data;
+  // Flatten the users object to username field for easier access
+  const flattenedData = data?.map(request => ({
+    ...request,
+    username: request.users?.username || null
+  }));
+
+  return flattenedData;
 };
 
 export function useClaimRequests(userId) {
