@@ -20,57 +20,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [userClaims, setUserClaims] = useState([]);
 
-  // Helper function to ensure admin user record exists in database
-  const ensureAdminUserRecord = async (supabaseAuthId, passwordHash) => {
-    try {
-      // Check if admin user record exists
-      const { data: existingAdmin, error: checkError} = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', 'admin')
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = not found
-        console.error("Error checking for admin user:", checkError);
-        return;
-      }
-
-      if (existingAdmin) {
-        // Update existing admin with supabase_auth_id if not set or different
-        if (existingAdmin.supabase_auth_id !== supabaseAuthId) {
-          const { error: updateError } = await supabase
-            .from('users')
-            .update({ supabase_auth_id: supabaseAuthId, is_admin: true })
-            .eq('username', 'admin');
-
-          if (updateError) {
-            console.error("Failed to update admin supabase_auth_id:", updateError);
-          } else {
-            console.log("Admin user updated with supabase_auth_id:", supabaseAuthId);
-          }
-        }
-      } else {
-        // Create admin user record
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([{
-            supabase_auth_id: supabaseAuthId,
-            username: 'admin',
-            password_hash: passwordHash,
-            is_admin: true
-          }]);
-
-        if (insertError) {
-          console.error("Failed to create admin user record:", insertError);
-        } else {
-          console.log("Admin user record created with supabase_auth_id:", supabaseAuthId);
-        }
-      }
-    } catch (error) {
-      console.error("Error in ensureAdminUserRecord:", error);
-    }
-  };
-
   // Helper function to clear session data
   const clearSession = () => {
     localStorage.removeItem("adminAuth");
@@ -225,61 +174,6 @@ export function AuthProvider({ children }) {
           username: "admin",
           is_admin: true,
         });
-
-        // CRITICAL: Create a Supabase auth session for the admin to get a valid JWT token
-        // This is required for edge functions that validate admin auth
-        try {
-          const adminEmail = import.meta.env.VITE_ADMIN_SUPABASE_EMAIL || "admin@siegeclan.org";
-          const adminPassword = import.meta.env.VITE_ADMIN_SUPABASE_PASSWORD;
-
-          if (!adminPassword) {
-            console.error("CRITICAL: VITE_ADMIN_SUPABASE_PASSWORD not configured in .env");
-            console.error("Admin operations will fail. Please add VITE_ADMIN_SUPABASE_PASSWORD to your .env file");
-            return { error: "Admin authentication not properly configured. Please contact system administrator." };
-          }
-
-          // Sign in to Supabase with admin credentials to get a valid JWT token
-          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: adminEmail,
-            password: adminPassword
-          });
-
-          if (signInError) {
-            console.log("Admin Supabase auth not found, attempting to create...");
-            // If sign-in fails, try to create the account (first time setup)
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: adminEmail,
-              password: adminPassword,
-              options: {
-                data: {
-                  is_admin: true
-                }
-              }
-            });
-
-            if (signUpError) {
-              console.error("Failed to create admin Supabase auth:", signUpError);
-              return { error: "Failed to establish admin session. Please check configuration." };
-            }
-
-            console.log("Admin Supabase auth created successfully");
-
-            // Use the new auth user ID
-            if (signUpData?.user?.id) {
-              await ensureAdminUserRecord(signUpData.user.id, passwordHash);
-            }
-          } else {
-            console.log("Admin authenticated with Supabase successfully");
-
-            // Ensure admin user record exists with correct supabase_auth_id
-            if (authData?.user?.id) {
-              await ensureAdminUserRecord(authData.user.id, passwordHash);
-            }
-          }
-        } catch (authError) {
-          console.error("Error setting up admin authentication:", authError);
-          return { error: "Failed to establish admin session: " + authError.message };
-        }
 
         return { success: true, isAdmin: true };
       }
