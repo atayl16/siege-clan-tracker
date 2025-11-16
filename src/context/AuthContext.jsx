@@ -1,8 +1,30 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
+/**
+ * Authentication context for managing user sessions and admin access.
+ *
+ * Uses Supabase Auth as the single source of truth for authentication.
+ * Provides user state, admin status, and authentication methods to the entire app.
+ *
+ * @example
+ * const { user, isAdmin, login, logout } = useAuth();
+ */
 const AuthContext = createContext();
 
+/**
+ * Authentication provider component that wraps the application.
+ *
+ * Manages:
+ * - User session state and persistence
+ * - Admin authentication flags
+ * - Supabase Auth session lifecycle
+ * - User claims and profile data
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components to wrap
+ * @returns {JSX.Element} Provider component with auth context
+ */
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(
     localStorage.getItem("adminAuth") === "true"
@@ -121,7 +143,23 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // User login
+  /**
+   * Authenticates a user with username and password.
+   *
+   * Converts username to email format (username@siege-clan.com) and authenticates
+   * via Supabase Auth. On success, fetches user record and sets admin flags.
+   *
+   * @param {string} username - Username or email to authenticate
+   * @param {string} password - User's password
+   * @returns {Promise<{success?: boolean, isAdmin?: boolean, error?: string}>}
+   *          Success object with admin flag, or error object
+   *
+   * @example
+   * const result = await login('myusername', 'mypassword');
+   * if (result.success) {
+   *   console.log('Logged in as admin:', result.isAdmin);
+   * }
+   */
   const login = async (username, password) => {
     try {
       const usernameInput = username.trim().toLowerCase();
@@ -173,7 +211,17 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Add a function to promote/demote admin users  
+  /**
+   * Toggles admin status for a user (admin-only operation).
+   *
+   * Calls the admin edge function to update the is_admin flag.
+   * Requires valid admin session with JWT token.
+   *
+   * @param {string} userId - UUID of the user to update
+   * @param {boolean} makeAdmin - True to grant admin, false to revoke
+   * @returns {Promise<{success?: boolean, data?: Object, error?: string}>}
+   *          Success object with updated data, or error object
+   */
   const toggleAdminStatus = async (userId, makeAdmin) => {
     try {
       console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
@@ -324,7 +372,24 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register a new user
+  /**
+   * Registers a new user account.
+   *
+   * Creates a Supabase Auth user with email format (username@siege-clan.com).
+   * Database trigger automatically creates the users table record.
+   * Username is stored in auth metadata for the trigger to use.
+   *
+   * @param {string} username - Desired username (will be converted to email)
+   * @param {string} password - User's password (min 6 characters)
+   * @returns {Promise<{success?: boolean, error?: string}>}
+   *          Success object or error with message
+   *
+   * @example
+   * const result = await register('newuser', 'securepass123');
+   * if (result.error) {
+   *   console.error(result.error); // "Username already taken"
+   * }
+   */
   const register = async (username, password) => {
     try {
       const usernameInput = username.trim().toLowerCase();
@@ -479,6 +544,14 @@ export function AuthProvider({ children }) {
     }
   };
 
+  /**
+   * Logs out the current user.
+   *
+   * Clears localStorage, resets user state, and signs out from Supabase Auth.
+   * Safe to call even if Supabase signOut fails.
+   *
+   * @returns {Promise<void>}
+   */
   const logout = async () => {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");

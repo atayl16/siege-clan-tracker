@@ -3,12 +3,17 @@ import { getAdminSupabaseClient } from '../utils/supabaseClient';
 import { supabase } from '../supabaseClient';
 
 /**
- * Get auth headers for admin API calls
+ * Get auth headers for admin API calls.
  *
- * For same-origin requests (localhost, Netlify deploys), auth headers are optional
- * since the Netlify Functions validateAuth allows same-origin without token.
+ * Retrieves the Supabase session token for authenticated admin requests.
+ * Throws an error if user is not admin or session is missing.
  *
- * For Supabase-authenticated admins, includes Bearer token for cross-origin security.
+ * @returns {Promise<Object>} Auth headers object with Authorization Bearer token
+ * @throws {Error} If user is not admin or missing Supabase session
+ *
+ * @example
+ * const headers = await getAuthHeaders();
+ * // Returns: { 'Authorization': 'Bearer eyJhbGc...' }
  */
 async function getAuthHeaders() {
   // Check if user is logged in as admin
@@ -34,6 +39,28 @@ async function getAuthHeaders() {
   };
 }
 
+/**
+ * Hook for fetching and managing clan members data.
+ *
+ * Provides member list with optional filtering of claimed players.
+ * Includes admin operations like toggling member visibility.
+ * Uses admin Supabase client to bypass RLS when user is admin.
+ *
+ * @param {boolean} [excludeClaimed=false] - If true, filters out claimed members
+ * @returns {{
+ *   members: Array<Object>,
+ *   loading: boolean,
+ *   error: Error|null,
+ *   refreshMembers: Function,
+ *   toggleMemberVisibility: Function
+ * }} Members data and mutation functions
+ *
+ * @example
+ * const { members, loading, toggleMemberVisibility } = useMembers(true);
+ *
+ * // Toggle member visibility (admin only)
+ * await toggleMemberVisibility(memberId, true); // Hide member
+ */
 export function useMembers(excludeClaimed = false) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);

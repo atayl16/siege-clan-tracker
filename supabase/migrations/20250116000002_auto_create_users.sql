@@ -2,11 +2,31 @@
 -- Description: Creates database trigger to automatically create public.users records
 --              when new users sign up via Supabase Auth
 -- Date: 2025-01-16
+--
+-- Purpose:
+-- - Eliminates need for manual user record creation
+-- - Ensures auth.users and public.users stay in sync
+-- - Extracts username from metadata or email prefix
+-- - Sets default is_admin=false for all new users
+--
+-- Security:
+-- - Uses SECURITY DEFINER to run with function owner privileges
+-- - Only service_role has EXECUTE permission
+-- - Prevents race conditions with ON CONFLICT clause
 
 -- Drop old trigger if exists
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
 -- Create improved handle_new_user function
+/**
+ * Automatically creates a public.users record when a new auth.users record is created.
+ *
+ * Extracts username from raw_user_meta_data or uses email prefix as fallback.
+ * Sets supabase_auth_id to link the two records.
+ *
+ * @param NEW - The new auth.users record (trigger variable)
+ * @returns NEW - The auth.users record (required by AFTER INSERT trigger)
+ */
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
