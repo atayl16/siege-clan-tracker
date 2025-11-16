@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
 
 const AuthContext = createContext();
@@ -122,48 +121,52 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Admin login
+  // User login
   const login = async (username, password) => {
     try {
-      // Try regular user login
-      const { data, error } = await supabase
+      const usernameInput = username.trim().toLowerCase();
+
+      // Convert username to email format (Supabase Auth requires emails)
+      const email = usernameInput.includes("@")
+        ? usernameInput
+        : `${usernameInput}@siege-clan.com`;
+
+      // Authenticate with Supabase Auth (single source of truth)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (authError) {
+        console.error("Login error:", authError);
+        return { error: "Invalid username or password" };
+      }
+
+      // Fetch user record from database using auth.uid()
+      const { data: userData, error: dbError } = await supabase
         .from("users")
         .select("*")
-        .eq("username", username.trim().toLowerCase())
+        .eq("id", authData.user.id)
         .single();
 
-      if (error) {
-        return { error: "Invalid credentials" };
+      if (dbError || !userData) {
+        console.error("Failed to fetch user record:", dbError);
+        return { error: "Account setup incomplete. Please contact support." };
       }
 
-      // Verify password
-      const inputPasswordHash = await sha256(password);
-      if (data.password_hash === inputPasswordHash) {
-        // CRITICAL: Create a proper Supabase session
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@siege-clan.com`,
-          password: password
-        });
-        
-        if (authError) {
-          console.warn("Supabase auth error, trying to create session:", authError);
-        }
-        
-        localStorage.setItem("userId", data.id);
-        localStorage.setItem("user", JSON.stringify(data));
-        setUser(data);
-  
-        // If user has admin privileges, set isAuthenticated to true
-        if (data.is_admin) {
-          setIsAuthenticated(true);
-          localStorage.setItem("adminAuth", "true");
-        }
-  
-        fetchUserClaims(data.id);
-        return { success: true, isAdmin: data.is_admin || false };
+      // Set user state
+      localStorage.setItem("userId", userData.id);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+
+      // Set admin flag if applicable
+      if (userData.is_admin) {
+        setIsAuthenticated(true);
+        localStorage.setItem("adminAuth", "true");
       }
-  
-      return { error: "Invalid credentials" };
+
+      fetchUserClaims(userData.id);
+      return { success: true, isAdmin: userData.is_admin || false };
     } catch (error) {
       console.error("Authentication error:", error);
       return { error: "Authentication failed" };
@@ -324,70 +327,56 @@ export function AuthProvider({ children }) {
   // Register a new user
   const register = async (username, password) => {
     try {
+      const usernameInput = username.trim().toLowerCase();
+
       // Check if username already exists
       const { data: existingUser } = await supabase
         .from("users")
         .select("id")
-        .eq("username", username.trim().toLowerCase())
+        .eq("username", usernameInput)
         .single();
-  
+
       if (existingUser) {
         return { error: "Username already taken" };
       }
-  
-      // First create the user in auth system
+
+      // Create user in Supabase Auth
+      // The database trigger will automatically create the users table record
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@siege-clan.com`,
+        email: `${usernameInput}@siege-clan.com`,
         password: password,
+        options: {
+          data: {
+            username: usernameInput  // Store username in metadata for trigger
+          }
+        }
       });
-  
+
       if (authError) {
-        console.error("Auth registration error:", authError);
+        console.error("Registration error:", authError);
         return { error: authError.message || "Registration failed" };
       }
-  
-      // Hash password
-      const passwordHash = await sha256(password);
-      
-      // Create user record
-      const { error } = await supabase
+
+      // Wait for trigger to create user record
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Fetch the created user record
+      const { data: userData, error: dbError } = await supabase
         .from("users")
-        .insert([
-          {
-            id: authData.user.id,
-            username: username.trim().toLowerCase(),
-            password_hash: passwordHash,
-            is_admin: false,
-          },
-        ])
-        .select();
-        
-      if (error) {
-        console.error("User record creation error:", error);
-        return { error: "Failed to create user record" };
+        .select("*")
+        .eq("id", authData.user.id)
+        .single();
+
+      if (dbError || !userData) {
+        console.error("Failed to fetch user record:", dbError);
+        return { error: "Account created but setup incomplete. Try logging in." };
       }
-      
-      // Set created_at timestamp
-      const created_at = new Date().toISOString();
-      
-      // Store user in local storage and state
-      localStorage.setItem("userId", authData.user.id);
-      localStorage.setItem("user", JSON.stringify({
-        id: authData.user.id,
-        username: username.trim().toLowerCase(),
-        is_admin: false,
-        created_at: created_at,
-        join_date: created_at,
-      }));
-      
-      setUser({
-        id: authData.user.id,
-        username: username.trim().toLowerCase(),
-        is_admin: false,
-        created_at: created_at,
-        join_date: created_at,
-      });
-  
+
+      // Set user state
+      localStorage.setItem("userId", userData.id);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+
       return { success: true };
     } catch (error) {
       console.error("Registration error:", error);

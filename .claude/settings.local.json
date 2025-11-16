@@ -30,7 +30,8 @@
       "Bash(supabase db psql:*)",
       "Bash(supabase db pull:*)",
       "Bash(npm run:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

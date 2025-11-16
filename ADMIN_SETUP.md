@@ -1,125 +1,108 @@
-# Admin Account Setup Guide
+# Admin User Setup Guide
 
-## Problem Overview
+## Overview
 
-The admin authentication system requires a valid Supabase JWT token to perform admin operations through edge functions. This document explains how to properly set up the admin account.
+This application uses **Supabase Auth** for all authentication. Admin privileges are controlled by a simple `is_admin` flag in the database.
 
-## Root Cause
+## How It Works
 
-The hardcoded admin login was creating localStorage flags but **not establishing a Supabase auth session**. Edge functions validate admin requests by:
+1. **User Registration**: Users register with username and password
+   - Supabase Auth creates an auth user with email `username@siege-clan.com`
+   - Database trigger automatically creates a `users` table record
+   - User starts with `is_admin = false`
 
-1. Checking for a valid JWT token in the Authorization header
-2. Looking up a user with `supabase_auth_id` matching the token
-3. Verifying that user has `is_admin = true`
+2. **Making Someone Admin**: Simply update the database
+   ```sql
+   UPDATE users SET is_admin = true WHERE username = 'username_here';
+   ```
 
-Without a Supabase session, admin operations fail with: `"Missing Supabase session token for admin request"`
+3. **Admin Login**: Admins log in the same way as regular users
+   - Enter their username and password
+   - System automatically recognizes admin status from database
+   - Admin operations work via JWT token validation
 
-## Solution
+## Creating an Admin Account
 
-### 1. Configure Environment Variables
+### Option 1: Promote Existing User
 
-Add these to your `.env` file:
+1. User registers through the normal registration flow
+2. In Supabase Dashboard → Table Editor → users table
+3. Find the user and set `is_admin` to `true`
+4. Done! User can now perform admin operations
 
-```bash
-# Admin Account Configuration (REQUIRED for admin auth)
-VITE_ADMIN_SUPABASE_EMAIL=admin@siegeclan.org
-VITE_ADMIN_SUPABASE_PASSWORD=your-secure-password-here
+### Option 2: Create Admin via SQL
+
+```sql
+-- First, create the auth user via Supabase Dashboard:
+-- Go to Authentication → Users → Add User
+-- Email: yourusername@siege-clan.com
+-- Password: [choose secure password]
+-- Auto Confirm: ✓
+
+-- Then update the users table record:
+UPDATE users
+SET is_admin = true
+WHERE email = 'yourusername@siege-clan.com';
 ```
 
-**Important Notes:**
-- These credentials are for Supabase authentication (JWT token generation)
-- They are **different** from the hardcoded admin login credentials
-- Use a strong, unique password
-- Never commit the `.env` file to version control
+## Verifying Admin Access
 
-### 2. First-Time Setup
+After setting up an admin user:
 
-When you log in as admin for the first time with the new code:
-
-1. The system will attempt to sign in to Supabase with the credentials from `.env`
-2. If the account doesn't exist, it will automatically create it
-3. It will create or update the admin user record in the database with the correct `supabase_auth_id`
-
-### 3. Verification
-
-After logging in as admin, check the browser console for these messages:
-
-```
-✅ Admin authenticated with Supabase successfully
-✅ Admin user updated with supabase_auth_id: [UUID]
-```
-
-If you see errors:
-- Check that `VITE_ADMIN_SUPABASE_PASSWORD` is set in `.env`
-- Restart your dev server after adding environment variables
-- Check Supabase auth settings allow sign-ups
-
-### 4. Testing Admin Functions
-
-After successful setup, admin functions should work:
-- Hide/unhide members
-- Approve claim requests
-- Update member data
-- Change user admin status
+1. Log in with the username (without @siege-clan.com)
+2. Open browser console
+3. Check for: `"Using admin client with RLS"`
+4. Admin tabs should be visible in the UI
+5. Test hiding/unhiding a member to verify JWT tokens work
 
 ## Troubleshooting
 
-### "Admin authentication not properly configured"
-- `VITE_ADMIN_SUPABASE_PASSWORD` is missing from `.env`
-- Solution: Add the variable and restart the dev server
+### "Invalid username or password"
+- Check the user exists in Authentication → Users
+- Verify the password is correct
+- Try resetting password in Supabase Dashboard
 
-### "Missing Supabase session token for admin request"
-- Supabase auth session wasn't created
-- Solution: Log out and log back in as admin
-- Check browser console for error messages during login
+### "Account setup incomplete"
+- The users table record might be missing
+- Check if user exists in users table with matching `id` from auth.users
+- The trigger should create this automatically - if missing, check trigger is active
 
-### "Unauthorized: Invalid token"
-- Session has expired
-- Solution: Log out and log back in
+### Admin operations fail with 403
+- Verify `is_admin = true` in users table
+- Check that `supabase_auth_id` matches the auth user's ID
+- Verify user is logged in (check browser console for session)
 
-### "Forbidden: Admin access required"
-- User record doesn't have `is_admin = true` or `supabase_auth_id` is incorrect
-- Solution: Check the database `users` table for the admin record
+### "Using regular client" instead of admin client
+- User is not marked as admin in database
+- Run: `SELECT is_admin FROM users WHERE username = 'your_username';`
+- Should return `true` for admin users
 
-## Database Schema Requirements
+## Database Structure
 
-The `users` table must have:
-- `supabase_auth_id` column (UUID, nullable)
-- `is_admin` column (BOOLEAN)
+The system requires these fields in the `users` table:
+- `id` - UUID (matches auth.users.id)
+- `username` - Text (unique)
+- `email` - Text (matches auth.users.email)
+- `is_admin` - Boolean (controls admin access)
+- `supabase_auth_id` - UUID (matches id, set by trigger)
 
-## Security Considerations
+## Security Notes
 
-1. **Never** commit `.env` files
-2. Use strong passwords for Supabase admin auth
-3. Rotate passwords periodically
-4. Monitor admin access logs in Supabase dashboard
-5. Consider adding 2FA for production environments
+1. **No hardcoded admins**: All admin accounts are in the database
+2. **JWT-based auth**: All admin operations require valid Supabase session
+3. **Column-level security**: Users cannot promote themselves to admin
+4. **Service role only**: Only edge functions can modify `is_admin` field
 
-## Manual Database Setup (Optional)
+## Migration from Old System
 
-If automatic setup fails, you can manually create the admin user in Supabase:
+If you had a hardcoded admin or password_hash-based system:
 
-1. Go to Supabase Dashboard → Authentication → Users
-2. Create a new user with email `admin@siegeclan.org` (or your configured email)
-3. Note the User UID
-4. Go to Table Editor → users table
-5. Find or create the admin user record
-6. Set `supabase_auth_id` to the User UID from step 3
-7. Set `is_admin` to `true`
+1. All existing users need to reset their passwords
+2. Or create new accounts via the registration flow
+3. The `password_hash` column is now deprecated and unused
+4. Supabase Auth is the single source of truth for passwords
 
-## Changes Made
+---
 
-### `.env.example`
-Added environment variables for admin Supabase credentials
-
-### `src/context/AuthContext.jsx`
-- Added `ensureAdminUserRecord()` helper function
-- Fixed admin login to create Supabase session with proper credentials
-- Updated logout to sign out from Supabase
-- Improved error handling and logging
-
-### Key Fixes
-1. **Use actual password** instead of hash for Supabase auth
-2. **Create/update user record** with correct `supabase_auth_id`
-3. **Proper error handling** with user-friendly messages
-4. **Session management** for persistent admin access
+**Last Updated**: 2025-01-16
+**Auth System**: Supabase Auth with Database Trigger
