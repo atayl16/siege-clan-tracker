@@ -4,12 +4,6 @@ import { supabase } from "../supabaseClient";
 
 const AuthContext = createContext();
 
-// Keep hardcoded admin for emergency access
-const ADMIN_EMAIL_HASH =
-  "8c91a3d71da50b56d355e4b61ff793842befb82bd5972e3b0d84fb771e450428";
-const ADMIN_PASSWORD_HASH =
-  "86c671c7a776b62f925b5d2387fae4c73392931be4d37b19e37e5534abab587d";
-
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(
     localStorage.getItem("adminAuth") === "true"
@@ -36,21 +30,6 @@ export function AuthProvider({ children }) {
       // Try to restore session from storage
       const sessionResponse = await supabase.auth.getSession();
       const session = sessionResponse?.data?.session;
-
-      // Check for hardcoded admin first
-      if (localStorage.getItem("adminAuth") === "true" && localStorage.getItem("useServiceRole") === "true") {
-        const adminUser = {
-          id: "admin",
-          username: "admin",
-          is_admin: true,
-        };
-        setUser(adminUser);
-        setIsAuthenticated(true);
-        setLoading(false);
-        return;
-      }
-
-      // Then proceed with your existing code...
       if (localStorage.getItem("userId")) {
         try {
           const userId = localStorage.getItem("userId");
@@ -132,8 +111,7 @@ export function AuthProvider({ children }) {
           } catch (err) {
             console.error("Auth state change error:", err);
           }
-        } else if (localStorage.getItem("adminAuth") !== "true") {
-          // Only clear if not hardcoded admin
+        } else {
           clearSession();
         }
       });
@@ -147,38 +125,7 @@ export function AuthProvider({ children }) {
   // Admin login
   const login = async (username, password) => {
     try {
-      // Hash the provided credentials
-      const usernameHash = await sha256(username.trim().toLowerCase());
-      const passwordHash = await sha256(password);
-      
-      // Try admin login first
-      if (usernameHash === ADMIN_EMAIL_HASH && passwordHash === ADMIN_PASSWORD_HASH) {
-        localStorage.setItem("adminAuth", "true");
-        // Add the flag for service role access
-        localStorage.setItem("useServiceRole", "true");
-        setIsAuthenticated(true);
-      
-        // Create a mock admin user for UI purposes
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: "admin",
-            username: "admin",
-            is_admin: true,
-            created_at: new Date().toISOString(),
-          })
-        );
-      
-        setUser({
-          id: "admin",
-          username: "admin",
-          is_admin: true,
-        });
-
-        return { success: true, isAdmin: true };
-      }
-  
-      // If not hardcoded admin, try regular user login
+      // Try regular user login
       const { data, error } = await supabase
         .from("users")
         .select("*")
