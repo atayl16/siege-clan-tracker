@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated hook
-import { useRaces } from "../hooks/useRaces"; // Updated hook
+// import { useRaces } from "../hooks/useRaces"; // Hidden until edge function issue resolved
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
@@ -19,8 +19,8 @@ import Tabs from "../components/ui/Tabs";
 import EmptyState from "../components/ui/EmptyState";
 import StatGroup from "../components/ui/StatGroup";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
-import RaceCard from "../components/RaceCard";
-import CreateRace from "../components/CreateRace";
+// import RaceCard from "../components/RaceCard"; // Hidden until edge function issue resolved
+// import CreateRace from "../components/CreateRace"; // Hidden until edge function issue resolved
 
 import "./ProfilePage.css";
 
@@ -55,14 +55,14 @@ function CharacterGoalCard({ claim, user }) {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, userClaims, fetchUserClaims } = useAuth();
   const [activeTab, setActiveTab] = useState("characters");
-  const [showCreateRace, setShowCreateRace] = useState(false);
+  // const [showCreateRace, setShowCreateRace] = useState(false); // Hidden until edge function issue resolved
 
   // Use new hooks
-  const { userClaims, refreshUserClaims } = useClaimRequests(user?.id);
-  const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id);
+  // const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id); // Hidden until edge function issue resolved
 
+  /* Hidden until edge function issue resolved
   // Handle creating a race
   const handleCreatedRace = () => {
     setShowCreateRace(false);
@@ -74,7 +74,7 @@ export default function ProfilePage() {
     ? activeRaces.filter((race) => {
         if (race.creator_id === user?.id) return true;
 
-        const userCharacterIds = userClaims.map(
+        const userCharacterIds = (userClaims || []).map(
           (claim) => claim.members.wom_id
         );
         return race.participants?.some((participant) =>
@@ -82,17 +82,18 @@ export default function ProfilePage() {
         );
       })
     : [];
+  */
 
   // Fetch user claims when the user changes
   useEffect(() => {
-    if (user) {
-      refreshUserClaims();
+    if (user?.id) {
+      fetchUserClaims(user.id);
     }
-  }, [user, refreshUserClaims]);
+  }, [user?.id]);
 
   // Update goals effect
   useEffect(() => {
-    if (user && userClaims.length > 0) {
+    if (user && userClaims && userClaims.length > 0) {
       const updateGoals = async () => {
         try {
           for (const claim of userClaims) {
@@ -124,6 +125,7 @@ export default function ProfilePage() {
     );
   }
 
+  /* Hidden until edge function issue resolved
   const renderRacesTabContent = () => {
     if (racesLoading) {
       return <LoadingIndicator />;
@@ -177,6 +179,7 @@ export default function ProfilePage() {
       </>
     );
   };
+  */
 
   return (
     <div className="profile-container">
@@ -205,7 +208,7 @@ export default function ProfilePage() {
             </Button>
           </div>
 
-          {userClaims.length === 0 ? (
+          {!userClaims || userClaims.length === 0 ? (
             <EmptyState
               title="No Characters Yet"
               description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
@@ -284,7 +287,7 @@ export default function ProfilePage() {
               <div className="ui-loading-spinner"></div>
               <div className="ui-loading-text">Loading user data...</div>
             </div>
-          ) : userClaims.length === 0 ? (
+          ) : !userClaims || userClaims.length === 0 ? (
             <EmptyState
               title="No Characters to Track"
               description="You need to claim a character before setting goals."
@@ -302,9 +305,11 @@ export default function ProfilePage() {
           )}
         </Tabs.Tab>
 
+        {/* Hidden until edge function issue resolved
         <Tabs.Tab tabId="races" label="Races" icon={<FaTrophy />}>
           <div className="player-races-section">{renderRacesTabContent()}</div>
         </Tabs.Tab>
+        */}
 
         <Tabs.Tab tabId="requests" label="Requests" icon={<FaClock />}>
           <div className="tab-header">
@@ -312,7 +317,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="claim-player-section">
-            <ClaimPlayer onRequestSubmitted={refreshUserClaims} />
+            <ClaimPlayer onRequestSubmitted={() => user?.id && fetchUserClaims(user.id)} />
           </div>
         </Tabs.Tab>
 

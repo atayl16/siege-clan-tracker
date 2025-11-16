@@ -20,11 +20,86 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [userClaims, setUserClaims] = useState([]);
 
+  // Helper function to ensure admin user record exists in database
+  const ensureAdminUserRecord = async (supabaseAuthId, passwordHash) => {
+    try {
+      // Check if admin user record exists
+      const { data: existingAdmin, error: checkError} = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', 'admin')
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = not found
+        console.error("Error checking for admin user:", checkError);
+        return;
+      }
+
+      if (existingAdmin) {
+        // Update existing admin with supabase_auth_id if not set or different
+        if (existingAdmin.supabase_auth_id !== supabaseAuthId) {
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ supabase_auth_id: supabaseAuthId, is_admin: true })
+            .eq('username', 'admin');
+
+          if (updateError) {
+            console.error("Failed to update admin supabase_auth_id:", updateError);
+          } else {
+            console.log("Admin user updated with supabase_auth_id:", supabaseAuthId);
+          }
+        }
+      } else {
+        // Create admin user record
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([{
+            supabase_auth_id: supabaseAuthId,
+            username: 'admin',
+            password_hash: passwordHash,
+            is_admin: true
+          }]);
+
+        if (insertError) {
+          console.error("Failed to create admin user record:", insertError);
+        } else {
+          console.log("Admin user record created with supabase_auth_id:", supabaseAuthId);
+        }
+      }
+    } catch (error) {
+      console.error("Error in ensureAdminUserRecord:", error);
+    }
+  };
+
+  // Helper function to clear session data
+  const clearSession = () => {
+    localStorage.removeItem("adminAuth");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("user");
+    localStorage.removeItem("useServiceRole");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   // Load user session on initial render
   useEffect(() => {
     const checkSession = async () => {
       // Try to restore session from storage
-      await supabase.auth.getSession();
+      const sessionResponse = await supabase.auth.getSession();
+      const session = sessionResponse?.data?.session;
+
+      // Check for hardcoded admin first
+      if (localStorage.getItem("adminAuth") === "true" && localStorage.getItem("useServiceRole") === "true") {
+        const adminUser = {
+          id: "admin",
+          username: "admin",
+          is_admin: true,
+        };
+        setUser(adminUser);
+        setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
 
       // Then proceed with your existing code...
       if (localStorage.getItem("userId")) {
@@ -45,18 +120,79 @@ export function AuthProvider({ children }) {
             }
             fetchUserClaims(data.id);
           } else {
-            logout();
+            // Session invalid - clear everything
+            clearSession();
           }
         } catch (err) {
           console.error("Session check error:", err);
-          logout();
+          // Clear invalid session
+          clearSession();
         }
+      } else if (session) {
+        // Try to restore from Supabase session
+        try {
+          const { data, error } = await supabase
+            .from("users")
+            .select("*")
+            .eq("email", session.user.email)
+            .single();
+
+          if (data && !error) {
+            setUser(data);
+            localStorage.setItem("userId", data.id);
+            if (data.is_admin) {
+              setIsAuthenticated(true);
+              localStorage.setItem("adminAuth", "true");
+            }
+            fetchUserClaims(data.id);
+          }
+        } catch (err) {
+          console.error("Session restoration error:", err);
+        }
+      } else {
+        // No userId - clear any stale data
+        clearSession();
       }
 
       setLoading(false);
     };
 
     checkSession();
+
+    // Listen for auth state changes (only if available)
+    if (supabase.auth.onAuthStateChange) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          // User logged in via Supabase Auth
+          try {
+            const { data, error } = await supabase
+              .from("users")
+              .select("*")
+              .eq("email", session.user.email)
+              .single();
+
+            if (data && !error) {
+              setUser(data);
+              localStorage.setItem("userId", data.id);
+              if (data.is_admin) {
+                setIsAuthenticated(true);
+                localStorage.setItem("adminAuth", "true");
+              }
+              fetchUserClaims(data.id);
+            }
+          } catch (err) {
+            console.error("Auth state change error:", err);
+          }
+        } else if (localStorage.getItem("adminAuth") !== "true") {
+          // Only clear if not hardcoded admin
+          clearSession();
+        }
+      });
+
+      return () => {
+        subscription?.unsubscribe();
+      };
+    }
   }, []);
 
   // Admin login
@@ -89,45 +225,62 @@ export function AuthProvider({ children }) {
           username: "admin",
           is_admin: true,
         });
-      
-        // NEW CODE: Try to create a Supabase auth session for the admin
+
+        // CRITICAL: Create a Supabase auth session for the admin to get a valid JWT token
+        // This is required for edge functions that validate admin auth
         try {
-          // First check if we have a pre-configured admin account
-          const adminEmail = "admin@siegeclan.org"; // Use consistent email
+          const adminEmail = import.meta.env.VITE_ADMIN_SUPABASE_EMAIL || "admin@siegeclan.org";
+          const adminPassword = import.meta.env.VITE_ADMIN_SUPABASE_PASSWORD;
+
+          if (!adminPassword) {
+            console.error("CRITICAL: VITE_ADMIN_SUPABASE_PASSWORD not configured in .env");
+            console.error("Admin operations will fail. Please add VITE_ADMIN_SUPABASE_PASSWORD to your .env file");
+            return { error: "Admin authentication not properly configured. Please contact system administrator." };
+          }
+
+          // Sign in to Supabase with admin credentials to get a valid JWT token
           const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
             email: adminEmail,
-            password: passwordHash // Use the same password hash
+            password: adminPassword
           });
-      
+
           if (signInError) {
-            console.log("Admin auth not found, creating...");
-            // If sign-in fails, try to create the account
+            console.log("Admin Supabase auth not found, attempting to create...");
+            // If sign-in fails, try to create the account (first time setup)
             const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
               email: adminEmail,
-              password: passwordHash
+              password: adminPassword,
+              options: {
+                data: {
+                  is_admin: true
+                }
+              }
             });
-      
-            if (!signUpError) {
-              console.log("Admin auth created successfully");
-            } else {
-              console.error("Failed to create admin auth:", signUpError);
+
+            if (signUpError) {
+              console.error("Failed to create admin Supabase auth:", signUpError);
+              return { error: "Failed to establish admin session. Please check configuration." };
+            }
+
+            console.log("Admin Supabase auth created successfully");
+
+            // Use the new auth user ID
+            if (signUpData?.user?.id) {
+              await ensureAdminUserRecord(signUpData.user.id, passwordHash);
             }
           } else {
-            console.log("Admin authenticated with Supabase");
-          }
-          
-          // Now call the function to register this user as admin
-          const { error: rpcError } = await supabase.rpc('register_admin_user');
-          if (rpcError) {
-            console.error("Error registering admin in database:", rpcError);
-          } else {
-            console.log("Admin registered in database successfully");
+            console.log("Admin authenticated with Supabase successfully");
+
+            // Ensure admin user record exists with correct supabase_auth_id
+            if (authData?.user?.id) {
+              await ensureAdminUserRecord(authData.user.id, passwordHash);
+            }
           }
         } catch (authError) {
           console.error("Error setting up admin authentication:", authError);
-          // Continue anyway - the hard-coded admin should still work
+          return { error: "Failed to establish admin session: " + authError.message };
         }
-      
+
         return { success: true, isAdmin: true };
       }
   
@@ -137,17 +290,17 @@ export function AuthProvider({ children }) {
         .select("*")
         .eq("username", username.trim().toLowerCase())
         .single();
-  
+
       if (error) {
         return { error: "Invalid credentials" };
       }
-  
+
       // Verify password
       const inputPasswordHash = await sha256(password);
       if (data.password_hash === inputPasswordHash) {
         // CRITICAL: Create a proper Supabase session
         const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@example.com`,
+          email: `${username.trim().toLowerCase()}@siege-clan.com`,
           password: password
         });
         
@@ -343,7 +496,7 @@ export function AuthProvider({ children }) {
   
       // First create the user in auth system
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@example.com`,
+        email: `${username.trim().toLowerCase()}@siege-clan.com`,
         password: password,
       });
   
@@ -496,7 +649,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
@@ -504,19 +657,20 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);
+
+    // Sign out from Supabase auth as well
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if Supabase signOut fails
+    }
   };
 
-  const isAdmin = () => {
-    return isAuthenticated;
-  };
-
-  const isLoggedIn = () => {
-    return isAuthenticated || user !== null;
-  };
-
-  const isLoggedOut = () => {
-    return !isAuthenticated && user === null;
-  };
+  // Computed values instead of functions - more React-like
+  const isAdmin = user?.is_admin === true;
+  const isLoggedIn = user !== null;
+  const isLoggedOut = user === null;
 
   return (
     <AuthContext.Provider

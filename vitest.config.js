@@ -14,6 +14,7 @@ export default defineConfig({
       'node_modules/',
       'src/setupTests.js',
       'netlify/edge-functions/**',
+      '**/*.integration.test.{js,jsx}', // Exclude integration tests from default runs
     ],
     // Use node environment for netlify function tests (not jsdom)
     environmentMatchGlobs: [

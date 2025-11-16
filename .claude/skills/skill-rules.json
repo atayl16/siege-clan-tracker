@@ -1,0 +1,19 @@
+{
+  "rules": [
+    {
+      "name": "react-guidelines",
+      "trigger": {
+        "patterns": [
+          "src/components/**/*.{jsx,js}",
+          "src/pages/**/*.{jsx,js}",
+          "src/hooks/**/*.{js,jsx}",
+          "src/context/**/*.{jsx,js}",
+          "src/services/**/*.{js,jsx}",
+          "src/utils/**/*.{js,jsx}",
+          "src/**/*.test.{jsx,js}",
+          "src/**/*.spec.{jsx,js}"
+        ]
+      }
+    }
+  ]
+}

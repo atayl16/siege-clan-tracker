@@ -10,10 +10,12 @@ import ProgressBar from "./ui/ProgressBar";
 export default function RaceCard({ race, isOwner }) {
   // Calculate overall progress for each participant
   const participants = race.race_participants || [];
-  
+
   participants.forEach(p => {
-    p.progressPercent = p.target_value > 0 
-      ? Math.min(100, Math.round((p.current_value / p.target_value) * 100))
+    const currentValue = Number(p.current_value) || 0;
+    const targetValue = Number(p.target_value) || 0;
+    p.progressPercent = targetValue > 0
+      ? Math.min(100, Math.round((currentValue / targetValue) * 100))
       : 0;
   });
   

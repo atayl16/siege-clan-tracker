@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🧪 Running tests before commit..."
+echo "💡 To skip this check for hotfixes, use: git commit --no-verify"
+echo ""
+
+npm test -- --run

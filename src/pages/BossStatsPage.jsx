@@ -18,18 +18,18 @@ export default function BossStatsPage() {
     if (!searchTerm.trim()) return data;
 
     const term = searchTerm.toLowerCase().trim();
-    
-    const filteredBosses = data.bosses.filter(
+
+    const filteredBosses = (data.bosses || []).filter(
       (boss) =>
         (boss.displayName && boss.displayName.toLowerCase().includes(term)) ||
-        (boss.player && boss.player.displayName && 
+        (boss.player && boss.player.displayName &&
          boss.player.displayName.toLowerCase().includes(term))
     );
-    
-    const filteredActivities = data.activities.filter(
+
+    const filteredActivities = (data.activities || []).filter(
       (activity) =>
         (activity.displayName && activity.displayName.toLowerCase().includes(term)) ||
-        (activity.player && activity.player.displayName && 
+        (activity.player && activity.player.displayName &&
          activity.player.displayName.toLowerCase().includes(term))
     );
 

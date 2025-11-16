@@ -1,9 +1,8 @@
 import useSWR from "swr";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
+import { jsonFetcher } from "../utils/fetchers";
 
 export function useGroupAchievements(limit = null) {
-  const { data, error, mutate } = useSWR("/api/wom-group-achievements", fetcher, {
+  const { data, error, mutate } = useSWR("/api/wom-group-achievements", jsonFetcher, {
     refreshInterval: 60000,
     dedupingInterval: 30000,
     revalidateOnMount: true,
