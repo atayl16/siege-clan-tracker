@@ -396,21 +396,31 @@ export function AuthProvider({ children }) {
 
       console.log("Checking if username exists:", usernameInput);
 
-      // Check if username already exists
-      const { data: existingUsers, error: checkError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("username", usernameInput);
+      // Check if username already exists with timeout
+      // If the check fails or times out, we'll let the database handle uniqueness
+      try {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Username check timeout')), 5000)
+        );
 
-      console.log("Username check result:", { existingUsers, checkError });
+        const checkPromise = supabase
+          .from("users")
+          .select("id")
+          .eq("username", usernameInput);
 
-      if (checkError) {
-        console.error("Error checking username:", checkError);
-        // Continue anyway - user might not have access to read users table yet
-      }
+        const { data: existingUsers, error: checkError } = await Promise.race([
+          checkPromise,
+          timeoutPromise
+        ]);
 
-      if (existingUsers && existingUsers.length > 0) {
-        return { error: "Username already taken" };
+        console.log("Username check result:", { existingUsers, checkError });
+
+        if (!checkError && existingUsers && existingUsers.length > 0) {
+          return { error: "Username already taken" };
+        }
+      } catch (checkTimeout) {
+        console.warn("Username check failed/timeout:", checkTimeout.message);
+        // Continue with registration - database will enforce uniqueness
       }
 
       // Create user in Supabase Auth
