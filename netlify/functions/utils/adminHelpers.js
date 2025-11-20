@@ -15,8 +15,8 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
  * @returns {Object} CORS headers
  */
 function getCorsHeaders(requestOrigin) {
-  const isAllowedOrigin = ALLOWED_ORIGINS.includes(requestOrigin) ||
-                          requestOrigin?.endsWith('.netlify.app');
+  // Only allow explicitly listed origins - no wildcards
+  const isAllowedOrigin = ALLOWED_ORIGINS.includes(requestOrigin);
 
   // Defensive check for empty ALLOWED_ORIGINS
   const fallbackOrigin = ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS[0] : 'http://localhost:5173';
@@ -46,13 +46,16 @@ function handlePreflight(event) {
 /**
  * Validate that the request has proper authentication and admin privileges
  *
+ * Authorization logic:
+ * All requests require valid JWT Bearer token - no origin-based bypass
+ *
  * @param {Object} event - Netlify function event
  * @returns {Promise<Object|null>} Error response if invalid, null if valid
  */
 async function validateAuth(event) {
   const origin = event.headers.origin || event.headers.Origin;
 
-  // Check for Authorization header
+  // All requests require Authorization header - no origin-based bypass
   const authHeader = event.headers.authorization || event.headers.Authorization;
 
   if (!authHeader) {

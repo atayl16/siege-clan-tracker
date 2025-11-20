@@ -60,13 +60,17 @@ export default function Login() {
         </button>
 
         <div className="forgot-password">
-          <a 
-            href="https://discord.com/channels/967354755045290004/969286091725209600/1084852251882950746" 
-            target="_blank" 
+          <a
+            href="https://discord.com/channels/967354755045290004/969286091725209600/1084852251882950746"
+            target="_blank"
             rel="noopener noreferrer"
           >
             Forgot your password?
           </a>
+        </div>
+
+        <div className="register-link">
+          Don't have an account? <Link to="/register">Register here</Link>
         </div>
       </form>
     </div>

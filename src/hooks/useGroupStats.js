@@ -1,7 +1,6 @@
 import useSWR from "swr";
 import { useMemo } from "react";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
+import { jsonFetcher } from "../utils/fetchers";
 
 function formatDisplayName(name) {
   return name
@@ -13,7 +12,7 @@ function formatDisplayName(name) {
 export function useGroupStats(limit = null) {
   const { data, error, mutate } = useSWR(
     "/api/wom-group-stats",
-    fetcher,
+    jsonFetcher,
     {
       refreshInterval: 60000,
       dedupingInterval: 30000,

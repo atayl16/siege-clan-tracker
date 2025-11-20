@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext"; 
-import { useRaces } from "../hooks/useRaces"; // Updated hook
+import { useAuth } from "../context/AuthContext";
+// import { useRaces } from "../hooks/useRaces"; // Hidden until metrics issue resolved
 import { useUserGoals } from "../hooks/useUserGoals"; // Updated hook
 import { FaPlus, FaTrophy, FaBullseye } from "react-icons/fa";
-import CreateRace from "../components/CreateRace";
+// import CreateRace from "../components/CreateRace"; // Hidden until metrics issue resolved
 import LoadingIndicator from "../components/ui/LoadingIndicator";
-import RaceCard from "../components/RaceCard";
+// import RaceCard from "../components/RaceCard"; // Hidden until metrics issue resolved
 import GoalCard from "../components/GoalCard";
 import EmptyState from "../components/ui/EmptyState";
 import "./ProgressPage.css";
@@ -16,10 +16,11 @@ import Card from "../components/ui/Card";
 export default function ProgressPage() {
   const { user } = useAuth();
 
-  // Set default active tab based on authentication status
-  const [activeTab, setActiveTab] = useState(user ? "myRaces" : "publicRaces");
-  const [showCreateRace, setShowCreateRace] = useState(false);
+  // Set default active tab to public goals (races hidden)
+  const [activeTab, setActiveTab] = useState("publicGoals");
+  // const [showCreateRace, setShowCreateRace] = useState(false); // Hidden until metrics issue resolved
 
+  /* Hidden until metrics issue resolved
   // Update active tab if auth state changes
   useEffect(() => {
     if (!user && activeTab === "myRaces") {
@@ -27,7 +28,7 @@ export default function ProgressPage() {
     }
   }, [user, activeTab]);
 
-  // Fetch races and user goals
+  // Fetch races
   const {
     activeRaces,
     publicRaces,
@@ -35,23 +36,26 @@ export default function ProgressPage() {
     refreshRaces,
   } = useRaces(user?.id);
 
+  const handleCreatedRace = () => {
+    setShowCreateRace(false);
+    refreshRaces();
+  };
+  */
+
+  // Fetch user goals
   const {
     userGoals,
     loading: goalsLoading,
     error: goalsError,
   } = useUserGoals();
 
-  const handleCreatedRace = () => {
-    setShowCreateRace(false);
-    refreshRaces();
-  };
-
-  const filteredPublicRaces = publicRaces.filter((race) => race.public === true);
-  const publicGoals = userGoals.filter((goal) => goal.public === true);
+  // publicGoals filtered from user goals
+  const publicGoals = (userGoals || []).filter((goal) => goal.public === true);
 
   // Content for different tabs
   const renderTabContent = () => {
     switch (activeTab) {
+      /* Hidden until metrics issue resolved
       case "myRaces":
         if (!user) {
           return (
@@ -128,7 +132,7 @@ export default function ProgressPage() {
       case "publicRaces":
         if (racesLoading) return <LoadingIndicator />;
 
-        if (!filteredPublicRaces || filteredPublicRaces.length === 0) {
+        if (!publicRaces || publicRaces.length === 0) {
           return (
             <EmptyState
               icon={<FaTrophy />}
@@ -140,7 +144,7 @@ export default function ProgressPage() {
 
         return (
           <div className="ui-races-grid">
-            {filteredPublicRaces.map((race) => (
+            {publicRaces.map((race) => (
               <RaceCard
                 key={race.id}
                 race={race}
@@ -149,6 +153,7 @@ export default function ProgressPage() {
             ))}
           </div>
         );
+      */
 
       case "publicGoals":
         if (goalsLoading) return <LoadingIndicator />;
@@ -180,14 +185,16 @@ export default function ProgressPage() {
     }
   };
 
-  // Create tabs array based on authentication status
+  // Create tabs array - only showing goals (races hidden)
   const tabsToDisplay = [
+    /* Hidden until metrics issue resolved
     {
       id: "publicRaces",
       label: "Public Races",
       icon: <FaTrophy />,
-      count: filteredPublicRaces?.length || 0,
+      count: publicRaces?.length || 0,
     },
+    */
     {
       id: "publicGoals",
       label: "Member Goals",
@@ -196,6 +203,7 @@ export default function ProgressPage() {
     },
   ];
 
+  /* Hidden until metrics issue resolved
   if (user) {
     tabsToDisplay.unshift({
       id: "myRaces",
@@ -204,6 +212,7 @@ export default function ProgressPage() {
       count: activeRaces?.length || 0,
     });
   }
+  */
 
   return (
     <Card className="ui-container-content-card">

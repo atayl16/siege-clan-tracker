@@ -3,12 +3,6 @@
   publish = "build"
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"  # Explicitly specify edge functions dir
-  
-# Redirects for client-side routing and API
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
 
 # Automatically map all edge functions in the folder
 [[edge_functions]]
@@ -34,6 +28,6 @@
 
 [dev]
   command = "npm start"
-  targetPort = 3001
+  targetPort = 3000
   port = 8888
   framework = "#custom"
