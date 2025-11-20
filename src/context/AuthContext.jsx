@@ -169,23 +169,57 @@ export function AuthProvider({ children }) {
         ? usernameInput
         : `${usernameInput}@siege-clan.com`;
 
-      // Authenticate with Supabase Auth (single source of truth)
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      // Authenticate with Supabase Auth with timeout
+      console.log("Attempting login for:", email);
+      let authData, authError;
+      try {
+        const loginPromise = supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Login timeout')), 10000)
+        );
+
+        const result = await Promise.race([loginPromise, timeoutPromise]);
+        authData = result.data;
+        authError = result.error;
+      } catch (loginTimeout) {
+        console.error("Login timeout:", loginTimeout);
+        return { error: "Login is taking too long. Please try again." };
+      }
+
+      console.log("Login result:", { hasUser: !!authData?.user, authError });
 
       if (authError) {
         console.error("Login error:", authError);
         return { error: "Invalid username or password" };
       }
 
-      // Fetch user record from database using auth.uid()
-      const { data: userData, error: dbError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", authData.user.id)
-        .single();
+      // Fetch user record from database with timeout
+      console.log("Fetching user record for:", authData.user.id);
+      let userData, dbError;
+      try {
+        const fetchPromise = supabase
+          .from("users")
+          .select("*")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('User fetch timeout')), 5000)
+        );
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+        userData = result.data;
+        dbError = result.error;
+      } catch (fetchTimeout) {
+        console.error("User fetch timeout:", fetchTimeout);
+        return { error: "Account setup incomplete. Please contact support." };
+      }
+
+      console.log("User record fetch result:", { hasUserData: !!userData, dbError });
 
       if (dbError || !userData) {
         console.error("Failed to fetch user record:", dbError);
