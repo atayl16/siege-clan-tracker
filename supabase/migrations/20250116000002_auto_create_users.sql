@@ -38,7 +38,7 @@ BEGIN
   INSERT INTO public.users (
     id,
     username,
-    email,
+    password_hash,
     supabase_auth_id,
     is_admin,
     created_at
@@ -49,13 +49,13 @@ BEGIN
       new.raw_user_meta_data->>'username',
       split_part(new.email, '@', 1)
     ),  -- Extract username from metadata or email
-    new.email,
+    '',  -- Empty string for deprecated password_hash field
     new.id,  -- Same as id, but explicit for clarity
     false,   -- Default not admin
     new.created_at
   )
   ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email,
+    username = EXCLUDED.username,
     supabase_auth_id = EXCLUDED.supabase_auth_id;
 
   RETURN new;
