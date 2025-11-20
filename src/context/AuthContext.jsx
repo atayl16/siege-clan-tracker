@@ -423,19 +423,34 @@ export function AuthProvider({ children }) {
         // Continue with registration - database will enforce uniqueness
       }
 
-      // Create user in Supabase Auth
+      // Create user in Supabase Auth with timeout
       // The database trigger will automatically create the users table record
       console.log("Creating auth user...");
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${usernameInput}@siege-clan.com`,
-        password: password,
-        options: {
-          data: {
-            username: usernameInput  // Store username in metadata for trigger
-          },
-          emailRedirectTo: undefined  // No email confirmation needed
-        }
-      });
+
+      let authData, authError;
+      try {
+        const signUpPromise = supabase.auth.signUp({
+          email: `${usernameInput}@siege-clan.com`,
+          password: password,
+          options: {
+            data: {
+              username: usernameInput  // Store username in metadata for trigger
+            },
+            emailRedirectTo: undefined  // No email confirmation needed
+          }
+        });
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Signup timeout')), 10000)
+        );
+
+        const result = await Promise.race([signUpPromise, timeoutPromise]);
+        authData = result.data;
+        authError = result.error;
+      } catch (signupTimeout) {
+        console.error("Signup timeout:", signupTimeout);
+        return { error: "Registration is taking too long. Please check your internet connection and try again." };
+      }
 
       console.log("Auth signup result:", { authData, authError });
 
@@ -454,12 +469,27 @@ export function AuthProvider({ children }) {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       console.log("Fetching user record for id:", authData.user.id);
-      // Fetch the created user record
-      const { data: userData, error: dbError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", authData.user.id)
-        .maybeSingle();
+
+      // Fetch the created user record with timeout
+      let userData, dbError;
+      try {
+        const fetchPromise = supabase
+          .from("users")
+          .select("*")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('User fetch timeout')), 5000)
+        );
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+        userData = result.data;
+        dbError = result.error;
+      } catch (fetchTimeout) {
+        console.error("User record fetch timeout:", fetchTimeout);
+        return { error: "Account created but setup incomplete. Try logging in." };
+      }
 
       console.log("User record fetch result:", { userData, dbError });
 
