@@ -394,19 +394,28 @@ export function AuthProvider({ children }) {
     try {
       const usernameInput = username.trim().toLowerCase();
 
+      console.log("Checking if username exists:", usernameInput);
+
       // Check if username already exists
-      const { data: existingUser } = await supabase
+      const { data: existingUsers, error: checkError } = await supabase
         .from("users")
         .select("id")
-        .eq("username", usernameInput)
-        .single();
+        .eq("username", usernameInput);
 
-      if (existingUser) {
+      console.log("Username check result:", { existingUsers, checkError });
+
+      if (checkError) {
+        console.error("Error checking username:", checkError);
+        // Continue anyway - user might not have access to read users table yet
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
         return { error: "Username already taken" };
       }
 
       // Create user in Supabase Auth
       // The database trigger will automatically create the users table record
+      console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: `${usernameInput}@siege-clan.com`,
         password: password,
@@ -418,23 +427,39 @@ export function AuthProvider({ children }) {
         }
       });
 
+      console.log("Auth signup result:", { authData, authError });
+
       if (authError) {
         console.error("Registration error:", authError);
         return { error: authError.message || "Registration failed" };
       }
 
-      // Wait for trigger to create user record
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!authData?.user) {
+        console.error("No user returned from signup");
+        return { error: "Registration failed - no user created" };
+      }
 
+      console.log("Auth user created successfully, waiting for trigger...");
+      // Wait for trigger to create user record
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("Fetching user record for id:", authData.user.id);
       // Fetch the created user record
       const { data: userData, error: dbError } = await supabase
         .from("users")
         .select("*")
         .eq("id", authData.user.id)
-        .single();
+        .maybeSingle();
 
-      if (dbError || !userData) {
+      console.log("User record fetch result:", { userData, dbError });
+
+      if (dbError) {
         console.error("Failed to fetch user record:", dbError);
+        return { error: "Account created but setup incomplete. Try logging in." };
+      }
+
+      if (!userData) {
+        console.error("User record not found after trigger");
         return { error: "Account created but setup incomplete. Try logging in." };
       }
 
