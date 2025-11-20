@@ -413,7 +413,8 @@ export function AuthProvider({ children }) {
         options: {
           data: {
             username: usernameInput  // Store username in metadata for trigger
-          }
+          },
+          emailRedirectTo: undefined  // No email confirmation needed
         }
       });
 

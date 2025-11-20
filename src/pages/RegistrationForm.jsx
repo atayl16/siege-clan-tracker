@@ -20,14 +20,40 @@ export default function RegistrationForm() {
     e.preventDefault();
     setError("");
     setIsProcessing(true);
-  
+
     // Validate inputs
+    if (!username.trim()) {
+      setError("Username is required");
+      setIsProcessing(false);
+      return;
+    }
+
+    // Prevent email addresses as usernames
+    if (username.includes("@")) {
+      setError("Username cannot be an email address. Please use a simple username (e.g., 'john123')");
+      setIsProcessing(false);
+      return;
+    }
+
+    // Username format validation
+    if (!/^[a-zA-Z0-9_-]+$/.test(username.trim())) {
+      setError("Username can only contain letters, numbers, underscores, and hyphens");
+      setIsProcessing(false);
+      return;
+    }
+
+    if (username.trim().length < 3) {
+      setError("Username must be at least 3 characters");
+      setIsProcessing(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords don't match");
       setIsProcessing(false);
       return;
     }
-  
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       setIsProcessing(false);

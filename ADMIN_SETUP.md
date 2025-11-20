@@ -4,6 +4,18 @@
 
 This application uses **Supabase Auth** for all authentication. Admin privileges are controlled by a simple `is_admin` flag in the database.
 
+## ⚠️ IMPORTANT: Required Supabase Configuration
+
+**You MUST disable email confirmation in Supabase** before users can register:
+
+1. Go to [Supabase Dashboard](https://app.supabase.com)
+2. Select your project
+3. Go to **Authentication** → **Providers** → **Email**
+4. **Disable** "Confirm email" toggle
+5. Click **Save**
+
+**Why?** This app uses fake emails (`username@siege-clan.com`), so users cannot receive or confirm emails. Without disabling confirmation, all registrations will fail at login with "Email not confirmed" error.
+
 ## How It Works
 
 1. **User Registration**: Users register with username and password
