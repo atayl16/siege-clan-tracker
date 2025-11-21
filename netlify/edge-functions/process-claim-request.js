@@ -46,12 +46,12 @@ export default async (request, _context) => {
     console.log(`Processing claim request ${requestId} with action: ${action}`);
 
     // Update the request status
+    // Note: updated_at is automatically handled by database trigger
     const { error: updateError } = await supabase
       .from("claim_requests")
       .update({
         status: action,
         admin_notes: adminNotes || null,
-        processed_at: new Date().toISOString(),
       })
       .eq("id", requestId);
 
