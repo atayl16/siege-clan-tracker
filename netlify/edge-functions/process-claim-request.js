@@ -60,20 +60,20 @@ export default async (request, _context) => {
       throw new Error(updateError.message || "Failed to update request status");
     }
 
-    // If approved, create the player claim
+    // If approved, update the member's claimed_by field
     if (action === "approved" && userId && womId) {
-      console.log(`Creating player claim for user ${userId} and wom_id ${womId}`);
+      console.log(`Claiming member ${womId} for user ${userId}`);
 
       const { error: claimError } = await supabase
-        .from("player_claims")
-        .insert([{
-          user_id: userId,
-          wom_id: womId,
-        }]);
+        .from("members")
+        .update({
+          claimed_by: userId,
+        })
+        .eq("wom_id", womId);
 
       if (claimError) {
-        console.error('Error creating player claim:', claimError);
-        throw new Error(claimError.message || "Failed to create player claim");
+        console.error('Error claiming member:', claimError);
+        throw new Error(claimError.message || "Failed to claim member");
       }
     }
 

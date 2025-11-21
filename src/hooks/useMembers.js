@@ -93,26 +93,9 @@ export function useMembers(excludeClaimed = false) {
       }
 
       // Filter out claimed members if requested
+      // Members are claimed when claimed_by field is not null
       if (excludeClaimed) {
-        const claimsPromise = client
-          .from('player_claims')
-          .select('wom_id');
-
-        const claimsTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Claims query timeout')), 5000)
-        );
-
-        const { data: claimedPlayers, error: claimsError } = await Promise.race([claimsPromise, claimsTimeoutPromise]);
-
-        if (claimsError) {
-          console.error('Error fetching claimed players:', claimsError);
-          // If we can't fetch claimed players, return all members
-          setMembers(data);
-          return;
-        }
-
-        const claimedIds = new Set(claimedPlayers?.map(p => p.wom_id) || []);
-        const availableMembers = data.filter(m => !claimedIds.has(m.wom_id));
+        const availableMembers = data.filter(m => m.claimed_by === null || m.claimed_by === undefined);
         setMembers(availableMembers);
         return;
       }
