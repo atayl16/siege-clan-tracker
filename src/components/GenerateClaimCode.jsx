@@ -58,28 +58,21 @@ export default function GenerateClaimCode() {
       }
       
       const code = generateRandomCode();
-      let expiresAt = null;
-      
-      if (expiryDays > 0) {
-        expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + parseInt(expiryDays));
-        expiresAt = expiresAt.toISOString();
-      }
-      
+
       // Ensure wom_id is correctly handled as number if needed
-      const womId = typeof selectedMemberObj.wom_id === 'string' 
-        ? parseInt(selectedMemberObj.wom_id, 10) 
+      const womId = typeof selectedMemberObj.wom_id === 'string'
+        ? parseInt(selectedMemberObj.wom_id, 10)
         : selectedMemberObj.wom_id;
-      
+
+      // Store claim code directly on members table
       const { error } = await supabase
-        .from('claim_codes')
-        .insert([{
-          code,
-          wom_id: womId,
-          expires_at: expiresAt
-        }])
+        .from('members')
+        .update({
+          claim_code: code
+        })
+        .eq('wom_id', womId)
         .select();
-        
+
       if (error) throw error;
       
       setGeneratedCode(code);
