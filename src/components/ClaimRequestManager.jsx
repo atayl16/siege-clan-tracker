@@ -55,12 +55,10 @@ export default function ClaimRequestManager() {
   );
 
   const openActionModal = (request, action) => {
-    console.log("openActionModal called", { request, action });
     setCurrentRequest(request);
     setCurrentAction(action);
     setAdminNotes("");
     setShowNotesModal(true);
-    console.log("Modal state set, showNotesModal should be true");
   };
 
   const confirmAction = async () => {
@@ -262,6 +260,7 @@ export default function ClaimRequestManager() {
 
         {showNotesModal && (
           <Modal
+            isOpen={showNotesModal}
             title={
               currentAction === "view"
                 ? "Request Details"
