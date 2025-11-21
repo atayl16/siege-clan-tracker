@@ -89,10 +89,11 @@ export function AuthProvider({ children }) {
         // Try to restore from Supabase session
         try {
           // Add timeout to Supabase session restoration
+          // Query by id since users.id = auth.users.id (from trigger)
           const userPromise = supabase
             .from("users")
             .select("*")
-            .eq("email", session.user.email)
+            .eq("id", session.user.id)
             .single();
 
           const timeoutPromise = new Promise((_, reject) =>
@@ -130,10 +131,11 @@ export function AuthProvider({ children }) {
           // User logged in via Supabase Auth
           try {
             // Add timeout to auth state change query
+            // Query by id since users.id = auth.users.id (from trigger)
             const userPromise = supabase
               .from("users")
               .select("*")
-              .eq("email", session.user.email)
+              .eq("id", session.user.id)
               .single();
 
             const timeoutPromise = new Promise((_, reject) =>
