@@ -54,11 +54,19 @@ export function AuthProvider({ children }) {
       if (localStorage.getItem("userId")) {
         try {
           const userId = localStorage.getItem("userId");
-          const { data, error } = await supabase
+
+          // Add timeout to session restoration query
+          const userPromise = supabase
             .from("users")
             .select("*")
-            .eq("id", userId) // This now works with UUID
+            .eq("id", userId)
             .single();
+
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Session restoration timeout')), 5000)
+          );
+
+          const { data, error } = await Promise.race([userPromise, timeoutPromise]);
 
           if (data && !error) {
             setUser(data);
@@ -80,11 +88,18 @@ export function AuthProvider({ children }) {
       } else if (session) {
         // Try to restore from Supabase session
         try {
-          const { data, error } = await supabase
+          // Add timeout to Supabase session restoration
+          const userPromise = supabase
             .from("users")
             .select("*")
             .eq("email", session.user.email)
             .single();
+
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Session restoration timeout')), 5000)
+          );
+
+          const { data, error } = await Promise.race([userPromise, timeoutPromise]);
 
           if (data && !error) {
             setUser(data);
@@ -114,11 +129,18 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           // User logged in via Supabase Auth
           try {
-            const { data, error } = await supabase
+            // Add timeout to auth state change query
+            const userPromise = supabase
               .from("users")
               .select("*")
               .eq("email", session.user.email)
               .single();
+
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Auth state change timeout')), 5000)
+            );
+
+            const { data, error } = await Promise.race([userPromise, timeoutPromise]);
 
             if (data && !error) {
               setUser(data);
@@ -349,13 +371,19 @@ export function AuthProvider({ children }) {
     console.log("Fetching claims for user ID:", userId);
     console.log("User ID type:", typeof userId);
     try {
-      // Use the RPC function that's working correctly
-      const { data: claimsData, error: claimsError } = await supabase.rpc(
+      // Use the RPC function with timeout
+      const claimsPromise = supabase.rpc(
         "get_user_claims",
         {
           user_id_param: userId,
         }
       );
+
+      const claimsTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('User claims query timeout - please check your connection')), 10000)
+      );
+
+      const { data: claimsData, error: claimsError } = await Promise.race([claimsPromise, claimsTimeoutPromise]);
 
       console.log("Claims query result:", { claimsData, claimsError });
 
@@ -369,13 +397,19 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Get the member details
+      // Get the member details with timeout
       const womIds = claimsData.map((claim) => claim.wom_id);
 
-      const { data: membersData, error: membersError } = await supabase
+      const membersPromise = supabase
         .from("members")
         .select("wom_id, name, current_lvl, ehb, siege_score")
         .in("wom_id", womIds);
+
+      const membersTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Member details query timeout')), 5000)
+      );
+
+      const { data: membersData, error: membersError } = await Promise.race([membersPromise, membersTimeoutPromise]);
 
       if (membersError) {
         console.error("Error fetching member details:", membersError);

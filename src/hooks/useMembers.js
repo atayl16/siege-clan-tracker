@@ -75,11 +75,18 @@ export function useMembers(excludeClaimed = false) {
       // Get the appropriate client based on admin status
       const client = getAdminSupabaseClient();
 
-      const { data, error: fetchError } = await client
+      // Add timeout to members query
+      const membersPromise = client
         .from('members')
         .select('*')
         .is('left_date', null)
         .order('name');
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Members query timeout - please check your connection')), 10000)
+      );
+
+      const { data, error: fetchError } = await Promise.race([membersPromise, timeoutPromise]);
 
       if (fetchError) {
         throw fetchError;
@@ -87,9 +94,15 @@ export function useMembers(excludeClaimed = false) {
 
       // Filter out claimed members if requested
       if (excludeClaimed) {
-        const { data: claimedPlayers, error: claimsError } = await client
+        const claimsPromise = client
           .from('player_claims')
           .select('wom_id');
+
+        const claimsTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Claims query timeout')), 5000)
+        );
+
+        const { data: claimedPlayers, error: claimsError } = await Promise.race([claimsPromise, claimsTimeoutPromise]);
 
         if (claimsError) {
           console.error('Error fetching claimed players:', claimsError);

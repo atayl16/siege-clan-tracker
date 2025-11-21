@@ -3,20 +3,32 @@ import { supabase } from "../supabaseClient";
 
 // Fetcher function that queries Supabase directly
 const claimRequestsFetcher = async () => {
-  // Fetch claim requests
-  const { data: requests, error: requestsError } = await supabase
+  // Fetch claim requests with timeout
+  const requestsPromise = supabase
     .from("claim_requests")
     .select("*")
     .order("created_at", { ascending: false });
+
+  const requestsTimeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Claim requests query timeout - please check your connection')), 10000)
+  );
+
+  const { data: requests, error: requestsError } = await Promise.race([requestsPromise, requestsTimeoutPromise]);
 
   if (requestsError) {
     throw new Error(requestsError.message || "Failed to fetch claim requests");
   }
 
-  // Fetch all users to get usernames
-  const { data: users, error: usersError } = await supabase
+  // Fetch all users to get usernames with timeout
+  const usersPromise = supabase
     .from("users")
     .select("id, username");
+
+  const usersTimeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Users query timeout')), 5000)
+  );
+
+  const { data: users, error: usersError } = await Promise.race([usersPromise, usersTimeoutPromise]);
 
   if (usersError) {
     console.error("Error fetching users:", usersError);
