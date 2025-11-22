@@ -590,37 +590,28 @@ export function AuthProvider({ children }) {
     if (!user) return { error: "You must be logged in to claim a player" };
 
     try {
-      // Verify the claim code by querying members table
-      // Claim codes are stored directly on members.claim_code
-      const { data: memberData, error: memberError } = await supabase
-        .from("members")
-        .select("wom_id, name, claim_code, claimed_by")
-        .eq("claim_code", code)
-        .single();
+      // Call the edge function to redeem claim code with service role
+      const API_KEY = import.meta.env.VITE_API_KEY;
 
-      if (memberError || !memberData) {
-        return { error: "Invalid or already used claim code" };
+      const response = await fetch('/api/redeem-claim-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({
+          code: code.trim(),
+          userId: user.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error || `Failed to redeem code: ${response.status}` };
       }
 
-      // Check if player is already claimed
-      if (memberData.claimed_by) {
-        return { error: "This player has already been claimed" };
-      }
-
-      const womId = memberData.wom_id;
-      const playerName = memberData.name || "Unknown Player";
-
-      // Claim the member by setting claimed_by to current user
-      const { error: claimError } = await supabase
-        .from("members")
-        .update({
-          claimed_by: user.id,
-          claim_code: null // Clear the claim code after use
-        })
-        .eq("wom_id", womId);
-
-      if (claimError) {
-        console.error("Error claiming member:", claimError);
+      if (!data.success) {
         return { error: "Failed to claim player" };
       }
 
@@ -629,8 +620,8 @@ export function AuthProvider({ children }) {
 
       return {
         success: true,
-        message: `Successfully claimed player: ${playerName}`,
-        player: { name: playerName },
+        message: `Successfully claimed player: ${data.playerName}`,
+        player: { name: data.playerName },
       };
     } catch (err) {
       console.error("Error claiming player:", err);
