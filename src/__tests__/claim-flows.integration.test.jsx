@@ -29,7 +29,7 @@ describe('Claim Request Approval Flow', () => {
   let mockProcessRequest;
   let mockRefresh;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mockProcessRequest = vi.fn().mockResolvedValue(true);
     mockRefresh = vi.fn();
 
