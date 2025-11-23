@@ -72,9 +72,9 @@ describe('Claim Request Approval Flow', () => {
     const approveButton = approveButtons.find(btn => btn.classList.contains('ui-action-button'));
     await user.click(approveButton);
 
-    // Modal should appear
+    // Modal should appear - check for heading instead of text to avoid ambiguity
     await waitFor(() => {
-      expect(screen.getByText(/Approve Request/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Approve Request/i })).toBeInTheDocument();
     });
 
     // Confirm approval
@@ -112,9 +112,9 @@ describe('Claim Request Approval Flow', () => {
     const denyButton = denyButtons.find(btn => btn.classList.contains('ui-action-button'));
     await user.click(denyButton);
 
-    // Modal should appear
+    // Modal should appear - check for heading to avoid ambiguity
     await waitFor(() => {
-      expect(screen.getByText(/Deny Request/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Deny Request/i })).toBeInTheDocument();
     });
 
     // Add admin notes
@@ -153,7 +153,7 @@ describe('Claim Request Approval Flow', () => {
     await user.click(approveButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Approve Request/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Approve Request/i })).toBeInTheDocument();
     });
 
     const confirmButton = screen.getByRole('button', { name: /Approve Request/i });
