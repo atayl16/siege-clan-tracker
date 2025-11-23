@@ -67,8 +67,9 @@ describe('Claim Request Approval Flow', () => {
       </MemoryRouter>
     );
 
-    // Find and click the Approve button
-    const approveButton = await screen.findByRole('button', { name: /approve/i });
+    // Find and click the Approve button - use more specific query to avoid filter buttons
+    const approveButtons = await screen.findAllByRole('button', { name: /approve/i });
+    const approveButton = approveButtons.find(btn => btn.classList.contains('ui-action-button'));
     await user.click(approveButton);
 
     // Modal should appear
@@ -106,8 +107,9 @@ describe('Claim Request Approval Flow', () => {
       </MemoryRouter>
     );
 
-    // Find and click the Deny button
-    const denyButton = await screen.findByRole('button', { name: /deny/i });
+    // Find and click the Deny button - use more specific query
+    const denyButtons = await screen.findAllByRole('button', { name: /deny/i });
+    const denyButton = denyButtons.find(btn => btn.classList.contains('ui-action-button'));
     await user.click(denyButton);
 
     // Modal should appear
@@ -146,7 +148,8 @@ describe('Claim Request Approval Flow', () => {
       </MemoryRouter>
     );
 
-    const approveButton = await screen.findByRole('button', { name: /approve/i });
+    const approveButtons = await screen.findAllByRole('button', { name: /approve/i });
+    const approveButton = approveButtons.find(btn => btn.classList.contains('ui-action-button'));
     await user.click(approveButton);
 
     await waitFor(() => {
@@ -180,15 +183,27 @@ describe('Claim Code Generation Flow', () => {
       error: null
     });
 
-    // Mock Supabase client
+    // Mock Supabase client with proper method chaining
     const { supabase } = await import('../supabaseClient');
+    const mockSelect = vi.fn().mockResolvedValue({
+      data: [{ claim_code: 'ABC12345' }],
+      error: null
+    });
+    const mockEq = vi.fn().mockReturnValue({ select: mockSelect });
+    const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [{ claim_code: 'ABC12345' }], error: null })
+      from: vi.fn().mockReturnValue({
+        update: mockUpdate,
+        eq: mockEq,
+        select: mockSelect
+      }),
+      update: mockUpdate,
+      eq: mockEq,
+      select: mockSelect
     };
-    supabase.from = mockSupabase.from;
+
+    // Apply the mock
+    Object.assign(supabase, mockSupabase);
   });
 
   afterEach(() => {
@@ -295,8 +310,8 @@ describe('Claim Code Redemption Flow', () => {
     const codeInput = await screen.findByPlaceholderText(/Enter your claim code/i);
     await user.type(codeInput, 'ABC12345');
 
-    // Submit
-    const submitButton = screen.getByRole('button', { name: /claim/i });
+    // Submit - get the submit button specifically (not the tab button)
+    const submitButton = screen.getByRole('button', { name: /claim player/i });
     await user.click(submitButton);
 
     // Verify edge function was called
@@ -326,7 +341,7 @@ describe('Claim Code Redemption Flow', () => {
     const codeInput = await screen.findByPlaceholderText(/Enter your claim code/i);
     await user.type(codeInput, 'INVALID');
 
-    const submitButton = screen.getByRole('button', { name: /claim/i });
+    const submitButton = screen.getByRole('button', { name: /claim player/i });
     await user.click(submitButton);
 
     // Error should be displayed
@@ -351,7 +366,7 @@ describe('Claim Code Redemption Flow', () => {
     const codeInput = await screen.findByPlaceholderText(/Enter your claim code/i);
     await user.type(codeInput, 'ABC12345');
 
-    const submitButton = screen.getByRole('button', { name: /claim/i });
+    const submitButton = screen.getByRole('button', { name: /claim player/i });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -377,7 +392,7 @@ describe('Claim Code Redemption Flow', () => {
     const codeInput = await screen.findByPlaceholderText(/Enter your claim code/i);
     await user.type(codeInput, 'ABC12345');
 
-    const submitButton = screen.getByRole('button', { name: /claim/i });
+    const submitButton = screen.getByRole('button', { name: /claim player/i });
     await user.click(submitButton);
 
     // Should show login required message
