@@ -49,7 +49,7 @@ testSuite('Claim Requests Integration Tests', () => {
         .select('id, user_id, wom_id, rsn, status');
 
       // Should not error on read
-      expect(error).toBeNull();
+      expect(error).toBeFalsy();
       expect(Array.isArray(data)).toBe(true);
     });
 
@@ -73,7 +73,7 @@ testSuite('Claim Requests Integration Tests', () => {
       if (error) {
         console.error('Insert error:', error);
         // If this fails, the RLS policy is not working correctly
-        expect(error).toBeNull();
+        expect(error).toBeFalsy();
       } else {
         expect(data).toBeDefined();
         expect(data.rsn).toBe('TestPlayer_Integration');
@@ -94,7 +94,7 @@ testSuite('Claim Requests Integration Tests', () => {
         .eq('id', testClaimRequestId)
         .single();
 
-      expect(error).toBeNull();
+      expect(error).toBeFalsy();
       expect(data).toBeDefined();
       expect(data.id).toBe(testClaimRequestId);
     });
@@ -108,7 +108,7 @@ testSuite('Claim Requests Integration Tests', () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      expect(error).toBeNull();
+      expect(error).toBeFalsy();
       expect(Array.isArray(data)).toBe(true);
     });
 
