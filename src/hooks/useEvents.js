@@ -14,14 +14,20 @@ export function useEvents() {
     setLoading(true);
     setError(null);
     try {
-      // Use the admin client to bypass RLS
-      const { data, error: fetchError } = await supabase
+      // Use the admin client to bypass RLS with timeout
+      const eventsPromise = supabase
         .from('events')
         .select('*')
         .order('start_date', { ascending: false });
-      
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Events query timeout - please check your connection')), 10000)
+      );
+
+      const { data, error: fetchError } = await Promise.race([eventsPromise, timeoutPromise]);
+
       if (fetchError) throw fetchError;
-      
+
       setEvents(data || []);
     } catch (err) {
       console.error('Error fetching events:', err);

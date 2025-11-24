@@ -38,8 +38,8 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     members: availableMembers,
     loading: membersLoading,
     error: membersError,
-    refresh: refreshAvailableMembers,
-  } = useMembers();
+    refreshMembers: refreshAvailableMembers,
+  } = useMembers(true); // Exclude already-claimed members
 
   // Get fresh data when switching tabs
   useEffect(() => {
@@ -143,6 +143,19 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
   return (
     <Card className="ui-claim-player-container">
+      {notification && (
+        <div
+          className={`ui-notification-message ui-notification-${notification.type}`}
+        >
+          {notification.type === "success" ? (
+            <FaCheck className="ui-notification-icon" />
+          ) : (
+            <FaInfoCircle className="ui-notification-icon" />
+          )}
+          {notification.message}
+        </div>
+      )}
+
       <Tabs
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -155,19 +168,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
               Enter the claim code provided by admin to connect your account
               with your in-game character.
             </p>
-
-            {notification && (
-              <div
-                className={`ui-notification-message ui-notification-${notification.type}`}
-              >
-                {notification.type === "success" ? (
-                  <FaCheck className="ui-notification-icon" />
-                ) : (
-                  <FaInfoCircle className="ui-notification-icon" />
-                )}
-                {notification.message}
-              </div>
-            )}
 
             {error && (
               <div className="ui-error-message">

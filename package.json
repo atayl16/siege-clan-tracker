@@ -34,13 +34,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.js",
     "netlify:dev": "netlify dev",
     "netlify:build": "netlify build",
     "netlify:deploy": "netlify deploy",
     "test:ui": "vitest --ui",
     "staging:export": "node scripts/staging/export-production-data.js",
     "staging:seed": "node scripts/staging/seed-staging-database.js",
-    "staging:refresh": "./scripts/staging/refresh-staging.sh"
+    "staging:refresh": "./scripts/staging/refresh-staging.sh",
+    "prepare": "husky"
   },
   "eslintConfig": {
     "extends": [
@@ -67,7 +69,7 @@
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",

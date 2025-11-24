@@ -1,16 +1,15 @@
 import useSWR from "swr";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
+import { jsonFetcher } from "../utils/fetchers";
 
 export function useUserGoals() {
-  const { data, error, mutate } = useSWR("/api/user-goals", fetcher, {
+  const { data, error, mutate } = useSWR("/api/user-goals", jsonFetcher, {
     refreshInterval: 60000,
     dedupingInterval: 30000,
     revalidateOnMount: true,
     revalidateOnFocus: false,
   });
   return {
-    userGoals: data,
+    userGoals: data || [],
     loading: !data && !error,
     error,
     refresh: mutate,

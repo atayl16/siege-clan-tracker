@@ -1,15 +1,30 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
 
+/**
+ * Authentication context for managing user sessions and admin access.
+ *
+ * Uses Supabase Auth as the single source of truth for authentication.
+ * Provides user state, admin status, and authentication methods to the entire app.
+ *
+ * @example
+ * const { user, isAdmin, login, logout } = useAuth();
+ */
 const AuthContext = createContext();
 
-// Keep hardcoded admin for emergency access
-const ADMIN_EMAIL_HASH =
-  "8c91a3d71da50b56d355e4b61ff793842befb82bd5972e3b0d84fb771e450428";
-const ADMIN_PASSWORD_HASH =
-  "86c671c7a776b62f925b5d2387fae4c73392931be4d37b19e37e5534abab587d";
-
+/**
+ * Authentication provider component that wraps the application.
+ *
+ * Manages:
+ * - User session state and persistence
+ * - Admin authentication flags
+ * - Supabase Auth session lifecycle
+ * - User claims and profile data
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components to wrap
+ * @returns {JSX.Element} Provider component with auth context
+ */
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(
     localStorage.getItem("adminAuth") === "true"
@@ -20,21 +35,38 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [userClaims, setUserClaims] = useState([]);
 
+  // Helper function to clear session data
+  const clearSession = () => {
+    localStorage.removeItem("adminAuth");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("user");
+    localStorage.removeItem("useServiceRole");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   // Load user session on initial render
   useEffect(() => {
     const checkSession = async () => {
       // Try to restore session from storage
-      await supabase.auth.getSession();
-
-      // Then proceed with your existing code...
+      const sessionResponse = await supabase.auth.getSession();
+      const session = sessionResponse?.data?.session;
       if (localStorage.getItem("userId")) {
         try {
           const userId = localStorage.getItem("userId");
-          const { data, error } = await supabase
+
+          // Add timeout to session restoration query
+          const userPromise = supabase
             .from("users")
             .select("*")
-            .eq("id", userId) // This now works with UUID
+            .eq("id", userId)
             .single();
+
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Session restoration timeout')), 5000)
+          );
+
+          const { data, error } = await Promise.race([userPromise, timeoutPromise]);
 
           if (data && !error) {
             setUser(data);
@@ -45,138 +77,209 @@ export function AuthProvider({ children }) {
             }
             fetchUserClaims(data.id);
           } else {
-            logout();
+            // Session invalid - clear everything
+            clearSession();
           }
         } catch (err) {
           console.error("Session check error:", err);
-          logout();
+          // Clear invalid session
+          clearSession();
         }
+      } else if (session) {
+        // Try to restore from Supabase session
+        try {
+          // Add timeout to Supabase session restoration
+          // Query by id since users.id = auth.users.id (from trigger)
+          const userPromise = supabase
+            .from("users")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Session restoration timeout')), 5000)
+          );
+
+          const { data, error } = await Promise.race([userPromise, timeoutPromise]);
+
+          if (data && !error) {
+            setUser(data);
+            localStorage.setItem("userId", data.id);
+            if (data.is_admin) {
+              setIsAuthenticated(true);
+              localStorage.setItem("adminAuth", "true");
+            }
+            fetchUserClaims(data.id);
+          }
+        } catch (err) {
+          console.error("Session restoration error:", err);
+        }
+      } else {
+        // No userId - clear any stale data
+        clearSession();
       }
 
       setLoading(false);
     };
 
     checkSession();
+
+    // Listen for auth state changes (only if available)
+    if (supabase.auth.onAuthStateChange) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          // User logged in via Supabase Auth
+          try {
+            // Add timeout to auth state change query
+            // Query by id since users.id = auth.users.id (from trigger)
+            const userPromise = supabase
+              .from("users")
+              .select("*")
+              .eq("id", session.user.id)
+              .single();
+
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Auth state change timeout')), 5000)
+            );
+
+            const { data, error } = await Promise.race([userPromise, timeoutPromise]);
+
+            if (data && !error) {
+              setUser(data);
+              localStorage.setItem("userId", data.id);
+              if (data.is_admin) {
+                setIsAuthenticated(true);
+                localStorage.setItem("adminAuth", "true");
+              }
+              fetchUserClaims(data.id);
+            }
+          } catch (err) {
+            console.error("Auth state change error:", err);
+          }
+        } else {
+          clearSession();
+        }
+      });
+
+      return () => {
+        subscription?.unsubscribe();
+      };
+    }
   }, []);
 
-  // Admin login
+  /**
+   * Authenticates a user with username and password.
+   *
+   * Converts username to email format (username@siege-clan.com) and authenticates
+   * via Supabase Auth. On success, fetches user record and sets admin flags.
+   *
+   * @param {string} username - Username or email to authenticate
+   * @param {string} password - User's password
+   * @returns {Promise<{success?: boolean, isAdmin?: boolean, error?: string}>}
+   *          Success object with admin flag, or error object
+   *
+   * @example
+   * const result = await login('myusername', 'mypassword');
+   * if (result.success) {
+   *   console.log('Logged in as admin:', result.isAdmin);
+   * }
+   */
   const login = async (username, password) => {
     try {
-      // Hash the provided credentials
-      const usernameHash = await sha256(username.trim().toLowerCase());
-      const passwordHash = await sha256(password);
-      
-      // Try admin login first
-      if (usernameHash === ADMIN_EMAIL_HASH && passwordHash === ADMIN_PASSWORD_HASH) {
-        localStorage.setItem("adminAuth", "true");
-        // Add the flag for service role access
-        localStorage.setItem("useServiceRole", "true");
-        setIsAuthenticated(true);
-      
-        // Create a mock admin user for UI purposes
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: "admin",
-            username: "admin",
-            is_admin: true,
-            created_at: new Date().toISOString(),
-          })
+      const usernameInput = username.trim().toLowerCase();
+
+      // Convert username to email format (Supabase Auth requires emails)
+      const email = usernameInput.includes("@")
+        ? usernameInput
+        : `${usernameInput}@siege-clan.com`;
+
+      // Authenticate with Supabase Auth with timeout
+      console.log("Attempting login for:", email);
+      let authData, authError;
+      try {
+        const loginPromise = supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Login timeout')), 10000)
         );
-      
-        setUser({
-          id: "admin",
-          username: "admin",
-          is_admin: true,
-        });
-      
-        // NEW CODE: Try to create a Supabase auth session for the admin
-        try {
-          // First check if we have a pre-configured admin account
-          const adminEmail = "admin@siegeclan.org"; // Use consistent email
-          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: adminEmail,
-            password: passwordHash // Use the same password hash
-          });
-      
-          if (signInError) {
-            console.log("Admin auth not found, creating...");
-            // If sign-in fails, try to create the account
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: adminEmail,
-              password: passwordHash
-            });
-      
-            if (!signUpError) {
-              console.log("Admin auth created successfully");
-            } else {
-              console.error("Failed to create admin auth:", signUpError);
-            }
-          } else {
-            console.log("Admin authenticated with Supabase");
-          }
-          
-          // Now call the function to register this user as admin
-          const { error: rpcError } = await supabase.rpc('register_admin_user');
-          if (rpcError) {
-            console.error("Error registering admin in database:", rpcError);
-          } else {
-            console.log("Admin registered in database successfully");
-          }
-        } catch (authError) {
-          console.error("Error setting up admin authentication:", authError);
-          // Continue anyway - the hard-coded admin should still work
-        }
-      
-        return { success: true, isAdmin: true };
+
+        const result = await Promise.race([loginPromise, timeoutPromise]);
+        authData = result.data;
+        authError = result.error;
+      } catch (loginTimeout) {
+        console.error("Login timeout:", loginTimeout);
+        return { error: "Login is taking too long. Please try again." };
       }
-  
-      // If not hardcoded admin, try regular user login
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username.trim().toLowerCase())
-        .single();
-  
-      if (error) {
-        return { error: "Invalid credentials" };
+
+      console.log("Login result:", { hasUser: !!authData?.user, authError });
+
+      if (authError) {
+        console.error("Login error:", authError);
+        return { error: "Invalid username or password" };
       }
-  
-      // Verify password
-      const inputPasswordHash = await sha256(password);
-      if (data.password_hash === inputPasswordHash) {
-        // CRITICAL: Create a proper Supabase session
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@example.com`,
-          password: password
-        });
-        
-        if (authError) {
-          console.warn("Supabase auth error, trying to create session:", authError);
-        }
-        
-        localStorage.setItem("userId", data.id);
-        localStorage.setItem("user", JSON.stringify(data));
-        setUser(data);
-  
-        // If user has admin privileges, set isAuthenticated to true
-        if (data.is_admin) {
-          setIsAuthenticated(true);
-          localStorage.setItem("adminAuth", "true");
-        }
-  
-        fetchUserClaims(data.id);
-        return { success: true, isAdmin: data.is_admin || false };
+
+      // Fetch user record from database with timeout
+      console.log("Fetching user record for:", authData.user.id);
+      let userData, dbError;
+      try {
+        const fetchPromise = supabase
+          .from("users")
+          .select("*")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('User fetch timeout')), 5000)
+        );
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+        userData = result.data;
+        dbError = result.error;
+      } catch (fetchTimeout) {
+        console.error("User fetch timeout:", fetchTimeout);
+        return { error: "Account setup incomplete. Please contact support." };
       }
-  
-      return { error: "Invalid credentials" };
+
+      console.log("User record fetch result:", { hasUserData: !!userData, dbError });
+
+      if (dbError || !userData) {
+        console.error("Failed to fetch user record:", dbError);
+        return { error: "Account setup incomplete. Please contact support." };
+      }
+
+      // Set user state
+      localStorage.setItem("userId", userData.id);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+
+      // Set admin flag if applicable
+      if (userData.is_admin) {
+        setIsAuthenticated(true);
+        localStorage.setItem("adminAuth", "true");
+      }
+
+      fetchUserClaims(userData.id);
+      return { success: true, isAdmin: userData.is_admin || false };
     } catch (error) {
       console.error("Authentication error:", error);
       return { error: "Authentication failed" };
     }
   };
 
-  // Add a function to promote/demote admin users  
+  /**
+   * Toggles admin status for a user (admin-only operation).
+   *
+   * Calls the admin edge function to update the is_admin flag.
+   * Requires valid admin session with JWT token.
+   *
+   * @param {string} userId - UUID of the user to update
+   * @param {boolean} makeAdmin - True to grant admin, false to revoke
+   * @returns {Promise<{success?: boolean, data?: Object, error?: string}>}
+   *          Success object with updated data, or error object
+   */
   const toggleAdminStatus = async (userId, makeAdmin) => {
     try {
       console.log(`Updating user ${userId} to admin status: ${makeAdmin}`);
@@ -270,13 +373,19 @@ export function AuthProvider({ children }) {
     console.log("Fetching claims for user ID:", userId);
     console.log("User ID type:", typeof userId);
     try {
-      // Use the RPC function that's working correctly
-      const { data: claimsData, error: claimsError } = await supabase.rpc(
+      // Use the RPC function with timeout
+      const claimsPromise = supabase.rpc(
         "get_user_claims",
         {
           user_id_param: userId,
         }
       );
+
+      const claimsTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('User claims query timeout - please check your connection')), 10000)
+      );
+
+      const { data: claimsData, error: claimsError } = await Promise.race([claimsPromise, claimsTimeoutPromise]);
 
       console.log("Claims query result:", { claimsData, claimsError });
 
@@ -290,13 +399,19 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Get the member details
+      // Get the member details with timeout
       const womIds = claimsData.map((claim) => claim.wom_id);
 
-      const { data: membersData, error: membersError } = await supabase
+      const membersPromise = supabase
         .from("members")
         .select("wom_id, name, current_lvl, ehb, siege_score")
         .in("wom_id", womIds);
+
+      const membersTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Member details query timeout')), 5000)
+      );
+
+      const { data: membersData, error: membersError } = await Promise.race([membersPromise, membersTimeoutPromise]);
 
       if (membersError) {
         console.error("Error fetching member details:", membersError);
@@ -327,73 +442,142 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register a new user
+  /**
+   * Registers a new user account.
+   *
+   * Creates a Supabase Auth user with email format (username@siege-clan.com).
+   * Database trigger automatically creates the users table record.
+   * Username is stored in auth metadata for the trigger to use.
+   *
+   * @param {string} username - Desired username (will be converted to email)
+   * @param {string} password - User's password (min 6 characters)
+   * @returns {Promise<{success?: boolean, error?: string}>}
+   *          Success object or error with message
+   *
+   * @example
+   * const result = await register('newuser', 'securepass123');
+   * if (result.error) {
+   *   console.error(result.error); // "Username already taken"
+   * }
+   */
   const register = async (username, password) => {
     try {
-      // Check if username already exists
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("id")
-        .eq("username", username.trim().toLowerCase())
-        .single();
-  
-      if (existingUser) {
-        return { error: "Username already taken" };
+      const usernameInput = username.trim().toLowerCase();
+
+      console.log("Checking if username exists:", usernameInput);
+
+      // Check if username already exists with timeout
+      // If the check fails or times out, we'll let the database handle uniqueness
+      try {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Username check timeout')), 5000)
+        );
+
+        const checkPromise = supabase
+          .from("users")
+          .select("id")
+          .eq("username", usernameInput);
+
+        const { data: existingUsers, error: checkError } = await Promise.race([
+          checkPromise,
+          timeoutPromise
+        ]);
+
+        console.log("Username check result:", { existingUsers, checkError });
+
+        if (!checkError && existingUsers && existingUsers.length > 0) {
+          return { error: "Username already taken" };
+        }
+      } catch (checkTimeout) {
+        console.warn("Username check failed/timeout:", checkTimeout.message);
+        // Continue with registration - database will enforce uniqueness
       }
-  
-      // First create the user in auth system
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@example.com`,
-        password: password,
-      });
-  
+
+      // Create user in Supabase Auth with timeout
+      // The database trigger will automatically create the users table record
+      console.log("Creating auth user...");
+
+      let authData, authError;
+      try {
+        const signUpPromise = supabase.auth.signUp({
+          email: `${usernameInput}@siege-clan.com`,
+          password: password,
+          options: {
+            data: {
+              username: usernameInput  // Store username in metadata for trigger
+            },
+            emailRedirectTo: undefined  // No email confirmation needed
+          }
+        });
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Signup timeout')), 10000)
+        );
+
+        const result = await Promise.race([signUpPromise, timeoutPromise]);
+        authData = result.data;
+        authError = result.error;
+      } catch (signupTimeout) {
+        console.error("Signup timeout:", signupTimeout);
+        return { error: "Registration is taking too long. Please check your internet connection and try again." };
+      }
+
+      console.log("Auth signup result:", { authData, authError });
+
       if (authError) {
-        console.error("Auth registration error:", authError);
+        console.error("Registration error:", authError);
         return { error: authError.message || "Registration failed" };
       }
-  
-      // Hash password
-      const passwordHash = await sha256(password);
-      
-      // Create user record
-      const { error } = await supabase
-        .from("users")
-        .insert([
-          {
-            id: authData.user.id,
-            username: username.trim().toLowerCase(),
-            password_hash: passwordHash,
-            is_admin: false,
-          },
-        ])
-        .select();
-        
-      if (error) {
-        console.error("User record creation error:", error);
-        return { error: "Failed to create user record" };
+
+      if (!authData?.user) {
+        console.error("No user returned from signup");
+        return { error: "Registration failed - no user created" };
       }
-      
-      // Set created_at timestamp
-      const created_at = new Date().toISOString();
-      
-      // Store user in local storage and state
-      localStorage.setItem("userId", authData.user.id);
-      localStorage.setItem("user", JSON.stringify({
-        id: authData.user.id,
-        username: username.trim().toLowerCase(),
-        is_admin: false,
-        created_at: created_at,
-        join_date: created_at,
-      }));
-      
-      setUser({
-        id: authData.user.id,
-        username: username.trim().toLowerCase(),
-        is_admin: false,
-        created_at: created_at,
-        join_date: created_at,
-      });
-  
+
+      console.log("Auth user created successfully, waiting for trigger...");
+      // Wait for trigger to create user record
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("Fetching user record for id:", authData.user.id);
+
+      // Fetch the created user record with timeout
+      let userData, dbError;
+      try {
+        const fetchPromise = supabase
+          .from("users")
+          .select("*")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('User fetch timeout')), 5000)
+        );
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+        userData = result.data;
+        dbError = result.error;
+      } catch (fetchTimeout) {
+        console.error("User record fetch timeout:", fetchTimeout);
+        return { error: "Account created but setup incomplete. Try logging in." };
+      }
+
+      console.log("User record fetch result:", { userData, dbError });
+
+      if (dbError) {
+        console.error("Failed to fetch user record:", dbError);
+        return { error: "Account created but setup incomplete. Try logging in." };
+      }
+
+      if (!userData) {
+        console.error("User record not found after trigger");
+        return { error: "Account created but setup incomplete. Try logging in." };
+      }
+
+      // Set user state
+      localStorage.setItem("userId", userData.id);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+
       return { success: true };
     } catch (error) {
       console.error("Registration error:", error);
@@ -406,80 +590,29 @@ export function AuthProvider({ children }) {
     if (!user) return { error: "You must be logged in to claim a player" };
 
     try {
-      // Verify the claim code
-      const { data: codeData, error: codeError } = await supabase
-        .from("claim_codes")
-        .select("*")
-        .eq("code", code)
-        .eq("is_claimed", false)
-        .single();
+      // Call the edge function to redeem claim code with service role
+      const API_KEY = import.meta.env.VITE_API_KEY;
 
-      if (codeError || !codeData) {
-        return { error: "Invalid or already used claim code" };
+      const response = await fetch('/api/redeem-claim-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({
+          code: code.trim(),
+          userId: user.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error || `Failed to redeem code: ${response.status}` };
       }
 
-      // Check if code is expired
-      if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
-        return { error: "This claim code has expired" };
-      }
-
-      // Check if player is already claimed
-      const { data: existingClaim } = await supabase
-        .from("player_claims")
-        .select("*")
-        .eq("wom_id", codeData.wom_id)
-        .single();
-
-      if (existingClaim) {
-        return { error: "This player has already been claimed" };
-      }
-
-      // Get player info - ensure wom_id is handled correctly
-      let womId = codeData.wom_id;
-      
-      // Convert if needed (depends on your wom_id type in members table)
-      if (typeof womId === "string" && !isNaN(womId)) {
-        womId = parseInt(womId, 10);
-      }
-
-      const { data: playerData, error: playerError } = await supabase
-        .from("members")
-        .select("name")
-        .eq("wom_id", womId)
-        .single();
-
-      let playerName = "Unknown Player";
-
-      if (playerError) {
-        console.warn("Player not found in members table:", playerError);
-      } else if (playerData) {
-        playerName = playerData.name;
-      }
-
-      // Create new claim using the wom_id from the claim code
-      // user.id is now a UUID
-      const { error: insertError } = await supabase
-        .from("player_claims")
-        .insert([
-          {
-            user_id: user.id, // This is now a UUID
-            wom_id: codeData.wom_id,
-          },
-        ]);
-
-      if (insertError) {
-        console.error("Error inserting player claim:", insertError);
+      if (!data.success) {
         return { error: "Failed to claim player" };
-      }
-
-      // Mark code as claimed
-      const { error: updateError } = await supabase
-        .from("claim_codes")
-        .update({ is_claimed: true })
-        .eq("id", codeData.id);
-
-      if (updateError) {
-        console.error("Error marking code as claimed:", updateError);
       }
 
       // Refresh user claims
@@ -487,8 +620,8 @@ export function AuthProvider({ children }) {
 
       return {
         success: true,
-        message: `Successfully claimed player: ${playerName}`,
-        player: { name: playerName },
+        message: `Successfully claimed player: ${data.playerName}`,
+        player: { name: data.playerName },
       };
     } catch (err) {
       console.error("Error claiming player:", err);
@@ -496,7 +629,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  /**
+   * Logs out the current user.
+   *
+   * Clears localStorage, resets user state, and signs out from Supabase Auth.
+   * Safe to call even if Supabase signOut fails.
+   *
+   * @returns {Promise<void>}
+   */
+  const logout = async () => {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
@@ -504,19 +645,20 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);
+
+    // Sign out from Supabase auth as well
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if Supabase signOut fails
+    }
   };
 
-  const isAdmin = () => {
-    return isAuthenticated;
-  };
-
-  const isLoggedIn = () => {
-    return isAuthenticated || user !== null;
-  };
-
-  const isLoggedOut = () => {
-    return !isAuthenticated && user === null;
-  };
+  // Computed values instead of functions - more React-like
+  const isAdmin = user?.is_admin === true;
+  const isLoggedIn = user !== null;
+  const isLoggedOut = user === null;
 
   return (
     <AuthContext.Provider

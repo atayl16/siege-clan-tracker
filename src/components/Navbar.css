@@ -108,7 +108,16 @@
   transition: all 0.3s;
 }
 
+/* Divider between main nav and auth links */
+.navbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.3);
+  margin: 0 0.5rem;
+}
+
 /* Special button styles */
+.navbar-logout-btn,
 .logout-button {
   background: none;
   border: 1px solid #d9534f;
@@ -118,8 +127,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 1rem;
+  white-space: nowrap;
 }
 
+.navbar-logout-btn:hover,
 .logout-button:hover {
   background-color: #d9534f;
   color: white;
@@ -189,14 +201,20 @@
   .navbar-links a:after {
     display: none;
   }
-  
+
+  /* Hide divider on mobile, replace with spacing */
+  .navbar-divider {
+    display: none;
+  }
+
   .navbar-auth-links {
     flex-direction: column;
     width: 100%;
     gap: 1rem;
     align-items: flex-start; /* Changed for mobile */
   }
-  
+
+  .navbar-logout-btn,
   .logout-button {
     margin-top: 1rem;
     width: 100%;

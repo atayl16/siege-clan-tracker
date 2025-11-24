@@ -1,9 +1,8 @@
 import useSWR from "swr";
-
-const fetcher = (url) => fetch(url).then((r) => r.json());
+import { jsonFetcher } from "../utils/fetchers";
 
 export function useCompetitions() {
-  const { data, error, mutate } = useSWR("/api/wom-competitions", fetcher, {
+  const { data, error, mutate } = useSWR("/api/wom-competitions", jsonFetcher, {
     refreshInterval: 60000,
     dedupingInterval: 30000,
     revalidateOnMount: true,

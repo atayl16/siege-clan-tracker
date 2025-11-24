@@ -20,15 +20,19 @@ vi.mock('../supabaseClient', () => ({
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: vi.fn(() => {
+      const chainable = {};
+      chainable.select = vi.fn(() => chainable);
+      chainable.insert = vi.fn(() => chainable);
+      chainable.update = vi.fn(() => chainable);
+      chainable.delete = vi.fn(() => chainable);
+      chainable.eq = vi.fn(() => chainable);
+      chainable.is = vi.fn(() => chainable);
+      chainable.single = vi.fn().mockResolvedValue({ data: null, error: null });
+      chainable.order = vi.fn().mockResolvedValue({ data: [], error: null });
+      chainable.then = vi.fn((resolve) => resolve({ data: [], error: null }));
+      return chainable;
+    }),
     rpc: vi.fn(),
   },
 }));
@@ -41,31 +45,39 @@ vi.mock('../supabaseClient.js', () => ({
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: vi.fn(() => {
+      const chainable = {};
+      chainable.select = vi.fn(() => chainable);
+      chainable.insert = vi.fn(() => chainable);
+      chainable.update = vi.fn(() => chainable);
+      chainable.delete = vi.fn(() => chainable);
+      chainable.eq = vi.fn(() => chainable);
+      chainable.is = vi.fn(() => chainable);
+      chainable.single = vi.fn().mockResolvedValue({ data: null, error: null });
+      chainable.order = vi.fn().mockResolvedValue({ data: [], error: null });
+      chainable.then = vi.fn((resolve) => resolve({ data: [], error: null }));
+      return chainable;
+    }),
     rpc: vi.fn(),
   },
 }));
 
 // Mock src/utils/supabaseClient.js
 vi.mock('./utils/supabaseClient', () => ({
-  getAdminSupabaseClient: vi.fn(() => ({
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-  })),
+  getAdminSupabaseClient: vi.fn(() => {
+    const chainable = {};
+    chainable.from = vi.fn(() => chainable);
+    chainable.select = vi.fn(() => chainable);
+    chainable.insert = vi.fn(() => chainable);
+    chainable.update = vi.fn(() => chainable);
+    chainable.delete = vi.fn(() => chainable);
+    chainable.eq = vi.fn(() => chainable);
+    chainable.is = vi.fn(() => chainable);
+    chainable.single = vi.fn().mockResolvedValue({ data: null, error: null });
+    chainable.order = vi.fn().mockResolvedValue({ data: [], error: null });
+    chainable.then = vi.fn((resolve) => resolve({ data: [], error: null }));
+    return chainable;
+  }),
 }));
 
 vi.mock('src/supabaseClient', () => ({
@@ -76,15 +88,19 @@ vi.mock('src/supabaseClient', () => ({
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: vi.fn(() => {
+      const chainable = {};
+      chainable.select = vi.fn(() => chainable);
+      chainable.insert = vi.fn(() => chainable);
+      chainable.update = vi.fn(() => chainable);
+      chainable.delete = vi.fn(() => chainable);
+      chainable.eq = vi.fn(() => chainable);
+      chainable.is = vi.fn(() => chainable);
+      chainable.single = vi.fn().mockResolvedValue({ data: null, error: null });
+      chainable.order = vi.fn().mockResolvedValue({ data: [], error: null });
+      chainable.then = vi.fn((resolve) => resolve({ data: [], error: null }));
+      return chainable;
+    }),
     rpc: vi.fn(),
   },
 }));
@@ -97,15 +113,19 @@ vi.mock('src/supabaseClient.js', () => ({
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: vi.fn(() => {
+      const chainable = {};
+      chainable.select = vi.fn(() => chainable);
+      chainable.insert = vi.fn(() => chainable);
+      chainable.update = vi.fn(() => chainable);
+      chainable.delete = vi.fn(() => chainable);
+      chainable.eq = vi.fn(() => chainable);
+      chainable.is = vi.fn(() => chainable);
+      chainable.single = vi.fn().mockResolvedValue({ data: null, error: null });
+      chainable.order = vi.fn().mockResolvedValue({ data: [], error: null });
+      chainable.then = vi.fn((resolve) => resolve({ data: [], error: null }));
+      return chainable;
+    }),
     rpc: vi.fn(),
   },
 }));

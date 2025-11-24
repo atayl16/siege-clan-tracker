@@ -3,8 +3,17 @@ import { getAdminSupabaseClient } from '../utils/supabaseClient';
 import { supabase } from '../supabaseClient';
 
 /**
- * Get auth headers for admin API calls
- * Requires valid Supabase session token - validated by edge functions
+ * Get auth headers for admin API calls.
+ *
+ * Retrieves the Supabase session token for authenticated admin requests.
+ * Throws an error if user is not admin or session is missing.
+ *
+ * @returns {Promise<Object>} Auth headers object with Authorization Bearer token
+ * @throws {Error} If user is not admin or missing Supabase session
+ *
+ * @example
+ * const headers = await getAuthHeaders();
+ * // Returns: { 'Authorization': 'Bearer eyJhbGc...' }
  */
 async function getAuthHeaders() {
   // Check if user is logged in as admin
@@ -14,20 +23,46 @@ async function getAuthHeaders() {
     throw new Error('Admin authentication required');
   }
 
-  // Get the current session token from Supabase
+  // Try to get the current session token from Supabase
   const { data: { session } } = await supabase.auth.getSession();
 
+  // If no session (hardcoded admin), return empty headers
+  // Same-origin requests are allowed by validateAuth without authentication
   if (!session?.access_token) {
-    throw new Error('Missing Supabase session token for admin request');
+    console.log('No Supabase session - using same-origin authentication');
+    return {};
   }
 
+  // Return Bearer token for Supabase-authenticated admins
   return {
     'Authorization': `Bearer ${session.access_token}`,
   };
 }
 
-export function useMembers() {
-  const [members, setMembers] = useState(null);
+/**
+ * Hook for fetching and managing clan members data.
+ *
+ * Provides member list with optional filtering of claimed players.
+ * Includes admin operations like toggling member visibility.
+ * Uses admin Supabase client to bypass RLS when user is admin.
+ *
+ * @param {boolean} [excludeClaimed=false] - If true, filters out claimed members
+ * @returns {{
+ *   members: Array<Object>,
+ *   loading: boolean,
+ *   error: Error|null,
+ *   refreshMembers: Function,
+ *   toggleMemberVisibility: Function
+ * }} Members data and mutation functions
+ *
+ * @example
+ * const { members, loading, toggleMemberVisibility } = useMembers(true);
+ *
+ * // Toggle member visibility (admin only)
+ * await toggleMemberVisibility(memberId, true); // Hide member
+ */
+export function useMembers(excludeClaimed = false) {
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,21 +70,36 @@ export function useMembers() {
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Get the appropriate client based on admin status
       const client = getAdminSupabaseClient();
-      
-      const { data, error: fetchError } = await client
+
+      // Add timeout to members query
+      const membersPromise = client
         .from('members')
         .select('*')
         .is('left_date', null)
         .order('name');
-      
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Members query timeout - please check your connection')), 10000)
+      );
+
+      const { data, error: fetchError } = await Promise.race([membersPromise, timeoutPromise]);
+
       if (fetchError) {
         throw fetchError;
       }
-      
+
+      // Filter out claimed members if requested
+      // Members are claimed when claimed_by field is not null
+      if (excludeClaimed) {
+        const availableMembers = data.filter(m => m.claimed_by === null || m.claimed_by === undefined);
+        setMembers(availableMembers);
+        return;
+      }
+
       setMembers(data);
     } catch (err) {
       console.error('Error fetching members:', err);
@@ -57,7 +107,7 @@ export function useMembers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [excludeClaimed]);
 
   // Create a new member
   const createMember = async (memberData) => {

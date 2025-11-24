@@ -1,15 +1,15 @@
 import useSWR from "swr";
-
-const fetcher = (url) => fetch(url).then((r) => r.json());
+import { jsonFetcher } from "../utils/fetchers";
 
 export function useMetrics(playerId, metricType = null) {
   const { data, error } = useSWR(
-    playerId ? `/api/pwom-player?id=${playerId}` : null,
-    fetcher,
+    playerId ? `/api/wom-player?id=${playerId}` : null,
+    jsonFetcher,
     { refreshInterval: 300000, dedupingInterval: 60000 }
   );
 
-  const loading = !error && !data;
+  // Only show loading if we have a playerId and are actually fetching
+  const loading = playerId && !error && !data;
 
   // Extract metrics by type
   const skills = data?.latestSnapshot?.data?.skills
