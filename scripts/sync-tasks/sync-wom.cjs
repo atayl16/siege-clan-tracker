@@ -99,6 +99,7 @@ async function syncWomMembers() {
         display_name: membership.player.displayName || membership.player.username,
         womrole: membership.role || null,
         build: membership.player.build || null,
+        joined_group_at: membership.createdAt || null, // When player joined the clan group
       }));
     
     console.log(`Found ${womMembers.length} members in WOM group`);
@@ -213,7 +214,7 @@ async function syncWomMembers() {
               build: member.build || playerData.type || "regular",
               siege_score: 0,
               active: true,
-              join_date: playerData.registeredAt || new Date().toISOString(),
+              join_date: member.joined_group_at || new Date().toISOString(),
               name_history: [],
               updated_at: new Date().toISOString(),
               created_at: new Date().toISOString(),

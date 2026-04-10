@@ -62,20 +62,30 @@ export function useMembers() {
   // Create a new member
   const createMember = async (memberData) => {
     try {
-      const client = getAdminSupabaseClient();
-      
-      const { data, error: createError } = await client
-        .from('members')
-        .insert([memberData])
-        .select();
-      
-      if (createError) {
-        throw createError;
+      // Get auth headers
+      const authHeaders = await getAuthHeaders();
+
+      // Call Netlify edge function instead of direct Supabase
+      const response = await fetch('/.netlify/functions/admin-create-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({ memberData }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create member');
       }
-      
+
+      const result = await response.json();
+      console.log("Edge function create response:", result);
+
       // Refresh members list
-      fetchMembers();
-      return data[0];
+      await fetchMembers();
+      return result.data;
     } catch (err) {
       console.error('Error creating member:', err);
       throw err;
@@ -167,24 +177,34 @@ export function useMembers() {
     if (!womId) {
       throw new Error('Missing WOM ID for whitelist');
     }
-    
+
     try {
-      const client = getAdminSupabaseClient();
-      
-      const { error: updateError } = await client
-        .from('members')
-        .update({
-          runewatch_whitelisted: true,
-          runewatch_whitelist_reason: reason || 'Whitelisted by admin'
-        })
-        .eq('wom_id', womId);
-      
-      if (updateError) {
-        throw updateError;
+      // Get auth headers
+      const authHeaders = await getAuthHeaders();
+
+      // Call Netlify edge function instead of direct Supabase
+      const response = await fetch('/.netlify/functions/admin-whitelist-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          memberId: womId,
+          reason: reason || 'Whitelisted by admin'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to whitelist member');
       }
-      
+
+      const result = await response.json();
+      console.log("Edge function whitelist response:", result);
+
       // Refresh members list
-      fetchMembers();
+      await fetchMembers();
       return true;
     } catch (err) {
       console.error('Error whitelisting member:', err);
@@ -241,27 +261,37 @@ export function useMembers() {
     if (!member || !member.wom_id) {
       throw new Error('Missing member WOM ID for rank change');
     }
-    
+
     try {
-      const client = getAdminSupabaseClient();
-      
       console.log(`Changing ${member.name}'s rank to ${newRank}`);
-      
-      const { data, error } = await client.rpc(
-        'admin_change_member_rank',
-        { 
-          member_id: member.wom_id,
-          new_role: newRank
-        }
-      );
-      
-      if (error) throw error;
-      
-      console.log("RPC rank change response:", data);
-      
+
+      // Get auth headers
+      const authHeaders = await getAuthHeaders();
+
+      // Call Netlify edge function instead of direct RPC
+      const response = await fetch('/.netlify/functions/admin-change-member-rank', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          memberId: member.wom_id,
+          newRank: newRank
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to change member rank');
+      }
+
+      const result = await response.json();
+      console.log("Edge function rank change response:", result);
+
       // Refresh members list
       await fetchMembers();
-      return data;
+      return result.data;
     } catch (err) {
       console.error('Error changing member rank:', err);
       throw err;
