@@ -2,7 +2,7 @@
  * Tests for Rank Calculation Utilities
  *
  * These tests cover all rank calculation logic including:
- * - Skiller ranks (XP-based): Opal → Zenyte (8 ranks)
+ * - Skiller ranks (XP-based): Opal → Zenyte + Maxed (9 ranks)
  * - Fighter ranks (EHB-based): Mentor → TzKal (9 ranks)
  * - Rank progression calculations
  * - Member rank update detection
@@ -22,9 +22,9 @@ import {
 } from '../rankUtils';
 
 describe('Rank Constants', () => {
-  it('defines 8 skiller ranks', () => {
-    expect(SKILLER_RANKS).toHaveLength(8);
-    expect(SKILLER_RANK_NAMES).toHaveLength(8);
+  it('defines 9 skiller ranks', () => {
+    expect(SKILLER_RANKS).toHaveLength(9);
+    expect(SKILLER_RANK_NAMES).toHaveLength(9);
   });
 
   it('defines 9 fighter ranks', () => {
@@ -33,7 +33,7 @@ describe('Rank Constants', () => {
   });
 
   it('has correct skiller rank order', () => {
-    const expected = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte"];
+    const expected = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte", "Maxed"];
     expect(SKILLER_RANK_NAMES).toEqual(expected);
   });
 
@@ -536,6 +536,20 @@ describe('memberNeedsRankUpdate - Skiller', () => {
       current_xp: 600000000, // 600M = Zenyte is correct
       ehb: 0
     };
+    expect(memberNeedsRankUpdate(member)).toBe(false);
+  });
+
+  it('recognizes Maxed as a valid skiller rank', () => {
+    const member = {
+      womrole: 'Maxed',
+      wom_id: 123,
+      hidden: false,
+      first_xp: 0,
+      current_xp: 600000000,
+      ehb: 0
+    };
+    // Maxed is a special rank based on total level, not XP progression
+    // The function should recognize it as a valid skiller rank
     expect(memberNeedsRankUpdate(member)).toBe(false);
   });
 });

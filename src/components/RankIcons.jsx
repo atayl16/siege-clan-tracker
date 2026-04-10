@@ -9,6 +9,7 @@ import executiveIcon from "../assets/images/Clan_icon_-_Executive.png";
 import senatorIcon from "../assets/images/Clan_icon_-_Senator.png";
 import monarchIcon from "../assets/images/Clan_icon_-_Monarch.png";
 import tzkalIcon from "../assets/images/Clan_icon_-_TzKal.png";
+import maxedIcon from "../assets/images/Clan_icon_-_Max.png";
 import standardIcon from "../assets/images/ironman/Ironman_chat_badge.png";
 import hardcoreIcon from "../assets/images/ironman/Hardcore_ironman_chat_badge.png"; // Fixed typo
 import ultimateIcon from "../assets/images/ironman/Ultimate_ironman_chat_badge.png";
@@ -64,13 +65,25 @@ export const GemIcon = ({ gemType, color }) => {
     normalizedGemType = gemType.charAt(0).toUpperCase() + gemType.slice(1).toLowerCase();
   }
 
+  // Special case for Maxed rank - use the max cape icon
+  if (normalizedGemType === "Maxed") {
+    return (
+      <img
+        src={maxedIcon}
+        alt="Maxed icon"
+        title="Maxed"
+        style={{ height: "20px", width: "auto", marginRight: "5px" }}
+      />
+    );
+  }
+
   return (
-    <i 
-      className="bi bi-gem" 
+    <i
+      className="bi bi-gem"
       title={normalizedGemType} // Add title attribute for tooltip
-      style={{ 
-        fontSize: "1.2rem", 
-        color: colorMap[normalizedGemType] || color || "white", 
+      style={{
+        fontSize: "1.2rem",
+        color: colorMap[normalizedGemType] || color || "white",
         marginRight: "8px",
         verticalAlign: "middle"
       }}

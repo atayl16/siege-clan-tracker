@@ -20,6 +20,7 @@ const SKILLER_RANK_NAMES = [
   "Dragonstone",
   "Onyx",
   "Zenyte",
+  "Maxed",
 ];
 
 const FIGHTER_RANK_NAMES = [

@@ -1,6 +1,12 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
+  // Webhook disabled - return early
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ success: true, message: 'Webhook disabled' })
+  };
+
   try {
     // Parse request body
     const body = JSON.parse(event.body);

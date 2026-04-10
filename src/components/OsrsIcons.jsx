@@ -23,6 +23,7 @@ import SmithingIcon from "../assets/images/skilling/Smithing_icon.png";
 import StrengthIcon from "../assets/images/skilling/Strength_icon.png";
 import ThievingIcon from "../assets/images/skilling/Thieving_icon.png";
 import WoodcuttingIcon from "../assets/images/skilling/Woodcutting_icon.png";
+import SailingIcon from "../assets/images/skilling/Sailing_icon.png";
 
 // New raid imports
 import ChambersOfXericIcon from "../assets/images/raids/Chambers_of_Xeric_logo.png";
@@ -109,6 +110,8 @@ import WintertodtIcon from "../assets/images/bosses/Howling_Snow_Storm.gif";
 import YamaIcon from "../assets/images/bosses/Yama.png";
 import ZalcanoIcon from "../assets/images/bosses/Zalcano.png";
 import ZulrahIcon from "../assets/images/bosses/Zulrah.png";
+import BrutusIcon from "../assets/images/bosses/Brutus.png";
+import ShellbaneGryphonIcon from "../assets/images/bosses/Shellbane_Gryphon.png";
 
 import OsrsIcon from "../assets/images/other/Old_School_RuneScape_Mobile_icon.png";
 
@@ -138,7 +141,8 @@ export const SkillIcon = ({ skill }) => {
     Smithing: SmithingIcon,
     Strength: StrengthIcon,
     Thieving: ThievingIcon,
-    Woodcutting: WoodcuttingIcon
+    Woodcutting: WoodcuttingIcon,
+    Sailing: SailingIcon
   };
 
   return skillIcons[skill] ? <img src={skillIcons[skill]} alt={`${skill} icon`} /> : null;
@@ -206,6 +210,7 @@ export const BossIcon = ({ boss }) => {
     araxxor: AraxxorIcon,
     artio: ArtioIcon,
     barrows_chests: BarrowsChestsIcon,
+    brutus: BrutusIcon,
     bryophyta: BryophytaIcon,
     callisto: CallistoIcon,
     calvarion: CalvarionIcon,
@@ -242,6 +247,7 @@ export const BossIcon = ({ boss }) => {
     sarachnis: SarachnisIcon,
     scorpia: ScorpiaIcon,
     scurrius: ScurriusIcon,
+    shellbane_gryphon: ShellbaneGryphonIcon,
     skotizo: SkotizoIcon,
     sol_heredit: SolHereditIcon,
     spindel: SpindelIcon,

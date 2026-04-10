@@ -1,5 +1,5 @@
 // Rank name definitions
-export const SKILLER_RANK_NAMES = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte"];
+export const SKILLER_RANK_NAMES = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte", "Maxed"];
 export const FIGHTER_RANK_NAMES = ["Mentor", "Prefect", "Leader", "Supervisor", "Superior", "Executive", "Senator", "Monarch", "TzKal"];
 
 // Rank threshold definitions
@@ -11,7 +11,8 @@ export const SKILLER_RANKS = [
   { name: "Diamond", color: "white", range: [40000000, 90000000], description: "40,000,000 XP" },
   { name: "Dragonstone", color: "magenta", range: [90000000, 150000000], description: "90,000,000 XP" },
   { name: "Onyx", color: "grey", range: [150000000, 500000000], description: "150,000,000 XP" },
-  { name: "Zenyte", color: "orange", range: [500000000, Infinity], description: "500,000,000 XP" }
+  { name: "Zenyte", color: "orange", range: [500000000, Infinity], description: "500,000,000 XP" },
+  { name: "Maxed", color: "red", range: null, description: "2,376 Total Level" }
 ];
 
 export const FIGHTER_RANKS = [
@@ -51,12 +52,15 @@ export const calculateNextLevel = (member) => {
     // Calculate clan XP (current - initial) with safe parsing
     const clanXp = safeParseInt(member.current_xp) - safeParseInt(member.first_xp);
 
+    // Filter out special ranks (like Maxed) that don't have XP-based ranges
+    const xpBasedRanks = SKILLER_RANKS.filter(rank => rank.range !== null);
+
     // Find which rank range the member is in
-    for (let i = 0; i < SKILLER_RANKS.length; i++) {
-      const rank = SKILLER_RANKS[i];
+    for (let i = 0; i < xpBasedRanks.length; i++) {
+      const rank = xpBasedRanks[i];
       if (clanXp >= rank.range[0] && clanXp < rank.range[1]) {
-        // Check if this is the last rank (max rank)
-        if (i === SKILLER_RANKS.length - 1) {
+        // Check if this is the last XP-based rank (max rank)
+        if (i === xpBasedRanks.length - 1) {
           return 0; // Already at max rank
         }
         // Return the XP needed to reach the next rank
@@ -64,8 +68,8 @@ export const calculateNextLevel = (member) => {
       }
     }
 
-    // If they're at the highest rank already
-    if (clanXp >= SKILLER_RANKS[SKILLER_RANKS.length - 1].range[0]) {
+    // If they're at the highest XP-based rank already
+    if (xpBasedRanks.length > 0 && clanXp >= xpBasedRanks[xpBasedRanks.length - 1].range[0]) {
       return 0; // Already at max rank
     }
   } else if (isFighter) {
@@ -110,16 +114,19 @@ export const calculateAppropriateRank = (member) => {
   let appropriateRank = null;
   
   if (isSkiller) {
+    // Filter out special ranks (like Maxed) that don't have XP-based ranges
+    const xpBasedRanks = SKILLER_RANKS.filter(rank => rank.range !== null);
+
     // Find the appropriate skiller rank based on XP
-    for (const rank of SKILLER_RANKS) {
+    for (const rank of xpBasedRanks) {
       if (clanXp >= rank.range[0] && clanXp < rank.range[1]) {
         appropriateRank = rank.name;
         break;
       }
     }
-    // If they're at max XP, give them the highest rank
-    if (clanXp >= SKILLER_RANKS[SKILLER_RANKS.length - 1].range[0]) {
-      appropriateRank = SKILLER_RANKS[SKILLER_RANKS.length - 1].name;
+    // If they're at max XP, give them the highest XP-based rank
+    if (xpBasedRanks.length > 0 && clanXp >= xpBasedRanks[xpBasedRanks.length - 1].range[0]) {
+      appropriateRank = xpBasedRanks[xpBasedRanks.length - 1].name;
     }
   } else if (isFighter) {
     // Find the appropriate fighter rank based on EHB
@@ -152,11 +159,12 @@ export const memberNeedsRankUpdate = (member) => {
   const womRole = (member.womrole || "").toLowerCase();
   
   // Determine if member is skiller or fighter based on current role
-  const isSkiller = 
-    womRole.includes("opal") || womRole.includes("sapphire") || 
-    womRole.includes("emerald") || womRole.includes("ruby") || 
-    womRole.includes("diamond") || womRole.includes("dragonstone") || 
-    womRole.includes("onyx") || womRole.includes("zenyte");
+  const isSkiller =
+    womRole.includes("opal") || womRole.includes("sapphire") ||
+    womRole.includes("emerald") || womRole.includes("ruby") ||
+    womRole.includes("diamond") || womRole.includes("dragonstone") ||
+    womRole.includes("onyx") || womRole.includes("zenyte") ||
+    womRole.includes("maxed");
   
   const isFighter = 
     womRole.includes("mentor") || womRole.includes("prefect") || 
@@ -171,11 +179,17 @@ export const memberNeedsRankUpdate = (member) => {
   }
   
   if (isSkiller) {
+    // Maxed is a special rank based on total level, not XP progression
+    // Members with Maxed rank don't need automatic rank updates
+    if (womRole.includes("maxed")) {
+      return false;
+    }
+
     // Use safe parsing to handle string or number types
     const firstXp = parseInt(member.first_xp) || 0;
     const currentXp = parseInt(member.current_xp) || 0;
     const clanXp = currentXp - firstXp;
-    
+
     // Determine correct role based on XP
     let correctRole;
     if (clanXp >= 500000000) correctRole = "zenyte";

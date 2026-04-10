@@ -52,7 +52,7 @@ function App() {
       <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
         <SeasonalFavicon />
         {showNavbar && <Navbar />}
-        {<AnniversaryBanner />}
+        {/* <AnniversaryBanner /> */}
         <Routes>
           <Route path="/" element={<NewMembers />} />
           <Route path="/members" element={<MembersPage />} />
