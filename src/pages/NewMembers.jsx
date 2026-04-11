@@ -39,7 +39,7 @@ export default function NewMembers() {
         <div className="nm-welcome-content">
           <p>
             Welcome to Siege's official clan site! We're a friendly and active
-            clan founded on April 23, 2022.
+            clan founded on April 23, 2023.
           </p>
 
           <p>

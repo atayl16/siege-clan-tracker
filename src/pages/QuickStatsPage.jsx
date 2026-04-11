@@ -110,7 +110,7 @@ export default function QuickStatsPage() {
             <div className="quick-stats-info-label">
               <FaCalendarDay /> Founded
             </div>
-            <div className="quick-stats-info-value">April 23, 2022</div>
+            <div className="quick-stats-info-value">April 23, 2023</div>
           </div>
       
           <div className="quick-stats-info-item">
