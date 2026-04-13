@@ -6,6 +6,10 @@ const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
 
 async function main() {
+  // TEMPORARILY DISABLED - anniversary data has issues (wrong join_dates)
+  console.log('Anniversary notifications are currently disabled.');
+  return;
+
   console.log('🎂 Checking for clan anniversaries...');
   
   // Initialize Supabase client
