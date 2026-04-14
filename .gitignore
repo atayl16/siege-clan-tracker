@@ -39,3 +39,8 @@ tasks.md
 # Claude Code
 .claude/
 
+
+# Claude Code local files
+CLAUDE.md
+deno.lock
+supabase/migrations/00000000000000_staging_schema.sql
