@@ -131,66 +131,36 @@ const getNextRankInfo = (member) => {
 };
 
 const getIronmanType = (member) => {
-  // First check the ironman_type field which is most specific
+  // Check player_type field from database (populated from WOM API)
+  if (member.player_type) {
+    const playerType = member.player_type.toLowerCase();
+
+    // Regular accounts are not ironman
+    if (playerType === 'regular') {
+      return null;
+    }
+
+    // Map WOM player types to our icon types
+    if (playerType.includes('hardcore') && playerType.includes('group')) {
+      return 'hardcore_group';
+    } else if (playerType.includes('hardcore')) {
+      return 'hardcore';
+    } else if (playerType.includes('ultimate')) {
+      return 'ultimate';
+    } else if (playerType.includes('unranked') && playerType.includes('group')) {
+      return 'unranked_group';
+    } else if (playerType.includes('group')) {
+      return 'group';
+    } else if (playerType === 'ironman' || playerType.includes('ironman')) {
+      return 'standard';
+    }
+  }
+
+  // Fallback: check legacy ironman_type field
   if (member.ironman_type) {
     return member.ironman_type.toLowerCase();
   }
-  
-  // Check build field from database (more limited options)
-  if (member.build) {
-    const build = member.build.toLowerCase();
-    // Regular means not an ironman at all
-    if (build === 'regular') {
-      return null;
-    } 
-    // Basic ironman
-    else if (build === 'ironman') {
-      return 'standard';
-    }
-    // Ultimate ironman
-    else if (build === 'ultimate' || build.includes('ultimate')) {
-      return 'ultimate';
-    }
-  }
-  
-  // Then try to extract from WOM data
-  if (member.wom_account_type) {
-    const accountType = member.wom_account_type.toLowerCase();
-    
-    if (accountType.includes('hardcore') && accountType.includes('group')) {
-      return 'hardcore_group';
-    } else if (accountType.includes('hardcore')) {
-      return 'hardcore';
-    } else if (accountType.includes('ultimate')) {
-      return 'ultimate';
-    } else if (accountType.includes('unranked') && accountType.includes('group')) {
-      return 'unranked_group';
-    } else if (accountType.includes('group')) {
-      return 'group';
-    } else if (accountType.includes('ironman') || accountType === 'im') {
-      return 'standard';
-    }
-  }
-  
-  // If account type isn't found, check if there's an ironman status in WOM player data
-  if (member.wom_player?.type) {
-    const womType = member.wom_player.type.toLowerCase();
-    
-    if (womType.includes('hardcore') && womType.includes('group')) {
-      return 'hardcore_group';
-    } else if (womType.includes('hardcore')) {
-      return 'hardcore';
-    } else if (womType.includes('ultimate')) {
-      return 'ultimate'; 
-    } else if (womType.includes('unranked') && womType.includes('group')) {
-      return 'unranked_group';
-    } else if (womType.includes('group')) {
-      return 'group';
-    } else if (womType.includes('ironman') || womType === 'im') {
-      return 'standard';
-    }
-  }
-  
+
   return null; // Not an ironman or type couldn't be determined
 };
 

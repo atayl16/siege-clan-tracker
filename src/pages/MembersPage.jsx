@@ -56,10 +56,8 @@ export default function MembersPage() {
 
       // Ironman filter
       if (filterIronman) {
-        const isIronman =
-          member.build?.toLowerCase().includes("ironman") ||
-          member.wom_account_type?.toLowerCase().includes("ironman") ||
-          member.ironman_type;
+        const playerType = member.player_type?.toLowerCase() || '';
+        const isIronman = playerType && playerType !== 'regular';
         if (!isIronman) return false;
       }
 
