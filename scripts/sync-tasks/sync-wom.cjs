@@ -211,7 +211,8 @@ async function syncWomMembers() {
                 playerData.latestSnapshot?.data?.computed?.ehb?.value || 0
               ),
               womrole: member.womrole,
-              build: member.build || playerData.type || "regular",
+              build: member.build || "main",
+              player_type: playerData.type || "regular",
               siege_score: 0,
               active: true,
               join_date: member.joined_group_at || new Date().toISOString(),
@@ -489,6 +490,16 @@ async function syncWomMembers() {
                     } → ${womMember.build}`
                   );
                 }
+              }
+
+              // Update player_type (ironman status) from individual player data
+              if (playerData.type && playerData.type !== member.player_type) {
+                updateData.player_type = playerData.type;
+                console.log(
+                  `Updating player_type for ${member.name}: ${
+                    member.player_type || "none"
+                  } → ${playerData.type}`
+                );
               }
               
               // Handle username change if needed
