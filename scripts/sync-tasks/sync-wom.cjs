@@ -127,7 +127,7 @@ async function syncWomMembers() {
     console.log("Fetching existing members from database...");
     const { data: existingMembers, error: fetchError } = await supabase
       .from("members")
-      .select("wom_id, wom_name, name, first_xp, first_lvl, join_date, name_history, updated_at, active, current_xp, current_lvl, ehb, womrole");
+      .select("wom_id, wom_name, name, first_xp, first_lvl, join_date, name_history, updated_at, active, current_xp, current_lvl, ehb, womrole, left_date, notes, player_type, build");
     
     if (fetchError) throw new Error(`Failed to fetch members: ${fetchError.message}`);
     
@@ -143,6 +143,14 @@ async function syncWomMembers() {
       .filter(m => m.active && !womIdsMap.has(m.wom_id))
       .slice(0, 10);
     console.log(`Processing ${missingMembers.length} missing members (limited to 10 per run)`);
+
+    // Process rejoined members: in DB with left_date set, but currently in WOM group.
+    // These were never picked up by the add-new path (wom_id already exists) or the
+    // missing-member path (active=false), so they stayed hidden from the website.
+    const rejoinedMembers = existingMembers.filter(
+      m => m.left_date && womIdsMap.has(m.wom_id)
+    );
+    console.log(`Processing ${rejoinedMembers.length} rejoined members`);
     
     // Determine which existing members to update in this run
     // If we have new or missing members, prioritize processing those
@@ -167,6 +175,7 @@ async function syncWomMembers() {
     let updatedCount = 0;
     let deactivatedCount = 0;
     let nameUpdatesCount = 0;
+    let rejoinedCount = 0;
     let errorCount = 0;
     
     // Process new members - limit to 10 per run
@@ -436,7 +445,70 @@ async function syncWomMembers() {
         }
       }
     }
-    
+
+    // Process rejoined members - refresh data and reactivate
+    if (rejoinedMembers.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+
+      for (let i = 0; i < rejoinedMembers.length; i += 3) {
+        const batch = rejoinedMembers.slice(i, i + 3);
+
+        await Promise.all(batch.map(async (member) => {
+          const womMember = womIdsMap.get(member.wom_id);
+          try {
+            const playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
+            const snap = playerData.latestSnapshot?.data;
+
+            const newName = playerData.displayName || womMember.display_name;
+            const newWomName = (playerData.username || womMember.wom_name).toLowerCase();
+
+            const nameHistory = Array.isArray(member.name_history) ? [...member.name_history] : [];
+            if (member.name && member.name !== newName && !nameHistory.includes(member.name)) {
+              nameHistory.push(member.name);
+            }
+
+            const leftDateStr = member.left_date ? member.left_date.split('T')[0] : 'unknown';
+            const rejoinNote = `Rejoined ${today}, previously left ${leftDateStr}`;
+            const notes = member.notes ? `${member.notes}\n${rejoinNote}` : rejoinNote;
+
+            const updateData = {
+              active: true,
+              left_date: null,
+              name: newName,
+              wom_name: newWomName,
+              name_history: nameHistory,
+              current_xp: snap?.skills?.overall?.experience ?? member.current_xp ?? 0,
+              current_lvl: snap?.skills?.overall?.level ?? member.current_lvl ?? 1,
+              ehb: Math.round(snap?.computed?.ehb?.value ?? member.ehb ?? 0),
+              womrole: womMember?.womrole ?? member.womrole ?? null,
+              build: womMember?.build ?? member.build ?? 'main',
+              player_type: playerData.type ?? member.player_type ?? 'regular',
+              notes,
+              updated_at: new Date().toISOString(),
+            };
+
+            const { error: rejoinError } = await supabase
+              .from('members')
+              .update(updateData)
+              .eq('wom_id', member.wom_id);
+
+            if (rejoinError) {
+              console.error(`Error reactivating rejoined member ${member.name}:`, rejoinError);
+              errorCount++;
+            } else {
+              console.log(`Reactivated rejoined member: "${member.name}" → "${newName}"`);
+              rejoinedCount++;
+            }
+          } catch (err) {
+            console.error(`Exception reactivating rejoined member ${member.name}:`, err);
+            errorCount++;
+          }
+        }));
+
+        await delay(1000);
+      }
+    }
+
     // Process member updates if we have any
     if (membersToUpdate.length > 0) {
       console.log(`Processing updates for ${membersToUpdate.length} active members`);
@@ -554,24 +626,27 @@ async function syncWomMembers() {
           updated: updatedCount,
           deactivated: deactivatedCount,
           nameUpdates: nameUpdatesCount,
+          rejoined: rejoinedCount,
           errors: errorCount
         })
       });
-    
+
     console.log(`
 Sync completed!
 - Added: ${addedCount} new members
 - Updated: ${updatedCount} existing members
 - Name updates: ${nameUpdatesCount}
 - Marked inactive: ${deactivatedCount}
+- Rejoined: ${rejoinedCount}
 - Errors: ${errorCount}
     `);
-    
+
     return {
       added: addedCount,
       updated: updatedCount,
       deactivated: deactivatedCount,
       nameUpdates: nameUpdatesCount,
+      rejoined: rejoinedCount,
       errors: errorCount
     };
   } catch (err) {

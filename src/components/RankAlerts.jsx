@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useMembers } from "../hooks/useMembers";
+import { titleize } from '../utils/stringUtils';
 import Button from './ui/Button';
 import { FaExclamationTriangle, FaCheck, FaExchangeAlt } from 'react-icons/fa';
 import './RankAlerts.css';
-
-// Utility functions (assuming these are in the original file)
-const titleize = (str) => {
-  if (!str) return '';
-  return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-};
 
 const safeFormat = (num) => {
   if (num === undefined || num === null) return '0';
