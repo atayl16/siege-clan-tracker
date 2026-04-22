@@ -56,8 +56,10 @@ describe('stringUtils', () => {
         expect(titleize('hello-world')).toBe('Hello-world');
       });
 
-      it('handles strings with underscores', () => {
-        expect(titleize('hello_world')).toBe('Hello_world');
+      it('treats underscores as word separators (WOM role format)', () => {
+        expect(titleize('hello_world')).toBe('Hello World');
+        expect(titleize('deputy_owner')).toBe('Deputy Owner');
+        expect(titleize('pvm_organizer')).toBe('Pvm Organizer');
       });
 
       it('handles strings with apostrophes', () => {
