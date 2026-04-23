@@ -28,7 +28,7 @@ export default defineConfig({
 
   webServer: {
     // Vite's --mode test causes it to load .env.test
-    command: 'npx vite --mode test --port 8889 --host',
+    command: 'npx vite --mode test --port 8889 --host 127.0.0.1',
     url: 'http://localhost:8889',
     timeout: 60_000,
     reuseExistingServer: !process.env.CI,
