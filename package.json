@@ -34,7 +34,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:smoke": "supabase db reset --local && playwright test",
+    "test:smoke": "supabase db reset --local && supabase status -o env --override-name api.url=SUPABASE_URL --override-name auth.anon_key=SUPABASE_ANON_KEY > .env.test && playwright test",
     "test:smoke:ui": "playwright test --ui",
     "netlify:dev": "netlify dev",
     "netlify:build": "netlify build",

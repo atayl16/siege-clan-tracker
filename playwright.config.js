@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Smoke-test config. Runs Vite dev server against the local Supabase stack
-// using .env.test credentials (mode=test → Vite loads .env.test automatically).
+// Smoke-test config. Runs Vite dev server against the local Supabase stack.
+// `.env.test` is generated at run time by `npm run test:smoke` from
+// `supabase status -o env` — it is gitignored and never committed.
 
 export default defineConfig({
   testDir: './tests/smoke',

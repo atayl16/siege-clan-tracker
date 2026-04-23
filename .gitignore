@@ -27,8 +27,6 @@ yarn-error.log*
 .netlify
 .env
 .env.*
-# Exception: .env.test is committed — contains only deterministic local Supabase demo keys (not secrets).
-!.env.test
 
 # Playwright output
 /test-results
