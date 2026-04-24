@@ -14,6 +14,7 @@ export default defineConfig({
       'node_modules/',
       'src/setupTests.js',
       'netlify/edge-functions/**',
+      'tests/smoke/**',
     ],
     // Use node environment for netlify function tests (not jsdom)
     environmentMatchGlobs: [

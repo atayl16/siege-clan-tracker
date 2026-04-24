@@ -28,10 +28,18 @@ yarn-error.log*
 .env
 .env.*
 
+# Playwright output
+/test-results
+/playwright-report
+
 # Staging seed data (contains production data)
 supabase/staging-seeds/*.json
 supabase/production-*.sql
 supabase/backup-*.sql
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
 
 # Local planning docs
 tasks.md
@@ -43,4 +51,3 @@ tasks.md
 # Claude Code local files
 CLAUDE.md
 deno.lock
-supabase/migrations/00000000000000_staging_schema.sql
