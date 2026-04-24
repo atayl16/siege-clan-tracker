@@ -11,6 +11,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/commits)
 [![GitHub issues](https://img.shields.io/github/issues/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/atayl16/siege-clan-tracker)](https://github.com/atayl16/siege-clan-tracker/pulls)
+[![Hourly Clan Data Sync](https://github.com/atayl16/siege-clan-tracker/actions/workflows/hourly-clan-sync.yml/badge.svg)](https://github.com/atayl16/siege-clan-tracker/actions/workflows/hourly-clan-sync.yml)
 
 ## 📖 Overview
 
