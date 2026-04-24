@@ -11,6 +11,7 @@ const supabase = createClient(
 // WOM API configuration
 const WOM_API_KEY = process.env.WOM_API_KEY || process.env.REACT_APP_WOM_API_KEY;
 const WOM_GROUP_ID = process.env.WOM_GROUP_ID || process.env.REACT_APP_WOM_GROUP_ID;
+const WOM_VERIFICATION_CODE = process.env.WOM_VERIFICATION_CODE;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
 // Helper function to add delay with exponential backoff
@@ -62,6 +63,40 @@ async function fetchWithRetry(url, options = {}, retries = 3, initialBackoff = 2
   throw lastError || new Error('Request failed after multiple retries');
 }
 
+// Ask WOM to refresh its cached stats for any group member whose data is
+// older than 24h. Without this, our sync only ever pulls whatever WOM
+// happens to have cached — which drifts as OSRS hiscores change.
+// Runs before the read so the refreshed stats are available by the next run.
+// Best-effort: logs and returns on missing code or API error.
+async function triggerGroupUpdateAll() {
+  if (!WOM_VERIFICATION_CODE) {
+    console.log('Skipping group update-all: WOM_VERIFICATION_CODE not set.');
+    return;
+  }
+  try {
+    const response = await fetch(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}/update-all`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': WOM_API_KEY,
+      },
+      body: JSON.stringify({ verificationCode: WOM_VERIFICATION_CODE }),
+    });
+    const body = await response.json().catch(() => ({}));
+    const message = body.message || '(no message)';
+    // WOM returns 400 with a benign "no outdated members" message when
+    // everyone's stats are already fresh. Not an error, just a no-op.
+    const noop = response.status === 400 && /no outdated members/i.test(message);
+    if (response.ok || noop) {
+      console.log(`WOM group update-all: ${message}`);
+    } else {
+      console.log(`WOM group update-all failed (${response.status}): ${message}`);
+    }
+  } catch (err) {
+    console.log(`WOM group update-all threw: ${err.message}`);
+  }
+}
+
 // Main function to sync WOM members
 async function syncWomMembers() {
   try {
@@ -73,6 +108,7 @@ async function syncWomMembers() {
     console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
     console.log(`- WOM_API_KEY: ${WOM_API_KEY ? 'Set ✓' : 'Missing ❌'}`);
     console.log(`- WOM_GROUP_ID: ${WOM_GROUP_ID ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- WOM_VERIFICATION_CODE: ${WOM_VERIFICATION_CODE ? 'Set ✓' : 'Missing (update-all will be skipped)'}`);
     
     // Check if we have all required environment variables
     if (!WOM_GROUP_ID) {
@@ -80,7 +116,10 @@ async function syncWomMembers() {
     }
     
     console.log(`Using WOM Group ID: ${WOM_GROUP_ID}`);
-    
+
+    // Trigger a refresh of WOM's own cache before we read from it.
+    await triggerGroupUpdateAll();
+
     // Fetch current WOM group members with proper API key authentication
     console.log("Fetching current WOM group members...");
     const groupData = await fetchWithRetry(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}?includeMemberships=true`);
