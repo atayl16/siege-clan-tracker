@@ -77,6 +77,20 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_ANNIVERSARY_WEBHOOK_URL: ${{ secrets.DISCORD_ANNIVERSARY_WEBHOOK_URL }}
       
+      # Notify Discord if any sync step failed. continue-on-error means
+      # step failures don't fail the job, so we check outcomes directly.
+      - name: Notify Discord on failure
+        if: ${{ contains(steps.*.outcome, 'failure') }}
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WORKFLOW: ${{ github.workflow }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{\"content\":\"Sync failure in ${WORKFLOW} (run ${RUN_ID}): https://github.com/${REPO}/actions/runs/${RUN_ID}\"}" \
+            "${WEBHOOK}"
+
       # Optional summary step to report overall status
       - name: Summary
         run: |
