@@ -73,6 +73,8 @@ async function triggerGroupUpdateAll() {
     console.log('Skipping group update-all: WOM_VERIFICATION_CODE not set.');
     return;
   }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   try {
     const response = await fetch(`${WOM_API_BASE}/groups/${WOM_GROUP_ID}/update-all`, {
       method: 'POST',
@@ -81,11 +83,13 @@ async function triggerGroupUpdateAll() {
         'x-api-key': WOM_API_KEY,
       },
       body: JSON.stringify({ verificationCode: WOM_VERIFICATION_CODE }),
+      signal: controller.signal,
     });
     const body = await response.json().catch(() => ({}));
     const message = body.message || '(no message)';
-    // WOM returns 400 with a benign "no outdated members" message when
-    // everyone's stats are already fresh. Not an error, just a no-op.
+    // WOM returns 400 with "no outdated members (updated over 24h ago)" when
+    // everyone's stats are already fresh — treat that as a no-op, not a failure.
+    // String match is fragile: if WOM rewords this message, re-check the regex.
     const noop = response.status === 400 && /no outdated members/i.test(message);
     if (response.ok || noop) {
       console.log(`WOM group update-all: ${message}`);
@@ -94,6 +98,8 @@ async function triggerGroupUpdateAll() {
     }
   } catch (err) {
     console.log(`WOM group update-all threw: ${err.message}`);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
