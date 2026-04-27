@@ -27,12 +27,12 @@ If you prefer to rollback manually:
 supabase link --project-ref YOUR-PROJECT-REF
 
 # Run the rollback SQL
-psql "$(supabase db url --linked)" -f supabase/migrations/ROLLBACK_20250104000003_rls_policies.sql
+psql "$(supabase db url --linked)" -f supabase/rollbacks/ROLLBACK_20250104000003_rls_policies.sql
 ```
 
 Or via Supabase Dashboard:
 1. Go to SQL Editor
-2. Copy contents of `supabase/migrations/ROLLBACK_20250104000003_rls_policies.sql`
+2. Copy contents of `supabase/rollbacks/ROLLBACK_20250104000003_rls_policies.sql`
 3. Run the SQL
 
 ### Step 2: Mark Migration as Reverted
