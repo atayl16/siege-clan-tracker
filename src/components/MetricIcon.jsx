@@ -52,6 +52,7 @@ const MetricIcon = memo(({ metric }) => {
     "kreearra",
     "kril_tsutsaroth",
     "lunar_chests",
+    "maggot_king",
     "mimic",
     "nex",
     "nightmare",
