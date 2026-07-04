@@ -119,7 +119,7 @@ export default function QuickStatsPage() {
             </div>
             <div className="quick-stats-info-value quick-stats-info-links">
               <a
-                href="https://discord.gg/aXYHD6UdQJ"
+                href="https://discord.gg/bQsupAy3W"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="quick-stats-resource-link"
