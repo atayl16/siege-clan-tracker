@@ -80,6 +80,7 @@ import KrakenIcon from "../assets/images/bosses/Cave_kraken.png";
 import KreeArraIcon from "../assets/images/bosses/Kree'arra.png";
 import KrilTsutsarothIcon from "../assets/images/bosses/K'ril_Tsutsaroth.png";
 import LunarChestsIcon from "../assets/images/bosses/Blue_Moon.png";
+import MadAngelIcon from "../assets/images/bosses/Mad_Angel.png";
 import MaggotKingIcon from "../assets/images/bosses/Maggot_King.png";
 import MimicIcon from "../assets/images/bosses/The_Mimic.png";
 import NexIcon from "../assets/images/bosses/Nex.png";
@@ -239,6 +240,7 @@ export const BossIcon = ({ boss }) => {
     kreearra: KreeArraIcon,
     kril_tsutsaroth: KrilTsutsarothIcon,
     lunar_chests: LunarChestsIcon,
+    mad_angel: MadAngelIcon,
     maggot_king: MaggotKingIcon,
     mimic: MimicIcon,
     nex: NexIcon,
