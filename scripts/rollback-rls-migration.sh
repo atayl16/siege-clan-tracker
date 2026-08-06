@@ -65,7 +65,7 @@ supabase link --project-ref $PROJECT_REF
 
 echo ""
 echo "Running rollback SQL..."
-psql "$(supabase db url --linked)" -f supabase/migrations/ROLLBACK_20250104000003_rls_policies.sql
+psql "$(supabase db url --linked)" -f supabase/rollbacks/ROLLBACK_20250104000003_rls_policies.sql
 
 echo ""
 echo "Marking migration as reverted in history..."
