@@ -79,7 +79,7 @@ export default function NewMembers() {
             <h4>Discord</h4>
             <div className="nm-connect-value">Join our community</div>
             <a
-              href="https://discord.gg/bQsupAy3W"
+              href="https://discord.gg/TqFpRD4vNv"
               target="_blank"
               rel="noopener noreferrer"
               className="nm-discord-button nm-connect-button"
