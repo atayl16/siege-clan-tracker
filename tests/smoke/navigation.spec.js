@@ -43,6 +43,43 @@ test.describe('navigation for a logged-out visitor', () => {
   });
 });
 
+test.describe('a registered member', () => {
+  /**
+   * Registers through the real form, which also proves the users INSERT policy
+   * works end to end.
+   *
+   * The Admin assertion is the important one. AuthContext exports isAdmin and
+   * isLoggedIn as functions, and the navbar originally wrote `{isAdmin && ...}`
+   * and `{isLoggedIn ? ...}` - a function reference is always truthy, so every
+   * visitor saw an Admin link and no visitor saw Login. Both are easy to
+   * reintroduce and invisible without a logged-in test.
+   */
+  test('lands on a working profile and sees no Admin link', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+
+    const username = `smokemate${Date.now()}`;
+    await page.goto('/register');
+    await page.locator('input[type="text"], input:not([type])').first().fill(username);
+    const passwords = page.locator('input[type="password"]');
+    const count = await passwords.count();
+    for (let i = 0; i < count; i++) await passwords.nth(i).fill('smoke-password-not-a-secret');
+    await page.locator('button[type="submit"]').first().click();
+
+    // Registration redirects to the profile, which used to be a blank page:
+    // ProfilePage read userClaims from useClaimRequests(), which never returned
+    // that key, so `userClaims.length` threw before the first paint.
+    await expect(page).toHaveURL(/\/profile$/, { timeout: 15_000 });
+    await expect(page.getByText('Your Characters')).toBeVisible();
+    expect(errors).toEqual([]);
+
+    const nav = page.locator('nav');
+    await expect(nav.getByRole('button', { name: 'Logout' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Admin' })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Login' })).toHaveCount(0);
+  });
+});
+
 test.describe('previously unreachable pages render', () => {
   test('profile page renders', async ({ page }) => rendersWithoutErrors(page, '/profile'));
   test('register page renders', async ({ page }) => rendersWithoutErrors(page, '/register'));

@@ -119,7 +119,7 @@ export default function Navbar() {
           {/* Auth Links */}
           {isLoggedIn() ? (
             <>
-              {isAdmin && (
+              {isAdmin() && (
                 <Link
                   to="/admin"
                   className={location.pathname === "/admin" ? "active" : ""}
