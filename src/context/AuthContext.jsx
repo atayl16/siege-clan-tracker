@@ -406,80 +406,22 @@ export function AuthProvider({ children }) {
     if (!user) return { error: "You must be logged in to claim a player" };
 
     try {
-      // Verify the claim code
-      const { data: codeData, error: codeError } = await supabase
-        .from("claim_codes")
-        .select("*")
-        .eq("code", code)
-        .eq("is_claimed", false)
-        .single();
+      // One server-side call. The browser has no read or write access to
+      // claim_codes or player_claims, and cannot be given any: a SELECT policy
+      // loose enough to look up your own code by value would also let anyone
+      // list every unredeemed code. The function also serialises concurrent
+      // redemptions, which the previous six-step client-side version did not.
+      const { data, error } = await supabase.rpc("redeem_claim_code", {
+        p_code: code,
+      });
 
-      if (codeError || !codeData) {
-        return { error: "Invalid or already used claim code" };
+      if (error) {
+        console.error("Error redeeming claim code:", error);
+        return { error: "Failed to process claim" };
       }
 
-      // Check if code is expired
-      if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
-        return { error: "This claim code has expired" };
-      }
-
-      // Check if player is already claimed
-      const { data: existingClaim } = await supabase
-        .from("player_claims")
-        .select("*")
-        .eq("wom_id", codeData.wom_id)
-        .single();
-
-      if (existingClaim) {
-        return { error: "This player has already been claimed" };
-      }
-
-      // Get player info - ensure wom_id is handled correctly
-      let womId = codeData.wom_id;
-      
-      // Convert if needed (depends on your wom_id type in members table)
-      if (typeof womId === "string" && !isNaN(womId)) {
-        womId = parseInt(womId, 10);
-      }
-
-      const { data: playerData, error: playerError } = await supabase
-        .from("members")
-        .select("name")
-        .eq("wom_id", womId)
-        .single();
-
-      let playerName = "Unknown Player";
-
-      if (playerError) {
-        console.warn("Player not found in members table:", playerError);
-      } else if (playerData) {
-        playerName = playerData.name;
-      }
-
-      // Create new claim using the wom_id from the claim code
-      // user.id is now a UUID
-      const { error: insertError } = await supabase
-        .from("player_claims")
-        .insert([
-          {
-            user_id: user.id, // This is now a UUID
-            wom_id: codeData.wom_id,
-          },
-        ]);
-
-      if (insertError) {
-        console.error("Error inserting player claim:", insertError);
-        return { error: "Failed to claim player" };
-      }
-
-      // Mark code as claimed
-      const { error: updateError } = await supabase
-        .from("claim_codes")
-        .update({ is_claimed: true })
-        .eq("id", codeData.id);
-
-      if (updateError) {
-        console.error("Error marking code as claimed:", updateError);
+      if (!data?.success) {
+        return { error: data?.error || "Failed to claim player" };
       }
 
       // Refresh user claims
@@ -487,8 +429,8 @@ export function AuthProvider({ children }) {
 
       return {
         success: true,
-        message: `Successfully claimed player: ${playerName}`,
-        player: { name: playerName },
+        message: `Successfully claimed player: ${data.player_name}`,
+        player: { name: data.player_name },
       };
     } catch (err) {
       console.error("Error claiming player:", err);
