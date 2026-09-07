@@ -107,6 +107,48 @@ test.describe('a registered member', () => {
   });
 });
 
+test.describe('the account round trip', () => {
+  /**
+   * Register, log out, log back in.
+   *
+   * This is the one that would have caught the production failure: an
+   * on_auth_user_created trigger there inserted the users row with
+   * password_hash = '', so AuthContext.register()'s own insert hit a duplicate
+   * key and the real SHA-256 was never stored. Registration reported failure
+   * while creating the account, and login could never match an empty hash.
+   * Registering alone does not reveal it - only coming back and logging in
+   * does.
+   */
+  test('a member can register, log out and log back in', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+
+    const username = `roundtrip${Date.now()}`;
+    const password = 'roundtrip-password-not-a-secret';
+
+    await page.goto('/register');
+    await page.locator('input[type="text"], input:not([type])').first().fill(username);
+    const passwords = page.locator('input[type="password"]');
+    const count = await passwords.count();
+    for (let i = 0; i < count; i++) await passwords.nth(i).fill(password);
+    await page.locator('button[type="submit"]').first().click();
+    await expect(page).toHaveURL(/\/profile$/, { timeout: 15_000 });
+
+    await page.locator('nav').getByRole('button', { name: 'Logout' }).click();
+    await expect(page.locator('nav').getByRole('link', { name: 'Login' })).toBeVisible();
+
+    await page.goto('/login');
+    await page.locator('input[type="text"], input:not([type])').first().fill(username);
+    await page.locator('input[type="password"]').first().fill(password);
+    await page.locator('button[type="submit"]').first().click();
+
+    await expect(page.locator('nav').getByRole('button', { name: 'Logout' })).toBeVisible({
+      timeout: 15_000,
+    });
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe('previously unreachable pages render', () => {
   test('profile page renders', async ({ page }) => rendersWithoutErrors(page, '/profile'));
   test('register page renders', async ({ page }) => rendersWithoutErrors(page, '/register'));

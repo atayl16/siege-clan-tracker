@@ -363,6 +363,10 @@ export function AuthProvider({ children }) {
             id: authData.user.id,
             username: username.trim().toLowerCase(),
             password_hash: passwordHash,
+            // Links the row to the auth account. validateAuth() in
+            // netlify/functions/utils/adminHelpers.cjs looks admins up by this
+            // column, so a row without it can never be promoted to admin.
+            supabase_auth_id: authData.user.id,
             is_admin: false,
           },
         ])

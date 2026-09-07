@@ -1,0 +1,39 @@
+-- Migration: drop the on_auth_user_created trigger
+--
+-- Registration has been producing accounts nobody can log into.
+--
+-- Production carries a trigger that is in no migration here - it came from
+-- 20250116000002_auto_create_users.sql on an abandoned Supabase Auth branch
+-- that was applied to the database but never merged:
+--
+--   CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users
+--   FOR EACH ROW EXECUTE FUNCTION handle_new_user()
+--
+-- handle_new_user() inserts the public.users row itself, with
+--   '',  -- Empty string for deprecated password_hash field
+-- because that branch was moving login onto Supabase Auth, where the column
+-- would no longer be used. The app never moved. So on production:
+--
+--   1. signUp() creates the auth account
+--   2. the trigger inserts users with password_hash = ''
+--   3. AuthContext.register()'s own insert - the one that writes the real
+--      SHA-256 - fails with 23505 duplicate key
+--   4. the user is told "Failed to create user record", though the row exists
+--   5. login compares sha256(password) against '' and can never match
+--
+-- Verified by reproducing it locally: with the trigger installed, registration
+-- fails exactly as production does; with it dropped, register -> logout ->
+-- login succeeds end to end.
+--
+-- Dropping the trigger rather than adapting to it, because AuthContext already
+-- writes the row correctly and the INSERT policy for it is in place
+-- (20260907000005). Keeping the trigger would instead need an UPDATE policy on
+-- users plus code to patch the hash afterwards - more surface for the same
+-- result, and it would leave two things writing the same row.
+--
+-- handle_new_user() is left in place: it is a trigger function, so it cannot be
+-- called over the API, and keeping it makes this trivial to reverse if the auth
+-- migration is ever picked up again. That is the one case where this trigger
+-- would be wanted back, and by then password_hash really would be unused.
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
