@@ -1,0 +1,33 @@
+name: Boss Coverage
+
+# Bosses are added to the game rarely, so once a week is plenty.
+# Deliberately not run on pull requests: it calls the WiseOldMan API, and a
+# transient upstream failure should not block unrelated work.
+#
+# There is no notification step. A failed run emails the repo owner, which is
+# the preferred channel - see the Discord decision in the cleanup runbook.
+on:
+  schedule:
+    - cron: '0 12 * * 1' # Mondays, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  boss-coverage:
+    name: Check every WOM boss can be rendered
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      # No npm install: the script uses only built-in fetch, fs and path.
+      # WOM_GROUP_ID is not set here - the script defaults to 2928. Set it as a
+      # repo variable and add it back here only if the group ever changes.
+      - name: Check boss coverage
+        run: node scripts/check-boss-coverage.cjs
