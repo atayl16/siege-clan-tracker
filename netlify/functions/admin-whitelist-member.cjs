@@ -6,7 +6,7 @@ const {
   errorResponse,
   parseRequestBody,
   validateEnvironment,
-} = require('./utils/adminHelpers');
+} = require('./utils/adminHelpers.cjs');
 
 // Validate environment variables at module load
 validateEnvironment();
@@ -51,7 +51,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const { memberId, updatedData } = parseResult.data;
+    const { memberId, reason } = parseResult.data;
 
     // Validate required fields
     if (!memberId) {
@@ -62,31 +62,33 @@ exports.handler = async function(event, context) {
       };
     }
 
-    if (!updatedData || typeof updatedData !== 'object') {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Valid updatedData object is required' }),
-      };
-    }
-
-    // Update member using RPC call (which bypasses RLS with service role key)
-    const { data, error } = await supabase.rpc(
-      'admin_update_member',
-      {
-        member_id: memberId,
-        updated_data: updatedData
-      }
-    );
+    // Update member whitelist status directly (service role bypasses RLS)
+    const { data, error } = await supabase
+      .from('members')
+      .update({
+        runewatch_whitelisted: true,
+        runewatch_whitelist_reason: reason || 'Whitelisted by admin',
+        updated_at: new Date().toISOString()
+      })
+      .eq('wom_id', memberId)
+      .select();
 
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: 'Member not found' }),
+      };
+    }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, data }),
+      body: JSON.stringify({ success: true, data: data[0] }),
     };
   } catch (error) {
-    return errorResponse(error, origin, 'Failed to update member');
+    return errorResponse(error, origin, 'Failed to whitelist member');
   }
 };

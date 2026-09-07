@@ -6,7 +6,7 @@ const {
   errorResponse,
   parseRequestBody,
   validateEnvironment,
-} = require('./utils/adminHelpers');
+} = require('./utils/adminHelpers.cjs');
 
 // Validate environment variables at module load
 validateEnvironment();
