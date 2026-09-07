@@ -36,6 +36,14 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      # These skip themselves when no stack is reachable, so `npm test` in
+      # ci.yml stays green without Docker. Here they get a real database.
+      # Run before the smoke step, whose db reset restores the seed afterwards.
+      - name: Run integration tests against local Supabase
+        run: npx vitest run netlify/functions/__tests__/admin-update-member.integration.test.js
+        env:
+          CI: true
+
       - name: Run smoke tests
         run: npm run test:smoke
         env:

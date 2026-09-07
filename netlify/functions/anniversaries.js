@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import fetch from 'node-fetch';
+import { pathToFileURL } from 'url';
 
 async function sendAnniversaries() {
   console.log('Running scheduled anniversary check...');
@@ -199,7 +200,7 @@ async function sendGroupAnniversaryMessage(webhookUrl, members) {
 }
 
 // Execute if this file is run directly
-if (require.main === module) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   sendAnniversaries()
     .then(result => console.log('Result:', result))
     .catch(err => {
@@ -208,4 +209,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { sendAnniversaries };
+export { sendAnniversaries };
