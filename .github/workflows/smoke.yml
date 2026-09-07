@@ -39,8 +39,11 @@ jobs:
       # These skip themselves when no stack is reachable, so `npm test` in
       # ci.yml stays green without Docker. Here they get a real database.
       # Run before the smoke step, whose db reset restores the seed afterwards.
+      # Filter by path substring, so a new *.integration.test.js file is picked
+      # up without editing this workflow. Naming one file meant a new test could
+      # be added and silently never run in CI.
       - name: Run integration tests against local Supabase
-        run: npx vitest run netlify/functions/__tests__/admin-update-member.integration.test.js
+        run: npx vitest run integration
         env:
           CI: true
 
