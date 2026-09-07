@@ -78,6 +78,33 @@ test.describe('a registered member', () => {
     await expect(nav.getByRole('link', { name: 'Admin' })).toHaveCount(0);
     await expect(nav.getByRole('link', { name: 'Login' })).toHaveCount(0);
   });
+
+  /**
+   * Only the claim-code path in ClaimPlayer is finished. The other two tabs
+   * are gated behind ?preview so they can be exercised in production without
+   * members seeing them. Worth a test because JSX children are evaluated even
+   * for inactive tabs, so an unfinished tab left mounted takes the whole
+   * Requests view down before it paints - which is exactly what happened.
+   */
+  test('the Requests tab shows only the finished claim-code path', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+
+    const username = `smoketab${Date.now()}`;
+    await page.goto('/register');
+    await page.locator('input[type="text"], input:not([type])').first().fill(username);
+    const passwords = page.locator('input[type="password"]');
+    const count = await passwords.count();
+    for (let i = 0; i < count; i++) await passwords.nth(i).fill('smoke-password-not-a-secret');
+    await page.locator('button[type="submit"]').first().click();
+    await expect(page).toHaveURL(/\/profile$/, { timeout: 15_000 });
+
+    await page.getByText('Requests', { exact: true }).first().click();
+    await expect(page.getByText('Use a Claim Code')).toBeVisible();
+    await expect(page.getByText('Search Members')).toHaveCount(0);
+    await expect(page.getByText('View My Requests')).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
 });
 
 test.describe('previously unreachable pages render', () => {

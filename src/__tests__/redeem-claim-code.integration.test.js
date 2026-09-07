@@ -71,7 +71,11 @@ describe.skipIf(!stack)('redeem_claim_code', () => {
     const session = await res.json();
     expect(session.access_token, JSON.stringify(session)).toBeTruthy();
 
-    await fetch(`${stack.API_URL}/rest/v1/users`, {
+    // Assert this rather than letting it fail quietly. When the users INSERT
+    // policy was missing, this returned 42501 and the suite only fell over
+    // later with a foreign key error on player_claims, which pointed at the
+    // wrong thing entirely.
+    const insert = await fetch(`${stack.API_URL}/rest/v1/users`, {
       method: 'POST',
       headers: { apikey: stack.ANON_KEY, Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -81,6 +85,11 @@ describe.skipIf(!stack)('redeem_claim_code', () => {
         is_admin: false,
       }),
     });
+    expect(
+      insert.status,
+      `creating the users row failed - is the users_insert_own_row policy applied? ${await insert.clone().text()}`
+    ).toBeLessThan(300);
+
     return session.access_token;
   }
 
