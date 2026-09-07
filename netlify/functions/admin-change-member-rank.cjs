@@ -6,7 +6,7 @@ const {
   errorResponse,
   parseRequestBody,
   validateEnvironment,
-} = require('./utils/adminHelpers');
+} = require('./utils/adminHelpers.cjs');
 
 // Validate environment variables at module load
 validateEnvironment();
@@ -51,7 +51,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const { memberId, reason } = parseResult.data;
+    const { memberId, newRank } = parseResult.data;
 
     // Validate required fields
     if (!memberId) {
@@ -62,33 +62,31 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Update member whitelist status directly (service role bypasses RLS)
-    const { data, error } = await supabase
-      .from('members')
-      .update({
-        runewatch_whitelisted: true,
-        runewatch_whitelist_reason: reason || 'Whitelisted by admin',
-        updated_at: new Date().toISOString()
-      })
-      .eq('wom_id', memberId)
-      .select();
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
+    if (!newRank) {
       return {
-        statusCode: 404,
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Member not found' }),
+        body: JSON.stringify({ error: 'New rank is required' }),
       };
     }
+
+    // Change member rank using RPC call
+    const { data, error } = await supabase.rpc(
+      'admin_change_member_rank',
+      {
+        member_id: memberId,
+        new_role: newRank
+      }
+    );
+
+    if (error) throw error;
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, data: data[0] }),
+      body: JSON.stringify({ success: true, data }),
     };
   } catch (error) {
-    return errorResponse(error, origin, 'Failed to whitelist member');
+    return errorResponse(error, origin, 'Failed to change member rank');
   }
 };

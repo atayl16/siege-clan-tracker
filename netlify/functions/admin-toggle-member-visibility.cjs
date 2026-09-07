@@ -6,7 +6,7 @@ const {
   errorResponse,
   parseRequestBody,
   validateEnvironment,
-} = require('./utils/adminHelpers');
+} = require('./utils/adminHelpers.cjs');
 
 // Validate environment variables at module load
 validateEnvironment();
@@ -51,7 +51,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const { memberId, newRank } = parseResult.data;
+    const { memberId, isHidden } = parseResult.data;
 
     // Validate required fields
     if (!memberId) {
@@ -62,20 +62,20 @@ exports.handler = async function(event, context) {
       };
     }
 
-    if (!newRank) {
+    if (typeof isHidden !== 'boolean') {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'New rank is required' }),
+        body: JSON.stringify({ error: 'isHidden must be a boolean value' }),
       };
     }
 
-    // Change member rank using RPC call
+    // Toggle visibility using RPC call (which bypasses RLS with service role key)
     const { data, error } = await supabase.rpc(
-      'admin_change_member_rank',
+      'admin_toggle_member_visibility',
       {
         member_id: memberId,
-        new_role: newRank
+        is_hidden: isHidden
       }
     );
 
@@ -87,6 +87,6 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ success: true, data }),
     };
   } catch (error) {
-    return errorResponse(error, origin, 'Failed to change member rank');
+    return errorResponse(error, origin, 'Failed to toggle member visibility');
   }
 };
