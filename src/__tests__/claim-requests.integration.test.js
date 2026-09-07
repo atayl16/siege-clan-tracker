@@ -163,6 +163,17 @@ describe.skipIf(!stack)('claim requests', () => {
     expect(data.length).toBeGreaterThan(0);
   });
 
+  it('resolves the username so the admin table is not all "Unknown User"', async () => {
+    // ClaimRequestManager renders request.username, which claim_requests does
+    // not store. The admin queue showed "Unknown User" on every row in
+    // production until the function started looking it up.
+    const res = await callAdmin(listHandler, adminToken);
+    const { data } = JSON.parse(res.body);
+    const mine = data.find((r) => r.user_id === member.id);
+    expect(mine, 'the request raised in this run should be listed').toBeTruthy();
+    expect(mine.username).toBe(`requester-${suffix}`);
+  });
+
   it('refuses the admin list to a non-admin', async () => {
     const res = await callAdmin(listHandler, member.token);
     expect(res.statusCode).toBe(403);
