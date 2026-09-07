@@ -1,5 +1,5 @@
 // Import Supabase with ES modules syntax
-import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.115.0';
 import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
 
 export default async (request, _context) => {
