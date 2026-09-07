@@ -55,6 +55,11 @@ export default function MemberSelector({
       header: "Actions",
       render: (member) => (
         <button
+          // Without this the button defaults to type="submit", and this table
+          // is rendered inside the Create Race form - so picking a player
+          // submitted the form and fired "All participant details must be
+          // complete" before the user had filled anything in.
+          type="button"
           className="select-member-btn"
           onClick={() => onMemberSelect(member)}
           disabled={disabled || member.is_claimed}
