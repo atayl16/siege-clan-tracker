@@ -80,17 +80,26 @@ INSERT INTO events (id, name, description, start_date, end_date, event_type) VAL
 -- ============================================================
 -- RACES & PARTICIPANTS
 -- ============================================================
-INSERT INTO races (id, name, description, start_date, end_date, metric) VALUES
-  ('20000000-0000-0000-0000-000000000001', 'Smoke Race Overall XP', 'Test race', NOW() - INTERVAL '2 days', NOW() + INTERVAL '5 days', 'overall');
+-- Uses the production column names (title, creator_id, public, status). See
+-- 20260907000007 - the migrations had drifted to name/start_date/metric, which
+-- production does not have.
+INSERT INTO races (id, title, description, creator_id, public, status, end_date) VALUES
+  ('20000000-0000-0000-0000-000000000001', 'Smoke Race Overall XP', 'Public test race',
+   '00000000-0000-0000-0000-000000000002', true, 'active', NOW() + INTERVAL '5 days'),
+  ('20000000-0000-0000-0000-000000000002', 'Smoke Private Race', 'Private test race',
+   '00000000-0000-0000-0000-000000000002', false, 'active', NOW() + INTERVAL '5 days');
 
-INSERT INTO race_participants (race_id, wom_id, start_value, end_value) VALUES
-  ('20000000-0000-0000-0000-000000000001', 900006, 40000000, 45000000),
-  ('20000000-0000-0000-0000-000000000001', 900011, 300000000, 310000000);
+INSERT INTO race_participants
+  (race_id, wom_id, player_name, metric, start_value, current_value, target_value) VALUES
+  ('20000000-0000-0000-0000-000000000001', 900006, 'Smoke Zenyte', 'overall', 40000000, 42000000, 50000000),
+  ('20000000-0000-0000-0000-000000000001', 900011, 'Smoke TzKal',  'overall', 300000000, 305000000, 350000000);
 
 -- ============================================================
 -- USER GOALS
 -- ============================================================
-INSERT INTO user_goals (user_id, wom_id, goal_type, target_value, current_value, completed) VALUES
-  ('00000000-0000-0000-0000-000000000002', 900006, 'overall_xp', 100000000, 90000000, false);
+INSERT INTO user_goals
+  (user_id, wom_id, goal_type, metric, target_value, start_value, current_value, completed, public) VALUES
+  ('00000000-0000-0000-0000-000000000002', 900006, 'overall_xp', 'overall', 100000000, 80000000, 90000000, false, false),
+  ('00000000-0000-0000-0000-000000000002', 900011, 'overall_xp', 'overall', 400000000, 300000000, 350000000, false, true);
 
 COMMIT;
