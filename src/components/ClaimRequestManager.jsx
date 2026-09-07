@@ -28,7 +28,7 @@ export default function ClaimRequestManager() {
     error: fetchError,
     refresh: refreshRequests,
     processRequest,
-  } = useClaimRequests();
+  } = useClaimRequests({ admin: true });
 
   // Apply local filtering based on the current filter
   const filteredRequests = allRequests?.filter((request) => {
