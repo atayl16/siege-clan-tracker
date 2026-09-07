@@ -14,6 +14,13 @@ import EmptyState from "./ui/EmptyState";
 import "./ClaimPlayer.css";
 
 export default function ClaimPlayer({ onRequestSubmitted }) {
+  // Read once at render: it only changes on navigation, and it exists so a
+  // half-built tab can be exercised in production without showing it to
+  // members.
+  const showUnfinishedTabs =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("preview");
+
   // Local state for form inputs and UI
   const [claimCode, setClaimCode] = useState("");
   const [selectedMember, setSelectedMember] = useState("");
@@ -203,140 +210,156 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab tabId="request" label="Search Members">
-          <div className="ui-claim-tab-content">
-            <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
-            <p className="ui-claim-description">
-              Select your character from the list to request access.
-            </p>
+        {/*
+          Only the claim-code path above is finished. "Search Members" calls
+          createClaimRequest(), which useClaimRequests() does not provide, and
+          "View My Requests" reads userRequests from the same hook - it returns
+          claimRequests from /api/claim-requests, which answers 401 in the
+          browser. JSX children are evaluated even for inactive tabs, so
+          leaving these mounted crashed the whole Requests tab on
+          `userRequests.map` before anything painted.
 
-            {membersError && (
-              <div className="ui-error-message">
-                <FaTimes className="ui-error-icon" />
-                Error loading members: {membersError.message || membersError}
-              </div>
-            )}
+          Kept rather than deleted, and reachable by appending ?preview to the
+          URL: hidden from members, testable in production.
+        */}
+        {showUnfinishedTabs ? (
+          <Tabs.Tab tabId="request" label="Search Members">
+            <div className="ui-claim-tab-content">
+              <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
+              <p className="ui-claim-description">
+                Select your character from the list to request access.
+              </p>
 
-            <form onSubmit={handleRequestClaim} className="ui-claim-form">
-              <div className="ui-form-group">
-                <label className="ui-form-label">Select Your Character:</label>
-                {membersLoading ? (
-                  <div className="ui-loading-indicator">
-                    <div className="ui-loading-spinner"></div>
-                    <div className="ui-loading-text">
-                      Loading available players...
+              {membersError && (
+                <div className="ui-error-message">
+                  <FaTimes className="ui-error-icon" />
+                  Error loading members: {membersError.message || membersError}
+                </div>
+              )}
+
+              <form onSubmit={handleRequestClaim} className="ui-claim-form">
+                <div className="ui-form-group">
+                  <label className="ui-form-label">Select Your Character:</label>
+                  {membersLoading ? (
+                    <div className="ui-loading-indicator">
+                      <div className="ui-loading-spinner"></div>
+                      <div className="ui-loading-text">
+                        Loading available players...
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <select
-                    className="ui-form-select"
-                    value={selectedMember}
-                    onChange={(e) => setSelectedMember(e.target.value)}
+                  ) : (
+                    <select
+                      className="ui-form-select"
+                      value={selectedMember}
+                      onChange={(e) => setSelectedMember(e.target.value)}
+                      disabled={loading}
+                      required
+                    >
+                      <option value="">-- Select your character --</option>
+                      {availableMembers?.map((member) => (
+                        <option key={member.wom_id} value={member.wom_id}>
+                          {member.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {availableMembers?.length === 0 && !membersLoading && (
+                    <div className="ui-info-message">
+                      All players have been claimed
+                    </div>
+                  )}
+                </div>
+
+                <div className="ui-form-group">
+                  <label className="ui-form-label">Message (optional):</label>
+                  <textarea
+                    className="ui-form-textarea"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Add any details that might help verify your identity"
                     disabled={loading}
-                    required
-                  >
-                    <option value="">-- Select your character --</option>
-                    {availableMembers?.map((member) => (
-                      <option key={member.wom_id} value={member.wom_id}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {availableMembers?.length === 0 && !membersLoading && (
-                  <div className="ui-info-message">
-                    All players have been claimed
-                  </div>
-                )}
-              </div>
+                    rows={3}
+                  />
+                </div>
 
-              <div className="ui-form-group">
-                <label className="ui-form-label">Message (optional):</label>
-                <textarea
-                  className="ui-form-textarea"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Add any details that might help verify your identity"
-                  disabled={loading}
-                  rows={3}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="ui-claim-button"
+                  disabled={loading || !selectedMember}
+                  fullWidth
+                >
+                  {loading ? "Submitting..." : "Submit Request"}
+                </Button>
+              </form>
+            </div>
+          </Tabs.Tab>
+        ) : null}
+
+        {showUnfinishedTabs ? (
+          <Tabs.Tab tabId="my-requests" label="View My Requests">
+            <div className="ui-claim-tab-content">
+              <h2 className="ui-claim-heading">My Claim Requests</h2>
+              {requestsError && (
+                <div className="ui-error-message">
+                  <FaTimes className="ui-error-icon" />
+                  Error loading requests: {requestsError.message || requestsError}
+                </div>
+              )}
+
+              {requestsLoading ? (
+                <div className="ui-loading-indicator">
+                  <div className="ui-loading-spinner"></div>
+                  <div className="ui-loading-text">Loading your requests...</div>
+                </div>
+              ) : userRequests?.length === 0 ? (
+                <EmptyState
+                  title="No Requests Yet"
+                  description="You haven't submitted any player claim requests yet"
+                  action={
+                    <Button
+                      variant="secondary"
+                      onClick={() => setActiveTab("request")}
+                    >
+                      Request a Player
+                    </Button>
+                  }
                 />
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="ui-claim-button"
-                disabled={loading || !selectedMember}
-                fullWidth
-              >
-                {loading ? "Submitting..." : "Submit Request"}
-              </Button>
-            </form>
-          </div>
-        </Tabs.Tab>
-
-        <Tabs.Tab tabId="my-requests" label="View My Requests">
-          <div className="ui-claim-tab-content">
-            <h2 className="ui-claim-heading">My Claim Requests</h2>
-            {requestsError && (
-              <div className="ui-error-message">
-                <FaTimes className="ui-error-icon" />
-                Error loading requests: {requestsError.message || requestsError}
-              </div>
-            )}
-
-            {requestsLoading ? (
-              <div className="ui-loading-indicator">
-                <div className="ui-loading-spinner"></div>
-                <div className="ui-loading-text">Loading your requests...</div>
-              </div>
-            ) : userRequests?.length === 0 ? (
-              <EmptyState
-                title="No Requests Yet"
-                description="You haven't submitted any player claim requests yet"
-                action={
-                  <Button
-                    variant="secondary"
-                    onClick={() => setActiveTab("request")}
-                  >
-                    Request a Player
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="ui-requests-list">
-                {userRequests.map((request) => (
-                  <Card key={request.id} className="ui-request-card">
-                    <Card.Header className="ui-request-header">
-                      <div className="ui-request-title">{request.rsn}</div>
-                      {getStatusBadge(request.status)}
-                    </Card.Header>
-                    <Card.Body>
-                      <div className="ui-request-details">
-                        <p>
-                          <strong>Requested:</strong>{" "}
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </p>
-                        {request.message && (
+              ) : (
+                <div className="ui-requests-list">
+                  {userRequests.map((request) => (
+                    <Card key={request.id} className="ui-request-card">
+                      <Card.Header className="ui-request-header">
+                        <div className="ui-request-title">{request.rsn}</div>
+                        {getStatusBadge(request.status)}
+                      </Card.Header>
+                      <Card.Body>
+                        <div className="ui-request-details">
                           <p>
-                            <strong>Your message:</strong> {request.message}
+                            <strong>Requested:</strong>{" "}
+                            {new Date(request.created_at).toLocaleDateString()}
                           </p>
-                        )}
-                        {request.admin_notes &&
-                          request.status !== "pending" && (
+                          {request.message && (
                             <p>
-                              <strong>Admin notes:</strong>{" "}
-                              {request.admin_notes}
+                              <strong>Your message:</strong> {request.message}
                             </p>
                           )}
-                      </div>
-                    </Card.Body>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        </Tabs.Tab>
+                          {request.admin_notes &&
+                            request.status !== "pending" && (
+                              <p>
+                                <strong>Admin notes:</strong>{" "}
+                                {request.admin_notes}
+                              </p>
+                            )}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Tabs.Tab>
+        ) : null}
       </Tabs>
     </Card>
   );

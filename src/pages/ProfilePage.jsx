@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useClaimRequests } from "../hooks/useClaimRequests"; // Updated hook
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
@@ -55,13 +54,24 @@ function CharacterGoalCard({ claim, user }) {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  // userClaims and fetchUserClaims come from AuthContext, which already joins
+  // get_user_claims() to the member rows and shapes each claim as
+  // { ..., members: { name, current_lvl, ehb, siege_score } } - exactly what
+  // this page renders. useClaimRequests() returns { claimRequests, refresh }
+  // and never had a userClaims or refreshUserClaims key, so both were
+  // undefined and `userClaims.length` threw before the page could paint.
+  const { user, userClaims, fetchUserClaims } = useAuth();
   const [activeTab, setActiveTab] = useState("characters");
   const [showCreateRace, setShowCreateRace] = useState(false);
 
-  // Use new hooks
-  const { userClaims, refreshUserClaims } = useClaimRequests(user?.id);
-  const { activeRaces, loading: racesLoading, refreshRaces } = useRaces(user?.id);
+  // useRaces returns { races, loading, error, refresh }; the old names here
+  // were undefined too. Races stay empty in practice: the page filters on
+  // race.creator_id and race.participants, and the races table has neither.
+  const {
+    races: activeRaces,
+    loading: racesLoading,
+    refresh: refreshRaces,
+  } = useRaces(user?.id);
 
   // Handle creating a race
   const handleCreatedRace = () => {
@@ -85,14 +95,17 @@ export default function ProfilePage() {
 
   // Fetch user claims when the user changes
   useEffect(() => {
-    if (user) {
-      refreshUserClaims();
+    if (user?.id) {
+      fetchUserClaims(user.id);
     }
-  }, [user, refreshUserClaims]);
+    // fetchUserClaims is redefined on every AuthProvider render, so depending
+    // on it here would refetch in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // Update goals effect
   useEffect(() => {
-    if (user && userClaims.length > 0) {
+    if (user && userClaims?.length > 0) {
       const updateGoals = async () => {
         try {
           for (const claim of userClaims) {
@@ -205,7 +218,7 @@ export default function ProfilePage() {
             </Button>
           </div>
 
-          {userClaims.length === 0 ? (
+          {!userClaims?.length ? (
             <EmptyState
               title="No Characters Yet"
               description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
@@ -284,7 +297,7 @@ export default function ProfilePage() {
               <div className="ui-loading-spinner"></div>
               <div className="ui-loading-text">Loading user data...</div>
             </div>
-          ) : userClaims.length === 0 ? (
+          ) : !userClaims?.length ? (
             <EmptyState
               title="No Characters to Track"
               description="You need to claim a character before setting goals."
@@ -312,7 +325,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="claim-player-section">
-            <ClaimPlayer onRequestSubmitted={refreshUserClaims} />
+            <ClaimPlayer onRequestSubmitted={() => user?.id && fetchUserClaims(user.id)} />
           </div>
         </Tabs.Tab>
 

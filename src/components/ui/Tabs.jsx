@@ -11,7 +11,13 @@ const Tabs = ({
   return (
     <div className={`ui-tabs-container ${className}`} {...props}>
       <div className="ui-tabs-nav">
-        {React.Children.map(children, (tab) => (
+        {/*
+          React.Children.map passes null and false through, so a caller writing
+          {condition ? <Tabs.Tab .../> : null} used to crash here on
+          `tab.props`. Conditional tabs are a reasonable thing to write, so
+          skip anything that is not an element.
+        */}
+        {React.Children.map(children, (tab) => tab?.props && (
           <button
             key={tab.props.tabId}
             className={`ui-tab ${tab.props.tabId === activeTab ? 'ui-tab-active' : ''}`}
@@ -24,7 +30,7 @@ const Tabs = ({
         ))}
       </div>
       <div className="ui-tabs-content">
-        {React.Children.map(children, (tab) => (
+        {React.Children.map(children, (tab) => tab?.props && (
           <div 
             key={tab.props.tabId} 
             className={`ui-tab-pane ${tab.props.tabId === activeTab ? 'ui-tab-pane-active' : ''}`}
