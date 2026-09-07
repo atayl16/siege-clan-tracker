@@ -2,6 +2,22 @@
 
 This directory contains database migrations and setup scripts for the Siege Clan Tracker Supabase database.
 
+## Applying migrations to production
+
+**Merging a migration does not change production.** Nothing applies it
+automatically. Paste the SQL into the dashboard SQL editor for the production
+project, then run a query to confirm it took.
+
+Keep the matching migration file in `migrations/` either way, so a fresh
+`supabase db reset` ends up in the same state.
+
+Avoid `supabase db push` unless you have checked `supabase migration list` first.
+Several migrations were applied by hand over time, so
+`supabase_migrations.schema_migrations` may not match what is really live, and
+push applies anything the remote does not list. `00000000000000_staging_schema.sql`
+ends with an `INSERT INTO members ... 'Test Member'` that would land in the live
+clan list if it were replayed.
+
 ## Files
 
 - **migrations/** - SQL migration files (version controlled)
