@@ -31,7 +31,7 @@ export default function ClaimRequestsPreview({
     error,
     refresh: refreshRequests,
     processRequest,
-  } = useClaimRequests();
+  } = useClaimRequests({ admin: true });
 
   // Ensure we only display truly pending requests by double-checking status
   useEffect(() => {

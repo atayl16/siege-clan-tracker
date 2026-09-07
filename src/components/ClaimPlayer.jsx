@@ -17,9 +17,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   // Read once at render: it only changes on navigation, and it exists so a
   // half-built tab can be exercised in production without showing it to
   // members.
-  const showUnfinishedTabs =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).has("preview");
 
   // Local state for form inputs and UI
   const [claimCode, setClaimCode] = useState("");
@@ -41,11 +38,14 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     createClaimRequest,
   } = useClaimRequests();
 
+  // useMembers exposes refreshMembers, not refresh - asking for the wrong name
+  // left refreshAvailableMembers undefined, and the effect below calls it on
+  // every tab switch.
   const {
     members: availableMembers,
     loading: membersLoading,
     error: membersError,
-    refresh: refreshAvailableMembers,
+    refreshMembers: refreshAvailableMembers,
   } = useMembers();
 
   // Get fresh data when switching tabs
@@ -210,20 +210,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
           </div>
         </Tabs.Tab>
 
-        {/*
-          Only the claim-code path above is finished. "Search Members" calls
-          createClaimRequest(), which useClaimRequests() does not provide, and
-          "View My Requests" reads userRequests from the same hook - it returns
-          claimRequests from /api/claim-requests, which answers 401 in the
-          browser. JSX children are evaluated even for inactive tabs, so
-          leaving these mounted crashed the whole Requests tab on
-          `userRequests.map` before anything painted.
-
-          Kept rather than deleted, and reachable by appending ?preview to the
-          URL: hidden from members, testable in production.
-        */}
-        {showUnfinishedTabs ? (
-          <Tabs.Tab tabId="request" label="Search Members">
+        <Tabs.Tab tabId="request" label="Search Members">
             <div className="ui-claim-tab-content">
               <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
               <p className="ui-claim-description">
@@ -294,10 +281,8 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
               </form>
             </div>
           </Tabs.Tab>
-        ) : null}
 
-        {showUnfinishedTabs ? (
-          <Tabs.Tab tabId="my-requests" label="View My Requests">
+        <Tabs.Tab tabId="my-requests" label="View My Requests">
             <div className="ui-claim-tab-content">
               <h2 className="ui-claim-heading">My Claim Requests</h2>
               {requestsError && (
@@ -359,7 +344,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
               )}
             </div>
           </Tabs.Tab>
-        ) : null}
       </Tabs>
     </Card>
   );

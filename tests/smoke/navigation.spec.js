@@ -80,13 +80,15 @@ test.describe('a registered member', () => {
   });
 
   /**
-   * Only the claim-code path in ClaimPlayer is finished. The other two tabs
-   * are gated behind ?preview so they can be exercised in production without
-   * members seeing them. Worth a test because JSX children are evaluated even
-   * for inactive tabs, so an unfinished tab left mounted takes the whole
-   * Requests view down before it paints - which is exactly what happened.
+   * All three ClaimPlayer tabs, now that useClaimRequests returns what its
+   * callers ask for. They were hidden behind ?preview while the hook still
+   * returned claimRequests from a 401.
+   *
+   * Each is clicked rather than merely asserted present: JSX children are
+   * evaluated even for inactive tabs, so a broken one takes the whole Requests
+   * view down before it paints, and only visiting each catches that.
    */
-  test('the Requests tab shows only the finished claim-code path', async ({ page }) => {
+  test('every Requests sub-tab renders', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
 
@@ -100,9 +102,14 @@ test.describe('a registered member', () => {
     await expect(page).toHaveURL(/\/profile$/, { timeout: 15_000 });
 
     await page.getByText('Requests', { exact: true }).first().click();
-    await expect(page.getByText('Use a Claim Code')).toBeVisible();
-    await expect(page.getByText('Search Members')).toHaveCount(0);
-    await expect(page.getByText('View My Requests')).toHaveCount(0);
+
+    for (const tab of ['Use a Claim Code', 'Search Members', 'View My Requests']) {
+      await page.getByText(tab, { exact: true }).first().click();
+      await expect(page.locator('#root')).not.toBeEmpty();
+    }
+
+    // A member with no requests should be told so, not shown a blank panel.
+    await expect(page.getByText('No Requests Yet')).toBeVisible();
     expect(errors).toEqual([]);
   });
 });
