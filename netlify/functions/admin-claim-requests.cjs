@@ -49,10 +49,35 @@ exports.handler = async function (event) {
 
     if (error) throw error;
 
+    // ClaimRequestManager renders request.username, and claim_requests only
+    // stores user_id - so every row showed "Unknown User".
+    //
+    // Deliberately two queries rather than a PostgREST embed. Local has
+    // claim_requests_user_id_fkey and production does not, so
+    // `users:user_id(username)` works here and fails there with PGRST200. The
+    // lookup below behaves the same either way.
+    const userIds = [...new Set((data ?? []).map((r) => r.user_id).filter(Boolean))];
+
+    let usernameById = {};
+    if (userIds.length) {
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, username')
+        .in('id', userIds);
+
+      if (usersError) throw usersError;
+      usernameById = Object.fromEntries(users.map((u) => [u.id, u.username]));
+    }
+
+    const withUsernames = (data ?? []).map((request) => ({
+      ...request,
+      username: usernameById[request.user_id] ?? null,
+    }));
+
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, data }),
+      body: JSON.stringify({ success: true, data: withUsernames }),
     };
   } catch (error) {
     return errorResponse(error, origin, 'Failed to load claim requests');
