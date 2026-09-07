@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { bossIconUrl } from "../utils/bossIconUrl";
 // Existing skill imports
 import AgilityIcon from "../assets/images/skilling/Agility_icon.png";
 import AttackIcon from "../assets/images/skilling/Attack_icon.png";
@@ -205,6 +206,10 @@ export const ActivityIcon = ({ type }) => {
 };
 
 export const BossIcon = ({ boss }) => {
+  // Set when the Storage request 404s, so we stop retrying it and show the
+  // generic icon instead.
+  const [remoteFailed, setRemoteFailed] = useState(false);
+
   const bossIcons = {
     abyssal_sire: AbyssalSireIcon,
     alchemical_hydra: AlchemicalHydraIcon,
@@ -279,7 +284,27 @@ export const BossIcon = ({ boss }) => {
     zulrah: ZulrahIcon,
   };
 
-  return bossIcons[boss] ? <img src={bossIcons[boss]} alt={`${boss} icon`} /> : null;
+  // Bundled asset wins: it ships with the bundle and costs no extra request.
+  if (bossIcons[boss]) {
+    return <img src={bossIcons[boss]} alt={`${boss} icon`} />;
+  }
+
+  // Not bundled, so this boss was added to the game since the last deploy. Try
+  // Supabase Storage, which can be updated without a build.
+  const remoteUrl = remoteFailed ? null : bossIconUrl(boss);
+  if (remoteUrl) {
+    return (
+      <img
+        src={remoteUrl}
+        alt={`${boss} icon`}
+        onError={() => setRemoteFailed(true)}
+      />
+    );
+  }
+
+  // Last resort. This used to return null, which rendered a silently blank
+  // cell in the Hall of Fame - matching ActivityIcon's behaviour instead.
+  return <img src={OsrsIcon} alt={`${boss} icon`} />;
 };
 
 export const OldSchoolIcon = () => {
