@@ -73,9 +73,17 @@ VALUES
 -- ============================================================
 -- EVENTS
 -- ============================================================
-INSERT INTO events (id, name, description, start_date, end_date, event_type) VALUES
-  ('10000000-0000-0000-0000-000000000001', 'Smoke Event Upcoming', 'Upcoming boss event',   NOW() + INTERVAL '7 days',  NOW() + INTERVAL '14 days', 'pvm'),
-  ('10000000-0000-0000-0000-000000000002', 'Smoke Event Past',     'Past boss event',       NOW() - INTERVAL '14 days', NOW() - INTERVAL '7 days',  'pvm');
+-- `type` is production's column and the one the UI and sync read; event_type
+-- exists only locally. See 20260907000013.
+INSERT INTO events (id, name, description, start_date, end_date, type, metric, status, points_processed) VALUES
+  ('10000000-0000-0000-0000-000000000001', 'Smoke Event Upcoming', 'Upcoming boss event',
+   NOW() + INTERVAL '7 days',  NOW() + INTERVAL '14 days', 'pvm', 'zulrah', 'upcoming', false),
+  ('10000000-0000-0000-0000-000000000002', 'Smoke Event Past',     'Past boss event',
+   NOW() - INTERVAL '14 days', NOW() - INTERVAL '7 days',  'pvm', 'zulrah', 'completed', true);
+
+-- One result row so anything rendering placements has data to work with.
+INSERT INTO event_results (event_id, wom_id, player_name, placement, points_awarded, progress) VALUES
+  ('10000000-0000-0000-0000-000000000002', '900006', 'Smoke Zenyte', 1, 10, 1500);
 
 -- ============================================================
 -- RACES & PARTICIPANTS
