@@ -95,3 +95,16 @@ describe('jsonWithEtag', () => {
     expect(await res.json()).toEqual(data);
   });
 });
+
+describe('private responses', () => {
+  it('stay out of shared caches and vary on Authorization', () => {
+    const res = jsonWithEtag(request(), 'users', [{ id: 1 }], { isPrivate: true });
+    expect(res.headers.get('Cache-Control')).toBe('private, no-cache');
+    expect(res.headers.get('CDN-Cache-Control')).toBe('no-store');
+    expect(res.headers.get('Vary')).toBe('Authorization');
+  });
+
+  it('public responses vary on Authorization too', () => {
+    expect(cacheHeaders('W/"x"').Vary).toBe('Authorization');
+  });
+});

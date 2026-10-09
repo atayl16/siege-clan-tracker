@@ -46,14 +46,26 @@ export function contentEtag(name, data) {
  * content ETag turns an unchanged recheck into a 304. The old headers used
  * max-age up to 3000 seconds, so a stale copy was not even rechecked for the
  * best part of an hour.
+ *
+ * Private responses (anything that depends on who is asking) are kept out of
+ * shared caches entirely and revalidated every time; the ETag still makes that
+ * cheap. Vary: Authorization is sent either way, because the same URL answers
+ * differently for an admin and for an anonymous visitor.
  */
-export function cacheHeaders(etag, maxAge = 60) {
-  return {
+export function cacheHeaders(etag, maxAge = 60, { isPrivate = false } = {}) {
+  const headers = {
     "Content-Type": "application/json",
-    "Cache-Control": `public, max-age=${maxAge}, must-revalidate`,
-    "CDN-Cache-Control": `public, max-age=${maxAge}, must-revalidate`,
     ETag: etag,
+    Vary: "Authorization",
   };
+  if (isPrivate) {
+    headers["Cache-Control"] = "private, no-cache";
+    headers["CDN-Cache-Control"] = "no-store";
+  } else {
+    headers["Cache-Control"] = `public, max-age=${maxAge}, must-revalidate`;
+    headers["CDN-Cache-Control"] = `public, max-age=${maxAge}, must-revalidate`;
+  }
+  return headers;
 }
 
 /**
@@ -85,11 +97,12 @@ export function etagMatches(ifNoneMatch, etag) {
  * @param {object} [options]
  * @param {number} [options.maxAge] - seconds, see cacheHeaders
  * @param {string} [options.cacheTag] - Netlify-Cache-Tag, for purging
+ * @param {boolean} [options.isPrivate] - per-caller data, see cacheHeaders
  */
-export function jsonWithEtag(request, name, data, { maxAge, cacheTag } = {}) {
+export function jsonWithEtag(request, name, data, { maxAge, cacheTag, isPrivate } = {}) {
   const body = JSON.stringify(data);
   const etag = contentEtag(name, body);
-  const headers = cacheHeaders(etag, maxAge);
+  const headers = cacheHeaders(etag, maxAge, { isPrivate });
   if (cacheTag) headers["Netlify-Cache-Tag"] = cacheTag;
 
   if (etagMatches(request.headers.get("If-None-Match"), etag)) {

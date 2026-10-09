@@ -4,22 +4,22 @@ import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
 import { jsonWithEtag } from './_shared/etag.js';
 
 export default async (request, _context) => {
-  // Check authentication
+  // Blocks casual cross-origin use. Not authentication: Origin is client-set.
   const { authorized, reason } = checkAuth(request);
   if (!authorized) {
     return unauthorizedResponse(reason);
   }
 
-  // Get environment variables with Deno.env.get()
-  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-  console.log('Fetching event data from Supabase...');
+  // Service role bypasses RLS, so every query below has to apply the same
+  // limits RLS would.
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL'),
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  );
 
   try {
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
+    // Public: allow_public_read_events lets anyone read every event, and
+    // events has no column that is not already shown on the events page.
     const { data, error } = await supabase
       .from('events')
       .select('*')
@@ -27,8 +27,6 @@ export default async (request, _context) => {
 
     if (error) throw error;
 
-    // The ETag is a hash of the payload, so a 304 means the data really is
-    // unchanged. See _shared/etag.js for why the old date-based tag was wrong.
     return jsonWithEtag(request, 'events', data, { cacheTag: 'supabase-events' });
   } catch (error) {
     console.error('Function error:', error);
