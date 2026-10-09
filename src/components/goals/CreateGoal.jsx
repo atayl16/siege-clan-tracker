@@ -30,7 +30,7 @@ export default function CreateGoal({
   const { player: currentStats, loading: loadingStats } = usePlayer(
     player.wom_id
   );
-  const { createGoal, loading: submitting } = useUserGoals();
+  const { createGoal, loading: submitting } = useUserGoals(userId);
 
   // Set initial selected metric when metrics load
   const handleMetricChange = (metric) => {

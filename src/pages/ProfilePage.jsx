@@ -107,12 +107,13 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user && userClaims?.length > 0) {
       const updateGoals = async () => {
-        try {
-          for (const claim of userClaims) {
+        // One character's failure should not stop the others updating.
+        for (const claim of userClaims) {
+          try {
             await updatePlayerGoals(claim.members.wom_id, user.id);
+          } catch (err) {
+            console.error(`Error updating goals for ${claim.members.wom_id}:`, err);
           }
-        } catch (err) {
-          console.error("Error updating goals:", err);
         }
       };
 
