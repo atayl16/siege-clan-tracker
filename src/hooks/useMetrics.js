@@ -1,10 +1,14 @@
 import useSWR from "swr";
 
-const fetcher = (url) => fetch(url).then((r) => r.json());
+const fetcher = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to load player metrics (${res.status})`);
+  return res.json();
+};
 
 export function useMetrics(playerId, metricType = null) {
   const { data, error } = useSWR(
-    playerId ? `/api/pwom-player?id=${playerId}` : null,
+    playerId ? `/api/wom-player?id=${playerId}` : null,
     fetcher,
     { refreshInterval: 300000, dedupingInterval: 60000 }
   );

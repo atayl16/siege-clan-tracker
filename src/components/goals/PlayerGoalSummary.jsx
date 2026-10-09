@@ -5,7 +5,7 @@ import './PlayerGoalSummary.css';
 
 export default function PlayerGoalSummary({ playerId, userId }) {
   // Use the new hook
-  const { goals, loading } = useUserGoals();
+  const { userGoals: goals, loading } = useUserGoals(userId);
 
   if (!playerId || !userId) {
     return (

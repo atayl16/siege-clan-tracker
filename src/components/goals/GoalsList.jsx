@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useUserGoals } from "../../hooks/useUserGoals"; // Updated to use new hook
-import { usePlayer } from "../../hooks/usePlayer"; // New hook for fetching player data
 import GoalProgress from "./GoalProgress";
 import CreateGoal from "./CreateGoal";
 import { updatePlayerGoals } from "../../services/goalProgressService";
@@ -21,11 +20,16 @@ export default function GoalsList({ player, userId, onClose }) {
     );
   }
 
-  // Use new hook for goals
-  const { goals, loading, error: apiError, refresh: refreshGoals, deleteGoal } = useUserGoals();
-
-  // Use new hook for player data
-  const { refreshPlayer } = usePlayer(player?.wom_id);
+  // useUserGoals returns userGoals, not goals - reading `goals` left it
+  // undefined, and `goals.map` below blanked the whole profile page.
+  const {
+    userGoals,
+    loading,
+    error: apiError,
+    refresh: refreshGoals,
+    deleteGoal,
+  } = useUserGoals(userId);
+  const goals = userGoals.filter((goal) => goal.wom_id === player?.wom_id);
 
   const [error, setError] = useState(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
@@ -66,15 +70,7 @@ export default function GoalsList({ player, userId, onClose }) {
       setSyncSuccess(false);
       setError(null);
 
-      // Refresh the player data using the new hook
-      const refreshResult = await refreshPlayer();
-
-      // Check if the refresh was successful
-      if (!refreshResult.success) {
-        console.warn("Player data refresh failed, continuing with goal updates anyway");
-      }
-
-      // Update the goals with the latest data
+      // Fetches fresh stats itself, and writes nothing if that fails.
       const result = await updatePlayerGoals(player.wom_id, userId);
 
       // Refresh goals list with updated data
