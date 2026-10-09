@@ -15,7 +15,8 @@ vi.mock('./utils/BackgroundLoader', () => ({
 vi.mock('../supabaseClient', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn(),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
@@ -36,7 +37,8 @@ vi.mock('../supabaseClient', () => ({
 vi.mock('../supabaseClient.js', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn(),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
@@ -71,7 +73,8 @@ vi.mock('./utils/supabaseClient', () => ({
 vi.mock('src/supabaseClient', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn(),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
@@ -92,7 +95,8 @@ vi.mock('src/supabaseClient', () => ({
 vi.mock('src/supabaseClient.js', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn(),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
