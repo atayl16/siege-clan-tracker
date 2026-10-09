@@ -33,7 +33,9 @@ function djb2(input) {
  * @returns {string} a weak ETag derived from the content
  */
 export function contentEtag(name, data) {
-  const body = typeof data === "string" ? data : JSON.stringify(data);
+  // JSON.stringify(undefined) is undefined, not a string; hash "" instead of
+  // letting djb2 throw on it.
+  const body = typeof data === "string" ? data : (JSON.stringify(data) ?? "");
   return `W/"${name}-${djb2(body)}"`;
 }
 

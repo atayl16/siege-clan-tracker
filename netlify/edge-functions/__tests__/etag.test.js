@@ -32,6 +32,10 @@ describe('contentEtag', () => {
     const data = [{ id: 1 }];
     expect(contentEtag('x', JSON.stringify(data))).toBe(contentEtag('x', data));
   });
+
+  it('does not throw on a value JSON cannot serialise', () => {
+    expect(() => contentEtag('x', undefined)).not.toThrow();
+  });
 });
 
 describe('cacheHeaders', () => {
