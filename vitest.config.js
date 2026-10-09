@@ -13,12 +13,14 @@ export default defineConfig({
     exclude: [
       'node_modules/',
       'src/setupTests.js',
-      'netlify/edge-functions/**',
+      // Calls Deno.env directly, which does not exist under Node.
+      'netlify/edge-functions/__tests__/api-authentication.test.js',
       'tests/smoke/**',
     ],
     // Use node environment for netlify function tests (not jsdom)
     environmentMatchGlobs: [
       ['netlify/functions/**/*.test.js', 'node'],
+      ['netlify/edge-functions/**/*.test.js', 'node'],
     ],
     css: true,
     coverage: {

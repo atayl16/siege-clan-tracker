@@ -53,3 +53,45 @@ export function cacheHeaders(etag, maxAge = 60) {
     ETag: etag,
   };
 }
+
+/**
+ * Whether an If-None-Match header covers this tag.
+ *
+ * The header can list several tags, or be "*". Comparison is weak (RFC 9110
+ * 13.1.2), so W/"x" and "x" match - a CDN that strips or adds the W/ prefix
+ * would otherwise turn every revalidation into a full download.
+ */
+export function etagMatches(ifNoneMatch, etag) {
+  if (!ifNoneMatch) return false;
+  if (ifNoneMatch.trim() === "*") return true;
+  const strip = (tag) => tag.trim().replace(/^W\//, "");
+  const target = strip(etag);
+  return ifNoneMatch.split(",").some((tag) => strip(tag) === target);
+}
+
+/**
+ * Respond with `data`, or 304 if the client already holds this exact payload.
+ *
+ * The tag can only be computed from the data, so the query always runs; what
+ * a 304 saves is the response body, not the database round trip. That is the
+ * price of correctness - the old date tag skipped the query and served
+ * yesterday's answer.
+ *
+ * @param {Request} request
+ * @param {string} name - endpoint name, see contentEtag
+ * @param {unknown} data - the payload
+ * @param {object} [options]
+ * @param {number} [options.maxAge] - seconds, see cacheHeaders
+ * @param {string} [options.cacheTag] - Netlify-Cache-Tag, for purging
+ */
+export function jsonWithEtag(request, name, data, { maxAge, cacheTag } = {}) {
+  const body = JSON.stringify(data);
+  const etag = contentEtag(name, body);
+  const headers = cacheHeaders(etag, maxAge);
+  if (cacheTag) headers["Netlify-Cache-Tag"] = cacheTag;
+
+  if (etagMatches(request.headers.get("If-None-Match"), etag)) {
+    return new Response(null, { status: 304, headers });
+  }
+  return new Response(body, { headers });
+}
