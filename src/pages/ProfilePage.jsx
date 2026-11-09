@@ -19,6 +19,7 @@ import EmptyState from "../components/ui/EmptyState";
 import StatGroup from "../components/ui/StatGroup";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 import RaceCard from "../components/RaceCard";
+import CharacterEventStandings from "../components/CharacterEventStandings";
 import CreateRace from "../components/CreateRace";
 
 import "./ProfilePage.css";
@@ -247,6 +248,8 @@ export default function ProfilePage() {
                         value={claim.members.siege_score || 0}
                       />
                     </StatGroup>
+
+                    <CharacterEventStandings womId={claim.members.wom_id} />
 
                     {user &&
                     user.id &&

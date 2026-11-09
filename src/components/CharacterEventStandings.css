@@ -1,0 +1,60 @@
+/* Matches the Current Goals block below it (PlayerGoalSummary.css). */
+.character-events {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #444;
+  width: 100%;
+}
+
+.character-events-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #ddd;
+}
+
+.character-events-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.character-event {
+  padding: 8px;
+  background-color: #333;
+  border-radius: 6px;
+}
+
+.character-event-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #f0f0f0;
+  margin-bottom: 4px;
+}
+
+.character-event-leader {
+  color: #ffd700;
+  flex-shrink: 0;
+}
+
+.character-event-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.8rem;
+  color: #bbb;
+}
+
+.character-event-rank {
+  color: #f0f0f0;
+}
+
+.character-event-ends {
+  color: #888;
+}
