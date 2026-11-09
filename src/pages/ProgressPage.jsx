@@ -19,11 +19,8 @@ export default function ProgressPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("publicRaces");
 
-  // useRaces returns { races, loading, refresh }. This page used to read
-  // activeRaces / publicRaces / refreshRaces, which the hook never had, so
-  // publicRaces.filter threw and the page was a blank screen - which is why
-  // the nav link was hidden. RLS (races_read) already limits `races` to
-  // public races plus your own.
+  // RLS (races_read) limits `races` to public races plus your own; the board
+  // shows only the public ones.
   const { races, loading: racesLoading } = useRaces(user?.id);
   const filteredPublicRaces = (races ?? []).filter((race) => race.public === true);
 

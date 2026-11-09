@@ -15,9 +15,20 @@ const goals = [
 ];
 
 vi.mock('../context/AuthContext', () => ({ useAuth: () => auth }));
-// Exactly what the real hooks return.
+// The real useRaces shape (src/hooks/useRaces.js), including the fields
+// this page does not read.
 vi.mock('../hooks/useRaces', () => ({
-  useRaces: () => ({ races, loading: false, error: null, refresh: vi.fn() }),
+  useRaces: () => ({
+    races,
+    createRace: vi.fn(),
+    updateRace: vi.fn(),
+    activeRaces: races.filter((r) => r.creator_id === auth.user?.id),
+    publicRaces: races.filter((r) => r.public === true),
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    refreshRaces: vi.fn(),
+  }),
 }));
 vi.mock('../hooks/useUserGoals', () => ({
   useUserGoals: () => ({ userGoals: goals, publicGoals: goals, loading: false, error: null }),
@@ -39,8 +50,6 @@ beforeEach(() => {
 });
 
 test('renders for a logged-out visitor and lists only public races', () => {
-  // Regression: read activeRaces/publicRaces from useRaces, which returns
-  // `races`, so publicRaces.filter threw and the page was blank.
   renderPage();
   expect(screen.getByText('Public Sailing')).toBeInTheDocument();
   expect(screen.queryByText('My Private Race')).not.toBeInTheDocument();
