@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FaPlus, FaTimes, FaGlobe, FaLock } from 'react-icons/fa';
 import { useRaces } from '../hooks/useRaces'; // Updated to use new hook
+import { useAuth } from '../context/AuthContext';
 import MemberSelector from './MemberSelector';
 import MetricSelector from './MetricSelector';
 import './CreateRace.css';
@@ -26,6 +27,32 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
   const [error, setError] = useState(null);
 
   const { createRace } = useRaces(); // Use the new hook
+
+  // The creator's own claimed characters. A race only makes sense with at
+  // least one of them in it, so the first row starts as one of them and
+  // submit refuses a race that has none.
+  const { userClaims } = useAuth();
+  const myCharacters = useMemo(
+    () =>
+      (userClaims ?? [])
+        .map((claim) => ({
+          wom_id: Number(claim.wom_id ?? claim.members?.wom_id),
+          name: claim.members?.name ?? claim.name,
+        }))
+        .filter((c) => Number.isFinite(c.wom_id)),
+    [userClaims]
+  );
+
+  // Claims load asynchronously, so fill the first row once they arrive -
+  // but only while it is still untouched.
+  useEffect(() => {
+    if (!myCharacters.length) return;
+    setParticipants((rows) =>
+      rows.length === 1 && !rows[0].playerId
+        ? [{ ...rows[0], playerId: myCharacters[0].wom_id, playerName: myCharacters[0].name }]
+        : rows
+    );
+  }, [myCharacters]);
 
   const handleAddParticipant = () => {
     setParticipants([
@@ -77,6 +104,17 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
 
     if (participants.some((p) => !p.playerId || !p.metric || !p.targetValue)) {
       setError("All participant details must be complete");
+      return;
+    }
+
+    if (!myCharacters.length) {
+      setError("Claim one of your characters before creating a race.");
+      return;
+    }
+
+    const mine = new Set(myCharacters.map((c) => c.wom_id));
+    if (!participants.some((p) => mine.has(Number(p.playerId)))) {
+      setError("Include at least one of your own characters in the race.");
       return;
     }
 
