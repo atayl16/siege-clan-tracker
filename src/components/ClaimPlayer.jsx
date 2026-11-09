@@ -14,20 +14,20 @@ import EmptyState from "./ui/EmptyState";
 import "./ClaimPlayer.css";
 
 export default function ClaimPlayer({ onRequestSubmitted }) {
-  // Read once at render: it only changes on navigation, and it exists so a
-  // half-built tab can be exercised in production without showing it to
-  // members.
+  // Claiming is request-then-approve: the member picks their character and an
+  // admin approves it. There used to be a "Use a Claim Code" tab as well, but
+  // nothing could create codes (claim_codes is service-role only and no admin
+  // screen generated them), so it was removed.
 
   // Local state for form inputs and UI
-  const [claimCode, setClaimCode] = useState("");
   const [selectedMember, setSelectedMember] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("code");
+  const [activeTab, setActiveTab] = useState("request");
 
-  const { user, claimPlayer } = useAuth();
+  const { user } = useAuth();
 
   // Get data from hooks
   const {
@@ -58,43 +58,11 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     }
   }, [activeTab, user, refreshAvailableMembers, refreshRequests]);
 
-  const handleClaim = async (e) => {
-    e.preventDefault();
-
-    if (!user) {
-      setError("You must be logged in to claim an account");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setNotification(null);
-
-    try {
-      const result = await claimPlayer(claimCode.trim());
-
-      if (result.success) {
-        setNotification({
-          type: "success",
-          message: result.message,
-        });
-        setClaimCode(""); // Clear the input on success
-
-        // Refresh data after a successful claim
-        refreshAvailableMembers();
-        refreshRequests();
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError("Failed to process claim");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleRequestClaim = async (e) => {
     e.preventDefault();
+
+    setError(null);
+    setNotification(null);
 
     if (!user) {
       setError("You must be logged in to request a player claim");
@@ -155,67 +123,33 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
         onChange={setActiveTab}
         className="ui-claim-tabs"
       >
-        <Tabs.Tab tabId="code" label="Use a Claim Code">
-          <div className="ui-claim-tab-content">
-            <h2 className="ui-claim-heading">Claim Your OSRS Account</h2>
-            <p className="ui-claim-description">
-              Enter the claim code provided by admin to connect your account
-              with your in-game character.
-            </p>
-
-            {notification && (
-              <div
-                className={`ui-notification-message ui-notification-${notification.type}`}
-              >
-                {notification.type === "success" ? (
-                  <FaCheck className="ui-notification-icon" />
-                ) : (
-                  <FaInfoCircle className="ui-notification-icon" />
-                )}
-                {notification.message}
-              </div>
-            )}
-
-            {error && (
-              <div className="ui-error-message">
-                <FaTimes className="ui-error-icon" />
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleClaim} className="ui-claim-form">
-              <div className="ui-form-group">
-                <label className="ui-form-label">Claim Code:</label>
-                <input
-                  className="ui-form-input"
-                  type="text"
-                  value={claimCode}
-                  onChange={(e) => setClaimCode(e.target.value)}
-                  placeholder="Enter your claim code"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="ui-claim-button"
-                disabled={loading}
-                fullWidth
-              >
-                {loading ? "Processing..." : "Claim Player"}
-              </Button>
-            </form>
-          </div>
-        </Tabs.Tab>
-
         <Tabs.Tab tabId="request" label="Search Members">
             <div className="ui-claim-tab-content">
               <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
               <p className="ui-claim-description">
                 Select your character from the list to request access.
               </p>
+
+              {notification && (
+                <div
+                  className={`ui-notification-message ui-notification-${notification.type}`}
+                  role="status"
+                >
+                  {notification.type === "success" ? (
+                    <FaCheck className="ui-notification-icon" />
+                  ) : (
+                    <FaInfoCircle className="ui-notification-icon" />
+                  )}
+                  {notification.message}
+                </div>
+              )}
+
+              {error && (
+                <div className="ui-error-message" role="alert">
+                  <FaTimes className="ui-error-icon" />
+                  {error}
+                </div>
+              )}
 
               {membersError && (
                 <div className="ui-error-message">
