@@ -1,13 +1,7 @@
 import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+import { womFetch, womError, jsonError, cachedJson } from './_shared/wom.js';
 
-const WOM_API = 'https://api.wiseoldman.net/v2';
 const TTL = 600; // 10 minutes, the same as wom-player
-
-const json = (body, status = 200, headers = {}) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...headers },
-  });
 
 /**
  * A player's placement in every WOM competition they are in right now.
@@ -31,28 +25,21 @@ export default async (request, _context) => {
 
   // Digits only: it goes into the upstream path.
   if (!playerId || !/^\d+$/.test(playerId)) {
-    return json({ error: 'Missing or invalid player ID' }, 400);
+    return jsonError(400, 'Missing or invalid player ID');
   }
 
-  const womHeaders = { headers: { 'User-Agent': 'Siege-Clan-Tracker/1.0' } };
-
   try {
-    const playerRes = await fetch(`${WOM_API}/players/id/${playerId}`, womHeaders);
-    if (!playerRes.ok) {
-      return json({ error: `WOM API Error: ${playerRes.status}` }, playerRes.status);
-    }
+    const playerRes = await womFetch(`/players/id/${playerId}`);
+    if (!playerRes.ok) return womError(playerRes);
     const player = await playerRes.json();
     if (!player?.username) {
-      return json({ error: 'WOM returned no username for this player' }, 502);
+      return jsonError(502, 'WOM returned no username for this player');
     }
 
-    const standingsRes = await fetch(
-      `${WOM_API}/players/${encodeURIComponent(player.username)}/competitions/standings?status=ongoing`,
-      womHeaders
+    const standingsRes = await womFetch(
+      `/players/${encodeURIComponent(player.username)}/competitions/standings?status=ongoing`
     );
-    if (!standingsRes.ok) {
-      return json({ error: `WOM API Error: ${standingsRes.status}` }, standingsRes.status);
-    }
+    if (!standingsRes.ok) return womError(standingsRes);
     const standings = await standingsRes.json();
 
     const events = (Array.isArray(standings) ? standings : [])
@@ -70,16 +57,14 @@ export default async (request, _context) => {
       // Soonest-ending first: those are the placements about to be final.
       .sort((a, b) => new Date(a.endsAt) - new Date(b.endsAt));
 
-    return json(events, 200, {
-      'Cache-Control': `public, max-age=${TTL}`,
-      'CDN-Cache-Control': `public, max-age=${TTL}`,
-      'Netlify-Cache-Tag': `wom-player-events-${playerId}`,
-    });
+    return cachedJson(events, { ttl: TTL, tag: `wom-player-events-${playerId}`, varyQuery: 'id' });
   } catch (error) {
-    return json({ error: `Failed to fetch player events: ${error.message}` }, 500);
+    console.error('wom-player-events failed:', error);
+    return jsonError(502, `Failed to reach WiseOldMan: ${error.message}`);
   }
 };
 
 export const config = {
   path: '/api/wom-player-events',
+  cache: 'manual',
 };
