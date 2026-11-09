@@ -97,9 +97,11 @@ The app will be available at `http://localhost:5173`
 
 ### Running with Netlify Dev
 
-For full functionality including serverless functions:
+For full functionality including serverless functions. The Netlify CLI is not
+a project dependency, so install it globally once:
 
 ```bash
+npm install -g netlify-cli
 npm run netlify:dev
 ```
 
