@@ -1,0 +1,121 @@
+name: Weekly Comp Polls
+
+# Mon 19:00 UK  open-polls posts this week's SotW / BotW / RotW polls.
+# Fri 19:15 UK  close-polls picks the winners, creates next week's WOM
+#               competitions and posts the winners. Saturday is a backup run.
+#
+# Cron is UTC and the UK clock moves with BST, so each fires at both possible
+# UTC hours. The scripts work out whether it is time yet and otherwise do
+# nothing; every step is safe to repeat.
+#
+# Switches (Settings > Secrets and variables > Actions > Variables):
+#   COMP_POLLS_ENABLED     "true" lets the schedule run. Anything else and the
+#                          scheduled runs skip; manual runs still work. This is
+#                          the off switch.
+#   COMP_POLLS_CREATE_WOM  "true" lets close-polls create real WOM group
+#                          competitions. Otherwise winners are posted and the
+#                          competitions are only logged.
+#   DISCORD_POLLS_CHANNEL_ID  where polls are posted (not secret).
+#
+# Plan: .claude/workspace/WEEKLY_COMP_POLLS_PLAN.md (local only).
+on:
+  schedule:
+    - cron: '0 18,19 * * 1'   # Monday: open
+    - cron: '15 18,19 * * 5'  # Friday: close
+    - cron: '0 10 * * 6'      # Saturday: close again, in case Friday's runs failed
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'What to run'
+        type: choice
+        options:
+          - preview        # what the next polls would offer; touches nothing
+          - check-discord  # bot token, channel access, emojis; posts nothing
+          - open-test      # three short test polls; never create WOM competitions
+          - close          # close due polls (test ones too), create competitions, announce
+          - open           # this week's real polls (only between Mon 19:00 and Fri 19:00 UK)
+        default: preview
+      dry_run:
+        description: 'open / close: show what would happen, change nothing'
+        type: boolean
+        default: false
+      closes_in:
+        description: 'open-test: minutes until the test polls close'
+        default: '10'
+      at:
+        description: 'preview / open / close: pretend it is this time (ISO). Blank = now.'
+        default: ''
+      seed:
+        description: 'preview: seed for a repeatable draw. Blank = random.'
+        default: ''
+
+# Never let an open and a close (or two closes) overlap.
+concurrency:
+  group: weekly-comp-polls
+  cancel-in-progress: false
+
+jobs:
+  polls:
+    name: ${{ github.event_name == 'schedule' && 'Scheduled run' || inputs.job }}
+    if: github.event_name == 'workflow_dispatch' || vars.COMP_POLLS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: github.event_name == 'schedule' || inputs.job != 'preview'
+        run: npm ci --force
+
+      - name: Run
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          JOB: ${{ inputs.job }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          CLOSES_IN: ${{ inputs.closes_in }}
+          AT: ${{ inputs.at }}
+          SEED: ${{ inputs.seed }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_POLLS_CHANNEL_ID: ${{ vars.DISCORD_POLLS_CHANNEL_ID }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+          WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
+          WOM_VERIFICATION_CODE: ${{ secrets.WOM_VERIFICATION_CODE }}
+          COMP_POLLS_CREATE_WOM: ${{ vars.COMP_POLLS_CREATE_WOM }}
+        run: |
+          if [ "$EVENT" = "schedule" ]; then
+            case "$SCHEDULE" in
+              '0 18,19 * * 1') JOB=open ;;
+              *) JOB=close ;;
+            esac
+          fi
+
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ -n "$AT" ]; then args+=(--at "$AT"); fi
+
+          case "$JOB" in
+            preview)
+              if [ -n "$SEED" ]; then set -- --seed "$SEED"; fi
+              node scripts/comp-polls/preview.cjs ${AT:+--at "$AT"} "$@" ;;
+            check-discord)
+              node scripts/comp-polls/check-discord.cjs ;;
+            open-test)
+              node scripts/comp-polls/open-polls.cjs --test --closes-in "${CLOSES_IN:-10}" "${args[@]}" ;;
+            open)
+              node scripts/comp-polls/open-polls.cjs "${args[@]}" ;;
+            close)
+              node scripts/comp-polls/close-polls.cjs "${args[@]}" ;;
+            *)
+              echo "Unknown job: $JOB"; exit 1 ;;
+          esac
