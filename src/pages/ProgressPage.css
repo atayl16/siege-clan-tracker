@@ -140,3 +140,17 @@
   min-width: 0;
   margin: 0;
 }
+
+/* The space between the tabs and the cards used to stack four gaps: the
+   shared .ui-tabs-nav margin (30px, components/ui/Tabs.css), the tabs
+   container margin, the tab panel's padding and the grid's top margin - 86px
+   of empty space above the first card. Keep only the panel's padding. */
+.ui-progress-card .ui-tabs-nav,
+.ui-progress-card .ui-tabs-container {
+  margin-bottom: 0;
+}
+
+.ui-progress-card .ui-races-grid,
+.ui-progress-card .ui-goals-grid {
+  margin-top: 0;
+}
