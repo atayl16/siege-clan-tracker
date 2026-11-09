@@ -1,4 +1,4 @@
-import { racesForUser } from '../pages/ProfilePage';
+import { racesForUser } from '../utils/races';
 
 const user = { id: 'u1' };
 const claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Roinrin' } }];

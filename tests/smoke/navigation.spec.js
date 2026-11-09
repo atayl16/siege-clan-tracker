@@ -34,12 +34,15 @@ test.describe('navigation for a logged-out visitor', () => {
     await expect(nav.getByRole('button', { name: 'Logout' })).toHaveCount(0);
   });
 
-  // Deliberately no Goals link: /progress crashes because ProgressPage reads
-  // race.public, activeRaces and goal.public, none of which exist in the
-  // schema. Linking it would just expose a white screen.
-  test('does not link to the unfinished progress page', async ({ page }) => {
+  // The page used to crash (it read hook fields that did not exist), so the
+  // link was hidden. It is back: a logged-out visitor can reach it from the
+  // navbar and sees the public tabs rather than a blank screen.
+  test('links to Races & Goals and the page renders', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('nav').getByRole('link', { name: 'Goals' })).toHaveCount(0);
+    await page.locator('nav').getByRole('link', { name: 'Races & Goals' }).click();
+    await expect(page).toHaveURL(/\/progress$/);
+    await expect(page.getByRole('button', { name: /Public Races/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Member Goals/ })).toBeVisible();
   });
 });
 
