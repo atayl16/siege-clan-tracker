@@ -22,6 +22,7 @@ import QuickStatsPage from "./pages/QuickStatsPage";
 import BossStatsPage from "./pages/BossStatsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
+import EditRacePage from "./pages/EditRacePage";
 import AchievementsPage from "./pages/AchievementsPage";
 import NewMembers from "./pages/NewMembers";
 import ForgotPassword from "./components/ForgotPassword";
@@ -60,6 +61,7 @@ function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/stats" element={<QuickStatsPage />} />
           <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/races/:id/edit" element={<EditRacePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegistrationForm />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

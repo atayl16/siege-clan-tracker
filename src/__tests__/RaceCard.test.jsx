@@ -53,10 +53,13 @@ test('shows the participants useRaces returns, leader first', () => {
   expect(screen.getAllByText('Sailing')).toHaveLength(2);
 });
 
-test('does not link to race pages that do not exist', () => {
-  // /races/:id and /races/:id/edit have no route; both links led to the 404.
-  renderCard();
+test('links the owner to the edit page, and nobody else', () => {
+  // The title stays plain text: there is no race detail page.
+  const { unmount } = renderCard({ isOwner: true });
+  expect(screen.getByRole('link', { name: 'Edit Race' })).toHaveAttribute('href', '/races/r1/edit');
+  expect(screen.getAllByRole('link')).toHaveLength(1);
+  unmount();
 
+  renderCard({ isOwner: false });
   expect(screen.queryByRole('link')).not.toBeInTheDocument();
-  expect(screen.getByText('Sailing Challenge')).toBeInTheDocument();
 });

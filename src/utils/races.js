@@ -17,3 +17,16 @@ export function racesForUser(races, user, userClaims) {
       race.participants?.some((p) => myCharacterIds.includes(Number(p.wom_id)))
   );
 }
+
+/**
+ * Whether this user may edit this race. The one place that decides it: the
+ * edit page and the race card's Edit link both ask here.
+ *
+ * Today the race's creator may edit it. If races ever carry wagers or pots,
+ * this becomes admin-only - change this function (e.g. to
+ * `Boolean(user?.is_admin)`) and the race_participants/races UPDATE policies
+ * in the database to match, since the policies are what actually enforce it.
+ */
+export function canEditRace(race, user) {
+  return Boolean(race && user?.id && race.creator_id === user.id);
+}
