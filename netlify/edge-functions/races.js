@@ -1,69 +1,50 @@
 // Import Supabase with ES modules syntax
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.115.0";
-import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.115.0';
+import { checkAuth, getCaller, unauthorizedResponse } from './_shared/auth.js';
+import { jsonWithEtag } from './_shared/etag.js';
 
 export default async (request, _context) => {
-  // Check authentication
+  // Blocks casual cross-origin use. Not authentication: Origin is client-set.
   const { authorized, reason } = checkAuth(request);
   if (!authorized) {
     return unauthorizedResponse(reason);
   }
 
-  // Get environment variables with Deno.env.get()
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  console.log("Fetching races data from Supabase...");
-
-  // Cache for 5 minutes
-  const TTL = 3000;
-
-  // Handle conditional requests
-  const ifNoneMatch = request.headers.get("If-None-Match");
-  const etag = `W/"races-${new Date().toISOString().split("T")[0]}"`;
-
-  if (ifNoneMatch === etag) {
-    return new Response(null, {
-      status: 304,
-      headers: {
-        ETag: etag,
-        "Cache-Control": `public, max-age=${TTL}`,
-        "CDN-Cache-Control": `public, max-age=${TTL}`,
-      },
-    });
-  }
+  // Service role bypasses RLS, so every query below has to apply the same
+  // limits RLS would.
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL'),
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  );
 
   try {
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const caller = await getCaller(request, supabase);
+    if (caller.error) return caller.error;
+    const isAdmin = caller.role === 'admin';
 
-    // Get only necessary fields instead of '*'
-    const { data, error } = await supabase
-      .from("races")
-      .select("*") // Fetch all columns from the members table
-      .order("created_at"); // Order by name
+    // races_read lets the public see races marked public and nothing else.
+    // Admins see them all.
+    let query = supabase.from('races').select('*').order('created_at');
+    if (!isAdmin) query = query.eq('public', true);
 
+    const { data, error } = await query;
     if (error) throw error;
 
-    // Return with caching headers and ETag
-    return new Response(JSON.stringify(data), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": `public, max-age=${TTL}`,
-        "CDN-Cache-Control": `public, max-age=${TTL}`,
-        "Netlify-Cache-Tag": "supabase-members",
-        ETag: etag,
-      },
-    });
+    return isAdmin
+      ? jsonWithEtag(request, 'races-admin', data, { isPrivate: true })
+      : jsonWithEtag(request, 'races', data, { cacheTag: 'supabase-races' });
   } catch (error) {
-    console.error("Function error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error('Function error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 };
 
 export const config = {
-  path: "/api/races",
+  path: '/api/races',
 };

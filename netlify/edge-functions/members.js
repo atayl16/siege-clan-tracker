@@ -1,73 +1,53 @@
 // Import Supabase with ES modules syntax
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.115.0';
 import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+import { jsonWithEtag } from './_shared/etag.js';
 
 export default async (request, _context) => {
-  // Check authentication
+  // Blocks casual cross-origin use. Not authentication: Origin is client-set.
   const { authorized, reason } = checkAuth(request);
   if (!authorized) {
     return unauthorizedResponse(reason);
   }
 
-  // Get environment variables with Deno.env.get()
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  // Service role bypasses RLS, so every query below has to apply the same
+  // limits RLS would.
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL'),
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  );
 
-  console.log("Fetching members data from Supabase...");
-
-  // Cache for 5 minutes (300 seconds)
-  const TTL = 300;
-  
-  // Handle conditional requests
-  const ifNoneMatch = request.headers.get('If-None-Match');
-  const etag = `W/"members-${new Date().toISOString().split('T')[0]}"`;
-  
-  if (ifNoneMatch === etag) {
-    return new Response(null, {
-      status: 304,
-      headers: {
-        'ETag': etag,
-        'Cache-Control': `public, max-age=${TTL}`,
-        'CDN-Cache-Control': `public, max-age=${TTL}`,
-      }
-    });
-  }
-  
   try {
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Get only necessary fields instead of '*'
+    // Public. Explicit columns: members also holds claim_code (which lets
+    // whoever has it claim the account), claimed_by and admin notes, none of
+    // which belong in a public payload. Hidden members are left out, as
+    // allow_public_read_visible_members does for the anon role.
     const { data, error } = await supabase
       .from('members')
-      .select('*') // Fetch all columns from the members table
-      .is('left_date', null) // Filter out members who have left
-      .order('name'); // Order by name
-    
+      .select(
+        'wom_id, name, wom_name, womrole, player_type, join_date, ' +
+          'first_xp, current_xp, current_lvl, ehb, siege_score, ' +
+          'runewatch_whitelisted, runewatch_reported, created_at, updated_at'
+      )
+      .is('left_date', null)
+      .or('hidden.is.null,hidden.eq.false')
+      .order('name');
+
     if (error) throw error;
-    
-    // Return with caching headers and ETag
-    return new Response(JSON.stringify(data), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${TTL}`,
-        'CDN-Cache-Control': `public, max-age=${TTL}`,
-        'Netlify-Cache-Tag': 'supabase-members',
-        'ETag': etag
-      }
-    });
+
+    return jsonWithEtag(request, 'members', data, { cacheTag: 'supabase-members' });
   } catch (error) {
     console.error('Function error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }
 };
 
 export const config = {
-  path: "/api/members",
+  path: '/api/members',
 };

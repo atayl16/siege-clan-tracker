@@ -127,11 +127,18 @@ export default function Navbar() {
                   Admin
                 </Link>
               )}
+              {/*
+                Labelled "Profile" rather than the username. The admin account
+                is called "admin", so showing the username put "Admin" and
+                "admin" next to each other in the navbar - two links that read
+                as duplicates but go to different pages. The username is already
+                shown on the profile page itself.
+              */}
               <Link
                 to="/profile"
                 className={location.pathname === "/profile" ? "active" : ""}
               >
-                {user?.username || "Profile"}
+                Profile
               </Link>
               <button onClick={handleLogout} className="navbar-logout-btn">
                 Logout
