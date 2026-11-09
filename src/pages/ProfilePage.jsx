@@ -8,6 +8,8 @@ import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
 import { FaUser, FaFlag, FaClock, FaCog, FaTrophy } from "react-icons/fa";
 import { titleize } from "../utils/stringUtils";
+import { mainFirst, mainCharacterId } from "../utils/characters";
+import { supabase } from "../supabaseClient";
 
 // Import UI components
 import Card from "../components/ui/Card";
@@ -23,8 +25,6 @@ import CreateRace from "../components/CreateRace";
 
 import "./ProfilePage.css";
 import { racesForUser } from "../utils/races";
-import { mainFirst, mainCharacterId } from "../utils/characters";
-import { supabase } from "../supabaseClient";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
