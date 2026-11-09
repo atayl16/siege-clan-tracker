@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { fetchFreshPlayerStats } from "./playerRefresh";
 
 // Helper function to extract metric data from player data
 // Exported for testing
@@ -73,8 +74,14 @@ function currentValueFor(playerData, goal) {
  *
  * If the stats cannot be loaded, nothing is written. A failed fetch is not
  * evidence that progress went back to zero.
+ *
+ * @param {object} [options]
+ * @param {boolean} [options.fresh] - ask WiseOldMan to pull the current
+ *   hiscores first (the Sync button). Without it this reads WOM's saved
+ *   snapshot, which is cheap but can be hours behind. Falls back to the saved
+ *   snapshot if the fresh fetch fails.
  */
-export async function updatePlayerGoals(womId, userId) {
+export async function updatePlayerGoals(womId, userId, { fresh = false } = {}) {
   const { data: goals, error } = await supabase
     .from("user_goals")
     .select("*")
@@ -86,7 +93,15 @@ export async function updatePlayerGoals(womId, userId) {
   if (!goals || goals.length === 0) return { updated: 0, completed: 0 };
 
   // One request for every goal on this character, not one per goal.
-  const playerData = await fetchPlayerStats(womId);
+  let playerData;
+  if (fresh) {
+    try {
+      playerData = await fetchFreshPlayerStats(womId);
+    } catch (err) {
+      console.warn(`Fresh stats unavailable for ${womId}; using saved ones:`, err.message);
+    }
+  }
+  if (!playerData) playerData = await fetchPlayerStats(womId);
 
   let updated = 0;
   let completed = 0;

@@ -233,3 +233,10 @@
     width: 100%;
   }
 }
+
+/* Shown when the starting value is WiseOldMan's saved number, not fresh. */
+.ui-stats-note {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #c9a227;
+}

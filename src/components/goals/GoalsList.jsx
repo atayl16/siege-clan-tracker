@@ -70,8 +70,9 @@ export default function GoalsList({ player, userId, onClose }) {
       setSyncSuccess(false);
       setError(null);
 
-      // Fetches fresh stats itself, and writes nothing if that fails.
-      const result = await updatePlayerGoals(player.wom_id, userId);
+      // Asks WiseOldMan for the current hiscores, and writes nothing if no
+      // stats can be loaded at all.
+      const result = await updatePlayerGoals(player.wom_id, userId, { fresh: true });
 
       // Refresh goals list with updated data
       refreshGoals();
