@@ -295,7 +295,7 @@ export function AuthProvider({ children }) {
 
       const { data: membersData, error: membersError } = await supabase
         .from("members")
-        .select("wom_id, name, current_lvl, ehb, siege_score")
+        .select("wom_id, name, current_lvl, ehb, siege_score, alt")
         .in("wom_id", womIds);
 
       if (membersError) {

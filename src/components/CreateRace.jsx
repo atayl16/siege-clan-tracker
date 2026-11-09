@@ -8,6 +8,7 @@ import './CreateRace.css';
 
 import Button from './ui/Button';
 import Card from './ui/Card';
+import { mainFirst } from "../utils/characters";
 
 // WOM's skill metrics. Participants store only the metric, so this tells the
 // edit form whether to open the skill or the boss picker for a saved row.
@@ -75,7 +76,8 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   const { userClaims } = useAuth();
   const myCharacters = useMemo(
     () =>
-      (userClaims ?? [])
+      // Main character first, so it is the one the first row starts as.
+      mainFirst(userClaims)
         .map((claim) => ({
           wom_id: Number(claim.wom_id ?? claim.members?.wom_id),
           name: claim.members?.name ?? claim.name,
