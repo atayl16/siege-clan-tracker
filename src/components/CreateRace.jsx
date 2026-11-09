@@ -290,6 +290,7 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
                 <label className="ui-form-label">Select Player</label>
                 <MemberSelector
                   selectedMemberId={participant.playerId}
+                  selectedMemberName={participant.playerName}
                   onMemberSelect={(player) => handleSelectPlayer(index, player)}
                 />
               </div>
