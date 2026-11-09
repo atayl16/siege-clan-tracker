@@ -47,6 +47,41 @@ export function useUserGoals(userId) {
     fetchGoals();
   }, [fetchGoals]);
 
+  /**
+   * Create a goal and reload the list. GoalsList and CreateGoal called these
+   * for months; the hook never had them, so creating or deleting a goal
+   * always failed. user_goals_own_rows pins both to the signed-in member.
+   *
+   * @returns {Promise<object>} the inserted row
+   */
+  const createGoal = useCallback(
+    async (goal) => {
+      const { data, error: insertError } = await supabase
+        .from("user_goals")
+        .insert(goal)
+        .select()
+        .single();
+      if (insertError) throw insertError;
+      await fetchGoals();
+      return data;
+    },
+    [fetchGoals]
+  );
+
+  /** @returns {Promise<{ success: boolean }>} */
+  const deleteGoal = useCallback(
+    async (goalId) => {
+      const { error: deleteError } = await supabase
+        .from("user_goals")
+        .delete()
+        .eq("id", goalId);
+      if (deleteError) throw deleteError;
+      await fetchGoals();
+      return { success: true };
+    },
+    [fetchGoals]
+  );
+
   const all = userGoals ?? [];
 
   return {
@@ -56,5 +91,7 @@ export function useUserGoals(userId) {
     error,
     refresh: fetchGoals,
     refreshGoals: fetchGoals,
+    createGoal,
+    deleteGoal,
   };
 }

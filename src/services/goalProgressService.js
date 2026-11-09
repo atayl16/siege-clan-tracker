@@ -1,5 +1,4 @@
 import { supabase } from "../supabaseClient";
-import { usePlayer } from "../hooks/usePlayer"; // New hook for fetching player data
 
 // Helper function to extract metric data from player data
 // Exported for testing
@@ -28,153 +27,94 @@ export function extractMetricData(playerData, type, metric) {
   return null;
 }
 
-// Get player statistics using the new hook
-async function getPlayerStat(womId, type, metric) {
-  try {
-    // Use the new hook to fetch player data
-    const { data: playerData, error } = await usePlayer(womId);
-
-    if (error) {
-      console.error(`Error fetching player data for WOM ID ${womId}:`, error);
-      throw error;
-    }
-
-    const metricData = extractMetricData(playerData, type, metric);
-    if (metricData) {
-      console.log(`Found ${type} data for ${metric}:`, metricData);
-      return metricData;
-    }
-
-    console.warn(`No ${type} data found for ${metric}`);
-    return type === "skill" ? { experience: 0, level: 1, rank: 0 } : { kills: 0, rank: 0 };
-  } catch (error) {
-    console.error(`Failed to get player stat for ${type} ${metric}:`, error);
-    return type === "skill" ? { experience: 0, level: 1, rank: 0 } : { kills: 0, rank: 0 };
+/**
+ * Fetch a player's latest stats from Wise Old Man, via our edge proxy.
+ *
+ * This used to call usePlayer() - a React hook - from a plain async function.
+ * Hooks only work while a component renders, so it threw every time, the
+ * catch below turned that into zero experience / zero kills, and
+ * updatePlayerGoals wrote current_value 0 over every active goal. Each
+ * profile load reset everyone's progress.
+ *
+ * @returns {Promise<object>} the WOM player details
+ * @throws when the request fails, so callers write nothing
+ */
+export async function fetchPlayerStats(womId) {
+  const res = await fetch(`/api/wom-player?id=${encodeURIComponent(womId)}`);
+  if (!res.ok) {
+    throw new Error(`Could not load stats for player ${womId} (${res.status})`);
   }
+  return res.json();
 }
 
+/**
+ * The value a goal measures, or undefined when the player has no data for it.
+ *
+ * Deliberately not extractMetricData: that falls back to { experience: 0 }
+ * when the metric is missing, which would write zero progress again.
+ */
+function currentValueFor(playerData, goal) {
+  const group = { skill: "skills", boss: "bosses" }[goal.goal_type];
+  if (!group) return undefined;
+  const entry =
+    playerData?.latestSnapshot?.data?.[group]?.[goal.metric] ??
+    playerData?.data?.[group]?.[goal.metric] ??
+    playerData?.[group]?.[goal.metric];
+  return goal.goal_type === "skill" ? entry?.experience : entry?.kills;
+}
+
+/**
+ * Bring one character's active goals up to date with their WOM stats.
+ *
+ * Goals are read from user_goals directly. RLS (user_goals_own_rows) limits
+ * them to the signed-in member's own, which is what the old get_user_goals
+ * RPC did - except that RPC is in no migration, so a database built from this
+ * repo did not have it.
+ *
+ * If the stats cannot be loaded, nothing is written. A failed fetch is not
+ * evidence that progress went back to zero.
+ */
 export async function updatePlayerGoals(womId, userId) {
-  try {
-    console.log(`Updating goals for player: ${womId}, user: ${userId}`);
+  const { data: goals, error } = await supabase
+    .from("user_goals")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("wom_id", womId)
+    .eq("completed", false);
 
-    // Fetch all active goals for this player using RPC
-    const { data: allGoals, error } = await supabase.rpc("get_user_goals", {
-      user_id_param: userId,
-    });
+  if (error) throw error;
+  if (!goals || goals.length === 0) return { updated: 0, completed: 0 };
 
-    if (error) throw error;
+  // One request for every goal on this character, not one per goal.
+  const playerData = await fetchPlayerStats(womId);
 
-    // Filter goals for this specific player
-    const goals = allGoals
-      ? allGoals.filter((goal) => goal.wom_id === womId && !goal.completed)
-      : [];
+  let updated = 0;
+  let completed = 0;
+  const now = new Date().toISOString();
 
-    if (!goals || goals.length === 0) {
-      console.log("No active goals found to update");
-      return { updated: 0, completed: 0 };
+  for (const goal of goals) {
+    const currentValue = currentValueFor(playerData, goal);
+    // No data for this metric: leave the stored progress alone rather than
+    // overwrite it with a default.
+    if (typeof currentValue !== "number") continue;
+
+    const isCompleted = currentValue >= goal.target_value;
+    const { error: updateError } = await supabase
+      .from("user_goals")
+      .update({
+        current_value: currentValue,
+        completed: isCompleted,
+        completed_date: isCompleted ? now : goal.completed_date,
+      })
+      .eq("id", goal.id);
+
+    if (updateError) {
+      console.error(`Error updating goal ${goal.id}:`, updateError);
+      continue;
     }
-
-    console.log(`Found ${goals.length} active goals to update`);
-
-    // Group goals by type to minimize API calls
-    const skillGoals = goals.filter((goal) => goal.goal_type === "skill");
-    const bossGoals = goals.filter((goal) => goal.goal_type === "boss");
-
-    let updated = 0;
-    let completed = 0;
-    const now = new Date().toISOString();
-
-    // Process skill goals
-    if (skillGoals.length > 0) {
-      for (const goal of skillGoals) {
-        try {
-          // Get the current stat for this metric
-          const playerStat = await getPlayerStat(womId, "skill", goal.metric);
-
-          console.log(`Fetched stat for ${goal.metric}:`, playerStat);
-
-          if (playerStat && playerStat.experience !== undefined) {
-            const currentValue = playerStat.experience;
-            const isCompleted = currentValue >= goal.target_value;
-
-            console.log(
-              `Goal ${goal.id} for ${goal.metric}: Current=${currentValue}, Target=${goal.target_value}, Completed=${isCompleted}`
-            );
-
-            // Always update the current value, even if it hasn't changed
-            const { error: updateError } = await supabase
-              .from("user_goals")
-              .update({
-                current_value: currentValue,
-                completed: isCompleted,
-                completed_date:
-                  isCompleted && !goal.completed ? now : goal.completed_date,
-              })
-              .eq("id", goal.id);
-
-            if (!updateError) {
-              updated++;
-              if (isCompleted && !goal.completed) completed++;
-            } else {
-              console.error(`Error updating goal ${goal.id}:`, updateError);
-            }
-          } else {
-            console.warn(`No experience data found for ${goal.metric}`);
-          }
-        } catch (err) {
-          console.error(`Error processing skill goal ${goal.id}:`, err);
-        }
-      }
-    }
-
-    // Process boss goals
-    if (bossGoals.length > 0) {
-      for (const goal of bossGoals) {
-        try {
-          const playerStat = await getPlayerStat(womId, "boss", goal.metric);
-
-          console.log(`Fetched stat for ${goal.metric}:`, playerStat);
-
-          if (playerStat && playerStat.kills !== undefined) {
-            const currentValue = playerStat.kills;
-            const isCompleted = currentValue >= goal.target_value;
-
-            console.log(
-              `Goal ${goal.id} for ${goal.metric}: Current=${currentValue}, Target=${goal.target_value}, Completed=${isCompleted}`
-            );
-
-            // Always update the value
-            const { error: updateError } = await supabase
-              .from("user_goals")
-              .update({
-                current_value: currentValue,
-                completed: isCompleted,
-                completed_date:
-                  isCompleted && !goal.completed ? now : goal.completed_date,
-              })
-              .eq("id", goal.id);
-
-            if (!updateError) {
-              updated++;
-              if (isCompleted && !goal.completed) completed++;
-            } else {
-              console.error(`Error updating goal ${goal.id}:`, updateError);
-            }
-          } else {
-            console.warn(`No kills data found for ${goal.metric}`);
-          }
-        } catch (err) {
-          console.error(`Error processing boss goal ${goal.id}:`, err);
-        }
-      }
-    }
-
-    console.log(
-      `Goals update complete: ${updated} updated, ${completed} completed`
-    );
-    return { updated, completed };
-  } catch (error) {
-    console.error("Error updating player goals:", error);
-    throw error;
+    updated++;
+    if (isCompleted) completed++;
   }
+
+  return { updated, completed };
 }
