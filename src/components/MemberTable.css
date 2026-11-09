@@ -204,3 +204,30 @@
   align-items: center;
   margin-right: 6px;
 }
+
+/* ---- Styling audit fixes ---- */
+
+/* Names line up: rank icons have different widths (crown, key, gem,
+   sword), which shifted each name by a few pixels. A fixed slot fixes it. */
+.ui-member-table .ui-rank-icon-left {
+  width: 1.5rem;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* The expand arrow follows the name, instead of floating at the far end of
+   a wide column, well away from the name it belongs to. */
+.ui-member-table .ui-name-content {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The Name header sits over the names, which are left-aligned. */
+.ui-member-table .ui-table-header-cell:first-child {
+  text-align: left !important;
+  padding-left: 1rem;
+}
+
+.ui-member-table .ui-name-cell {
+  justify-content: flex-start;
+}

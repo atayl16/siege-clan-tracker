@@ -179,3 +179,27 @@
 .quick-stats-clan-info-section {
   margin-bottom: 2rem;
 }
+
+/* Phones: each row of three numbers stays side by side (a 2x3 grid), instead
+   of stacking all six into one tall column. */
+@media (max-width: 600px) {
+  .quick-stats-stats-group.ui-stat-group {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .quick-stats-stats-group .ui-stat {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 0.25rem;
+  }
+
+  .quick-stats-stats-group .ui-stat-value {
+    font-size: 1.3rem;
+  }
+
+  .quick-stats-stats-group .ui-stat-label {
+    font-size: 0.62rem;
+    letter-spacing: 0;
+  }
+}

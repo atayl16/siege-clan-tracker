@@ -132,3 +132,11 @@
     padding: 1rem;
   }
 }
+
+/* Inside .ui-page-container now, so the card fills it rather than setting
+   its own 85% width and margins. */
+.ui-container-content-card.ui-progress-card {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
