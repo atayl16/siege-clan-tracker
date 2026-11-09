@@ -75,13 +75,15 @@ test('asks a member with no claimed character to claim one first', async () => {
   expect(createRace).not.toHaveBeenCalled();
 });
 
-test('edit mode starts from the saved race and saves through updateRace', async () => {
+test('edit mode starts from the saved race and saves the user\'s changes through updateRace', async () => {
   const race = {
     id: 'r9',
     title: 'Sailing Challenge',
     description: '',
     public: false,
-    end_date: '2026-11-13T00:00:00+00:00',
+    // Already ended: an ended race's saved date must not block saving, and a
+    // fixed past date keeps this test from depending on today's date.
+    end_date: '2025-01-31T00:00:00+00:00',
     participants: [
       { id: 'p1', wom_id: 1, player_name: 'Roinrin', metric: 'sailing', target_value: 20000 },
     ],
@@ -93,14 +95,18 @@ test('edit mode starts from the saved race and saves through updateRace', async 
   expect(screen.getByDisplayValue('Sailing Challenge')).toBeInTheDocument();
   expect(screen.getByDisplayValue('20000')).toBeInTheDocument();
 
+  const titleInput = screen.getByDisplayValue('Sailing Challenge');
+  await userEvent.clear(titleInput);
+  await userEvent.type(titleInput, 'Sailing Sprint');
   await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
   expect(createRace).not.toHaveBeenCalled();
   expect(updateRace).toHaveBeenCalledWith(
     'r9',
     expect.objectContaining({
-      title: 'Sailing Challenge',
-      end_date: '2026-11-13',
+      title: 'Sailing Sprint',
+      end_date: '2025-01-31',
+      originalParticipantIds: ['p1'],
       participants: [expect.objectContaining({ id: 'p1', wom_id: 1, metric: 'sailing', target_value: 20000 })],
     })
   );

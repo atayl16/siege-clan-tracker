@@ -107,43 +107,90 @@ export function useRaces(userId) {
    * limits all of it to the race's creator (races_update_own and the
    * race_participants update/delete/insert policies).
    *
+   * These are separate requests, not one transaction: if a later step fails,
+   * earlier ones stay saved and the error is reported. Every write is checked
+   * for the rows it actually changed, because RLS rejects a write it does not
+   * allow by matching zero rows rather than raising - which is what happens
+   * if the participant policies migration has not been applied.
+   *
    * @param {string} raceId
    * @param {object} raceData - { title, description, public, end_date,
-   *   participants: [{ id?, wom_id, player_name, metric, target_value }] }
+   *   participants: [{ id?, wom_id, player_name, metric, target_value }],
+   *   originalParticipantIds: ids the form was opened with }
    */
   const updateRace = useCallback(
-    async (raceId, { participants = [], ...race }) => {
-      const { error: raceError } = await supabase
+    async (raceId, { participants = [], originalParticipantIds, ...race }) => {
+      const notSaved = (what) =>
+        new Error(
+          `${what} was not saved. You may not have permission to edit this race.`
+        );
+
+      const { data: updatedRace, error: raceError } = await supabase
         .from("races")
         .update(race)
-        .eq("id", raceId);
+        .eq("id", raceId)
+        .select("id");
       if (raceError) throw raceError;
+      if (!updatedRace?.length) throw notSaved("The race");
 
       const { data: existing, error: readError } = await supabase
         .from("race_participants")
-        .select("id")
+        .select("id, wom_id, metric")
         .eq("race_id", raceId);
       if (readError) throw readError;
+      const existingById = new Map((existing ?? []).map((p) => [p.id, p]));
 
-      const keptIds = new Set(participants.filter((p) => p.id).map((p) => p.id));
-      const removedIds = (existing ?? []).map((p) => p.id).filter((id) => !keptIds.has(id));
-
-      if (removedIds.length) {
-        const { error } = await supabase.from("race_participants").delete().in("id", removedIds);
-        if (error) throw error;
+      // Every row the form kept must belong to this race. Guards against a
+      // form left holding another race's rows writing into that race.
+      const kept = participants.filter((p) => p.id);
+      for (const p of kept) {
+        if (!existingById.has(p.id)) {
+          throw new Error("This race changed since you opened it. Reload and try again.");
+        }
       }
 
-      for (const p of participants.filter((row) => row.id)) {
-        const { error } = await supabase
+      // Delete only rows the user removed from what the form opened with, so
+      // a participant added elsewhere since then is left alone.
+      const keptIds = new Set(kept.map((p) => p.id));
+      const opened = new Set(originalParticipantIds ?? existingById.keys());
+      const removedIds = [...existingById.keys()].filter(
+        (id) => opened.has(id) && !keptIds.has(id)
+      );
+
+      if (removedIds.length) {
+        const { data: deleted, error } = await supabase
           .from("race_participants")
-          .update({
-            wom_id: p.wom_id,
-            player_name: p.player_name,
-            metric: p.metric,
-            target_value: p.target_value,
-          })
-          .eq("id", p.id);
+          .delete()
+          .eq("race_id", raceId)
+          .in("id", removedIds)
+          .select("id");
         if (error) throw error;
+        if ((deleted?.length ?? 0) !== removedIds.length) {
+          throw notSaved("Removing participants");
+        }
+      }
+
+      for (const p of kept) {
+        const before = existingById.get(p.id);
+        const changes = {
+          wom_id: p.wom_id,
+          player_name: p.player_name,
+          metric: p.metric,
+          target_value: p.target_value,
+        };
+        // Progress belongs to a character and metric; a new one starts over.
+        if (Number(before.wom_id) !== Number(p.wom_id) || before.metric !== p.metric) {
+          changes.start_value = 0;
+          changes.current_value = 0;
+        }
+        const { data: updated, error } = await supabase
+          .from("race_participants")
+          .update(changes)
+          .eq("race_id", raceId)
+          .eq("id", p.id)
+          .select("id");
+        if (error) throw error;
+        if (!updated?.length) throw notSaved(`${p.player_name}'s entry`);
       }
 
       const added = participants.filter((p) => !p.id);

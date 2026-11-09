@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaTrophy } from "react-icons/fa";
+import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { useRaces } from "../hooks/useRaces";
 import { canEditRace } from "../utils/races";
@@ -19,11 +20,23 @@ export default function EditRacePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { races, loading } = useRaces(user?.id);
+  const { races, loading, error, refresh } = useRaces(user?.id);
 
   const backToRaces = () => navigate("/profile");
 
   if (loading) return <LoadingIndicator />;
+
+  // Checked before "not found": a failed load says nothing about the race.
+  if (error) {
+    return (
+      <EmptyState
+        icon={<FaTrophy />}
+        title="Couldn't Load Races"
+        description="Something went wrong loading this race."
+        action={<Button onClick={() => refresh()}>Try Again</Button>}
+      />
+    );
+  }
 
   // RLS only returns public races and your own, so a private race someone
   // else created reads as not found - which is the right answer for it.
@@ -51,7 +64,15 @@ export default function EditRacePage() {
 
   return (
     <div className="ui-container-content-card">
-      <CreateRace userId={user.id} race={race} onCreated={backToRaces} onCancel={backToRaces} />
+      {/* Keyed on the race: moving between two edit pages reuses this route's
+          element, and the form would otherwise keep the first race's rows. */}
+      <CreateRace
+        key={race.id}
+        userId={user.id}
+        race={race}
+        onCreated={backToRaces}
+        onCancel={backToRaces}
+      />
     </div>
   );
 }

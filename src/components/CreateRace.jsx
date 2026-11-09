@@ -40,7 +40,12 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   const [title, setTitle] = useState(race?.title ?? "");
   const [description, setDescription] = useState(race?.description ?? "");
   const [isPublic, setIsPublic] = useState(race?.public ?? false);
-  const [endDate, setEndDate] = useState(race?.end_date ? race.end_date.slice(0, 10) : "");
+  const savedEndDate = race?.end_date ? race.end_date.slice(0, 10) : "";
+  const [endDate, setEndDate] = useState(savedEndDate);
+  // New end dates must not be in the past, but an ended race's saved date
+  // has to stay valid, or none of its other fields could be saved.
+  const today = new Date().toISOString().split("T")[0];
+  const minEndDate = isEditing && savedEndDate && savedEndDate < today ? savedEndDate : today;
   const savedParticipants = race?.participants ?? race?.race_participants ?? [];
   const [participants, setParticipants] = useState(
     savedParticipants.length
@@ -169,7 +174,10 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
       };
 
       if (isEditing) {
-        await updateRace(race.id, raceData);
+        await updateRace(race.id, {
+          ...raceData,
+          originalParticipantIds: savedParticipants.map((p) => p.id),
+        });
         onCreated(race);
         return;
       }
@@ -232,7 +240,7 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
               className="ui-form-input"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
+              min={minEndDate}
             />
           </div>
 
