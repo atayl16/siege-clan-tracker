@@ -67,9 +67,16 @@ async function openPolls({ now, deps, channelId, test = false, closesInMinutes =
   const opensAt = test ? now : schedule.pollOpensAt;
   const closesAt = test ? new Date(now.getTime() + closesInMinutes * MINUTE_MS) : schedule.pollClosesAt;
 
+  const existing = test ? [] : await store.pollsForWeek(schedule.weekStart);
+  const isPosted = (category) => existing.some((r) => r.category === category && r.status !== 'draft');
+  // The schedule retries all evening; once the polls are up, don't call WOM or Discord.
+  if (CATEGORY_ORDER.every(isPosted)) {
+    log("This week's polls are already posted.");
+    return { posted: 0, errors };
+  }
+
   const competitions = await wom.fetchGroupCompetitions();
   const emojis = await serverEmojis(discord, channelId, log);
-  const existing = test ? [] : await store.pollsForWeek(schedule.weekStart);
 
   let posted = 0;
   for (const category of CATEGORY_ORDER) {

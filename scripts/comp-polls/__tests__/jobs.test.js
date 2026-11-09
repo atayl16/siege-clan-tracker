@@ -175,6 +175,22 @@ describe('openPolls', () => {
     expect(discord.posts).toHaveLength(3);
   });
 
+  it('once all three are posted, a retry does not call WOM or Discord', async () => {
+    await open(MON_OPEN);
+    const calls = [];
+    const offline = (name) => async () => {
+      calls.push(name);
+      throw new Error(`${name} should not be called`);
+    };
+    wom.fetchGroupCompetitions = offline('fetchGroupCompetitions');
+    discord.getChannel = offline('getChannel');
+    discord.getGuildEmojis = offline('getGuildEmojis');
+
+    const res = await open(new Date(MON_OPEN.getTime() + 15 * 60 * 1000));
+    expect(res).toEqual({ posted: 0, errors: [] });
+    expect(calls).toEqual([]);
+  });
+
   it('a failed post leaves a draft that the next run posts, without redrawing options', async () => {
     discord.failPostsFor.add('skill');
     const first = await open(MON_OPEN);

@@ -1,18 +1,18 @@
 name: Weekly Comp Polls
 
 # Mon 19:00 UK  open-polls posts this week's SotW / BotW / RotW polls.
-#               20:30 UTC is a backup run.
-# Fri 19:15 UK  close-polls picks the winners, creates next week's WOM
-#               competitions and posts the winners. Saturday is a backup run.
+# Fri 19:00 UK  close-polls picks the winners, creates next week's WOM
+#               competitions (they start Mon 19:00 UK) and posts the winners.
 #
-# Cron is UTC and the UK clock moves with BST, so each fires at both possible
-# UTC hours. The scripts work out whether it is time yet and otherwise do
-# nothing; every step is safe to repeat.
+# GitHub starts scheduled runs late, often by hours, and drops many outright;
+# on this repo most top-of-the-hour runs never start. So the schedule retries:
+# every 15 minutes on Monday and Friday evenings, then hourly or two-hourly
+# until the next deadline, at odd minutes to stay off the busy top of the hour.
 #
-# GitHub sometimes drops a scheduled run. In winter (GMT) only the 19:00 UTC
-# Monday run is late enough to open the polls, so without the 20:30 backup one
-# dropped run would mean no polls that week. Any cron ending "* * 1" opens;
-# every other cron closes.
+# Every scheduled run does both jobs, close then open. Each works out whether
+# it is due and otherwise does nothing (no WOM or Discord calls), so whichever
+# run GitHub actually starts does the work and the rest are no-ops. Cron is
+# UTC and the UK clock moves with BST; the windows below cover both.
 #
 # Switches (Settings > Secrets and variables > Actions > Variables):
 #   COMP_POLLS_ENABLED     "true" lets the schedule run. Anything else and the
@@ -26,10 +26,11 @@ name: Weekly Comp Polls
 # Plan: .claude/workspace/WEEKLY_COMP_POLLS_PLAN.md (local only).
 on:
   schedule:
-    - cron: '0 18,19 * * 1'   # Monday: open
-    - cron: '30 20 * * 1'     # Monday: open again, in case the 19:00 run was dropped
-    - cron: '15 18,19 * * 5'  # Friday: close
-    - cron: '0 10 * * 6'      # Saturday: close again, in case Friday's runs failed
+    - cron: '7,22,37,52 18-23 * * 1'  # Monday evening, every 15 min: open
+    - cron: '37 * * * 2'              # Tuesday, hourly: open, if Monday's runs never started
+    - cron: '7,22,37,52 18-23 * * 5'  # Friday evening, every 15 min: close
+    - cron: '37 */2 * * 0,6'          # Saturday and Sunday, every 2 hours: close
+    - cron: '37 0-16/2 * * 1'         # Monday before 19:00 UK, every 2 hours: close
   workflow_dispatch:
     inputs:
       job:
@@ -85,7 +86,6 @@ jobs:
       - name: Run
         env:
           EVENT: ${{ github.event_name }}
-          SCHEDULE: ${{ github.event.schedule }}
           JOB: ${{ inputs.job }}
           DRY_RUN: ${{ inputs.dry_run }}
           CLOSES_IN: ${{ inputs.closes_in }}
@@ -101,10 +101,11 @@ jobs:
           COMP_POLLS_CREATE_WOM: ${{ vars.COMP_POLLS_CREATE_WOM }}
         run: |
           if [ "$EVENT" = "schedule" ]; then
-            case "$SCHEDULE" in
-              *' * * 1') JOB=open ;;
-              *) JOB=close ;;
-            esac
+            # Run both even if the first fails, then report any failure.
+            status=0
+            node scripts/comp-polls/close-polls.cjs || status=1
+            node scripts/comp-polls/open-polls.cjs || status=1
+            exit $status
           fi
 
           args=()
