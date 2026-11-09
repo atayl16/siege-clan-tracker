@@ -1,6 +1,8 @@
 import useSWR from "swr";
+import { fetchJson } from "../utils/fetchJson";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
+// Throws on a failed response, so SWR reports an error instead of data.
+const fetcher = fetchJson;
 
 export function useGroupAchievements(limit = null) {
   const { data, error, mutate } = useSWR("/api/wom-group-achievements", fetcher, {

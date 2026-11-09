@@ -113,3 +113,17 @@
     padding: 1rem;
   }
 }
+
+/* ---- Styling audit fixes ---- */
+
+/* Each card is as tall as its own content: the grid stretched an empty
+   Event Wins card to the height of the full Siege Score list. */
+.ui-leaderboards-container {
+  align-items: start;
+}
+
+/* Orange headings like the rest of the site, instead of blue. */
+.ui-points-category h4 {
+  color: var(--color-orange, #ff9800);
+  font-size: 1rem;
+}

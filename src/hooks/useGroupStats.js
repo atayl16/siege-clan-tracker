@@ -1,7 +1,9 @@
 import useSWR from "swr";
 import { useMemo } from "react";
+import { fetchJson } from "../utils/fetchJson";
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
+// Throws on a failed response, so SWR reports an error instead of data.
+const fetcher = fetchJson;
 
 function formatDisplayName(name) {
   return name

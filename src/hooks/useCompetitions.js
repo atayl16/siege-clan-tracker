@@ -1,6 +1,8 @@
 import useSWR from "swr";
+import { fetchJson } from "../utils/fetchJson";
 
-const fetcher = (url) => fetch(url).then((r) => r.json());
+// Throws on a failed response, so SWR reports an error instead of data.
+const fetcher = fetchJson;
 
 export function useCompetitions() {
   const { data, error, mutate } = useSWR("/api/wom-competitions", fetcher, {

@@ -91,7 +91,16 @@ export default function AchievementsPage() {
                           <span className="achievement-icon">
                             <MetricIcon metric={achievement.metric} />
                           </span>
-                          {achievement.name}
+                          <span className="achievement-name-text">
+                            {achievement.name}
+                            {/* Phones hide the Date column; show it here. */}
+                            <span className="achievement-date-inline">
+                              {new Date(achievement.createdAt).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </span>
                         </td>
                         <td className="achievement-date">
                           {new Date(achievement.createdAt).toLocaleDateString(undefined, {

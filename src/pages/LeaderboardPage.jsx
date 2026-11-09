@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Leaderboard from "../components/Leaderboard";
 import { useMembers } from "../hooks/useMembers";
 import { useEvents } from "../hooks/useEvents";
-import { FaTrophy, FaTimes, FaMedal } from "react-icons/fa";
+import { FaTrophy, FaTimes, FaMedal, FaInfoCircle } from "react-icons/fa";
 
 // Import UI components
 import Card from "../components/ui/Card";
@@ -108,6 +108,9 @@ export default function LeaderboardPage() {
       {/* Explanation Card */}
       <Card className="ui-leaderboard-info" variant="dark">
         <Card.Body>
+          <h3 className="ui-section-title">
+            <FaInfoCircle className="ui-section-icon" /> How Siege Score Works
+          </h3>
           <p>
             Points are earned by participating in clan events and
             competitions:

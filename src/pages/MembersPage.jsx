@@ -259,8 +259,9 @@ export default function MembersPage() {
         </div>
       </div>
 
+      {/* Only when filters are on: empty, it still took ~32px of space. */}
+      {activeFilterCount > 0 && (
       <div className="ui-filter-summary">
-        {activeFilterCount > 0 && (
           <>
             <span className="ui-filter-label">Active filters:</span>
             {showAlts && (
@@ -289,12 +290,12 @@ export default function MembersPage() {
               </span>
             )}
           </>
-        )}
       </div>
+      )}
 
-      <div className="ui-member-table-container">
-        <MemberTable filteredMembers={filteredMembers} />
-      </div>
+      {/* MemberTable draws its own panel; wrapping it in a second
+          .ui-member-table-container doubled the padding and the frame. */}
+      <MemberTable filteredMembers={filteredMembers} />
     </div>
   );
 }

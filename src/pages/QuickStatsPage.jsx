@@ -20,14 +20,16 @@ import WiseOldManIcon from "../assets/images/other/Wise_Old_Man_chathead.png"; /
 // Import UI components
 import StatGroup from "../components/ui/StatGroup";
 import "./QuickStatsPage.css";
+import LoadError from "../components/ui/LoadError";
 
 export default function QuickStatsPage() {
   const {
     data: clanStats,
     isLoading: statsLoading,
     error: statsError,
+    refresh: refreshStats,
   } = useClanStats();
-  const { memberCount, loading: groupLoading, error: groupError } = useGroup();
+  const { memberCount, loading: groupLoading, error: groupError, refresh: refreshGroup } = useGroup();
 
   if (statsLoading || groupLoading) {
     return (
@@ -38,15 +40,19 @@ export default function QuickStatsPage() {
     );
   }
 
-  if (statsError || groupError) {
+  // Only when there is nothing to show: if a refresh fails after the stats
+  // loaded, SWR keeps the last good numbers on screen.
+  if ((statsError && !clanStats) || (groupError && memberCount == null)) {
     return (
-      <div className="quick-stats-error-container">
-        <h3>Error Loading Clan Stats</h3>
-        <p>
-          {statsError?.message ||
-            groupError?.message ||
-            "Failed to load stats data"}
-        </p>
+      <div className="quick-stats-page-container">
+        <LoadError
+          what="the clan stats"
+          error={statsError || groupError}
+          onRetry={() => {
+            refreshStats?.();
+            refreshGroup?.();
+          }}
+        />
       </div>
     );
   }
@@ -54,12 +60,12 @@ export default function QuickStatsPage() {
   return (
     <div className="quick-stats-page-container">
       <div className="quick-stats-content-header">
-        <h2>Clan Quick Stats</h2>
+        <h2>Clan Stats</h2>
       </div>
 
       <div className="quick-stats-section-container">
         <h3 className="quick-stats-section-title">
-          <FaChartBar className="quick-stats-section-icon" /> Clan Stats
+          <FaChartBar className="quick-stats-section-icon" /> At a Glance
         </h3>
 
         <StatGroup className="quick-stats-stats-group">

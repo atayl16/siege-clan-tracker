@@ -301,3 +301,14 @@
     width: 100%;
   }
 }
+
+/* Hero title readability: orange on a busy game screenshot was hard to read
+   in places. A soft dark band behind the text and a stronger shadow keep
+   it legible over any frame of the video. */
+.nm-hero-content {
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 65%);
+}
+
+.nm-hero-title {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.6);
+}

@@ -118,7 +118,13 @@ export default function ProgressPage() {
 
 
   return (
-    <Card className="ui-container-content-card">
+    // The standard page container and title, like every other page: this page
+    // used its card as the whole page, so it had no title and sat wider.
+    <div className="ui-page-container">
+      <div className="ui-content-header">
+        <h2>Races &amp; Goals</h2>
+      </div>
+    <Card className="ui-container-content-card ui-progress-card">
       <div className="ui-tabs-container">
         <div className="ui-tabs-nav">
           {tabsToDisplay.map((tab) => (
@@ -136,5 +142,6 @@ export default function ProgressPage() {
 
       <div className="ui-tab-content">{renderTabContent()}</div>
     </Card>
+    </div>
   );
 }

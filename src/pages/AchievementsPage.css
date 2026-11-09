@@ -251,3 +251,17 @@
   50% { opacity: 1; }
   100% { opacity: 0.7; }
 }
+
+/* The date under the name, only where the Date column is hidden. */
+.achievement-date-inline {
+  display: none;
+}
+
+@media (max-width: 576px) {
+  .achievement-date-inline {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+    color: #999;
+  }
+}
