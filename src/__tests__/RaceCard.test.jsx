@@ -49,7 +49,7 @@ test('shows the participants useRaces returns, leader first', () => {
 
   const names = screen.getAllByText(/Roinrin|Zezima/).map((el) => el.textContent);
   expect(names).toEqual(['Zezima', 'Roinrin']);
-  expect(screen.getByText('900 / 1,000')).toBeInTheDocument();
+  expect(screen.getByText('+900 / 1,000')).toBeInTheDocument();
   expect(screen.getAllByText('Sailing')).toHaveLength(2);
 });
 
@@ -62,4 +62,21 @@ test('links the owner to the edit page, and nobody else', () => {
 
   renderCard({ isOwner: false });
   expect(screen.queryByRole('link')).not.toBeInTheDocument();
+});
+
+test('the winner leads with a trophy, and unsynced participants say tracking has not started', () => {
+  const card = {
+    ...race,
+    participants: [
+      { id: 'p1', player_name: 'Roinrin', metric: 'sailing', current_value: 1000, target_value: 1000, is_winner: true, baseline_set_at: '2026-11-09T00:00:00Z' },
+      { id: 'p2', player_name: 'Zezima', metric: 'sailing', current_value: 0, target_value: 500, is_winner: false, baseline_set_at: null },
+    ],
+  };
+  renderCard({ race: card });
+
+  const names = screen.getAllByText(/^(Roinrin|Zezima)$/).map((el) => el.textContent);
+  expect(names[0]).toBe('Roinrin');
+  expect(screen.getByLabelText('Winner')).toBeInTheDocument();
+  expect(screen.getByText('+1,000 / 1,000')).toBeInTheDocument();
+  expect(screen.getAllByText(/tracking starts at the next hourly sync/i)).toHaveLength(1);
 });

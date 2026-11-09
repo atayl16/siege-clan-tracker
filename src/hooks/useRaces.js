@@ -170,6 +170,8 @@ export function useRaces(userId) {
         if (Number(before.wom_id) !== Number(p.wom_id) || before.metric !== p.metric) {
           changes.start_value = 0;
           changes.current_value = 0;
+          // Tells the race progress sync to take a new baseline.
+          changes.baseline_set_at = null;
         }
         const { data: updated, error } = await supabase
           .from("race_participants")

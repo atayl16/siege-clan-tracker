@@ -4,6 +4,7 @@ run-name: >-
       github.event.inputs.job_to_run == 'wom-events' && 'WOM Events Sync' ||
       github.event.inputs.job_to_run == 'runewatch' && 'RuneWatch Check' ||
       github.event.inputs.job_to_run == 'anniversaries' && 'Anniversary Notifications' ||
+      github.event.inputs.job_to_run == 'race-progress' && 'Race Progress Sync' ||
       github.event.inputs.job_to_run == 'all' && 'All Sync Tasks' ||
       'Manual Clan Data Sync' }}
 
@@ -20,6 +21,7 @@ on:
           - wom-events
           - runewatch
           - anniversaries
+          - race-progress
           - all
         default: 'wom-sync'
 
@@ -57,6 +59,15 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
+
+      - name: Run Race Progress Sync
+        if: ${{ github.event.inputs.job_to_run == 'race-progress' || github.event.inputs.job_to_run == 'all' }}
+        run: node scripts/sync-tasks/race-progress.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           
       - name: Run RuneWatch Check
         if: ${{ github.event.inputs.job_to_run == 'runewatch' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}

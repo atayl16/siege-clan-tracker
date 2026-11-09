@@ -125,3 +125,17 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.ui-participant-winner {
+  color: #ffd700;
+  margin-right: 0.35rem;
+  vertical-align: -2px;
+}
+
+.ui-participant-pending {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+}
