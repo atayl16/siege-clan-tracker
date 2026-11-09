@@ -50,10 +50,11 @@ npm run staging:refresh
 These JSON files are ignored by git (contain production data).
 Never commit these files to the repository!
 
-## Automated Refresh
+## Refreshing
 
-The staging database is automatically refreshed every Sunday at 2 AM UTC via GitHub Actions.
-See `.github/workflows/refresh-staging.yml` for details.
+There is no automated refresh. The weekly GitHub Actions workflow was removed
+once the staging deploy was retired; run `npm run staging:refresh` by hand if
+you bring a staging database back.
 
 ---
 

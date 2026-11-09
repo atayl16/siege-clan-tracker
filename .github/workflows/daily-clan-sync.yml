@@ -2,8 +2,11 @@ name: Daily Clan Data Sync
 
 on:
   schedule:
-    # Run at 2pm UTC every day
-    - cron: '0 14 * * *'
+    # Daily, at 13:43 UTC rather than on the hour. GitHub drops and delays
+    # scheduled runs most at the top of the hour; at 14:00 this one was
+    # starting anywhere from 18:00 to 22:30, so anniversary posts landed at a
+    # different time each evening. Same UTC day either way.
+    - cron: '43 13 * * *'
 
 jobs:
   sync-data:
