@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import RaceCard from '../components/RaceCard';
 
@@ -64,7 +66,7 @@ test('links the owner to the edit page, and nobody else', () => {
   expect(screen.queryByRole('link')).not.toBeInTheDocument();
 });
 
-test('the winner leads with a trophy, and unsynced participants say tracking has not started', () => {
+test('the winner leads with a trophy, and unsynced participants say their starting point is not recorded', () => {
   const card = {
     ...race,
     participants: [
@@ -78,5 +80,59 @@ test('the winner leads with a trophy, and unsynced participants say tracking has
   expect(names[0]).toBe('Roinrin');
   expect(screen.getByLabelText('Winner')).toBeInTheDocument();
   expect(screen.getByText('+1,000 / 1,000')).toBeInTheDocument();
-  expect(screen.getAllByText(/tracking starts at the next hourly sync/i)).toHaveLength(1);
+  expect(screen.getAllByText(/starting point not recorded yet/i)).toHaveLength(1);
+});
+
+describe('refresh', () => {
+  const checked = {
+    ...race,
+    status: 'active',
+    participants: race.participants.map((p) => ({
+      ...p,
+      baseline_set_at: '2026-11-09T00:00:00Z',
+      updated_at: new Date(Date.now() - 5 * 60000).toISOString(),
+    })),
+  };
+
+  test('says when progress was last checked', () => {
+    renderCard({ race: checked });
+    expect(screen.getByText('Updated 5 minutes ago')).toBeInTheDocument();
+  });
+
+  test('offers Refresh only when given a handler, and only on active races', () => {
+    const { unmount } = renderCard({ race: checked });
+    expect(screen.queryByRole('button', { name: /refresh/i })).not.toBeInTheDocument();
+    unmount();
+
+    const again = renderCard({ race: { ...checked, status: 'completed' }, onRefresh: vi.fn() });
+    expect(screen.queryByRole('button', { name: /refresh/i })).not.toBeInTheDocument();
+    again.unmount();
+
+    renderCard({ race: checked, onRefresh: vi.fn() });
+    expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument();
+  });
+
+  test('refreshes this race when pressed', async () => {
+    const onRefresh = vi.fn().mockResolvedValue({ results: [{ raceId: 'r1', status: 'refreshed' }] });
+    renderCard({ race: checked, onRefresh });
+    await userEvent.click(screen.getByRole('button', { name: /refresh/i }));
+    expect(onRefresh).toHaveBeenCalledWith('r1');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  test('says when to try again if the race was only just refreshed', async () => {
+    const onRefresh = vi.fn().mockResolvedValue({
+      results: [{ raceId: 'r1', status: 'recently_refreshed', retryAfterSeconds: 42 }],
+    });
+    renderCard({ race: checked, onRefresh });
+    await userEvent.click(screen.getByRole('button', { name: /refresh/i }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Try again in 42s');
+  });
+
+  test('shows the error when a refresh fails', async () => {
+    const onRefresh = vi.fn().mockRejectedValue(new Error('Sign in to refresh a race.'));
+    renderCard({ race: checked, onRefresh });
+    await userEvent.click(screen.getByRole('button', { name: /refresh/i }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Sign in to refresh a race.');
+  });
 });

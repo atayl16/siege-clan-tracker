@@ -2,8 +2,11 @@ name: Hourly Clan Data Sync
 
 on:
   schedule:
-    # Run hourly
-    - cron: "0 * * * *"
+    # Hourly, at 17 past rather than on the hour. GitHub drops and delays
+    # scheduled runs most at the top of the hour, when everyone's fire; this
+    # one was starting only every 4-8 hours. Races no longer depend on it
+    # (the races page refreshes them itself), but members, events and goals do.
+    - cron: "17 * * * *"
 
 jobs:
   sync-data:

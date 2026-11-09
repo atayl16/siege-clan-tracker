@@ -1,5 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../supabaseClient";
+import { refreshRaceProgress } from "../services/raceRefresh";
+
+/** Record new racers' starting points now rather than at the next sync. */
+async function startTracking(raceId) {
+  try {
+    await refreshRaceProgress([raceId]);
+  } catch (err) {
+    // The hourly sync will pick them up; the save itself succeeded.
+    console.warn("Could not start tracking the race yet:", err.message);
+  }
+}
 
 /**
  * Races for the progress and profile pages.
@@ -22,8 +33,10 @@ export function useRaces(userId) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchRaces = useCallback(async () => {
-    setLoading(true);
+  // `quiet` re-reads without flipping `loading`, so a background progress
+  // refresh does not blank the page while it reloads.
+  const fetchRaces = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
     setError(null);
     try {
       // Participants are aliased to `participants` because that is what
@@ -42,13 +55,50 @@ export function useRaces(userId) {
       // leaving it undefined is what took the pages down in the first place.
       setRaces([]);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchRaces();
   }, [fetchRaces]);
+
+  /**
+   * Bring progress up to date from WiseOldMan, then re-read the races if
+   * anything changed. Progress used to move only when the hourly sync ran,
+   * which GitHub often starts hours late.
+   *
+   * @param {string[]} raceIds
+   * @param {{ force?: boolean }} [options] - force: the Refresh button, which
+   *   also asks WiseOldMan to pull fresh hiscores (needs a signed-in member)
+   */
+  const refreshProgress = useCallback(
+    async (raceIds, options) => {
+      const body = await refreshRaceProgress(raceIds, options);
+      if (body.results?.some((r) => r.status === "refreshed")) {
+        await fetchRaces({ quiet: true });
+      }
+      return body;
+    },
+    [fetchRaces]
+  );
+
+  // Once per page visit, refresh the active races in the background. The
+  // server skips any it checked in the last few minutes, so this is cheap.
+  const autoRefreshed = useRef(false);
+  useEffect(() => {
+    if (autoRefreshed.current || !races) return;
+    const ids = races
+      .filter((race) => race.status === "active" && race.participants?.length)
+      .map((race) => race.id)
+      .slice(0, 20);
+    if (!ids.length) return;
+    autoRefreshed.current = true;
+    refreshProgress(ids).catch((err) => {
+      console.warn("Could not refresh race progress:", err.message);
+    });
+  }, [races, refreshProgress]);
+
 
   /**
    * Create a race and its participants.
@@ -91,6 +141,7 @@ export function useRaces(userId) {
           .insert(rows);
 
         if (participantError) throw participantError;
+        await startTracking(created.id);
       }
 
       await fetchRaces();
@@ -214,6 +265,8 @@ export function useRaces(userId) {
         }
       }
 
+      // Picks up anyone added, or re-baselined by a character or metric change.
+      await startTracking(raceId);
       await fetchRaces();
     },
     [fetchRaces]
@@ -233,5 +286,6 @@ export function useRaces(userId) {
     error,
     refresh: fetchRaces,
     refreshRaces: fetchRaces,
+    refreshProgress,
   };
 }

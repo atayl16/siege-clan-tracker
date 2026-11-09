@@ -21,7 +21,10 @@ export default function ProgressPage() {
 
   // RLS (races_read) limits `races` to public races plus your own; the board
   // shows only the public ones.
-  const { races, loading: racesLoading } = useRaces(user?.id);
+  const { races, loading: racesLoading, refreshProgress } = useRaces(user?.id);
+  // The Refresh button asks WiseOldMan for fresh hiscores, which needs a
+  // signed-in member; visitors still get the automatic refresh on open.
+  const refreshRace = user ? (raceId) => refreshProgress([raceId], { force: true }) : undefined;
   const filteredPublicRaces = (races ?? []).filter((race) => race.public === true);
 
   // Without a user id, RLS returns your own goals plus everyone's public ones;
@@ -62,6 +65,7 @@ export default function ProgressPage() {
                 key={race.id}
                 race={race}
                 isOwner={canEditRace(race, user)}
+                onRefresh={refreshRace}
               />
             ))}
           </div>

@@ -82,7 +82,9 @@ export default function ProfilePage() {
     races: activeRaces,
     loading: racesLoading,
     refresh: refreshRaces,
+    refreshProgress,
   } = useRaces(user?.id);
+  const refreshRace = (raceId) => refreshProgress([raceId], { force: true });
 
   // Main character. With more than one claimed, the user picks which is their
   // main; set_main_character() marks the rest as alts (which the Members page
@@ -212,6 +214,7 @@ export default function ProfilePage() {
               key={race.id}
               race={race}
               isOwner={canEditRace(race, user)}
+              onRefresh={refreshRace}
             />
           ))}
         </div>

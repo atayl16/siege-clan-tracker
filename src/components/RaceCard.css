@@ -155,3 +155,51 @@
   border-color: var(--color-orange, #ff9800);
   color: #fff;
 }
+
+/* "Updated 5 minutes ago" and the Refresh button. */
+.ui-race-refresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.ui-race-refresh-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: transparent;
+  color: #ddd;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.ui-race-refresh-button:hover:not(:disabled) {
+  border-color: var(--color-orange, #ff9800);
+  color: #fff;
+}
+
+.ui-race-refresh-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ui-race-refresh-note {
+  flex-basis: 100%;
+}
+
+.ui-spin {
+  animation: ui-race-spin 1s linear infinite;
+}
+
+@keyframes ui-race-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
