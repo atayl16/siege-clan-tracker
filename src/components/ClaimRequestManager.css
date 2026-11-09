@@ -381,3 +381,15 @@
     overflow: hidden;
   }
 }
+
+/* Dark-theme filter tabs: the unselected ones used the light default button
+   (bright white), which glared on the dark admin page. */
+.ui-filter-bar .ui-filter-button:not(.ui-button-primary) {
+  background-color: #2a2a2a;
+  color: #ccc;
+}
+
+.ui-filter-bar .ui-filter-button:not(.ui-button-primary):hover {
+  background-color: #383838;
+  color: #fff;
+}

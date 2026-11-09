@@ -22,7 +22,8 @@
 
 .dashboard-header h1 {
   margin: 0;
-  color: #f8f8f8;
+  /* Orange like every other page title (it was the only white one). */
+  color: var(--color-orange, #ff9800);
   font-size: 1.75rem; /* 28px */
 }
 

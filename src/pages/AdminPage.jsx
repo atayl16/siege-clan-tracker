@@ -453,7 +453,7 @@ export default function AdminPage() {
                   value={searchTerm}
                   onChange={handleSearchChange}
                   onClear={handleSearchClear}
-                  placeholder="Search members by name, WOM name, or role..."
+                  placeholder="Search by name or role"
                   ref={searchInputRef}
                   className="search-container"
                 />
