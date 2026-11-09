@@ -207,4 +207,30 @@ describe.skipIf(!stack)('admin-update-member against a real database', () => {
       .single();
     expect(data.siege_score).not.toBe(99999);
   });
+
+  // The anon key ships in the frontend bundle. If it can call the RPC
+  // directly, validateAuth above is decoration: anyone could rewrite a member
+  // with one POST to /rest/v1/rpc. Migration 20261009000001 revokes it.
+  it.each([
+    ['admin_update_member', { member_id: SEEDED_MEMBER, updated_data: { siege_score: 99999 } }],
+    ['admin_toggle_member_visibility', { member_id: SEEDED_MEMBER, is_hidden: true }],
+    ['admin_change_member_rank', { member_id: SEEDED_MEMBER, new_role: 'anon-was-here' }],
+  ])('refuses %s to the anon key', async (fn, args) => {
+    const { createClient } = require('@supabase/supabase-js');
+    const anon = createClient(stack.API_URL, stack.ANON_KEY);
+    const { error } = await anon.rpc(fn, args);
+    expect(error, `${fn} was callable with the anon key`).not.toBeNull();
+    expect(error.code).toBe('42501'); // insufficient_privilege
+  });
+
+  it('leaves the member untouched after the anon calls', async () => {
+    const { data } = await supabase
+      .from('members')
+      .select('siege_score, hidden, womrole')
+      .eq('wom_id', SEEDED_MEMBER)
+      .single();
+    expect(data.siege_score).not.toBe(99999);
+    expect(data.hidden).not.toBe(true);
+    expect(data.womrole).not.toBe('anon-was-here');
+  });
 });
