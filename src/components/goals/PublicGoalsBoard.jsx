@@ -9,7 +9,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function PublicGoalsBoard() {
-  const { goals, loading } = useUserGoals(); // Use the new hook
+  const { userGoals: goals, loading } = useUserGoals();
   const [sortBy, setSortBy] = useState('progress');
   const [filterType, setFilterType] = useState('all');
 

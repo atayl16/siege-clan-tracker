@@ -260,6 +260,7 @@ export default function ClaimRequestManager() {
 
         {showNotesModal && (
           <Modal
+            isOpen={showNotesModal}
             title={
               currentAction === "view"
                 ? "Request Details"
