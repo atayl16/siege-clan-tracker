@@ -121,3 +121,22 @@ describe('changeOwnPassword', () => {
     expect(supabase.calls.hash).toHaveLength(0);
   });
 });
+
+describe('the built-in admin account', () => {
+  const adminRow = { id: 'a-1', username: 'admin', password_hash: '', supabase_auth_id: null };
+
+  it('cannot have its password reset by an admin', async () => {
+    const supabase = fakeSupabase({ rows: [adminRow] });
+    const err = await resetPassword(supabase, 'a-1').catch((e) => e);
+    expect(err.statusCode).toBe(403);
+    expect(supabase.calls.auth).toHaveLength(0);
+    expect(supabase.calls.hash).toHaveLength(0);
+  });
+
+  it('cannot change its own password either', async () => {
+    const supabase = fakeSupabase({ rows: [adminRow] });
+    const err = await changeOwnPassword(supabase, { id: 'a-1' }, '', 'some-new-password').catch((e) => e);
+    expect(err.statusCode).toBe(403);
+    expect(supabase.calls.auth).toHaveLength(0);
+  });
+});

@@ -95,6 +95,7 @@ describe('renameUser', () => {
     ['an invalid name', 'no spaces', 400],
     ['the current name', 'roin', 400],
     ['a name another user has', 'dan', 409],
+    ['the reserved name admin', 'Admin', 400],
   ])('refuses %s without changing anything', async (_label, newUsername, status) => {
     const err = await renameUser({ supabase, authUser: AUTH_USER, newUsername }).catch((e) => e);
     expect(err).toBeInstanceOf(RenameError);
