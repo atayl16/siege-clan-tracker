@@ -109,6 +109,16 @@ describe("updateRace", () => {
     }
   });
 
+  it("removes participants last, so a failed insert loses nobody", async () => {
+    respond = (q) =>
+      q.op === "insert" ? { data: null, error: new Error("insert failed") } : defaultRespond(q);
+    const updateRace = await hook();
+    await expect(
+      updateRace(RACE, { participants: [row("p1", 1), row(null, 3)], originalParticipantIds: ["p1", "p2"] })
+    ).rejects.toThrow("insert failed");
+    expect(writes("delete")).toHaveLength(0);
+  });
+
   it("refuses rows that belong to another race", async () => {
     const updateRace = await hook();
     await expect(

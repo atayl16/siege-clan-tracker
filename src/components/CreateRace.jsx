@@ -43,9 +43,13 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   const savedEndDate = race?.end_date ? race.end_date.slice(0, 10) : "";
   const [endDate, setEndDate] = useState(savedEndDate);
   // New end dates must not be in the past, but an ended race's saved date
-  // has to stay valid, or none of its other fields could be saved.
+  // has to stay valid while it is unchanged, or none of its other fields
+  // could be saved. Any other date picked must still be today or later.
   const today = new Date().toISOString().split("T")[0];
-  const minEndDate = isEditing && savedEndDate && savedEndDate < today ? savedEndDate : today;
+  const minEndDate =
+    isEditing && savedEndDate && savedEndDate < today && endDate === savedEndDate
+      ? savedEndDate
+      : today;
   const savedParticipants = race?.participants ?? race?.race_participants ?? [];
   const [participants, setParticipants] = useState(
     savedParticipants.length

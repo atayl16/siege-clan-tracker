@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import CreateRace from '../components/CreateRace';
@@ -112,4 +112,24 @@ test('edit mode starts from the saved race and saves the user\'s changes through
   );
   expect(updateRace.mock.calls[0][1]).not.toHaveProperty('creator_id');
   expect(onCreated).toHaveBeenCalledWith(race);
+});
+
+test('editing an ended race still requires any newly picked end date to be today or later', async () => {
+  const race = {
+    id: 'r9',
+    title: 'Sailing Challenge',
+    description: '',
+    public: false,
+    end_date: '2025-01-31T00:00:00+00:00',
+    participants: [
+      { id: 'p1', wom_id: 1, player_name: 'Roinrin', metric: 'sailing', target_value: 20000 },
+    ],
+  };
+  const { container } = render(<CreateRace userId="u1" race={race} onCreated={vi.fn()} onCancel={vi.fn()} />);
+  const dateInput = container.querySelector('input[type="date"]');
+  // Another date that is also already past: allowed only for the saved one.
+  fireEvent.change(dateInput, { target: { value: '2025-06-01' } });
+  await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+  expect(updateRace).not.toHaveBeenCalled();
 });

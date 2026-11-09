@@ -108,7 +108,8 @@ export function useRaces(userId) {
    * race_participants update/delete/insert policies).
    *
    * These are separate requests, not one transaction: if a later step fails,
-   * earlier ones stay saved and the error is reported. Every write is checked
+   * earlier ones stay saved and the error is reported. Removals run last so
+   * a failure part-way never loses a participant. Every write is checked
    * for the rows it actually changed, because RLS rejects a write it does not
    * allow by matching zero rows rather than raising - which is what happens
    * if the participant policies migration has not been applied.
@@ -157,19 +158,6 @@ export function useRaces(userId) {
         (id) => opened.has(id) && !keptIds.has(id)
       );
 
-      if (removedIds.length) {
-        const { data: deleted, error } = await supabase
-          .from("race_participants")
-          .delete()
-          .eq("race_id", raceId)
-          .in("id", removedIds)
-          .select("id");
-        if (error) throw error;
-        if ((deleted?.length ?? 0) !== removedIds.length) {
-          throw notSaved("Removing participants");
-        }
-      }
-
       for (const p of kept) {
         const before = existingById.get(p.id);
         const changes = {
@@ -207,6 +195,21 @@ export function useRaces(userId) {
           }))
         );
         if (error) throw error;
+      }
+
+      // Removals go last: if an earlier step fails, the race is left with an
+      // extra row rather than a lost one.
+      if (removedIds.length) {
+        const { data: deleted, error } = await supabase
+          .from("race_participants")
+          .delete()
+          .eq("race_id", raceId)
+          .in("id", removedIds)
+          .select("id");
+        if (error) throw error;
+        if ((deleted?.length ?? 0) !== removedIds.length) {
+          throw notSaved("Removing participants");
+        }
       }
 
       await fetchRaces();
