@@ -27,11 +27,21 @@ describe('vote button ids', () => {
   });
 });
 
+const G = '\u{1F7E9}'; // filled segment
+const B = '⬛'; // empty segment
+
 describe('tallyBar', () => {
-  it('scales to 10 cells and handles no votes', () => {
-    expect(tallyBar(0, 0)).toBe('░'.repeat(10));
-    expect(tallyBar(1, 2)).toBe('█'.repeat(5) + '░'.repeat(5));
-    expect(tallyBar(3, 3)).toBe('█'.repeat(10));
+  it('is 8 segments, scaled to the leading option like Subo', () => {
+    // Subo's own example: 3 / 2 / 1 votes drew 8 / 5 / 3 segments.
+    expect(tallyBar(3, 3)).toBe(G.repeat(8));
+    expect(tallyBar(2, 3)).toBe(G.repeat(5) + B.repeat(3));
+    expect(tallyBar(1, 3)).toBe(G.repeat(3) + B.repeat(5));
+  });
+
+  it('is empty with no votes, and never empty for an option that has one', () => {
+    expect(tallyBar(0, 0)).toBe(B.repeat(8));
+    expect(tallyBar(0, 40)).toBe(B.repeat(8));
+    expect(tallyBar(1, 40)).toBe(G + B.repeat(7));
   });
 });
 
@@ -41,9 +51,11 @@ describe('renderPoll', () => {
     const [embed] = msg.embeds;
     expect(embed.title).toBe(base.question);
     expect(embed.description).toContain('<:Farming:123456789012345678> **Farming**');
-    expect(embed.description).toContain('3 votes (75%)');
-    expect(embed.description).toContain('1 vote (25%)');
+    expect(embed.description).toContain(`${G.repeat(8)}  3 · 75%`);
+    expect(embed.description).toContain(`${G.repeat(3)}${B.repeat(5)}  1 · 25%`);
     expect(embed.description).toContain('4 votes so far');
+    // Emoji inside code formatting render as plain glyphs, not coloured squares.
+    expect(embed.description).not.toContain('`');
     expect(embed.description).toContain(`<t:${closesAt.getTime() / 1000}:R>`);
     expect(embed.footer.text).toMatch(/anonymous/);
 
@@ -57,7 +69,7 @@ describe('renderPoll', () => {
   it('no votes: no NaN anywhere', () => {
     const msg = renderPoll({ ...base, counts: [0, 0, 0] });
     expect(msg.embeds[0].description).not.toMatch(/NaN/);
-    expect(msg.embeds[0].description).toContain('0 votes (0%)');
+    expect(msg.embeds[0].description).toContain(`${B.repeat(8)}  0 · 0%`);
   });
 
   it('closed poll: buttons disabled, winner marked', () => {

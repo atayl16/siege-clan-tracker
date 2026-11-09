@@ -113,7 +113,7 @@ describe('voting', () => {
 
     const [, channelId, messageId, message] = updateTally.mock.calls[0];
     expect([channelId, messageId]).toEqual(['111', '222']);
-    expect(message.embeds[0].description).toContain('1 vote (100%)');
+    expect(message.embeds[0].description).toContain('1 · 100%');
 
     const reply = parse(res);
     expect(reply.type).toBe(4);
