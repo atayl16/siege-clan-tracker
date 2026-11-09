@@ -8,7 +8,7 @@ name: Boss Coverage
 # the preferred channel - see the Discord decision in the cleanup runbook.
 on:
   schedule:
-    - cron: '0 12 * * 1' # Mondays, 12:00 UTC
+    - cron: '43 11 * * 1' # Mondays, 11:43 UTC: off the hour, when GitHub delays runs least
   workflow_dispatch:
 
 jobs:
