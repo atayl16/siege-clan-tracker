@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaLock, FaGlobe, FaCalendarAlt } from 'react-icons/fa';
+import { FaLock, FaGlobe, FaCalendarAlt, FaTrophy } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { titleize } from '../utils/stringUtils';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,7 +23,8 @@ export default function RaceCard({ race, isOwner }) {
           ? Math.min(100, Math.round(((p.current_value ?? 0) / p.target_value) * 100))
           : 0,
     }))
-    .sort((a, b) => b.progressPercent - a.progressPercent);
+    // The winner (first to reach their target) leads, then by progress.
+    .sort((a, b) => (b.is_winner === true) - (a.is_winner === true) || b.progressPercent - a.progressPercent);
   
   // Format date for display
   const formatDate = (dateString) => {
@@ -71,6 +72,9 @@ export default function RaceCard({ race, isOwner }) {
             >
               <div className="ui-participant-header">
                 <span className="ui-participant-name">
+                  {participant.is_winner && (
+                    <FaTrophy className="ui-participant-winner" aria-label="Winner" />
+                  )}
                   {participant.player_name}
                 </span>
                 <span className="ui-participant-metric">
@@ -80,9 +84,14 @@ export default function RaceCard({ race, isOwner }) {
 
               <ProgressBar
                 value={participant.progressPercent}
-                label={`${(participant.current_value ?? 0).toLocaleString()} / ${(participant.target_value ?? 0).toLocaleString()}`}
+                label={`+${(participant.current_value ?? 0).toLocaleString()} / ${(participant.target_value ?? 0).toLocaleString()}`}
                 variant={index === 0 ? "success" : "primary"}
               />
+              {/* null (not undefined): the column exists and the hourly sync
+                  has not recorded this participant's starting point yet. */}
+              {participant.baseline_set_at === null && (
+                <span className="ui-participant-pending">Tracking starts at the next hourly sync</span>
+              )}
             </div>
           ))}
         </div>
@@ -90,7 +99,7 @@ export default function RaceCard({ race, isOwner }) {
         {endDate && (
           <div className="ui-race-footer">
             <span className="ui-race-end-date">
-              <FaCalendarAlt /> Ends {endDate}
+              <FaCalendarAlt /> {race.status === "completed" ? "Ended" : "Ends"} {endDate}
             </span>
           </div>
         )}

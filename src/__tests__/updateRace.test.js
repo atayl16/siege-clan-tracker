@@ -105,7 +105,7 @@ describe("updateRace", () => {
       originalParticipantIds: ["p1", "p2"],
     });
     for (const upd of writes("update")) {
-      expect(upd.payload).toMatchObject({ start_value: 0, current_value: 0 });
+      expect(upd.payload).toMatchObject({ start_value: 0, current_value: 0, baseline_set_at: null });
     }
   });
 

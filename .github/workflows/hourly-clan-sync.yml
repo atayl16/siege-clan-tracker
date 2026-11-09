@@ -39,6 +39,15 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
+
+      # After the WOM sync, so player snapshots are as fresh as they get.
+      - name: Run Race Progress Sync
+        run: node scripts/sync-tasks/race-progress.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
            
       # Optional summary step to report overall status
       - name: Summary
