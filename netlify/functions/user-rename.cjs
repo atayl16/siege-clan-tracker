@@ -6,7 +6,7 @@ const {
   parseRequestBody,
   validateEnvironment,
 } = require('./utils/adminHelpers.cjs');
-const { renameUser, RenameError } = require('./utils/renameUser.cjs');
+const { renameUser, RenameError, RenameStepError } = require('./utils/renameUser.cjs');
 
 validateEnvironment();
 
@@ -51,6 +51,13 @@ exports.handler = async function (event) {
     return reply(200, result);
   } catch (error) {
     if (error instanceof RenameError) return reply(error.statusCode, { error: error.message });
+    if (error instanceof RenameStepError) {
+      // The member is acting on their own account, so the step and the
+      // underlying message are safe to show them, and make a failure
+      // diagnosable without the function logs.
+      console.error('user-rename failed while', error.message, error.cause);
+      return reply(500, { error: `Could not change your username (failed while ${error.message})` });
+    }
     return errorResponse(error, origin, 'Failed to change username');
   }
 };
