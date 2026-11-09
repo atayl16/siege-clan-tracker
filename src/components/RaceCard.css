@@ -203,3 +203,8 @@
     transform: rotate(360deg);
   }
 }
+
+/* "Created 2 days ago by roinrin": the name reads as a name, not more meta. */
+.ui-race-creator {
+  color: #ccc;
+}

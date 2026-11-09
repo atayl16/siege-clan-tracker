@@ -136,3 +136,12 @@ describe('refresh', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Sign in to refresh a race.');
   });
 });
+
+test("says who created the race, when known", () => {
+  const { unmount } = renderCard({ race: { ...race, creator_name: 'roinrin' } });
+  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by roinrin$/);
+  unmount();
+
+  renderCard({ race: { ...race, creator_name: null } });
+  expect(screen.queryByText(/ by /)).not.toBeInTheDocument();
+});
