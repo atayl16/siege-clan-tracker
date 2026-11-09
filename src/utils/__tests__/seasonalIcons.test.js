@@ -35,71 +35,71 @@ describe('seasonalIcons', () => {
     });
 
     describe('Default icon (non-seasonal months)', () => {
-      it('returns default favicon for January (month index 0)', () => {
+      it('returns the default logo for January (month index 0)', () => {
         mockDate(0);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for February (month index 1)', () => {
+      it('returns the default logo for February (month index 1)', () => {
         mockDate(1);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for March (month index 2)', () => {
+      it('returns the default logo for March (month index 2)', () => {
         mockDate(2);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for April (month index 3)', () => {
+      it('returns the default logo for April (month index 3)', () => {
         mockDate(3);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for May (month index 4)', () => {
+      it('returns the default logo for May (month index 4)', () => {
         mockDate(4);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for June (month index 5)', () => {
+      it('returns the default logo for June (month index 5)', () => {
         mockDate(5);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for July (month index 6)', () => {
+      it('returns the default logo for July (month index 6)', () => {
         mockDate(6);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for August (month index 7)', () => {
+      it('returns the default logo for August (month index 7)', () => {
         mockDate(7);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for September (month index 8)', () => {
+      it('returns the default logo for September (month index 8)', () => {
         mockDate(8);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
-      it('returns default favicon for November (month index 10)', () => {
+      it('returns the default logo for November (month index 10)', () => {
         mockDate(10);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
     });
 
     describe('all months coverage', () => {
       it('returns appropriate icon for all 12 months', () => {
         const expectedIcons = {
-          0: '/icons/favicon.ico',    // January
-          1: '/icons/favicon.ico',    // February
-          2: '/icons/favicon.ico',    // March
-          3: '/icons/favicon.ico',    // April
-          4: '/icons/favicon.ico',    // May
-          5: '/icons/favicon.ico',    // June
-          6: '/icons/favicon.ico',    // July
-          7: '/icons/favicon.ico',    // August
-          8: '/icons/favicon.ico',    // September
+          0: '/icons/original_logo.png',    // January
+          1: '/icons/original_logo.png',    // February
+          2: '/icons/original_logo.png',    // March
+          3: '/icons/original_logo.png',    // April
+          4: '/icons/original_logo.png',    // May
+          5: '/icons/original_logo.png',    // June
+          6: '/icons/original_logo.png',    // July
+          7: '/icons/original_logo.png',    // August
+          8: '/icons/original_logo.png',    // September
           9: '/icons/siege_pumpkin.png', // October
-          10: '/icons/favicon.ico',   // November
+          10: '/icons/original_logo.png',   // November
           11: '/icons/siege_hat_1.png'  // December
         };
 
@@ -144,7 +144,7 @@ describe('seasonalIcons', () => {
     describe('boundary testing', () => {
       it('handles first month of year (January)', () => {
         mockDate(0);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
       it('handles last month of year (December)', () => {
@@ -154,12 +154,12 @@ describe('seasonalIcons', () => {
 
       it('handles month before Halloween (September)', () => {
         mockDate(8);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
 
       it('handles month after Halloween (November)', () => {
         mockDate(10);
-        expect(getSeasonalIcon()).toBe('/icons/favicon.ico');
+        expect(getSeasonalIcon()).toBe('/icons/original_logo.png');
       });
     });
 
@@ -179,7 +179,7 @@ describe('seasonalIcons', () => {
       it('returns default favicon outside seasonal periods', () => {
         mockDate(5); // June (summer)
         const icon = getSeasonalIcon();
-        expect(icon).toBe('/icons/favicon.ico');
+        expect(icon).toBe('/icons/original_logo.png');
       });
     });
   });

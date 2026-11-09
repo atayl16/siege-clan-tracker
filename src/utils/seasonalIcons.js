@@ -10,7 +10,9 @@ export const getSeasonalIcon = () => {
     // December
     return `/icons/siege_hat_1.png`;
   } else {
-    return `/icons/favicon.ico`; // Default favicon path
+    // The full-size logo: the favicon is at most 48px and blurs when shown
+    // at the navbar's 50px.
+    return `/icons/original_logo.png`;
   }
 };
 

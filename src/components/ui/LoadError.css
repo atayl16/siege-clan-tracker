@@ -1,0 +1,57 @@
+.load-error {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+  background-color: rgba(220, 53, 69, 0.12);
+  border: 1px solid rgba(220, 53, 69, 0.45);
+  border-radius: 8px;
+  color: #f1c4c8;
+}
+
+.load-error-icon {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  color: #ff6b6b;
+}
+
+.load-error-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.load-error-text strong {
+  color: #fff;
+}
+
+.load-error-text span {
+  font-size: 0.9rem;
+}
+
+.load-error-retry {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.load-error-retry:hover {
+  border-color: #fff;
+}
+
+@media (max-width: 480px) {
+  .load-error {
+    flex-wrap: wrap;
+  }
+
+  .load-error-retry {
+    width: 100%;
+  }
+}

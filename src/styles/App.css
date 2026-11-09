@@ -102,3 +102,38 @@ body, html {
     word-wrap: break-word;
   }
 }
+
+/* One page gutter on phones. Each page defines its own container, and on a
+   phone they ranged from ~10px (most pages) to ~46px (Stats, Profile) at the
+   edge. Prefixed with .App to win over the per-page media queries. */
+@media (max-width: 600px) {
+  .App .ui-page-container,
+  .App .nm-page-container,
+  .App .quick-stats-page-container,
+  .App .profile-container,
+  .App .ui-container-content-card,
+  .App .admin-dashboard {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+  }
+}
+
+/* Page toolbars (search box plus a button, top right). The 400px cap left
+   too little for the search box beside a button: Hall of Fame's placeholder
+   was cut off at "Search bosses or playe". */
+.App .ui-actions-container {
+  max-width: 520px;
+}
+
+/* On phones the search box spans the page, like the buttons beside it. */
+@media (max-width: 600px) {
+  .App .ui-actions-container,
+  .App .ui-search-container {
+    max-width: 100%;
+  }
+}
