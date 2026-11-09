@@ -75,13 +75,22 @@
   display: block;
 }
 
+/* Phones: one row of tabs that scrolls sideways, rather than wrapping into
+   two or three rows (Profile's five tabs took three). */
 @media (max-width: 768px) {
   .ui-tabs-nav {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  
+
+  .ui-tabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+
   .ui-tab {
-    flex: 1 0 calc(50% - 10px);
-    justify-content: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 }

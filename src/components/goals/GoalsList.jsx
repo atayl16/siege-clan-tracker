@@ -210,11 +210,7 @@ export default function GoalsList({ player, userId, onClose }) {
                 <GoalProgress goal={goal} />
 
                 <div className="ui-goal-details">
-                  <div className="ui-goal-target">
-                    <span className="ui-detail-label">Target:</span>
-                    <span className="ui-detail-value">{goal.target_value.toLocaleString()}</span>
-                  </div>
-
+                  {/* The target is already shown by GoalProgress above. */}
                   {goal.target_date && (
                     <div className="ui-goal-deadline">
                       <span className="ui-detail-label">Deadline:</span>

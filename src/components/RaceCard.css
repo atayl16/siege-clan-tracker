@@ -139,3 +139,19 @@
   color: #888;
   font-style: italic;
 }
+
+/* "Edit Race": was an unstyled default link (bright blue, underlined). */
+.ui-race-actions .ui-btn-text {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #ddd;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.ui-race-actions .ui-btn-text:hover {
+  border-color: var(--color-orange, #ff9800);
+  color: #fff;
+}

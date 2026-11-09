@@ -40,7 +40,9 @@
 
 .ui-progress-container {
   height: 0.5rem;
-  background-color: #333;
+  /* A visible track: #333 matched the card behind it, so only the filled
+     part of the bar showed and 27% looked like a short orange line. */
+  background-color: rgba(255, 255, 255, 0.12);
   border-radius: 1rem;
   margin-bottom: 0.625rem;
   position: relative;

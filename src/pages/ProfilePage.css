@@ -260,3 +260,50 @@
   border: 1px solid rgba(220, 53, 69, 0.5);
   color: #f5a5ad;
 }
+
+/* Card footer buttons sit together, with a gap; the claim date goes right. */
+.ui-character-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  /* Title above its button instead of wrapping beside it. */
+  .tab-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  /* Footer buttons all full width, whether a card has one or two. */
+  .ui-character-card-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .ui-character-card-actions > * {
+    width: 100%;
+  }
+
+  /* Keep a character's three numbers side by side; stacked, they made each
+     card three boxes taller. */
+  .ui-character-stats.ui-stat-group {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .ui-character-stats .ui-stat {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 0.25rem;
+  }
+
+  .ui-character-stats .ui-stat-value {
+    font-size: 1.25rem;
+  }
+
+  .ui-character-stats .ui-stat-label {
+    font-size: 0.65rem;
+  }
+}

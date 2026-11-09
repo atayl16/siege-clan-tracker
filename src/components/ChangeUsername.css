@@ -41,8 +41,7 @@
   gap: 0.5rem;
 }
 
-.change-username-save,
-.change-username-open {
+.change-username-save {
   padding: 0.4rem 0.9rem;
   border: none;
   border-radius: 6px;
@@ -52,9 +51,22 @@
   cursor: pointer;
 }
 
+/* Opening an account form is a secondary action: outlined, so the Save
+   inside the form is the one orange button. */
 .change-username-open {
   margin-top: 0.5rem;
   align-self: flex-start;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: none;
+  color: #ddd;
+  cursor: pointer;
+}
+
+.change-username-open:hover {
+  border-color: var(--color-orange, #ff9800);
+  color: #fff;
 }
 
 .change-username-save:disabled {
