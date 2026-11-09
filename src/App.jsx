@@ -4,7 +4,6 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation
 } from "react-router-dom";
 
 import BackgroundLoader from "./utils/BackgroundLoader";
@@ -39,21 +38,12 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 function App() {
   // Create a wrapper component to check the current route
   const AppContent = () => {
-    const location = useLocation();
-    
-    // More robust check - only hide navbar on welcome page or auth pages
-    const hideNavbarPaths = [
-      "/login", 
-      "/register", 
-      "/forgot-password"
-    ];
-    
-    const showNavbar = !hideNavbarPaths.includes(location.pathname);
-
+    // Every page shows the navbar. The sign-in pages used to hide it, which
+    // left no way back to the site except the browser's Back button.
     return (
-      <div className={`App ${showNavbar ? "has-navbar" : ""}`}>
+      <div className="App has-navbar">
         <SeasonalFavicon />
-        {showNavbar && <Navbar />}
+        <Navbar />
         {/* <AnniversaryBanner /> */}
         <Routes>
           <Route path="/" element={<NewMembers />} />
