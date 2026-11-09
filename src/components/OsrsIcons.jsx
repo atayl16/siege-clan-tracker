@@ -99,6 +99,7 @@ import TemporossIcon from "../assets/images/bosses/Tempoross.png";
 import TheGauntletIcon from "../assets/images/bosses/Crystalline_Hunllef.png";
 import TheCorruptedGauntletIcon from "../assets/images/bosses/Corrupted_Hunllef.png";
 import TheHueycoatlIcon from "../assets/images/bosses/The_Hueycoatl.png";
+import TheFracturedArchiveIcon from "../assets/images/bosses/The_Fractured_Archive.png";
 import TheLeviathanIcon from "../assets/images/bosses/The_Leviathan.png";
 import TheRoyalTitansIcon from "../assets/images/bosses/Eldric_the_Ice_King.png";
 import TheWhispererIcon from "../assets/images/bosses/The_Whisperer.png";
@@ -263,6 +264,7 @@ export const BossIcon = ({ boss }) => {
     tempoross: TemporossIcon,
     the_gauntlet: TheGauntletIcon,
     the_corrupted_gauntlet: TheCorruptedGauntletIcon,
+    the_fractured_archive: TheFracturedArchiveIcon,
     the_hueycoatl: TheHueycoatlIcon,
     the_leviathan: TheLeviathanIcon,
     the_royal_titans: TheRoyalTitansIcon,
