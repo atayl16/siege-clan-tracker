@@ -1,61 +1,28 @@
 import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+import { womFetch, womError, jsonError, cachedJson } from './_shared/wom.js';
 
+const TTL = 900; // seconds
+
+/** Group details and memberships for the clan's WOM group, cached at the edge (see _shared/wom.js). */
 export default async (request, _context) => {
-  // Check authentication
   const { authorized, reason } = checkAuth(request);
   if (!authorized) {
     return unauthorizedResponse(reason);
   }
 
-  // Add debug logging
-  console.log("Edge function: wom-group executing");
+  const groupId = Deno.env.get('WOM_GROUP_ID') || '2928';
 
-  // Get WOM Group ID from environment using Deno.env.get() instead of process.env
-  const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID") || '2928';
-  console.log("WOM_GROUP_ID:", WOM_GROUP_ID);
-  
-  // Cache for 15 minutes (900 seconds)
-  const TTL = 900;
-
-  console.log("Fetching WOM group data...");
-  
   try {
-    // Fetch from WOM API
-    console.log("Fetching from WOM API...");
-    const womResponse = await fetch(`https://api.wiseoldman.net/v2/groups/${WOM_GROUP_ID}?includeMemberships=true`, {
-      headers: { 'User-Agent': 'Siege-Clan-Tracker/1.0' }
-    });
-    
-    console.log("WOM response status:", womResponse.status);
-    
-    if (!womResponse.ok) {
-      throw new Error(`WOM API returned status: ${womResponse.status}`);
-    }
-    
-    const data = await womResponse.json();
-    console.log("WOM data received successfully");
-    
-    // Return with caching headers
-    return new Response(JSON.stringify(data), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${TTL}`,
-        'CDN-Cache-Control': `public, max-age=${TTL}`,
-        'Netlify-Cache-Tag': `wom-group-${WOM_GROUP_ID}`
-      }
-    });
+    const res = await womFetch(`/groups/${groupId}?includeMemberships=true`);
+    if (!res.ok) return womError(res);
+    return cachedJson(await res.json(), { ttl: TTL, tag: `wom-group-${groupId}` });
   } catch (error) {
-    console.error("Edge function error:", error);
-    return new Response(
-      JSON.stringify({ error: `Failed to fetch group data: ${error.message}` }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    console.error('wom-group failed:', error);
+    return jsonError(502, `Failed to reach WiseOldMan: ${error.message}`);
   }
 };
 
 export const config = {
-  path: "/api/wom-group",
+  path: '/api/wom-group',
+  cache: 'manual',
 };

@@ -1,65 +1,28 @@
 import { checkAuth, unauthorizedResponse } from './_shared/auth.js';
+import { womFetch, womError, jsonError, cachedJson } from './_shared/wom.js';
 
+const TTL = 600; // seconds
+
+/** Recent achievements for the clan's WOM group, cached at the edge (see _shared/wom.js). */
 export default async (request, _context) => {
-  // Check authentication
   const { authorized, reason } = checkAuth(request);
   if (!authorized) {
     return unauthorizedResponse(reason);
   }
 
-  // Get environment variables using Deno.env.get
-  const WOM_GROUP_ID = Deno.env.get("WOM_GROUP_ID") || '2928'; // Default group ID
-  const WOM_API_KEY = Deno.env.get("WOM_API_KEY");
-  
-  // Cache for 10 minutes (600 seconds)
-  const TTL = 600;
-
-  console.log(`Fetching achievements for group ID: ${WOM_GROUP_ID}`);
+  const groupId = Deno.env.get('WOM_GROUP_ID') || '2928';
 
   try {
-    const response = await fetch(
-      `https://api.wiseoldman.net/v2/groups/${WOM_GROUP_ID}/achievements`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "Siege-Clan-Tracker/1.0",
-          ...(WOM_API_KEY ? { "Authorization": `Bearer ${WOM_API_KEY}` } : {})
-        },
-      }
-    );
-
-    console.log("API response status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API Error: ${response.status} - ${errorText}`);
-      return new Response(
-        JSON.stringify({ error: `Failed to fetch achievements: ${errorText}` }),
-        { status: response.status, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const data = await response.json();
-    console.log("Achievements data fetched successfully");
-
-    // Return with caching headers
-    return new Response(JSON.stringify(data), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": `public, max-age=${TTL}`,
-        "CDN-Cache-Control": `public, max-age=${TTL}`,
-        "Netlify-Cache-Tag": `group-achievements-${WOM_GROUP_ID}`,
-      },
-    });
+    const res = await womFetch(`/groups/${groupId}/achievements`);
+    if (!res.ok) return womError(res);
+    return cachedJson(await res.json(), { ttl: TTL, tag: `group-achievements-${groupId}` });
   } catch (error) {
-    console.error("Unexpected Error:", error);
-    return new Response(
-      JSON.stringify({ error: `An unexpected error occurred: ${error.message}` }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error('wom-group-achievements failed:', error);
+    return jsonError(502, `Failed to reach WiseOldMan: ${error.message}`);
   }
 };
 
 export const config = {
-  path: "/api/wom-group-achievements",
+  path: '/api/wom-group-achievements',
+  cache: 'manual',
 };
