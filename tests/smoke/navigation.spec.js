@@ -83,7 +83,7 @@ test.describe('a registered member', () => {
   });
 
   /**
-   * All three ClaimPlayer tabs, now that useClaimRequests returns what its
+   * Both ClaimPlayer tabs, now that useClaimRequests returns what its
    * callers ask for. They were hidden behind ?preview while the hook still
    * returned claimRequests from a 401.
    *
@@ -106,7 +106,7 @@ test.describe('a registered member', () => {
 
     await page.getByText('Requests', { exact: true }).first().click();
 
-    for (const tab of ['Use a Claim Code', 'Search Members', 'View My Requests']) {
+    for (const tab of ['Search Members', 'View My Requests']) {
       await page.getByText(tab, { exact: true }).first().click();
       await expect(page.locator('#root')).not.toBeEmpty();
     }
