@@ -97,7 +97,8 @@ export function useRaces(userId) {
   );
 
   // Once per page visit, refresh the active races in the background. The
-  // server skips any it checked in the last few minutes, so this is cheap.
+  // server asks WiseOldMan for the racers' current hiscores, at most once per
+  // race every five minutes however many people open the page.
   const autoRefreshed = useRef(false);
   useEffect(() => {
     if (autoRefreshed.current || !races) return;

@@ -4,10 +4,11 @@ import { supabase } from "../supabaseClient";
  * Ask the server to bring race progress up to date from WiseOldMan
  * (netlify/functions/race-refresh.cjs).
  *
- * Without `force` this is the cheap refresh the races page does when it
+ * Either way the server asks WiseOldMan to pull the racers' current hiscores
+ * first. Without `force` this is the refresh the races page does when it
  * opens: anyone may call it, and the server skips races it checked in the
- * last few minutes. With `force` the server first asks WiseOldMan to pull
- * fresh hiscores, which needs a signed-in member.
+ * last five minutes. With `force` (the Refresh button) that drops to one
+ * minute, which needs a signed-in member.
  *
  * @param {string[]} raceIds
  * @param {{ force?: boolean }} [options]

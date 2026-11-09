@@ -29,9 +29,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_RACES_PER_REQUEST = 20;
 
 // How long a race must have gone unchecked before another refresh does any
-// work. Opening the page reads WOM's stored stats, so every few minutes is
-// plenty. A forced refresh also asks WOM to pull new hiscores, which WOM
-// itself only allows about once a minute per player.
+// work. Every refresh asks WOM to pull each racer's current hiscores, so this
+// is what bounds the WOM quota spent: opening the page (anyone, signed in or
+// not) refreshes a race at most every five minutes however many people view
+// it; the Refresh button (`force`, signed-in members) can go every minute,
+// which is about as often as WOM will update a player anyway.
 const COOLDOWN_MS = { view: 5 * 60_000, force: 60_000 };
 
 class RaceRefreshError extends Error {
@@ -180,15 +182,17 @@ async function applyRaceUpdates(supabase, race, snapshots, now = new Date(), log
 /**
  * Refresh the given races on demand (the race page, or its Refresh button).
  *
- * Only active races are touched, and only when refreshDecision says so, so
- * repeated calls cost at most one WOM lookup per player per cooldown. The
- * result says what happened to each race but returns no race data: the
- * caller re-reads races through its own RLS-checked query.
+ * WOM is always asked to pull each racer's current hiscores before progress
+ * is worked out; its saved snapshot can be hours behind, and is only used if
+ * the update fails. Only active races are touched, and only when
+ * refreshDecision says so, so repeated calls cost at most one WOM update per
+ * player per cooldown. The result says what happened to each race but returns
+ * no race data: the caller re-reads races through its own RLS-checked query.
  *
  * @param {object} args
  * @param {object} args.supabase - service-role client
  * @param {string[]} args.raceIds
- * @param {boolean} [args.force] - ask WOM to pull fresh hiscores first
+ * @param {boolean} [args.force] - the Refresh button: the shorter cooldown
  * @returns {Promise<{ results: Array<{ raceId, status, retryAfterSeconds?, updated?, completed? }> }>}
  */
 async function refreshRaces({ supabase, raceIds, force = false, now = new Date(), apiKey, fetchImpl, log = () => {} }) {
@@ -227,14 +231,15 @@ async function refreshRaces({ supabase, raceIds, force = false, now = new Date()
 
   const womIds = [...new Set(due.flatMap((r) => (r.participants ?? []).map((p) => Number(p.wom_id))))];
   const snapshots = await fetchSnapshots(womIds, {
-    force,
+    force: true,
     apiKey,
     fetchImpl,
     // A Netlify function has about ten seconds. Look everyone up at once
     // (races are a handful of players, well inside WOM's 100 a minute) and
-    // keep each call short, so even a forced refresh finishes in time.
+    // cap each of the two WOM calls per player (look up, then update) so the
+    // pair finishes in time.
     concurrency: Math.min(womIds.length, 12),
-    timeoutMs: force ? 4000 : 3000,
+    timeoutMs: 4000,
     log,
   });
 
