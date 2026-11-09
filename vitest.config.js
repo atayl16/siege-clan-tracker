@@ -9,18 +9,31 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.js'],
-    include: ['**/*.{test,spec}.{js,jsx}'],
-    exclude: [
-      'node_modules/',
-      'src/setupTests.js',
-      // Calls Deno.env directly, which does not exist under Node.
-      'netlify/edge-functions/__tests__/api-authentication.test.js',
-      'tests/smoke/**',
-    ],
-    // Use node environment for netlify function tests (not jsdom)
-    environmentMatchGlobs: [
-      ['netlify/functions/**/*.test.js', 'node'],
-      ['netlify/edge-functions/**/*.test.js', 'node'],
+    // Netlify function tests run under node, everything else under jsdom.
+    // Vitest 4 removed environmentMatchGlobs, which this used to do; projects
+    // are its replacement. Each project inherits the settings below.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'netlify',
+          environment: 'node',
+          include: ['netlify/**/*.test.js'],
+          exclude: [
+            'node_modules/**',
+            // Calls Deno.env directly, which does not exist under Node.
+            'netlify/edge-functions/__tests__/api-authentication.test.js',
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'app',
+          include: ['**/*.{test,spec}.{js,jsx}'],
+          exclude: ['node_modules/**', 'src/setupTests.js', 'tests/smoke/**', 'netlify/**'],
+        },
+      },
     ],
     css: true,
     coverage: {
