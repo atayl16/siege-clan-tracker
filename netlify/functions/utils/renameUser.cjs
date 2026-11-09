@@ -104,7 +104,13 @@ async function renameUser({ supabase, authUser, newUsername }) {
   if (authError) {
     // Another auth account already has that email: the name is taken, even
     // if no users row shows it.
-    if (/already|registered|exists/i.test(authError.message || '')) {
+    // Supabase Auth reports this as 422 / email_exists; match the message
+    // too, as older versions only said so in words.
+    if (
+      authError.status === 422 ||
+      authError.code === 'email_exists' ||
+      /already|registered|exists/i.test(authError.message || '')
+    ) {
       throw new RenameError('That username is taken.', 409);
     }
     throw new RenameStepError('updating your login email', authError);

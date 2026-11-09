@@ -123,6 +123,16 @@ describe('renameUser', () => {
     expect(supabase.calls.rowUpdates).toHaveLength(0);
   });
 
+  it('recognises Supabase Auth\'s email_exists error as a taken name, whatever its wording', async () => {
+    supabase = fakeSupabase({
+      users: users(),
+      authUpdateError: { status: 422, code: 'email_exists', message: 'Unprocessable' },
+    });
+    const err = await renameUser({ supabase, authUser: AUTH_USER, newUsername: 'roinrin' }).catch((e) => e);
+    expect(err).toBeInstanceOf(RenameError);
+    expect(err.statusCode).toBe(409);
+  });
+
   it('puts the login email back if the username cannot be saved', async () => {
     supabase = fakeSupabase({ users: users(), rowUpdateError: { code: '23505', message: 'duplicate' } });
     const err = await renameUser({ supabase, authUser: AUTH_USER, newUsername: 'racer' }).catch((e) => e);
