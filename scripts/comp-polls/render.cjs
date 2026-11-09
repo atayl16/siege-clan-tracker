@@ -9,8 +9,8 @@
  * Voter identities never reach this module. It only ever sees counts.
  */
 
-// Square emoji render as coloured blocks in Discord, like Subo's bars. They
-// must stay outside backticks: inside code formatting they show as plain glyphs.
+// Square emoji render as coloured blocks in Discord. They must stay outside
+// backticks: inside code formatting they show as plain glyphs.
 const BAR_SEGMENTS = 8;
 const BAR_FILLED = '\u{1F7E9}'; // green square
 const BAR_EMPTY = '⬛'; // black large square
@@ -35,10 +35,10 @@ function parseVoteCustomId(customId) {
 }
 
 /**
- * Bar length is relative to the leading option, as Subo does: the leader is
- * always full, so with five options the bars are long enough to compare at a
- * glance. The percentage beside it is the share of all votes. Any option with
- * a vote gets at least one segment.
+ * Bar length is relative to the leading option: the leader is always full,
+ * so with five options the bars are long enough to compare at a glance.
+ * The percentage beside it is the share of all votes. Any option with a
+ * vote gets at least one segment.
  */
 function tallyBar(count, leader) {
   let filled = leader > 0 ? Math.round((count / leader) * BAR_SEGMENTS) : 0;

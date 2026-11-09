@@ -31,8 +31,8 @@ const G = '\u{1F7E9}'; // filled segment
 const B = '⬛'; // empty segment
 
 describe('tallyBar', () => {
-  it('is 8 segments, scaled to the leading option like Subo', () => {
-    // Subo's own example: 3 / 2 / 1 votes drew 8 / 5 / 3 segments.
+  it('is 8 segments, scaled to the leading option', () => {
+    // 3 / 2 / 1 votes draw 8 / 5 / 3 segments.
     expect(tallyBar(3, 3)).toBe(G.repeat(8));
     expect(tallyBar(2, 3)).toBe(G.repeat(5) + B.repeat(3));
     expect(tallyBar(1, 3)).toBe(G.repeat(3) + B.repeat(5));
