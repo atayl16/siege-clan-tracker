@@ -193,3 +193,20 @@
     gap: 0.625rem; /* 10px */
   }
 }
+
+/* The claim panel's own tabs used the shared tab styles meant for page-level
+   tabs: a 30px gap under the tab bar, then each tab's content in a second
+   card (background, shadow, 25px padding) inside this one, on top of
+   .ui-claim-tab-content's own padding - 80px from the tabs to the heading,
+   with an empty band and a card nested in a card. Here the tab content sits
+   directly in the claim panel; .ui-claim-tab-content provides the padding. */
+.ui-claim-tabs .ui-tabs-nav {
+  margin-bottom: 0;
+}
+
+.ui-claim-tabs .ui-tab-pane {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
