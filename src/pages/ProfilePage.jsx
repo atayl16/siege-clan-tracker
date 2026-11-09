@@ -46,6 +46,11 @@ function CharacterGoalCard({ claim, user }) {
 
   return (
     <Card variant="default" hover className="ui-character-card">
+      {/* Names the character: on the Goals tab each card was otherwise only
+          an "Add New Goal" button and its goals, with nothing saying whose. */}
+      <Card.Header className="ui-character-card-header">
+        <div className="ui-character-name">{claim.members.name}</div>
+      </Card.Header>
       <Card.Body>
         <div className="ui-character-goal-content">
           <GoalsList
@@ -284,7 +289,9 @@ export default function ProfilePage() {
                   <Card.Body>
                     <StatGroup className="ui-character-stats">
                       <StatGroup.Stat
-                        label="Combat Level"
+                        // current_lvl is the total level (the sync stores
+                        // the overall skill level there), not combat level.
+                        label="Total Level"
                         value={claim.members.current_lvl || 3}
                       />
                       <StatGroup.Stat
@@ -315,6 +322,7 @@ export default function ProfilePage() {
                   </Card.Body>
 
                   <Card.Footer className="ui-character-card-footer">
+                    <div className="ui-character-card-actions">
                     <Button variant="primary" onClick={() => setActiveTab("goals")}>
                       Manage Goals
                     </Button>
@@ -332,6 +340,7 @@ export default function ProfilePage() {
                             : "Make Main"}
                         </Button>
                       )}
+                    </div>
                     <div className="ui-claim-date">
                       Claimed on{" "}
                       {new Date(claim.claimed_at).toLocaleDateString()}

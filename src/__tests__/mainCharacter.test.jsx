@@ -72,6 +72,9 @@ describe("ProfilePage main character", () => {
     const names = screen.getAllByText(/^(Oldalt|Roinrin)$/).map((el) => el.textContent);
     expect(names).toEqual(["Roinrin", "Oldalt"]);
     expect(screen.getByText("Main")).toBeInTheDocument();
+    // current_lvl is the total level; it was labelled "Combat Level".
+    expect(screen.getAllByText("Total Level").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Combat Level")).toBeNull();
     expect(screen.getByText("Alt")).toBeInTheDocument();
   });
 
