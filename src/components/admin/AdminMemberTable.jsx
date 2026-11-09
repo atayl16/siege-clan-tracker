@@ -299,7 +299,6 @@ export default function AdminMemberTable({
               <th className="ui-text-center ui-table-header-cell">EHB</th>
               <th className="ui-text-center ui-table-header-cell">Clan XP</th>
               <th className="ui-text-center ui-table-header-cell">Joined</th>
-              <th className="ui-text-center ui-table-header-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -366,7 +365,7 @@ export default function AdminMemberTable({
                         </div>
                         <Button
                           variant="info"
-                          size="md"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleAddPoints(member, 2);
@@ -432,14 +431,12 @@ export default function AdminMemberTable({
                           )
                         : "-"}
                     </td>
-                    <td className="ui-text-center">
-                    </td>
                   </tr>
 
                   {/* Expanded row with details */}
                   {isExpanded && (
                     <tr className="ui-expanded-details-row">
-                      <td colSpan={7}>
+                      <td colSpan={6}>
                         <Card variant="dark">
                           <Card.Body>
                             <div className="ui-details-grid">

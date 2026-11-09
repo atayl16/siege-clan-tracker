@@ -468,3 +468,44 @@
   margin-left: 5px;
   vertical-align: middle;
 }
+
+/* ---- Styling audit fixes ---- */
+
+/* The role mismatch badge was positioned over the end of the role name
+   ("Emeral", "Supervis"); it now sits after the name. */
+.ui-role-value .ui-role-badge {
+  position: static;
+  margin-left: 0.35rem;
+  vertical-align: 1px;
+}
+
+/* Score and its +2 button side by side, with a quiet outlined button: the
+   bright white full-size button was the loudest thing on the page and made
+   every row tall. Score in the site's orange instead of an off-palette cyan. */
+.ui-score-with-button {
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.ui-score-value {
+  color: var(--color-orange, #ff9800);
+  min-width: 1.75rem;
+  text-align: right;
+}
+
+.ui-score-with-button .ui-add-points-btn {
+  min-height: 0;
+  padding: 0.2rem 0.55rem;
+  background: none;
+  border: 1px solid #555;
+  color: #ddd;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ui-score-with-button .ui-add-points-btn:hover:not(:disabled) {
+  border-color: var(--color-orange, #ff9800);
+  color: #fff;
+  background: none;
+}
