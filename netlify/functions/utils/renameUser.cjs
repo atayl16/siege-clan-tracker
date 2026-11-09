@@ -42,6 +42,19 @@ class RenameError extends Error {
 }
 
 /**
+ * An unexpected failure, labelled with the step it happened in, so the
+ * response and the function log say where a rename broke rather than only
+ * "Failed to change username".
+ */
+class RenameStepError extends Error {
+  constructor(step, cause) {
+    super(`${step}: ${cause?.message || String(cause)}`);
+    this.step = step;
+    this.cause = cause;
+  }
+}
+
+/**
  * @param {object} args
  * @param {object} args.supabase - service-role client
  * @param {object} args.authUser - the caller, from supabase.auth.getUser(token)
@@ -67,7 +80,7 @@ async function renameUser({ supabase, authUser, newUsername }) {
     .select('id, username')
     .or(`id.eq.${authUser.id},supabase_auth_id.eq.${authUser.id}`)
     .limit(1);
-  if (findError) throw findError;
+  if (findError) throw new RenameStepError('finding your account', findError);
   const account = rows?.[0];
   if (!account) throw new RenameError('No account is linked to this login.', 404);
 
@@ -80,7 +93,7 @@ async function renameUser({ supabase, authUser, newUsername }) {
     .select('id')
     .eq('username', username)
     .limit(1);
-  if (takenError) throw takenError;
+  if (takenError) throw new RenameStepError('checking the name is free', takenError);
   if (taken?.length) throw new RenameError('That username is taken.', 409);
 
   const previousEmail = authUser.email;
@@ -94,7 +107,7 @@ async function renameUser({ supabase, authUser, newUsername }) {
     if (/already|registered|exists/i.test(authError.message || '')) {
       throw new RenameError('That username is taken.', 409);
     }
-    throw authError;
+    throw new RenameStepError('updating your login email', authError);
   }
 
   const { error: updateError } = await supabase
@@ -108,7 +121,7 @@ async function renameUser({ supabase, authUser, newUsername }) {
       email_confirm: true,
     });
     if (updateError.code === '23505') throw new RenameError('That username is taken.', 409);
-    throw updateError;
+    throw new RenameStepError('saving the new username', updateError);
   }
 
   return { username };
@@ -120,4 +133,5 @@ module.exports = {
   normaliseUsername,
   loginEmail,
   RenameError,
+  RenameStepError,
 };
