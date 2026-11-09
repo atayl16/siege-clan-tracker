@@ -63,7 +63,11 @@ describe('WOM edge functions', () => {
 
   it.each(names)('%s sends the WOM key as x-api-key, the header WOM reads', async (name) => {
     env.WOM_API_KEY = 'test-key';
-    await call(name);
+    const res = await call(name);
+    // Without these, a handler that returned early would pass by checking
+    // no requests at all.
+    expect(res.status).toBe(200);
+    expect(globalThis.fetch).toHaveBeenCalled();
     for (const [, init] of globalThis.fetch.mock.calls) {
       expect(init.headers['x-api-key']).toBe('test-key');
       expect(init.headers.Authorization).toBeUndefined();
@@ -78,9 +82,11 @@ describe('WOM edge functions', () => {
 
   it('falls back to anonymous once if WOM rejects the key', async () => {
     env.WOM_API_KEY = 'revoked-key';
+    const rejected = new Response('{"message":"Invalid API Key"}', { status: 403 });
+    const cancel = vi.spyOn(rejected.body, 'cancel');
     globalThis.fetch = vi
       .fn()
-      .mockResolvedValueOnce(new Response('{}', { status: 403 }))
+      .mockResolvedValueOnce(rejected)
       .mockResolvedValueOnce(ok());
     const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -89,8 +95,31 @@ describe('WOM edge functions', () => {
     expect(res.status).toBe(200);
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     expect(globalThis.fetch.mock.calls[1][1].headers['x-api-key']).toBeUndefined();
+    expect(cancel).toHaveBeenCalled(); // the unread 403 body is released
     expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('WOM_API_KEY'));
     errorLog.mockRestore();
+  });
+
+  // wom-player-events makes two WOM calls. The cases above fail the first
+  // one; these fail the second (standings) after the player lookup succeeds.
+  it.each([
+    [429, 429, '42'],
+    [503, 502, null],
+  ])('wom-player-events maps a standings %i to %i, uncached', async (upstream, expected, retryAfter) => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(ok())
+      .mockResolvedValueOnce(
+        new Response('{}', { status: upstream, headers: retryAfter ? { 'Retry-After': retryAfter } : {} })
+      );
+
+    const res = await call('wom-player-events');
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect(res.status).toBe(expected);
+    expect(res.headers.get('Retry-After')).toBe(retryAfter);
+    expect(res.headers.get('Cache-Control')).toBeNull();
+    expect(res.headers.get('Netlify-CDN-Cache-Control')).toBeNull();
   });
 
   it.each(names)('%s passes a WOM 429 through with Retry-After, uncached', async (name) => {

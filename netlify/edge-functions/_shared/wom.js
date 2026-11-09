@@ -39,6 +39,9 @@ export async function womFetch(path) {
     const res = await fetch(url, { headers: { ...BASE_HEADERS, 'x-api-key': key } });
     if (res.status !== 403) return res;
     console.error('WOM rejected WOM_API_KEY with 403; retrying without it. Check the key in the Netlify environment.');
+    // Release the unread 403 body before the retry. Failing to cancel it
+    // must not stop the retry.
+    await res.body?.cancel().catch(() => {});
   }
 
   return fetch(url, { headers: BASE_HEADERS });
