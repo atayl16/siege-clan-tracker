@@ -22,7 +22,7 @@ import RaceCard from "../components/RaceCard";
 import CreateRace from "../components/CreateRace";
 
 import "./ProfilePage.css";
-import { racesForUser } from "../utils/races";
+import { racesForUser, canEditRace } from "../utils/races";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
@@ -174,7 +174,7 @@ export default function ProfilePage() {
             <RaceCard
               key={race.id}
               race={race}
-              isOwner={race.creator_id === user?.id}
+              isOwner={canEditRace(race, user)}
             />
           ))}
         </div>

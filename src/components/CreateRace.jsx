@@ -9,24 +9,56 @@ import './CreateRace.css';
 import Button from './ui/Button';
 import Card from './ui/Card';
 
-export default function CreateRace({ userId, onCreated, onCancel }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
-  const [endDate, setEndDate] = useState("");
-  const [participants, setParticipants] = useState([
-    {
-      playerId: "",
-      playerName: "",
-      metricType: "skill",
-      metric: "",
-      targetValue: "",
-    },
-  ]);
+// WOM's skill metrics. Participants store only the metric, so this tells the
+// edit form whether to open the skill or the boss picker for a saved row.
+const SKILL_METRICS = new Set([
+  "overall", "attack", "defence", "strength", "hitpoints", "ranged", "prayer",
+  "magic", "cooking", "woodcutting", "fletching", "fishing", "firemaking",
+  "crafting", "smithing", "mining", "herblore", "agility", "thieving", "slayer",
+  "farming", "runecrafting", "hunter", "construction", "sailing",
+]);
+
+/** A saved race_participants row, as the form's editable row. */
+function toFormRow(p) {
+  return {
+    id: p.id,
+    playerId: p.wom_id,
+    playerName: p.player_name,
+    metricType: SKILL_METRICS.has(p.metric) ? "skill" : "boss",
+    metric: p.metric,
+    targetValue: String(p.target_value ?? ""),
+  };
+}
+
+/**
+ * Create a race, or - given `race` - edit it. Editing reuses the same fields
+ * and validation; who may edit is decided by canEditRace (utils/races.js) on
+ * the edit page, and enforced by RLS.
+ */
+export default function CreateRace({ userId, race = null, onCreated, onCancel }) {
+  const isEditing = Boolean(race);
+  const [title, setTitle] = useState(race?.title ?? "");
+  const [description, setDescription] = useState(race?.description ?? "");
+  const [isPublic, setIsPublic] = useState(race?.public ?? false);
+  const [endDate, setEndDate] = useState(race?.end_date ? race.end_date.slice(0, 10) : "");
+  const savedParticipants = race?.participants ?? race?.race_participants ?? [];
+  const [participants, setParticipants] = useState(
+    savedParticipants.length
+      ? savedParticipants.map(toFormRow)
+      : [
+          {
+            playerId: "",
+            playerName: "",
+            metricType: "skill",
+            metric: "",
+            targetValue: "",
+          },
+        ]
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const { createRace } = useRaces(); // Use the new hook
+  const { createRace, updateRace } = useRaces(); // Use the new hook
 
   // The creator's own claimed characters. A race only makes sense with at
   // least one of them in it, so the first row starts as one of them and
@@ -46,13 +78,13 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
   // Claims load asynchronously, so fill the first row once they arrive -
   // but only while it is still untouched.
   useEffect(() => {
-    if (!myCharacters.length) return;
+    if (isEditing || !myCharacters.length) return;
     setParticipants((rows) =>
       rows.length === 1 && !rows[0].playerId
         ? [{ ...rows[0], playerId: myCharacters[0].wom_id, playerName: myCharacters[0].name }]
         : rows
     );
-  }, [myCharacters]);
+  }, [myCharacters, isEditing]);
 
   const handleAddParticipant = () => {
     setParticipants([
@@ -123,12 +155,12 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
 
     try {
       const raceData = {
-        creator_id: userId,
         title,
         description,
         public: isPublic,
         end_date: endDate || null,
         participants: participants.map((p) => ({
+          ...(p.id ? { id: p.id } : {}),
           wom_id: p.playerId,
           player_name: p.playerName,
           metric: p.metric,
@@ -136,13 +168,19 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
         })),
       };
 
-      const result = await createRace(raceData);
+      if (isEditing) {
+        await updateRace(race.id, raceData);
+        onCreated(race);
+        return;
+      }
+
+      const result = await createRace({ creator_id: userId, ...raceData });
 
       if (result.id) {
         onCreated(result);
       }
     } catch (err) {
-      setError(`Failed to create race: ${err.message}`);
+      setError(`Failed to ${isEditing ? "save" : "create"} race: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +189,7 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
   return (
     <Card className="ui-race-form">
       <Card.Header>
-        <h3 className="ui-race-form-title">Create New Race</h3>
+        <h3 className="ui-race-form-title">{isEditing ? "Edit Race" : "Create New Race"}</h3>
         <Button
           variant="text"
           size="sm"
@@ -331,7 +369,9 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
                 !title
               }
             >
-              {isSubmitting ? "Creating..." : "Create Race"}
+              {isSubmitting
+                ? isEditing ? "Saving..." : "Creating..."
+                : isEditing ? "Save Changes" : "Create Race"}
             </Button>
           </div>
         </form>

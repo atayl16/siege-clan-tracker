@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import { useUserGoals } from "../hooks/useUserGoals"; // Updated hook
 import { useMembers } from "../hooks/useMembers";
+import { canEditRace } from "../utils/races";
 import { racesForUser } from "../utils/races";
 import { FaPlus, FaTrophy, FaBullseye } from "react-icons/fa";
 import CreateRace from "../components/CreateRace";
@@ -153,7 +154,7 @@ export default function ProgressPage() {
               <RaceCard
                 key={race.id}
                 race={race}
-                isOwner={user && race.creator_id === user.id}
+                isOwner={canEditRace(race, user)}
               />
             ))}
           </div>

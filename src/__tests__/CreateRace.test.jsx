@@ -5,9 +5,10 @@ import { vi } from 'vitest';
 import CreateRace from '../components/CreateRace';
 
 const createRace = vi.fn().mockResolvedValue({ id: 'r1' });
+const updateRace = vi.fn().mockResolvedValue(undefined);
 let claims = [];
 
-vi.mock('../hooks/useRaces', () => ({ useRaces: () => ({ createRace }) }));
+vi.mock('../hooks/useRaces', () => ({ useRaces: () => ({ createRace, updateRace }) }));
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ userClaims: claims }) }));
 // Stand-ins: the member picker shows its selection and can pick "Dan";
 // the metric picker can pick "sailing".
@@ -34,6 +35,7 @@ const fillAndSubmit = async () => {
 
 beforeEach(() => {
   createRace.mockClear();
+  updateRace.mockClear();
   claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Roinrin' } }];
 });
 
@@ -71,4 +73,37 @@ test('asks a member with no claimed character to claim one first', async () => {
 
   expect(screen.getByText(/claim one of your characters/i)).toBeInTheDocument();
   expect(createRace).not.toHaveBeenCalled();
+});
+
+test('edit mode starts from the saved race and saves through updateRace', async () => {
+  const race = {
+    id: 'r9',
+    title: 'Sailing Challenge',
+    description: '',
+    public: false,
+    end_date: '2026-11-13T00:00:00+00:00',
+    participants: [
+      { id: 'p1', wom_id: 1, player_name: 'Roinrin', metric: 'sailing', target_value: 20000 },
+    ],
+  };
+  const onCreated = vi.fn();
+  render(<CreateRace userId="u1" race={race} onCreated={onCreated} onCancel={vi.fn()} />);
+
+  expect(screen.getByText('Edit Race')).toBeInTheDocument();
+  expect(screen.getByDisplayValue('Sailing Challenge')).toBeInTheDocument();
+  expect(screen.getByDisplayValue('20000')).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+  expect(createRace).not.toHaveBeenCalled();
+  expect(updateRace).toHaveBeenCalledWith(
+    'r9',
+    expect.objectContaining({
+      title: 'Sailing Challenge',
+      end_date: '2026-11-13',
+      participants: [expect.objectContaining({ id: 'p1', wom_id: 1, metric: 'sailing', target_value: 20000 })],
+    })
+  );
+  expect(updateRace.mock.calls[0][1]).not.toHaveProperty('creator_id');
+  expect(onCreated).toHaveBeenCalledWith(race);
 });

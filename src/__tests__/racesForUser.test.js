@@ -1,4 +1,4 @@
-import { racesForUser } from '../utils/races';
+import { racesForUser, canEditRace } from '../utils/races';
 
 const user = { id: 'u1' };
 const claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Roinrin' } }];
@@ -24,5 +24,15 @@ describe('racesForUser', () => {
     expect(racesForUser(null, user, claims)).toEqual([]);
     expect(racesForUser([race({ participants: [{ wom_id: '1' }] })], user, [])).toEqual([]);
     expect(racesForUser([race({ participants: [{ wom_id: '1' }] })], user, claims)).toHaveLength(1);
+  });
+});
+
+describe('canEditRace', () => {
+  it("lets only the race's creator edit it", () => {
+    const r = { creator_id: 'u1' };
+    expect(canEditRace(r, { id: 'u1' })).toBe(true);
+    expect(canEditRace(r, { id: 'u2' })).toBe(false);
+    expect(canEditRace(r, null)).toBe(false);
+    expect(canEditRace(null, { id: 'u1' })).toBe(false);
   });
 });

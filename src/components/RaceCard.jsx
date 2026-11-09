@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaLock, FaGlobe, FaCalendarAlt } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import { titleize } from '../utils/stringUtils';
 import { formatDistanceToNow } from 'date-fns';
 import './RaceCard.css';
@@ -95,8 +96,15 @@ export default function RaceCard({ race, isOwner }) {
         )}
       </Card.Body>
 
-      {/* "Edit Race" linked to /races/:id/edit, which has no route either.
-          Hidden until an edit page exists; isOwner is kept for it. */}
+      {/* Callers pass isOwner from canEditRace (utils/races.js), the single
+          rule for who may edit. */}
+      {isOwner && (
+        <Card.Footer className="ui-race-actions">
+          <Link to={`/races/${race.id}/edit`} className="ui-btn ui-btn-text">
+            Edit Race
+          </Link>
+        </Card.Footer>
+      )}
     </Card>
   );
 }

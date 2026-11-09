@@ -99,11 +99,80 @@ export function useRaces(userId) {
     [fetchRaces]
   );
 
+  /**
+   * Save an edited race: its own fields, then its participants.
+   *
+   * Participants are matched by id: rows the form still has are updated,
+   * rows it dropped are deleted, and rows without an id are inserted. RLS
+   * limits all of it to the race's creator (races_update_own and the
+   * race_participants update/delete/insert policies).
+   *
+   * @param {string} raceId
+   * @param {object} raceData - { title, description, public, end_date,
+   *   participants: [{ id?, wom_id, player_name, metric, target_value }] }
+   */
+  const updateRace = useCallback(
+    async (raceId, { participants = [], ...race }) => {
+      const { error: raceError } = await supabase
+        .from("races")
+        .update(race)
+        .eq("id", raceId);
+      if (raceError) throw raceError;
+
+      const { data: existing, error: readError } = await supabase
+        .from("race_participants")
+        .select("id")
+        .eq("race_id", raceId);
+      if (readError) throw readError;
+
+      const keptIds = new Set(participants.filter((p) => p.id).map((p) => p.id));
+      const removedIds = (existing ?? []).map((p) => p.id).filter((id) => !keptIds.has(id));
+
+      if (removedIds.length) {
+        const { error } = await supabase.from("race_participants").delete().in("id", removedIds);
+        if (error) throw error;
+      }
+
+      for (const p of participants.filter((row) => row.id)) {
+        const { error } = await supabase
+          .from("race_participants")
+          .update({
+            wom_id: p.wom_id,
+            player_name: p.player_name,
+            metric: p.metric,
+            target_value: p.target_value,
+          })
+          .eq("id", p.id);
+        if (error) throw error;
+      }
+
+      const added = participants.filter((p) => !p.id);
+      if (added.length) {
+        const { error } = await supabase.from("race_participants").insert(
+          added.map((p) => ({
+            race_id: raceId,
+            wom_id: p.wom_id,
+            player_name: p.player_name,
+            metric: p.metric,
+            target_value: p.target_value,
+            start_value: 0,
+            current_value: 0,
+          }))
+        );
+        if (error) throw error;
+      }
+
+      await fetchRaces();
+    },
+    [fetchRaces]
+  );
+
   const all = races ?? [];
 
   return {
     races: all,
     createRace,
+    updateRace,
     // The signed-in member's own races. Empty when signed out, which is what
     // the "My Races" tab should show.
     activeRaces: userId ? all.filter((race) => race.creator_id === userId) : [],
