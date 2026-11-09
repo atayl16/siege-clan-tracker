@@ -31,13 +31,24 @@ describe("Login", () => {
     expect(navigate).toHaveBeenCalledWith("/profile");
   });
 
-  it("shows a failed sign-in", async () => {
-    login.mockResolvedValue({ error: "Invalid credentials" });
+  // A failed attempt must leave the form usable so the user can retry, and
+  // must not redirect. Covers both ways login can fail: a returned error and a
+  // thrown one (network down).
+  it.each([
+    ["a returned error", () => login.mockResolvedValue({ error: "Invalid credentials" }), "Invalid credentials"],
+    ["a rejected call", () => login.mockRejectedValue(new Error("offline")), "Connection failed"],
+  ])("shows a failed sign-in from %s and leaves the form usable", async (_label, arrange, message) => {
+    arrange();
     inRouter(<Login />);
     await userEvent.type(screen.getByLabelText(/username/i), "x");
     await userEvent.type(screen.getByLabelText(/password/i), "y");
     await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid credentials");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(screen.getByLabelText(/username/i)).toBeEnabled();
+    expect(screen.getByLabelText(/password/i)).toBeEnabled();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeEnabled();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it("links to Register and to the forgot-password help", () => {
