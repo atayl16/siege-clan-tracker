@@ -8,6 +8,7 @@ import './CreateRace.css';
 
 import Button from './ui/Button';
 import Card from './ui/Card';
+import { mainFirst } from "../utils/characters";
 
 export default function CreateRace({ userId, onCreated, onCancel }) {
   const [title, setTitle] = useState("");
@@ -34,7 +35,8 @@ export default function CreateRace({ userId, onCreated, onCancel }) {
   const { userClaims } = useAuth();
   const myCharacters = useMemo(
     () =>
-      (userClaims ?? [])
+      // Main character first, so it is the one the first row starts as.
+      mainFirst(userClaims)
         .map((claim) => ({
           wom_id: Number(claim.wom_id ?? claim.members?.wom_id),
           name: claim.members?.name ?? claim.name,

@@ -23,6 +23,8 @@ import CreateRace from "../components/CreateRace";
 
 import "./ProfilePage.css";
 import { racesForUser } from "../utils/races";
+import { mainFirst, mainCharacterId } from "../utils/characters";
+import { supabase } from "../supabaseClient";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
@@ -73,6 +75,33 @@ export default function ProfilePage() {
     loading: racesLoading,
     refresh: refreshRaces,
   } = useRaces(user?.id);
+
+  // Main character. With more than one claimed, the user picks which is their
+  // main; set_main_character() marks the rest as alts (which the Members page
+  // hides by default). The main is listed first and is the default character
+  // elsewhere, e.g. the first participant in a new race.
+  const orderedClaims = mainFirst(userClaims);
+  const mainId = mainCharacterId(userClaims);
+  const hasSeveralCharacters = (userClaims?.length ?? 0) > 1;
+  const [settingMainId, setSettingMainId] = useState(null);
+  const [mainError, setMainError] = useState(null);
+
+  const handleMakeMain = async (womId) => {
+    setSettingMainId(womId);
+    setMainError(null);
+    try {
+      const { error } = await supabase.rpc("set_main_character", {
+        p_wom_id: womId,
+      });
+      if (error) throw error;
+      await fetchUserClaims(user.id);
+    } catch (err) {
+      console.error("Error setting main character:", err);
+      setMainError(`Could not change your main character: ${err.message}`);
+    } finally {
+      setSettingMainId(null);
+    }
+  };
 
   // Handle creating a race
   const handleCreatedRace = () => {
@@ -209,6 +238,12 @@ export default function ProfilePage() {
             </Button>
           </div>
 
+          {mainError && (
+            <div className="profile-main-error" role="alert">
+              {mainError}
+            </div>
+          )}
+
           {!userClaims?.length ? (
             <EmptyState
               title="No Characters Yet"
@@ -217,9 +252,10 @@ export default function ProfilePage() {
             />
           ) : (
             <CardGrid>
-              {userClaims.map((claim) => (
+              {/* get_user_claims rows have no id column, so key on wom_id. */}
+              {orderedClaims.map((claim) => (
                 <Card
-                  key={`claim-${claim.id}`}
+                  key={`claim-${claim.wom_id}`}
                   hover
                   className="ui-character-card"
                 >
@@ -227,9 +263,19 @@ export default function ProfilePage() {
                     <div className="ui-character-name">
                       {claim.members.name}
                     </div>
-                    <Badge variant="success" pill>
-                      Claimed
-                    </Badge>
+                    {!hasSeveralCharacters ? (
+                      <Badge variant="success" pill>
+                        Claimed
+                      </Badge>
+                    ) : Number(claim.members.wom_id ?? claim.wom_id) === mainId ? (
+                      <Badge variant="success" pill>
+                        Main
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" pill>
+                        Alt
+                      </Badge>
+                    )}
                   </Card.Header>
 
                   <Card.Body>
@@ -267,6 +313,20 @@ export default function ProfilePage() {
                     <Button variant="primary" onClick={() => setActiveTab("goals")}>
                       Manage Goals
                     </Button>
+                    {hasSeveralCharacters &&
+                      Number(claim.members.wom_id ?? claim.wom_id) !== mainId && (
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            handleMakeMain(Number(claim.members.wom_id ?? claim.wom_id))
+                          }
+                          disabled={settingMainId !== null}
+                        >
+                          {settingMainId === Number(claim.members.wom_id ?? claim.wom_id)
+                            ? "Saving..."
+                            : "Make Main"}
+                        </Button>
+                      )}
                     <div className="ui-claim-date">
                       Claimed on{" "}
                       {new Date(claim.claimed_at).toLocaleDateString()}
@@ -295,9 +355,9 @@ export default function ProfilePage() {
             />
           ) : (
             <CardGrid>
-              {userClaims.map((claim) => (
+              {orderedClaims.map((claim) => (
                 <CharacterGoalCard
-                  key={`goal-card-${claim.id}`}
+                  key={`goal-card-${claim.wom_id}`}
                   claim={claim}
                   user={user}
                 />
