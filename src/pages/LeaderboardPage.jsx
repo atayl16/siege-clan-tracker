@@ -9,6 +9,7 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
 import "./LeaderboardPage.css";
+import LoadError from "../components/ui/LoadError";
 
 export default function LeaderboardPage() {
   const { members, loading: membersLoading, error: membersError, refreshMembers } = useMembers();
@@ -36,18 +37,7 @@ export default function LeaderboardPage() {
       )}
 
       {membersError && (
-        <div className="ui-error-container">
-          <div className="ui-error-icon">
-            <FaTimes />
-          </div>
-          <div className="ui-error-message">
-            <h3>Error Loading Data</h3>
-            <p>{membersError.message || "Failed to load data"}</p>
-            <Button onClick={refreshMembers} variant="danger">
-              Try Again
-            </Button>
-          </div>
-        </div>
+        <LoadError what="the leaderboard" error={membersError} onRetry={refreshMembers} />
       )}
 
       <div className="ui-content-header">

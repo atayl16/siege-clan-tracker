@@ -14,6 +14,7 @@ import Button from "../components/ui/Button";
 import StatGroup from "../components/ui/StatGroup";
 
 import "./EventsPage.css";
+import LoadError from "../components/ui/LoadError";
 
 export default function EventsPage() {
   // Get events data
@@ -53,18 +54,7 @@ export default function EventsPage() {
       )}
 
       {eventsError && (
-        <div className="ui-error-container">
-          <div className="ui-error-icon">
-            <FaTimes />
-          </div>
-          <div className="ui-error-message">
-            <h3>Error Loading Events</h3>
-            <p>{eventsError.message || "Failed to load events"}</p>
-            <Button onClick={refreshEvents} variant="danger">
-              Try Again
-            </Button>
-          </div>
-        </div>
+        <LoadError what="events" error={eventsError} onRetry={refreshEvents} />
       )}
 
       <div className="ui-content-header">

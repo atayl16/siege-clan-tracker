@@ -9,6 +9,7 @@ import Button from "../components/ui/Button";
 import SearchInput from "../components/ui/SearchInput";
 
 import "./MembersPage.css";
+import LoadError from "../components/ui/LoadError";
 
 export default function MembersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -151,18 +152,7 @@ export default function MembersPage() {
       )}
 
       {membersError && (
-        <div className="ui-error-container">
-          <div className="ui-error-icon">
-            <FaTimes />
-          </div>
-          <div className="ui-error-message">
-            <h3>Error Loading Data</h3>
-            <p>{membersError.message || "Failed to load data"}</p>
-            <Button onClick={refreshMembers} variant="danger">
-              Try Again
-            </Button>
-          </div>
-        </div>
+        <LoadError what="the member list" error={membersError} onRetry={refreshMembers} />
       )}
 
       <div className="ui-content-header">
