@@ -10,6 +10,22 @@ import Button from "../ui/Button";
 import Card from "../ui/Card";
 import "./CreateGoal.css";
 
+/**
+ * Current XP (skill) or kill count (boss) for one metric, from WOM player
+ * details. undefined when WOM has no entry for it. WOM reports -1 for a
+ * metric below its ranking threshold, which is 0 for a goal's purposes.
+ *
+ * Shared by the "Current XP" box and submit, which used to disagree: the box
+ * read currentStats.experience - a field the player object does not have -
+ * so it always showed 0.
+ */
+export function currentValueOf(stats, goalType, metric) {
+  const group = goalType === "skill" ? "skills" : "bosses";
+  const field = goalType === "skill" ? "experience" : "kills";
+  const value = stats?.latestSnapshot?.data?.[group]?.[metric]?.[field];
+  return typeof value === "number" ? Math.max(0, value) : undefined;
+}
+
 export default function CreateGoal({
   player,
   userId,
@@ -73,13 +89,10 @@ export default function CreateGoal({
     let currentValue, startValue, actualTargetValue;
 
     if (goalType === "skill") {
-      // Safely access experience value with null coalescence
-      currentValue =
-        currentStats?.latestSnapshot?.data?.skills?.[selectedMetric]
-          ?.experience || 0;
+      currentValue = currentValueOf(currentStats, "skill", selectedMetric);
       startValue = currentValue;
 
-      if (currentValue === 0 && selectedMetric) {
+      if (currentValue === undefined) {
         setError(
           `Could not find current experience for ${selectedMetric}. Try selecting a different skill.`
         );
@@ -92,13 +105,12 @@ export default function CreateGoal({
           ? targetValueInput
           : currentValue + targetValueInput;
     } else {
-      // Safely access kill count with null coalescence
-      currentValue =
-        currentStats?.latestSnapshot?.data?.bosses?.[selectedMetric]?.kills ||
-        0;
+      // 0 kills is a valid starting point for a boss goal; only a boss WOM
+      // has no entry for is an error.
+      currentValue = currentValueOf(currentStats, "boss", selectedMetric);
       startValue = currentValue;
 
-      if (currentValue === 0 && selectedMetric) {
+      if (currentValue === undefined) {
         setError(
           `Could not find current kill count for ${selectedMetric}. Try selecting a different boss.`
         );
@@ -216,15 +228,7 @@ export default function CreateGoal({
                     Current {goalType === "skill" ? "XP" : "Kills"}
                   </div>
                   <div className="ui-stats-value">
-                    {goalType === "skill"
-                      ? (currentStats.experience !== undefined
-                          ? currentStats.experience
-                          : 0
-                        ).toLocaleString()
-                      : (currentStats.kills !== undefined
-                          ? currentStats.kills
-                          : 0
-                        ).toLocaleString()}
+                    {currentValueOf(currentStats, goalType, selectedMetric)?.toLocaleString() ?? "-"}
                   </div>
                 </Card.Body>
               </Card>
