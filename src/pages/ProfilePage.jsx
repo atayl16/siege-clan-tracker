@@ -26,6 +26,7 @@ import CreateRace from "../components/CreateRace";
 
 import "./ProfilePage.css";
 import { racesForUser, canEditRace } from "../utils/races";
+import ChangeUsername from "../components/ChangeUsername";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
@@ -393,6 +394,23 @@ export default function ProfilePage() {
               <div className="account-field">
                 <label>Username</label>
                 <div className="field-value">{user.username}</div>
+                <ChangeUsername
+                  currentUsername={user.username}
+                  onRenamed={(username) => {
+                    // AuthContext re-reads the user row on load, so a reload
+                    // picks up the new name everywhere. Update the cached copy
+                    // too, so nothing shows the old name in between.
+                    try {
+                      const cached = JSON.parse(localStorage.getItem("user") || "null");
+                      if (cached) {
+                        localStorage.setItem("user", JSON.stringify({ ...cached, username }));
+                      }
+                    } catch {
+                      // A bad cache entry is replaced on reload anyway.
+                    }
+                    window.location.reload();
+                  }}
+                />
               </div>
               <div className="account-field">
                 <label>Member Since</label>
