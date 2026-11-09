@@ -7,6 +7,7 @@ import { useSearchParams } from "react-router-dom";
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";
 import AdminUserManager from "../components/admin/AdminUserManager";
+import AdminPasswordReset from "../components/admin/AdminPasswordReset";
 import ClaimRequestManager from "../components/ClaimRequestManager";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
@@ -587,6 +588,7 @@ export default function AdminPage() {
             </div>
 
             <AdminUserManager />
+            <AdminPasswordReset />
           </div>
         </Tabs.Tab>
       </Tabs>

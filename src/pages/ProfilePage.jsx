@@ -27,6 +27,7 @@ import CreateRace from "../components/CreateRace";
 import "./ProfilePage.css";
 import { racesForUser, canEditRace } from "../utils/races";
 import ChangeUsername from "../components/ChangeUsername";
+import ChangePassword from "../components/ChangePassword";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
@@ -411,6 +412,10 @@ export default function ProfilePage() {
                     window.location.reload();
                   }}
                 />
+              </div>
+              <div className="account-field">
+                <label>Password</label>
+                <ChangePassword />
               </div>
               <div className="account-field">
                 <label>Member Since</label>
