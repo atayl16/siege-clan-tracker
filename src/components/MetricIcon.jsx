@@ -70,6 +70,7 @@ const MetricIcon = memo(({ metric }) => {
     "tempoross",
     "the_gauntlet",
     "the_corrupted_gauntlet",
+    "the_fractured_archive",
     "the_hueycoatl",
     "the_leviathan",
     "the_royal_titans",
