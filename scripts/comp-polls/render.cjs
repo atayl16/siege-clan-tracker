@@ -9,7 +9,11 @@
  * Voter identities never reach this module. It only ever sees counts.
  */
 
-const BAR_WIDTH = 10;
+// Square emoji render as coloured blocks in Discord, like Subo's bars. They
+// must stay outside backticks: inside code formatting they show as plain glyphs.
+const BAR_SEGMENTS = 8;
+const BAR_FILLED = '\u{1F7E9}'; // green square
+const BAR_EMPTY = '⬛'; // black large square
 const BUTTON_STYLE = { SECONDARY: 2, SUCCESS: 3 };
 const CUSTOM_ID_PREFIX = 'poll';
 
@@ -30,9 +34,16 @@ function parseVoteCustomId(customId) {
   return { pollId: match[1], optionIndex: Number(match[2]) };
 }
 
-function tallyBar(count, total) {
-  const filled = total > 0 ? Math.round((count / total) * BAR_WIDTH) : 0;
-  return '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled);
+/**
+ * Bar length is relative to the leading option, as Subo does: the leader is
+ * always full, so with five options the bars are long enough to compare at a
+ * glance. The percentage beside it is the share of all votes. Any option with
+ * a vote gets at least one segment.
+ */
+function tallyBar(count, leader) {
+  let filled = leader > 0 ? Math.round((count / leader) * BAR_SEGMENTS) : 0;
+  if (count > 0) filled = Math.max(1, filled);
+  return BAR_FILLED.repeat(filled) + BAR_EMPTY.repeat(BAR_SEGMENTS - filled);
 }
 
 function percent(count, total) {
@@ -69,13 +80,14 @@ function renderPoll({ pollId, question, options, counts, closesAt, closed = fals
   }
 
   const total = counts.reduce((sum, n) => sum + n, 0);
+  const leader = Math.max(...counts);
   const isWinner = (i) => closed && i === winnerIndex;
 
   const lines = options.map((option, i) => {
     const name = isWinner(i) ? `**${option.name}** - winner` : `**${option.name}**`;
     return [
       `${emojiText(option.emoji)}${name}`,
-      `\`${tallyBar(counts[i], total)}\` ${plural(counts[i], 'vote')} (${percent(counts[i], total)}%)`,
+      `${tallyBar(counts[i], leader)}  ${counts[i]} · ${percent(counts[i], total)}%`,
     ].join('\n');
   });
 

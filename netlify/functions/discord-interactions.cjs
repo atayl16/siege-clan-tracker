@@ -3,8 +3,9 @@
  *
  * Discord POSTs here every time someone clicks a vote button. Set it in the
  * Discord developer portal as
- *   https://siege-clan.com/.netlify/functions/discord-interactions
- * Not /api/...: netlify.toml routes /api/* to the edge functions.
+ *   https://www.siege-clan.com/.netlify/functions/discord-interactions
+ * With the www: the bare domain redirects there, and Discord does not follow
+ * redirects. Not /api/...: netlify.toml routes /api/* to the edge functions.
  *
  * Each click: verify Discord's signature, record the vote with one RPC,
  * redraw the public tally, and reply privately to the voter. Discord allows
