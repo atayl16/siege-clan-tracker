@@ -8,21 +8,11 @@ vi.mock("../supabaseClient", () => ({
     auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: "tok" } } }) },
   },
 }));
-// The real picker loads users over the network; here it offers one member.
-vi.mock("../components/UserSelector", () => ({
-  default: ({ onUserSelect }) => (
-    <button type="button" onClick={() => onUserSelect({ id: "u-1", username: "roinrin" })}>
-      pick roinrin
-    </button>
-  ),
-}));
-
-import AdminPasswordReset from "../components/admin/AdminPasswordReset";
 import ChangePassword from "../components/ChangePassword";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status });
 
-describe("password forms", () => {
+describe("ChangePassword form", () => {
   const realFetch = globalThis.fetch;
   beforeEach(() => {
     globalThis.fetch = vi.fn();
@@ -31,37 +21,6 @@ describe("password forms", () => {
   afterEach(() => {
     globalThis.fetch = realFetch;
     vi.restoreAllMocks();
-  });
-
-  describe("AdminPasswordReset", () => {
-    it("resets the chosen member and shows the temporary password once", async () => {
-      globalThis.fetch.mockResolvedValue(json(200, { username: "roinrin", temporaryPassword: "k7mq-x2dp-9rtw-hb4e" }));
-      render(<AdminPasswordReset />);
-      await userEvent.click(screen.getByText("pick roinrin"));
-      await userEvent.click(screen.getByRole("button", { name: /reset password for roinrin/i }));
-
-      expect(await screen.findByText("k7mq-x2dp-9rtw-hb4e")).toBeInTheDocument();
-      const [url, init] = globalThis.fetch.mock.calls[0];
-      expect(url).toBe("/.netlify/functions/admin-reset-password");
-      expect(init.headers.Authorization).toBe("Bearer tok");
-      expect(JSON.parse(init.body)).toEqual({ userId: "u-1" });
-    });
-
-    it("does nothing if the admin cancels the confirmation", async () => {
-      window.confirm.mockReturnValue(false);
-      render(<AdminPasswordReset />);
-      await userEvent.click(screen.getByText("pick roinrin"));
-      await userEvent.click(screen.getByRole("button", { name: /reset password for roinrin/i }));
-      expect(globalThis.fetch).not.toHaveBeenCalled();
-    });
-
-    it("shows the server's error", async () => {
-      globalThis.fetch.mockResolvedValue(json(403, { error: "Forbidden: Admin access required" }));
-      render(<AdminPasswordReset />);
-      await userEvent.click(screen.getByText("pick roinrin"));
-      await userEvent.click(screen.getByRole("button", { name: /reset password for roinrin/i }));
-      expect(await screen.findByRole("alert")).toHaveTextContent("Admin access required");
-    });
   });
 
   describe("ChangePassword", () => {

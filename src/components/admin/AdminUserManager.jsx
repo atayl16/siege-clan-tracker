@@ -1,153 +1,104 @@
-import React, { useState, useMemo } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext'; // Updated to use new DataContext
-import UserSelector from '../UserSelector';
-import { FaUserShield, FaUser, FaCheckCircle, FaExclamationTriangle, FaKey } from 'react-icons/fa';
+import React, { useMemo, useState } from "react";
+import { FaCheckCircle, FaExclamationTriangle, FaCopy, FaCheck, FaSearch } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
+import { useData } from "../../context/DataContext";
+import { supabase } from "../../supabaseClient";
+import Card from "../ui/Card";
+import "./AdminUserManager.css";
 
-// Import UI components
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import EmptyState from '../ui/EmptyState';
-import DataTable from '../ui/DataTable';
+// The built-in admin login's account. Its admin status and password are
+// never changed from here (the server refuses too).
+const isBuiltInAdmin = (user) => String(user?.username).toLowerCase() === "admin";
 
-import './AdminUserManager.css';
-
+/**
+ * Every account in one table, with that account's actions on its row:
+ * grant or remove admin (confirmed first), and reset a forgotten password.
+ * This replaces separate "current admins" and "promote a user" lists.
+ */
 export default function AdminUserManager() {
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [processing, setProcessing] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [supabaseUUID, setSupabaseUUID] = useState('');
-  const { toggleAdminStatus, linkUserToSupabaseAuth } = useAuth();
-  
-  // Get all users from the new DataContext
-  const { users, loading: usersLoading, error: usersError, refresh: refreshUsers } = useData();
+  const { user: me, toggleAdminStatus } = useAuth();
+  const { users, loading, error: loadError, refresh } = useData();
+  const [query, setQuery] = useState("");
+  const [busyId, setBusyId] = useState(null);
+  const [message, setMessage] = useState(null); // { type, text }
+  const [reset, setReset] = useState(null); // { username, temporaryPassword }
+  const [copied, setCopied] = useState(false);
 
-  // Filter admin users from the users data
-  const adminUsers = useMemo(() => {
-    return users?.filter(user => user.is_admin) || [];
-  }, [users]);
-  
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
-    setSupabaseUUID(''); // Reset UUID field when selecting a new user
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (users ?? [])
+      .filter((u) => !q || u.username?.toLowerCase().includes(q))
+      .sort((a, b) => (b.is_admin === true) - (a.is_admin === true) || a.username.localeCompare(b.username));
+  }, [users, query]);
+
+  const setAdmin = async (target, makeAdmin) => {
+    const question = makeAdmin
+      ? `Make ${target.username} an admin? They will be able to edit members, approve claims and manage users.`
+      : `Remove admin from ${target.username}?`;
+    if (!window.confirm(question)) return;
+
+    setBusyId(target.id);
     setMessage(null);
-  };
-
-  const handleToggleAdmin = async (userId, makeAdmin, username) => {
     try {
-      setProcessing(true);
-      const result = await toggleAdminStatus(userId, makeAdmin);
-      
-      if (result.success) {
-        // Link with Supabase Auth if UUID is provided (optional)
-        if (makeAdmin && supabaseUUID.trim() && typeof linkUserToSupabaseAuth === 'function') {
-          try {
-            const linkResult = await linkUserToSupabaseAuth(userId, supabaseUUID.trim());
-            if (!linkResult.success) {
-              setMessage({
-                type: 'warning',
-                text: `${username} is now an admin, but linking to Supabase Auth failed: ${linkResult.error}`
-              });
-            } else {
-              setMessage({
-                type: 'success',
-                text: `${username} is now an admin and linked to Supabase Auth`
-              });
-            }
-          } catch (err) {
-            console.error('Error linking to Supabase Auth:', err);
-            setMessage({
-              type: 'warning',
-              text: `${username} is now an admin, but linking to Supabase Auth failed: ${err.message}`
-            });
-          }
-        } else if (makeAdmin && supabaseUUID.trim()) {
-          // We have a UUID but the linking function isn't available
-          setMessage({
-            type: 'warning',
-            text: `${username} is now an admin, but Supabase Auth linking is not available.`
-          });
-        } else {
-          setMessage({
-            type: 'success',
-            text: `${username} is now ${makeAdmin ? 'an admin' : 'a regular user'}`
-          });
-        }
-        
-        // Refresh users data to reflect the changes
-        refreshUsers();
-        
-        // Update selected user if it's the same one
-        if (selectedUser && selectedUser.id === userId) {
-          setSelectedUser({
-            ...selectedUser,
-            is_admin: makeAdmin
-          });
-        }
-        
-        // Reset UUID field
-        if (makeAdmin) setSupabaseUUID('');
-      } else {
-        setMessage({
-          type: 'error',
-          text: result.error || 'Failed to update admin status'
-        });
-      }
-    } catch (err) {
-      console.error('Error toggling admin status:', err);
+      const result = await toggleAdminStatus(target.id, makeAdmin);
+      if (!result?.success) throw new Error(result?.error || "Failed to update admin status");
       setMessage({
-        type: 'error',
-        text: 'An error occurred while updating admin status'
+        type: "success",
+        text: `${target.username} is now ${makeAdmin ? "an admin" : "a regular member"}.`,
       });
+      refresh();
+    } catch (err) {
+      setMessage({ type: "error", text: err.message });
     } finally {
-      setProcessing(false);
+      setBusyId(null);
     }
   };
 
-  // Define columns for admin users table
-  const adminColumns = [
-    {
-      header: 'Username',
-      accessor: 'username'
-    },
-    {
-      header: 'Created',
-      accessor: 'created_at',
-      render: (user) => new Date(user.created_at).toLocaleDateString()
-    },
-    {
-      header: 'Actions',
-      render: (user) => (
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => handleToggleAdmin(user.id, false, user.username)}
-          disabled={processing}
-          icon={<FaUser />}
-        >
-          Remove Admin
-        </Button>
-      )
+  const resetPassword = async (target) => {
+    if (!window.confirm(`Reset the password for ${target.username}? Their current password stops working.`)) {
+      return;
     }
-  ];
+    setBusyId(target.id);
+    setMessage(null);
+    setReset(null);
+    setCopied(false);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error("Your admin session has expired. Log out and back in.");
+
+      const res = await fetch("/.netlify/functions/admin-reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId: target.id }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || `Reset failed (${res.status}).`);
+      setReset(body);
+    } catch (err) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(reset.temporaryPassword);
+      setCopied(true);
+    } catch {
+      // Clipboard can be blocked; the password is on screen to copy by hand.
+    }
+  };
 
   return (
     <div className="ui-admin-user-manager">
+      {/* No heading of its own: the User Management tab already has one. */}
       <Card variant="dark">
-        <Card.Header>
-          <div className="ui-header-with-actions">
-            <h2 className="ui-section-title">
-              <FaUserShield className="ui-icon-left" /> Admin User Management
-            </h2>
-          </div>
-        </Card.Header>
-        
         <Card.Body>
           {message && (
-            <div className={`ui-message ui-message-${message.type}`}>
-              {message.type === 'error' ? (
-                <FaExclamationTriangle className="ui-message-icon" />
-              ) : message.type === 'warning' ? (
+            <div className={`ui-message ui-message-${message.type}`} role={message.type === "error" ? "alert" : "status"}>
+              {message.type === "error" ? (
                 <FaExclamationTriangle className="ui-message-icon" />
               ) : (
                 <FaCheckCircle className="ui-message-icon" />
@@ -155,99 +106,118 @@ export default function AdminUserManager() {
               <span>{message.text}</span>
             </div>
           )}
-          
-          {usersError && (
-            <div className="ui-message ui-message-error">
-              <FaExclamationTriangle className="ui-message-icon" />
-              <span>Error loading users: {usersError.message || usersError}</span>
+
+          {reset && (
+            <div className="user-reset-result" role="status">
+              <p>
+                New temporary password for <strong>{reset.username}</strong>. It's shown only this once:
+              </p>
+              <div className="user-reset-secret">
+                <code>{reset.temporaryPassword}</code>
+                <button type="button" onClick={copy} className="user-reset-copy">
+                  {copied ? <FaCheck /> : <FaCopy />} {copied ? "Copied" : "Copy"}
+                </button>
+                <button type="button" onClick={() => setReset(null)} className="user-reset-copy">
+                  Done
+                </button>
+              </div>
+              <p className="user-reset-hint">
+                Send it to them privately. They can change it from Profile, then Account.
+              </p>
             </div>
           )}
-          
-          <div className="ui-section">
-            <h3 className="ui-section-subtitle">
-              <FaUserShield className="ui-icon-left" /> Current Admin Users
-            </h3>
-            
-            {usersLoading ? (
-              <div className="ui-loading-indicator">
-                <div className="ui-loading-spinner"></div>
-                <div className="ui-loading-text">Loading admin users...</div>
-              </div>
-            ) : adminUsers.length === 0 ? (
-              <EmptyState 
-                title="No Admin Users" 
-                description="There are currently no users with admin privileges."
-                icon={<FaUserShield className="ui-empty-state-icon" />}
-              />
-            ) : (
-              <DataTable
-                columns={adminColumns}
-                data={adminUsers}
-                keyField="id"
-                emptyMessage="No admin users found"
-                className="ui-admin-users-table"
-              />
-            )}
-          </div>
-          
-          <div className="ui-section ui-promote-section">
-            <h3 className="ui-section-subtitle">
-              <FaUser className="ui-icon-left" /> Promote Regular User to Admin
-            </h3>
-            <p className="ui-section-description">
-              Search for a user below and grant them admin privileges.
-            </p>
-            
-            <UserSelector
-              onUserSelect={handleUserSelect}
-              selectedUserId={selectedUser?.id}
-              disabled={processing}
-              viewMode="table"
-              excludeAdmins={true}
+
+          <div className="user-search">
+            <FaSearch className="user-search-icon" aria-hidden="true" />
+            <input
+              type="text"
+              placeholder="Search users"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search users"
             />
-            
-            {selectedUser && !selectedUser.is_admin && (
-              <div className="ui-user-actions">
-                <Card variant="dark" className="ui-selected-user-card">
-                  <Card.Body>
-                    <h4 className="ui-selected-user-title">
-                      Selected User: {selectedUser.username}
-                    </h4>
-                    
-                    <div className="ui-form-group ui-supabase-uuid-field">
-                      <label htmlFor="supabase-uuid" className="ui-form-label">
-                        <FaKey className="ui-icon-left" /> Supabase Auth UUID (optional):
-                      </label>
-                      <input
-                        type="text"
-                        id="supabase-uuid"
-                        value={supabaseUUID}
-                        onChange={e => setSupabaseUUID(e.target.value)}
-                        placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                        disabled={processing}
-                        className="ui-form-input"
-                      />
-                      <p className="ui-field-help">
-                        This field is completely optional. Users will have admin access in the app without a Supabase Auth ID.
-                        Only provide this if you need the user to have database-level admin access.
-                      </p>
-                    </div>
-                    
-                    <div className="ui-form-actions">
-                      <Button 
-                        variant="primary"
-                        onClick={() => handleToggleAdmin(selectedUser.id, true, selectedUser.username)}
-                        disabled={processing}
-                        icon={<FaUserShield />}
-                      >
-                        {processing ? 'Processing...' : 'Grant Admin Status'}
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </div>
-            )}
           </div>
+
+          {loadError && (
+            <div className="ui-message ui-message-error" role="alert">
+              <FaExclamationTriangle className="ui-message-icon" />
+              <span>Error loading users: {loadError.message || String(loadError)}</span>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="ui-loading-text">Loading users...</div>
+          ) : rows.length === 0 ? (
+            <p className="user-empty">No users match.</p>
+          ) : (
+            <div className="user-table-wrap">
+              <table className="user-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Joined</th>
+                    <th className="user-actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((u) => {
+                    const builtIn = isBuiltInAdmin(u);
+                    const isMe = me?.id === u.id;
+                    const busy = busyId === u.id;
+                    return (
+                      <tr key={u.id}>
+                        <td>
+                          <span className="user-name">{u.username}</span>
+                          {u.is_admin && <span className="user-tag user-tag-admin">Admin</span>}
+                          {isMe && <span className="user-tag">You</span>}
+                        </td>
+                        <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}</td>
+                        <td className="user-actions-col">
+                          {builtIn ? (
+                            <span className="user-locked">Built-in admin</span>
+                          ) : (
+                            <>
+                              {u.is_admin ? (
+                                // You can't remove your own admin access here:
+                                // it would lock you out of this page.
+                                !isMe && (
+                                  <button
+                                    type="button"
+                                    className="user-action user-action-danger"
+                                    onClick={() => setAdmin(u, false)}
+                                    disabled={busyId !== null}
+                                  >
+                                    Remove Admin
+                                  </button>
+                                )
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="user-action"
+                                  onClick={() => setAdmin(u, true)}
+                                  disabled={busyId !== null}
+                                >
+                                  Make Admin
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="user-action"
+                                onClick={() => resetPassword(u)}
+                                disabled={busyId !== null}
+                              >
+                                {busy ? "Working..." : "Reset Password"}
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card.Body>
       </Card>
     </div>

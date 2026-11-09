@@ -72,6 +72,8 @@ async function renameUser({ supabase, authUser, newUsername }) {
   const username = normaliseUsername(newUsername);
   const invalid = validateUsername(username);
   if (invalid) throw new RenameError(invalid, 400);
+  // The built-in admin's users row is named "admin"; nobody else may take it.
+  if (username === 'admin') throw new RenameError('That username is reserved.', 400);
 
   // Accounts are created with users.id = auth user id; supabase_auth_id
   // covers accounts linked afterwards.

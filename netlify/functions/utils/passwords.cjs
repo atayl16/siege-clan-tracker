@@ -39,6 +39,13 @@ function validateNewPassword(password) {
   return null;
 }
 
+// The built-in admin login (AuthContext) signs in to Supabase Auth with a
+// password derived from the hard-coded admin password, through a users row
+// named "admin". Changing its password would lock that login out, so it is
+// never changed here, by anyone.
+const PROTECTED_USERNAMES = new Set(['admin']);
+const isProtectedAccount = (account) => PROTECTED_USERNAMES.has(String(account?.username).toLowerCase());
+
 class PasswordError extends Error {
   constructor(message, statusCode) {
     super(message);
@@ -89,6 +96,9 @@ async function setPassword(supabase, account, password) {
 async function resetPassword(supabase, userId) {
   if (!userId) throw new PasswordError('Choose a user to reset.', 400);
   const account = await findAccount(supabase, { userId });
+  if (isProtectedAccount(account)) {
+    throw new PasswordError("The built-in admin account's password cannot be changed.", 403);
+  }
   const temporaryPassword = generateTempPassword();
   await setPassword(supabase, account, temporaryPassword);
   return { username: account.username, temporaryPassword };
@@ -97,6 +107,9 @@ async function resetPassword(supabase, userId) {
 /** Self-service change: the caller proves their current password first. */
 async function changeOwnPassword(supabase, authUser, currentPassword, newPassword) {
   const account = await findAccount(supabase, { authUserId: authUser.id });
+  if (isProtectedAccount(account)) {
+    throw new PasswordError("The built-in admin account's password cannot be changed.", 403);
+  }
   if (sha256Hex(currentPassword ?? '') !== account.password_hash) {
     throw new PasswordError('Your current password is not right.', 403);
   }
@@ -116,4 +129,5 @@ module.exports = {
   resetPassword,
   changeOwnPassword,
   PasswordError,
+  isProtectedAccount,
 };

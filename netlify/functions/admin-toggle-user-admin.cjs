@@ -70,6 +70,23 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // The built-in admin account must stay an admin: its login depends on it.
+    if (!isAdmin) {
+      const { data: target, error: targetError } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', userId)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (target?.username?.toLowerCase() === 'admin') {
+        return {
+          statusCode: 403,
+          headers,
+          body: JSON.stringify({ error: 'The built-in admin account cannot be demoted.' }),
+        };
+      }
+    }
+
     // Update user admin status using service role key (bypasses RLS)
     const { data, error } = await supabase
       .from('users')
