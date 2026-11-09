@@ -274,11 +274,10 @@ export default function ProfilePage() {
                     <div className="ui-character-name">
                       {claim.members.name}
                     </div>
-                    {!hasSeveralCharacters ? (
-                      <Badge variant="success" pill>
-                        Claimed
-                      </Badge>
-                    ) : Number(claim.members.wom_id ?? claim.wom_id) === mainId ? (
+                    {/* Every character here is claimed, so "Claimed" said nothing.
+                        A lone character is the main (mainCharacterId falls back
+                        to it), so it reads Main too. */}
+                    {Number(claim.members.wom_id ?? claim.wom_id) === mainId ? (
                       <Badge variant="success" pill>
                         Main
                       </Badge>

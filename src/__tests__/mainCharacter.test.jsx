@@ -104,10 +104,12 @@ describe("ProfilePage main character", () => {
     expect(fetchUserClaims).toHaveBeenCalledTimes(callsBefore);
   });
 
-  it("shows no main/alt controls with a single character", () => {
+  it("labels a single character Main, with no Make Main button", () => {
+    // It used to say "Claimed", which every character on this page is.
     mockClaims = [claim(2, "Roinrin", true)];
     renderPage();
-    expect(screen.getByText("Claimed")).toBeInTheDocument();
+    expect(screen.getByText("Main")).toBeInTheDocument();
+    expect(screen.queryByText("Claimed")).toBeNull();
     expect(screen.queryByRole("button", { name: "Make Main" })).toBeNull();
   });
 });
