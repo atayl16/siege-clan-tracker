@@ -1,5 +1,6 @@
 import React from "react";
 import { useMetrics } from "../hooks/useMetrics"; // Use the updated hook
+import { titleize } from "../utils/stringUtils";
 import "./MetricSelector.css";
 
 export default function MetricSelector({ 
@@ -45,7 +46,8 @@ export default function MetricSelector({
           <option value="">{getPlaceholderText()}</option>
           {metrics?.map((metric) => (
             <option key={metric.metric} value={metric.metric}>
-              {metric.name}
+              {/* WOM keys are snake_case ("chambers_of_xeric"); show them as names. */}
+              {titleize(metric.name)}
             </option>
           ))}
         </select>
