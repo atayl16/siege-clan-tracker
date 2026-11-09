@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { usePlayer } from "../../hooks/usePlayer"; // New hook for player stats
+import { fetchFreshPlayerStats } from "../../services/playerRefresh";
 import { useUserGoals } from "../../hooks/useUserGoals"; // New hook for goals
 import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
@@ -42,10 +43,30 @@ export default function CreateGoal({
   const [isPublic, setIsPublic] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false); // Track if user has interacted with the form
 
-  // Use new hooks for player stats and goals
-  const { player: currentStats, loading: loadingStats } = usePlayer(
-    player.wom_id
-  );
+  // The goal's starting value is recorded from these stats, so they must be
+  // current: WOM's saved snapshot (usePlayer) can be hours or days old, and
+  // XP gained since then would count as progress on the new goal. Ask WOM to
+  // pull the hiscores as the form opens, and fall back to the saved snapshot
+  // only if that fails.
+  const { player: savedStats, loading: loadingSaved } = usePlayer(player.wom_id);
+  const [fresh, setFresh] = useState({ status: "loading", stats: null });
+  useEffect(() => {
+    let cancelled = false;
+    setFresh({ status: "loading", stats: null });
+    fetchFreshPlayerStats(player.wom_id)
+      .then((stats) => {
+        if (!cancelled) setFresh({ status: stats.updated ? "fresh" : "saved", stats });
+      })
+      .catch(() => {
+        if (!cancelled) setFresh({ status: "failed", stats: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [player.wom_id]);
+  const currentStats = fresh.stats ?? (fresh.status === "failed" ? savedStats : null);
+  const loadingStats = fresh.status === "loading" || (fresh.status === "failed" && loadingSaved);
+
   const { createGoal, loading: submitting } = useUserGoals(userId);
 
   // Set initial selected metric when metrics load
@@ -73,7 +94,7 @@ export default function CreateGoal({
     // Check if currentStats is loaded yet
     if (loadingStats) {
       setError(
-        "Player statistics are still loading. Please wait a moment and try again."
+        "Still getting your latest stats from WiseOldMan. Please wait a moment and try again."
       );
       return;
     }
@@ -219,7 +240,7 @@ export default function CreateGoal({
             (loadingStats ? (
               <div className="ui-loading-indicator">
                 <div className="ui-loading-spinner"></div>
-                <div className="ui-loading-text">Loading player stats...</div>
+                <div className="ui-loading-text">Getting your latest stats from WiseOldMan...</div>
               </div>
             ) : currentStats ? (
               <Card variant="dark" className="ui-current-stats">
@@ -230,6 +251,12 @@ export default function CreateGoal({
                   <div className="ui-stats-value">
                     {currentValueOf(currentStats, goalType, selectedMetric)?.toLocaleString() ?? "-"}
                   </div>
+                  {fresh.status !== "fresh" && (
+                    <div className="ui-stats-note" role="note">
+                      WiseOldMan could not fetch your latest hiscores just now, so
+                      this is its last saved number and may be behind.
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             ) : hasInteracted ? (
@@ -305,10 +332,10 @@ export default function CreateGoal({
               type="number"
               className="ui-form-input"
               min={
-                targetMode === "total" && currentStats
-                  ? goalType === "skill"
-                    ? (currentStats.experience || 0) + 1
-                    : (currentStats.kills || 0) + 1
+                // The player object has no top-level experience or kills, so
+                // this used to be 1 whatever the current value was.
+                targetMode === "total"
+                  ? (currentValueOf(currentStats, goalType, selectedMetric) ?? 0) + 1
                   : 1
               }
               value={targetValue}

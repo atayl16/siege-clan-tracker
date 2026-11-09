@@ -2,13 +2,25 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import { refreshRaceProgress } from "../services/raceRefresh";
 
-/** Record new racers' starting points now rather than at the next sync. */
+/**
+ * Record new racers' starting points now rather than at the next sync.
+ *
+ * Forced, so WiseOldMan pulls each racer's current hiscores first: its saved
+ * snapshot can be hours old, and XP gained since then would otherwise count
+ * as race progress.
+ */
 async function startTracking(raceId) {
   try {
-    await refreshRaceProgress([raceId]);
+    await refreshRaceProgress([raceId], { force: true });
   } catch (err) {
-    // The hourly sync will pick them up; the save itself succeeded.
-    console.warn("Could not start tracking the race yet:", err.message);
+    console.warn("Could not get fresh stats for the race; using saved ones:", err.message);
+    try {
+      await refreshRaceProgress([raceId]);
+    } catch (fallbackErr) {
+      // The page refresh or the hourly sync will pick them up; the save
+      // itself succeeded.
+      console.warn("Could not start tracking the race yet:", fallbackErr.message);
+    }
   }
 }
 

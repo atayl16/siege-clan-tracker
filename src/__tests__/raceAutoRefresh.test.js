@@ -6,12 +6,15 @@ let racesRead;
 let races;
 vi.mock("../supabaseClient", () => {
   const from = () => {
+    let single = false;
     const builder = {
       select() { return builder; },
       insert() { return builder; },
       order() { return builder; },
-      single() { return builder; },
+      // Like supabase-js: one row, not the list.
+      single() { single = true; return builder; },
       then(resolve) {
+        if (single) return Promise.resolve({ data: races[0], error: null }).then(resolve);
         racesRead++;
         return Promise.resolve({ data: races, error: null }).then(resolve);
       },
@@ -94,6 +97,39 @@ describe("useRaces progress refresh", () => {
     await waitFor(() => expect(warn).toHaveBeenCalled());
     expect(result.current.races).toEqual(races);
     expect(result.current.error).toBeNull();
+    warn.mockRestore();
+  });
+
+  it("records new racers' starting points from fresh hiscores when a race is created", async () => {
+    races = [];
+    const { result } = renderHook(() => useRaces("u1"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    races = [{ id: "new", status: "active", participants: [] }];
+
+    await result.current.createRace({ title: "T", participants: [{ wom_id: 7, metric: "sailing", target_value: 1 }] });
+
+    const bodies = globalThis.fetch.mock.calls.map(([, init]) => JSON.parse(init.body));
+    expect(bodies[0]).toEqual({ raceIds: ["new"], force: true });
+  });
+
+  it("falls back to saved stats if the fresh refresh fails at creation", async () => {
+    races = [];
+    const { result } = renderHook(() => useRaces("u1"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    races = [{ id: "new", status: "active", participants: [] }];
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 502, json: async () => ({}) })
+      .mockResolvedValue({ ok: true, json: async () => ({ results: [] }) });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await result.current.createRace({ title: "T", participants: [{ wom_id: 7, metric: "sailing", target_value: 1 }] });
+
+    const bodies = globalThis.fetch.mock.calls.map(([, init]) => JSON.parse(init.body));
+    expect(bodies.slice(0, 2)).toEqual([
+      { raceIds: ["new"], force: true },
+      { raceIds: ["new"], force: false },
+    ]);
     warn.mockRestore();
   });
 });

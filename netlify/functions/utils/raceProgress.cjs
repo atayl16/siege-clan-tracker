@@ -23,7 +23,8 @@
  * it can be tested without the network or a database.
  */
 
-const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
+const { fetchSnapshots } = require('./womPlayers.cjs');
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_RACES_PER_REQUEST = 20;
 
@@ -121,68 +122,6 @@ function refreshDecision(race, now, force) {
   const lastChecked = Math.max(0, ...participants.map((p) => Date.parse(p.updated_at) || 0));
   const wait = (force ? COOLDOWN_MS.force : COOLDOWN_MS.view) - (now.getTime() - lastChecked);
   return wait > 0 ? { due: false, retryAfterSeconds: Math.ceil(wait / 1000) } : { due: true };
-}
-
-/** One WOM request with a timeout; null on any failure. */
-async function womRequest(fetchImpl, url, { method = 'GET', apiKey, timeoutMs }) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const headers = { 'User-Agent': 'Siege-Clan-Tracker/1.0' };
-    if (apiKey) headers['x-api-key'] = apiKey;
-    const res = await fetchImpl(url, { method, headers, signal: controller.signal });
-    if (!res.ok) {
-      // Drain it so the connection is released.
-      await res.body?.cancel?.().catch(() => {});
-      return null;
-    }
-    return await res.json();
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/**
- * Latest WOM snapshot data for each player.
- *
- * With `force`, WOM is first asked to pull the player's current hiscores
- * (POST /players/:username), so XP gained since WOM last checked them counts.
- * WOM refuses that more than about once a minute per player; the stored
- * snapshot is used whenever the update does not succeed.
- *
- * @param {number[]} womIds
- * @returns {Promise<Map<number, object>>} wom_id -> latestSnapshot.data
- */
-async function fetchSnapshots(
-  womIds,
-  { force = false, apiKey, fetchImpl = globalThis.fetch, concurrency = 4, delayMs = 0, timeoutMs = 4000, log = () => {} } = {}
-) {
-  const snapshots = new Map();
-  const queue = [...new Set(womIds.map(Number))];
-
-  async function worker() {
-    while (queue.length) {
-      const womId = queue.shift();
-      const player = await womRequest(fetchImpl, `${WOM_API_BASE}/players/id/${womId}`, { apiKey, timeoutMs });
-      let data = player?.latestSnapshot?.data;
-      if (force && player?.username) {
-        const updated = await womRequest(
-          fetchImpl,
-          `${WOM_API_BASE}/players/${encodeURIComponent(player.username)}`,
-          { method: 'POST', apiKey, timeoutMs }
-        );
-        if (updated?.latestSnapshot?.data) data = updated.latestSnapshot.data;
-      }
-      if (data) snapshots.set(womId, data);
-      else log(`No WOM data for player ${womId}; skipping them this time`);
-      if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
-  return snapshots;
 }
 
 /**

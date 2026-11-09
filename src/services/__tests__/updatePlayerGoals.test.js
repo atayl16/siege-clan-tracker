@@ -31,7 +31,10 @@ vi.mock('../../supabaseClient', () => {
   return { supabase: { from } };
 });
 
+vi.mock('../playerRefresh', () => ({ fetchFreshPlayerStats: vi.fn() }));
+
 import { updatePlayerGoals } from '../goalProgressService';
+import { fetchFreshPlayerStats } from '../playerRefresh';
 
 const player = {
   latestSnapshot: {
@@ -60,6 +63,7 @@ beforeEach(() => {
   state.updates = [];
   state.selectError = null;
   global.fetch = vi.fn();
+  fetchFreshPlayerStats.mockReset();
 });
 
 describe('updatePlayerGoals', () => {
@@ -105,5 +109,41 @@ describe('updatePlayerGoals', () => {
 
     expect(global.fetch).not.toHaveBeenCalled();
     expect(result).toEqual({ updated: 0, completed: 0 });
+  });
+
+  it('uses fresh hiscores when asked (the Sync button), not the saved snapshot', async () => {
+    state.goals = [goal()];
+    fetchFreshPlayerStats.mockResolvedValue({
+      updated: true,
+      latestSnapshot: { data: { skills: { attack: { experience: 6_000_000 } } } },
+    });
+
+    await updatePlayerGoals(42, 'u1', { fresh: true });
+
+    expect(fetchFreshPlayerStats).toHaveBeenCalledWith(42);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(state.updates).toEqual([expect.objectContaining({ id: 'g1', current_value: 6_000_000 })]);
+  });
+
+  it('falls back to the saved snapshot when fresh stats are unavailable', async () => {
+    state.goals = [goal()];
+    fetchFreshPlayerStats.mockImplementation(async () => {
+      throw new Error('WiseOldMan is down');
+    });
+    global.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(player) });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await updatePlayerGoals(42, 'u1', { fresh: true });
+
+    expect(global.fetch).toHaveBeenCalledWith('/api/wom-player?id=42');
+    expect(state.updates).toEqual([expect.objectContaining({ id: 'g1', current_value: 5_000_000 })]);
+    warn.mockRestore();
+  });
+
+  it('does not ask for fresh stats by default (opening the profile)', async () => {
+    state.goals = [goal()];
+    global.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(player) });
+    await updatePlayerGoals(42, 'u1');
+    expect(fetchFreshPlayerStats).not.toHaveBeenCalled();
   });
 });

@@ -16,6 +16,11 @@ const stats = {
 vi.mock('../../../hooks/usePlayer', () => ({
   usePlayer: () => ({ player: stats, loading: false }),
 }));
+// The form takes its numbers from fresh hiscores (playerRefresh), falling
+// back to the saved snapshot (usePlayer) only if that fails.
+vi.mock('../../../services/playerRefresh', () => ({
+  fetchFreshPlayerStats: async () => ({ updated: true, ...stats }),
+}));
 vi.mock('../../../hooks/useUserGoals', () => ({
   useUserGoals: () => ({ createGoal: vi.fn(), loading: false }),
 }));
@@ -53,5 +58,5 @@ test("shows the selected skill's real XP, not 0", async () => {
 
   await userEvent.selectOptions(screen.getByLabelText('metric'), 'runecrafting');
 
-  expect(screen.getByText((13034431).toLocaleString())).toBeInTheDocument();
+  expect(await screen.findByText((13034431).toLocaleString())).toBeInTheDocument();
 });
