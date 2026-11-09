@@ -53,8 +53,11 @@ test('shows public goals with the player name looked up from members', async () 
   expect(screen.getByText('Runecrafting')).toBeInTheDocument();
 });
 
-test("a signed-in member's My Races tab includes the races they created", () => {
+test('is a community board: no My Races tab, and a signed-in member sees only public races', () => {
+  // Your own races (and creating one) live on the profile's Races tab.
   auth = { user: { id: 'u1' }, userClaims: [] };
   renderPage();
-  expect(screen.getByText('My Private Race')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /My Races/ })).not.toBeInTheDocument();
+  expect(screen.getByText('Public Sailing')).toBeInTheDocument();
+  expect(screen.queryByText('My Private Race')).not.toBeInTheDocument();
 });
