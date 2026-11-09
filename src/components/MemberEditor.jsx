@@ -27,6 +27,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
     first_lvl: 0,
     siege_score: 0,
     join_date: new Date(),
+    alt: false,
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +49,7 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         first_lvl: member.first_lvl || 0,
         siege_score: member.siege_score || 0,
         join_date: member.join_date ? new Date(member.join_date) : new Date(),
+        alt: Boolean(member.alt),
       });
     } else {
       // Reset form for new member
@@ -63,15 +65,18 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         first_lvl: 0,
         siege_score: 0,
         join_date: new Date(),
+        alt: false,
       });
     }
   }, [member]);
   
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
     
     // For number inputs, convert them all to integers (whole numbers)
-    const processedValue = type === 'number' 
+    const processedValue = type === 'checkbox'
+      ? checked
+      : type === 'number' 
       ? (value === '' ? 0 : Math.floor(parseFloat(value))) // Use Math.floor to ensure whole numbers
       : value;
       
@@ -243,6 +248,22 @@ export default function MemberEditor({ member, onSave, onCancel }) {
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="ui-form-group ui-form-checkbox">
+          <label htmlFor="alt">
+            <input
+              type="checkbox"
+              id="alt"
+              name="alt"
+              checked={formData.alt}
+              onChange={handleChange}
+            />{" "}
+            Alt account
+          </label>
+          <div className="ui-form-hint">
+            Alts are hidden on the Members page unless "Show Alt Accounts" is ticked.
           </div>
         </div>
 
