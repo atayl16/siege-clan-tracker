@@ -95,7 +95,7 @@ describe("useRaces progress refresh", () => {
     const { result } = renderHook(() => useRaces("u1"));
 
     await waitFor(() => expect(warn).toHaveBeenCalled());
-    expect(result.current.races).toEqual(races);
+    expect(result.current.races).toEqual(races.map((race) => ({ ...race, creator_name: null })));
     expect(result.current.error).toBeNull();
     warn.mockRestore();
   });

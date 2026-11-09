@@ -89,7 +89,15 @@ export default function RaceCard({ race, isOwner, onRefresh }) {
                 <FaLock /> Private
               </span>
             )}
-            <span className="ui-race-date">Created {createdAt}</span>
+            <span className="ui-race-date">
+              Created {createdAt}
+              {race.creator_name && (
+                <>
+                  {" by "}
+                  <span className="ui-race-creator">{race.creator_name}</span>
+                </>
+              )}
+            </span>
           </div>
         </div>
       </Card.Header>

@@ -59,7 +59,8 @@ export function useRaces(userId) {
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
-      setRaces(data ?? []);
+      const names = await creatorNames(data ?? []);
+      setRaces((data ?? []).map((race) => ({ ...race, creator_name: names.get(race.creator_id) ?? null })));
     } catch (err) {
       console.error("Error fetching races:", err);
       setError(err);
@@ -300,4 +301,37 @@ export function useRaces(userId) {
     refreshRaces: fetchRaces,
     refreshProgress,
   };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Usernames of the races' creators, keyed by creator_id.
+ *
+ * races.creator_id is the creator's auth id (the races_insert_own policy pins
+ * it to auth.uid()), with no foreign key to users, so it cannot be embedded in
+ * the races query. Registered users' users.id is their auth id, and every row
+ * also carries supabase_auth_id, so either column can match. Only username is
+ * read. A failed lookup just leaves the names off.
+ */
+async function creatorNames(races) {
+  const ids = [...new Set(races.map((race) => race.creator_id).filter((id) => UUID.test(id ?? "")))];
+  if (!ids.length) return new Map();
+  try {
+    const list = ids.join(",");
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, supabase_auth_id, username")
+      .or(`id.in.(${list}),supabase_auth_id.in.(${list})`);
+    if (error) throw error;
+    const names = new Map();
+    for (const u of data ?? []) {
+      if (u.id) names.set(u.id, u.username);
+      if (u.supabase_auth_id) names.set(u.supabase_auth_id, u.username);
+    }
+    return names;
+  } catch (err) {
+    console.warn("Could not look up race creators:", err.message);
+    return new Map();
+  }
 }
