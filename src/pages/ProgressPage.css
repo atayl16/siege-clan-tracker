@@ -8,10 +8,11 @@
   color: var(--color-text, #e0e0e0);
 }
 
+/* No border here: .ui-tabs-nav (components/ui/Tabs.css) already draws the
+   line under the tabs, and both together showed as two dividers. */
 .ui-tabs-container {
   width: 100%;
   margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ui-tabs-nav {
