@@ -31,7 +31,8 @@ Copy `.env.example` to `.env` and configure:
 # Development server
 npm run dev
 
-# With Netlify functions
+# With Netlify functions (needs the CLI installed globally once:
+# npm install -g netlify-cli)
 npm run netlify:dev
 ```
 
