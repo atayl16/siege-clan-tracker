@@ -25,6 +25,7 @@ import ProgressPage from "./pages/ProgressPage";
 import EditRacePage from "./pages/EditRacePage";
 import AchievementsPage from "./pages/AchievementsPage";
 import NewMembers from "./pages/NewMembers";
+import NotFoundPage from "./pages/NotFoundPage";
 import ForgotPassword from "./components/ForgotPassword";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -115,7 +116,7 @@ function App() {
           {/* 404 Route */}
           <Route
             path="*"
-            element={<div className="page-container">404 - Page Not Found</div>}
+            element={<NotFoundPage />}
           />
         </Routes>
       </div>
