@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../context/AuthContext"; 
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import { useUserGoals } from "../hooks/useUserGoals"; // Updated hook
+import { useMembers } from "../hooks/useMembers";
+import { racesForUser } from "../utils/races";
 import { FaPlus, FaTrophy, FaBullseye } from "react-icons/fa";
 import CreateRace from "../components/CreateRace";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
@@ -14,7 +16,7 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 
 export default function ProgressPage() {
-  const { user } = useAuth();
+  const { user, userClaims } = useAuth();
 
   // Set default active tab based on authentication status
   const [activeTab, setActiveTab] = useState(user ? "myRaces" : "publicRaces");
@@ -27,27 +29,34 @@ export default function ProgressPage() {
     }
   }, [user, activeTab]);
 
-  // Fetch races and user goals
-  const {
-    activeRaces,
-    publicRaces,
-    loading: racesLoading,
-    refreshRaces,
-  } = useRaces(user?.id);
+  // useRaces returns { races, loading, refresh }. This page used to read
+  // activeRaces / publicRaces / refreshRaces, which the hook never had, so
+  // publicRaces.filter threw and the page was a blank screen - which is why
+  // the nav link was hidden. RLS (races_read) already limits `races` to
+  // public races plus your own.
+  const { races, loading: racesLoading, refresh: refreshRaces } = useRaces(user?.id);
+  const activeRaces = racesForUser(races, user, userClaims);
+  const filteredPublicRaces = (races ?? []).filter((race) => race.public === true);
 
-  const {
-    userGoals,
-    loading: goalsLoading,
-    error: goalsError,
-  } = useUserGoals();
+  // Without a user id, RLS returns your own goals plus everyone's public ones;
+  // the hook's publicGoals keeps only the public ones.
+  const { publicGoals: goals, loading: goalsLoading } = useUserGoals();
+
+  // user_goals has no player name, and GoalCard shows goal.player_name, so
+  // look the character up by wom_id.
+  const { members } = useMembers();
+  const publicGoals = useMemo(() => {
+    const nameById = new Map((members ?? []).map((m) => [Number(m.wom_id), m.name]));
+    return (goals ?? []).map((goal) => ({
+      ...goal,
+      player_name: goal.player_name ?? nameById.get(Number(goal.wom_id)),
+    }));
+  }, [goals, members]);
 
   const handleCreatedRace = () => {
     setShowCreateRace(false);
     refreshRaces();
   };
-
-  const filteredPublicRaces = publicRaces.filter((race) => race.public === true);
-  const publicGoals = userGoals.filter((goal) => goal.public === true);
 
   // Content for different tabs
   const renderTabContent = () => {

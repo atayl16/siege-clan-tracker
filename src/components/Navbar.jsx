@@ -112,6 +112,13 @@ export default function Navbar() {
             Achievements
           </Link>
 
+          <Link
+            to="/progress"
+            className={location.pathname === "/progress" ? "active" : ""}
+          >
+            Races &amp; Goals
+          </Link>
+
 
           {/* Divider */}
           <div className="navbar-divider"></div>
