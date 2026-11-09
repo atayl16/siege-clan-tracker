@@ -19,13 +19,14 @@ const supabase = createClient(
  * POST /.netlify/functions/race-refresh  { raceIds: string[], force?: boolean }
  *
  * Brings race progress up to date from WiseOldMan, so the races page does not
- * have to wait for the hourly sync (which GitHub often runs hours late).
+ * have to wait for the hourly sync (which GitHub often runs hours late). Each
+ * refresh asks WOM to pull the racers' current hiscores first.
  *
  * - The page calls it with force false when it opens: anyone may, signed in
- *   or not. It only re-reads WOM's stored stats and writes derived progress,
- *   at most once per race every few minutes.
- * - The Refresh button sends force true, which also asks WOM to pull fresh
- *   hiscores. That spends WOM API quota, so it needs a signed-in member.
+ *   or not, and each race is refreshed at most once every five minutes.
+ * - The Refresh button sends force true for a one-minute cooldown instead.
+ *   That lets one person spend WOM quota faster, so it needs a signed-in
+ *   member.
  *
  * Nothing about the races is returned beyond what happened to each one; the
  * page re-reads races through its own RLS-checked query.

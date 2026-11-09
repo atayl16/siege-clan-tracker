@@ -42,8 +42,10 @@ function fakeWom({ stored = {}, fresh = {}, failUpdate = false } = {}) {
     }
     const byName = url.match(/\/players\/player(\d+)$/);
     if (byName && method === 'POST') {
-      if (failUpdate) return json({ message: 'Too soon' }, 429);
       const id = Number(byName[1]);
+      // No fresh value given: WOM declines the update, as it does for a
+      // player updated in the last minute, so the saved snapshot is used.
+      if (failUpdate || !(id in fresh)) return json({ message: 'Too soon' }, 429);
       return json({ id, username: `player${id}`, latestSnapshot: { data: snapshot(fresh[id]) } });
     }
     return json({}, 404);
@@ -159,6 +161,16 @@ describe('refreshRaces', () => {
         filters: [['id', 'p1']],
       }),
     ]);
+  });
+
+  it('asks WOM for current hiscores even on a page-view refresh, and uses them', async () => {
+    const supabase = fakeSupabase([activeRace([participant()])]);
+    const fetchImpl = fakeWom({ stored: { 7: 55000 }, fresh: { 7: 58000 } });
+
+    await refreshRaces({ supabase, raceIds: [RACE_ID], now: NOW, fetchImpl });
+
+    expect(fetchImpl.mock.calls.some(([url, init]) => init?.method === 'POST' && url.endsWith('/players/player7'))).toBe(true);
+    expect(supabase.writes[0].values).toEqual({ current_value: 8000, updated_at: NOW.toISOString() });
   });
 
   it('stamps participants whose progress did not change, so the cooldown sees the check', async () => {
