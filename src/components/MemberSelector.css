@@ -1,23 +1,123 @@
-.member-selector {
+.member-picker {
+  position: relative;
   width: 100%;
+  max-width: 400px;
 }
 
-.select-member-btn {
-  background-color: var(--color-primary, #3498db);
-  color: white;
+.member-picker-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.member-picker-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #888;
+  pointer-events: none;
+}
+
+.member-picker-input {
+  width: 100%;
+  padding: 0.6rem 2.25rem 0.6rem 2.25rem;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #f0f0f0;
+  font-size: 0.95rem;
+}
+
+.member-picker-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #5b8def);
+}
+
+.member-picker-cancel {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
   border: none;
-  border-radius: var(--border-radius-sm, 0.25rem);
-  padding: 0.25rem 0.75rem;
-  font-size: var(--font-size-sm, 0.875rem);
+  color: #aaa;
   cursor: pointer;
-  transition: background-color var(--transition-fast, 0.2s);
+  padding: 0.25rem;
 }
 
-.select-member-btn:hover:not(:disabled) {
-  background-color: var(--color-primary-hover, #2980b9);
+.member-picker-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background-color: #252525;
+  border: 1px solid #444;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.select-member-btn:disabled {
-  background-color: var(--color-disabled, #bdc3c7);
-  cursor: not-allowed;
+.member-picker-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: #f0f0f0;
+}
+
+.member-picker-option.is-active {
+  background-color: #34405a;
+}
+
+.member-picker-option-name {
+  font-weight: 500;
+}
+
+.member-picker-meta {
+  font-size: 0.8rem;
+  color: #999;
+  white-space: nowrap;
+}
+
+.member-picker-empty {
+  padding: 0.5rem 0.75rem;
+  color: #888;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.member-picker-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 400px;
+  padding: 0.5rem 0.75rem;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+}
+
+.member-picker-selected-name {
+  font-weight: 600;
+  color: #f0f0f0;
+}
+
+.member-picker-change {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #ddd;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.member-picker-change:hover:not(:disabled) {
+  border-color: var(--color-primary, #5b8def);
+  color: #fff;
 }
