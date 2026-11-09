@@ -78,3 +78,46 @@
     font-size: 0.875rem; /* 14px */
   }
 }
+
+/* Forgot Password: the steps to get a reset from an admin. */
+.ui-auth-help {
+  color: var(--color-text, #e0e0e0);
+  line-height: 1.5;
+}
+
+.ui-auth-help p {
+  margin-bottom: 0.5rem;
+}
+
+.ui-auth-help ol {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ui-auth-help li + li {
+  margin-top: 0.35rem;
+}
+
+.ui-auth-discord {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  background-color: #5865f2;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ui-auth-discord:hover {
+  background-color: #4752c4;
+  color: #fff;
+}
+
+/* Two redirect lines in a row (Login: register, then forgot password). */
+.ui-auth-redirect + .ui-auth-redirect {
+  margin-top: 0.5rem;
+}
