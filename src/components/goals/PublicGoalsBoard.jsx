@@ -35,7 +35,8 @@ export default function PublicGoalsBoard() {
         const progressB = (b.current_value - b.start_value) / (b.target_value - b.start_value);
         return progressB - progressA;
       } else if (sortBy === 'recent') {
-        return new Date(b.created_at) - new Date(a.created_at);
+        // Production's user_goals has no created_at; updated_at is what exists.
+        return new Date(b.updated_at) - new Date(a.updated_at);
       } else if (sortBy === 'deadline') {
         if (!a.target_date) return 1;
         if (!b.target_date) return -1;

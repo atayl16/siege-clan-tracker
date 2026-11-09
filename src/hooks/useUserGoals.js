@@ -28,7 +28,10 @@ export function useUserGoals(userId) {
       // caller only wants one member's goals.
       if (userId) query = query.eq("user_id", userId);
 
-      const { data, error: fetchError } = await query.order("created_at", {
+      // updated_at, not created_at: production's user_goals has no
+      // created_at column, so ordering by it failed the whole query (42703)
+      // and every goals view came back empty.
+      const { data, error: fetchError } = await query.order("updated_at", {
         ascending: false,
       });
       if (fetchError) throw fetchError;
