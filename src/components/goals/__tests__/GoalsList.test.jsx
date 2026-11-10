@@ -37,6 +37,20 @@ describe('GoalsList', () => {
     expect(screen.queryByText(/magic_other_char|magic other char/i)).not.toBeInTheDocument();
   });
 
+  it('says whether each goal is public or private', () => {
+    hookResult.userGoals = [
+      { id: 'a', wom_id: 42, goal_type: 'skill', metric: 'attack', target_value: 100, current_value: 50, start_value: 0, public: true },
+      { id: 'b', wom_id: 42, goal_type: 'boss', metric: 'zulrah', target_value: 100, current_value: 50, start_value: 0, public: false },
+      // Goals saved before the column had a value count as private.
+      { id: 'c', wom_id: 42, goal_type: 'boss', metric: 'vorkath', target_value: 100, current_value: 50, start_value: 0 },
+    ];
+    render(<GoalsList player={player} userId="u1" onClose={vi.fn()} />);
+
+    expect(screen.getAllByText('Public')).toHaveLength(1);
+    expect(screen.getAllByText('Private')).toHaveLength(2);
+    expect(screen.getByText('Public')).toHaveAttribute('title', 'Visible to other players');
+  });
+
   it('shows the empty state rather than crashing when there are no goals', () => {
     hookResult.userGoals = [];
     render(<GoalsList player={player} userId="u1" onClose={vi.fn()} />);
