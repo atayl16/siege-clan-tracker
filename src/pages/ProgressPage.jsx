@@ -9,6 +9,9 @@ import LoadingIndicator from "../components/ui/LoadingIndicator";
 import RaceCard from "../components/RaceCard";
 import GoalCard from "../components/GoalCard";
 import EmptyState from "../components/ui/EmptyState";
+import Button from "../components/ui/Button";
+import BoardFilters from "../components/BoardFilters";
+import { filterGoals, filterRaces, sortGoals } from "../utils/boardFilters";
 import "./ProgressPage.css";
 
 import Card from "../components/ui/Card";
@@ -42,6 +45,46 @@ export default function ProgressPage() {
     }));
   }, [goals, members]);
 
+  // Search and filters, per tab. Everything is already loaded, so they
+  // filter in the browser.
+  const [raceQuery, setRaceQuery] = useState("");
+  const [raceStatus, setRaceStatus] = useState("all");
+  const [goalQuery, setGoalQuery] = useState("");
+  const [goalType, setGoalType] = useState("all");
+  const [goalStatus, setGoalStatus] = useState("all");
+  const [goalSort, setGoalSort] = useState("progress");
+
+  const shownRaces = useMemo(
+    () => filterRaces(filteredPublicRaces, { query: raceQuery, status: raceStatus }),
+    [filteredPublicRaces, raceQuery, raceStatus]
+  );
+  const shownGoals = useMemo(
+    () => sortGoals(filterGoals(publicGoals, { query: goalQuery, type: goalType, status: goalStatus }), goalSort),
+    [publicGoals, goalQuery, goalType, goalStatus, goalSort]
+  );
+
+  const clearRaceFilters = () => {
+    setRaceQuery("");
+    setRaceStatus("all");
+  };
+  const clearGoalFilters = () => {
+    setGoalQuery("");
+    setGoalType("all");
+    setGoalStatus("all");
+  };
+
+  const noMatches = (what, onClear) => (
+    <EmptyState
+      title={`No ${what} match`}
+      description="Try a different search or filter."
+      action={
+        <Button variant="secondary" onClick={onClear}>
+          Clear filters
+        </Button>
+      }
+    />
+  );
+
   // Content for different tabs
   const renderTabContent = () => {
     switch (activeTab) {
@@ -59,16 +102,42 @@ export default function ProgressPage() {
         }
 
         return (
-          <div className="ui-races-grid">
-            {filteredPublicRaces.map((race) => (
-              <RaceCard
-                key={race.id}
-                race={race}
-                isOwner={canEditRace(race, user)}
-                onRefresh={refreshRace}
-              />
-            ))}
-          </div>
+          <>
+            <BoardFilters
+              query={raceQuery}
+              onQueryChange={setRaceQuery}
+              placeholder="Search races or racers"
+              groups={[
+                {
+                  label: "Race status",
+                  value: raceStatus,
+                  onChange: setRaceStatus,
+                  options: [
+                    { value: "all", label: "All" },
+                    { value: "active", label: "Active" },
+                    { value: "finished", label: "Finished" },
+                  ],
+                },
+              ]}
+              shown={shownRaces.length}
+              total={filteredPublicRaces.length}
+              onClear={clearRaceFilters}
+            />
+            {shownRaces.length === 0 ? (
+              noMatches("races", clearRaceFilters)
+            ) : (
+              <div className="ui-races-grid">
+                {shownRaces.map((race) => (
+                  <RaceCard
+                    key={race.id}
+                    race={race}
+                    isOwner={canEditRace(race, user)}
+                    onRefresh={refreshRace}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         );
 
       case "publicGoals":
@@ -85,15 +154,60 @@ export default function ProgressPage() {
         }
 
         return (
-          <div className="ui-goals-grid">
-            {publicGoals.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                isOwner={user && goal.user_id === user.id}
-              />
-            ))}
-          </div>
+          <>
+            <BoardFilters
+              query={goalQuery}
+              onQueryChange={setGoalQuery}
+              placeholder="Search characters, skills or bosses"
+              groups={[
+                {
+                  label: "Goal type",
+                  value: goalType,
+                  onChange: setGoalType,
+                  options: [
+                    { value: "all", label: "All" },
+                    { value: "skill", label: "Skills" },
+                    { value: "boss", label: "Bosses" },
+                  ],
+                },
+                {
+                  label: "Goal status",
+                  value: goalStatus,
+                  onChange: setGoalStatus,
+                  options: [
+                    { value: "all", label: "All" },
+                    { value: "active", label: "Active" },
+                    { value: "completed", label: "Completed" },
+                  ],
+                },
+              ]}
+              sort={{
+                value: goalSort,
+                onChange: setGoalSort,
+                options: [
+                  { value: "progress", label: "Closest to done" },
+                  { value: "newest", label: "Newest" },
+                  { value: "deadline", label: "Deadline" },
+                ],
+              }}
+              shown={shownGoals.length}
+              total={publicGoals.length}
+              onClear={clearGoalFilters}
+            />
+            {shownGoals.length === 0 ? (
+              noMatches("goals", clearGoalFilters)
+            ) : (
+              <div className="ui-goals-grid">
+                {shownGoals.map((goal) => (
+                  <GoalCard
+                    key={goal.id}
+                    goal={goal}
+                    isOwner={user && goal.user_id === user.id}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         );
 
       default:
