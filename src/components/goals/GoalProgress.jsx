@@ -2,10 +2,16 @@ import React from 'react';
 import { hasLevels, levelForXp } from '../../utils/skillLevels';
 import './GoalProgress.css';
 
-// " (level 85)" for a skill goal, so a goal set as a level reads as one.
-function levelSuffix(goal, xp) {
-  if (goal.goal_type !== 'skill' || !hasLevels(goal.metric)) return '';
-  return ` (level ${levelForXp(xp)})`;
+/**
+ * One side of the values row. A skill reads as its level, with the XP
+ * underneath; a boss (or overall, whose level is the total level) reads as
+ * the number itself.
+ */
+function valueLines(goal, value) {
+  const amount = value.toLocaleString();
+  if (goal.goal_type === 'boss') return { main: `${amount} kills`, detail: null };
+  if (!hasLevels(goal.metric)) return { main: `${amount} XP`, detail: null };
+  return { main: `Level ${levelForXp(value)}`, detail: `${amount} XP` };
 }
 
 export default function GoalProgress({ goal }) {
@@ -36,6 +42,9 @@ export default function GoalProgress({ goal }) {
   } else if (expectedProgress !== null) {
     status = progress >= expectedProgress ? 'ahead' : 'behind';
   }
+
+  const current = valueLines(goal, goal.current_value);
+  const target = valueLines(goal, goal.target_value);
 
   return (
     <div className="ui-goal-progress">
@@ -68,17 +77,23 @@ export default function GoalProgress({ goal }) {
       </div>
       
       <div className="ui-progress-values">
-        <span className="ui-current-value">
-          Current: {goal.current_value.toLocaleString()}{levelSuffix(goal, goal.current_value)}{' '}
-          {goal.start_value > 0 && (
-            <span className="ui-gained-value">
-              (+{(goal.current_value - goal.start_value).toLocaleString()})
-            </span>
-          )}
-        </span>
-        <span className="ui-target-value">
-          Target: {goal.target_value.toLocaleString()}{levelSuffix(goal, goal.target_value)}
-        </span>
+        <div className="ui-progress-stat">
+          <span className="ui-progress-stat-label">Current</span>
+          <span className="ui-progress-stat-main">{current.main}</span>
+          <span className="ui-progress-stat-detail">
+            {current.detail}
+            {goal.start_value > 0 && (
+              <span className="ui-gained-value">
+                +{(goal.current_value - goal.start_value).toLocaleString()}
+              </span>
+            )}
+          </span>
+        </div>
+        <div className="ui-progress-stat ui-progress-stat-target">
+          <span className="ui-progress-stat-label">Target</span>
+          <span className="ui-progress-stat-main">{target.main}</span>
+          {target.detail && <span className="ui-progress-stat-detail">{target.detail}</span>}
+        </div>
       </div>
     </div>
   );
