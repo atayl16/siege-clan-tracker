@@ -14,8 +14,6 @@
   border-top: 2px solid var(--primary-color);
 }
 
-/* Then remove the .ui-race-card styles from ProgressPage.css */
-
 .ui-goal-header {
   display: flex;
   justify-content: space-between;
@@ -36,24 +34,6 @@
   font-size: 0.95rem;
 }
 
-.ui-goal-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  text-transform: capitalize;
-}
-
-/* Sits under the title, so it takes over the title's gap to the progress bar. */
-.ui-goal-title:has(+ .ui-goal-levels) {
-  margin-bottom: 0.25rem;
-}
-
-.ui-goal-levels {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--color-text-secondary, #aaa);
-}
-
 .ui-goal-progress {
   margin-bottom: 1rem;
 }
@@ -64,11 +44,82 @@
   margin-top: 0.5rem;
 }
 
-.ui-goal-status {
-  font-weight: 500;
-  margin-top: 0.5rem;
+/* ---- Public goal card on the Races & Goals board (GoalCard.jsx) ---- */
+
+/* Whose goal it is leads the card; the type and status are pills. */
+.ui-board-goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.ui-goal-status.ui-completed {
-  color: var(--success-color);
+.ui-board-goal-player {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-orange, #ff9800);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-board-goal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.ui-board-goal-type {
+  text-transform: capitalize;
+}
+
+.ui-board-goal-metric {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.ui-board-goal-levels {
+  margin-top: 0.15rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #aaa);
+}
+
+/* The bar and its percentage on one line. */
+.ui-board-goal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ui-board-goal-bar .ui-progress-container {
+  flex: 1;
+}
+
+.ui-board-goal-percent {
+  min-width: 2.75rem;
+  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* Amount on the left, deadline or completion date on the right. */
+.ui-board-goal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-top: 0.6rem;
+  font-size: 0.875rem;
+  color: #aaa;
+}
+
+.ui-board-goal-overdue {
+  color: #ffca7a;
+}
+
+.ui-board-goal-done .ui-board-goal-when {
+  color: #75e090;
 }

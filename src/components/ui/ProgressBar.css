@@ -6,7 +6,9 @@
 .ui-progress-track {
   width: 100%;
   height: var(--progress-height);
-  background-color: var(--bg-accent);
+  /* --bg-accent is not defined in the theme; the fallback keeps the empty
+     part of the bar visible. */
+  background-color: var(--bg-accent, rgba(255, 255, 255, 0.12));
   border-radius: 100px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.224); /* Add subtle border */
@@ -22,28 +24,31 @@
   margin: -1px; /* Compensate for the border */
 }
 
+/* The variants used undefined tokens (--primary-color, --success-color), so
+   every bar fell through to GoalProgress.css's page-wide orange. They now
+   use the theme's tokens; primary stays the orange the bars have shown. */
 .ui-progress-primary {
-  background-color: var(--primary-color);
+  background-color: var(--color-orange, #ff9800);
 }
 
 .ui-progress-secondary {
-  background-color: var(--secondary-color);
+  background-color: var(--color-secondary, #6c757d);
 }
 
 .ui-progress-success {
-  background-color: var(--success-color);
+  background-color: var(--color-success, #28a745);
 }
 
 .ui-progress-danger {
-  background-color: var(--danger-color);
+  background-color: var(--color-danger, #dc3545);
 }
 
 .ui-progress-warning {
-  background-color: var(--warning-color);
+  background-color: var(--color-warning, #ffc107);
 }
 
 .ui-progress-info {
-  background-color: var(--info-color);
+  background-color: var(--color-info, #0dcaf0);
 }
 
 .ui-progress-animated {
