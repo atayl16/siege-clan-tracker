@@ -38,7 +38,9 @@
   color: #7fc5ed;
 }
 
-.ui-progress-container {
+/* Scoped to .ui-goal-progress: ui/ProgressBar uses the same class names, and
+   unscoped these rules painted every progress bar on the site orange. */
+.ui-goal-progress .ui-progress-container {
   height: 0.5rem;
   /* A visible track: #333 matched the card behind it, so only the filled
      part of the bar showed and 27% looked like a short orange line. */
@@ -49,31 +51,31 @@
   overflow: visible;
 }
 
-.ui-progress-bar {
+.ui-goal-progress .ui-progress-bar {
   height: 100%;
   border-radius: 1rem;
   transition: width 0.5s ease-in-out;
 }
 
 /* Progress bar colors based on status */
-.ui-progress-bar.ui-status-ahead {
+.ui-goal-progress .ui-progress-bar.ui-status-ahead {
   background-color: var(--color-success, #28a745);
 }
 
-.ui-progress-bar.ui-status-behind {
+.ui-goal-progress .ui-progress-bar.ui-status-behind {
   background-color: var(--color-warning, #ffc107);
 }
 
-.ui-progress-bar.ui-status-completed {
+.ui-goal-progress .ui-progress-bar.ui-status-completed {
   background-color: var(--color-primary, #3498db);
 }
 
-.ui-progress-bar:not(.ui-status-ahead):not(.ui-status-behind):not(.ui-status-completed) {
+.ui-goal-progress .ui-progress-bar:not(.ui-status-ahead):not(.ui-status-behind):not(.ui-status-completed) {
   background-color: var(--color-orange, #ff9800);
 }
 
 /* Expected progress marker */
-.ui-expected-marker {
+.ui-goal-progress .ui-expected-marker {
   position: absolute;
   top: -0.5rem;
   width: 0.125rem;
@@ -82,7 +84,7 @@
   transform: translateX(-50%);
 }
 
-.ui-expected-marker::after {
+.ui-goal-progress .ui-expected-marker::after {
   content: '';
   position: absolute;
   top: -0.25rem;
