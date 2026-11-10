@@ -1,5 +1,12 @@
 import React from 'react';
+import { hasLevels, levelForXp } from '../../utils/skillLevels';
 import './GoalProgress.css';
+
+// " (level 85)" for a skill goal, so a goal set as a level reads as one.
+function levelSuffix(goal, xp) {
+  if (goal.goal_type !== 'skill' || !hasLevels(goal.metric)) return '';
+  return ` (level ${levelForXp(xp)})`;
+}
 
 export default function GoalProgress({ goal }) {
   // Calculate progress percentage
@@ -62,7 +69,7 @@ export default function GoalProgress({ goal }) {
       
       <div className="ui-progress-values">
         <span className="ui-current-value">
-          Current: {goal.current_value.toLocaleString()} 
+          Current: {goal.current_value.toLocaleString()}{levelSuffix(goal, goal.current_value)}{' '}
           {goal.start_value > 0 && (
             <span className="ui-gained-value">
               (+{(goal.current_value - goal.start_value).toLocaleString()})
@@ -70,7 +77,7 @@ export default function GoalProgress({ goal }) {
           )}
         </span>
         <span className="ui-target-value">
-          Target: {goal.target_value.toLocaleString()}
+          Target: {goal.target_value.toLocaleString()}{levelSuffix(goal, goal.target_value)}
         </span>
       </div>
     </div>

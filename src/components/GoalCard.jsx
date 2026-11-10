@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { titleize } from '../utils/stringUtils';
+import { hasLevels, levelForXp } from '../utils/skillLevels';
 import './GoalCard.css';
 
 import Card from './ui/Card';
@@ -27,6 +28,11 @@ export default function GoalCard({ goal }) {
     ? `${current.toLocaleString()} / ${total.toLocaleString()} XP`
     : `${current.toLocaleString()} / ${total.toLocaleString()} kills`;
   
+  // Members set skill goals by level, so show the levels too.
+  const levels = isSkill && hasLevels(goal.metric)
+    ? `Level ${levelForXp(goal.current_value)} → ${levelForXp(goal.target_value)}`
+    : null;
+
   return (
     <Card className="ui-goal-card">
       <Card.Header className="ui-goal-header">
@@ -42,6 +48,7 @@ export default function GoalCard({ goal }) {
         <h3 className="ui-goal-title">
           {titleize(goal.metric)}
         </h3>
+        {levels && <div className="ui-goal-levels">{levels}</div>}
         
         <div className="ui-goal-progress">
           <ProgressBar 

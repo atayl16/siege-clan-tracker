@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { usePlayer } from "../../hooks/usePlayer"; // New hook for player stats
 import { fetchFreshPlayerStats } from "../../services/playerRefresh";
 import { useUserGoals } from "../../hooks/useUserGoals"; // New hook for goals
-import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes } from "react-icons/fa";
+import { FaLock, FaGlobe, FaArrowUp, FaTrophy, FaTimes, FaStar } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
+import { MAX_LEVEL, hasLevels, levelForXp, xpForLevel } from "../../utils/skillLevels";
 import MetricSelector from "../MetricSelector";
 
 // Import UI components
@@ -39,7 +40,10 @@ export default function CreateGoal({
   const [targetValue, setTargetValue] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [error, setError] = useState(null);
-  const [targetMode, setTargetMode] = useState("gain");
+  // "level" (skills only: reach a level), "gain" (add XP or kills) or
+  // "total" (reach an exact XP or kill count). Members think in levels, so a
+  // skill goal starts on "level".
+  const [targetMode, setTargetMode] = useState("level");
   const [isPublic, setIsPublic] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false); // Track if user has interacted with the form
 
@@ -73,12 +77,27 @@ export default function CreateGoal({
   const handleMetricChange = (metric) => {
     setSelectedMetric(metric);
     setHasInteracted(true); // User has now interacted with the form
+    if (targetMode === "level" && metric && !hasLevels(metric)) {
+      changeTargetMode("gain");
+    }
+  };
+
+  // A level and an XP amount are different scales, so a value typed for one
+  // mode would be wildly wrong in the other: 85 as a level is 3.2M XP.
+  const changeTargetMode = (mode) => {
+    if ((mode === "level") !== (targetMode === "level")) setTargetValue("");
+    setTargetMode(mode);
+    setHasInteracted(true);
   };
 
   // Clear any errors when switching goal types
   const handleGoalTypeChange = (type) => {
     setGoalType(type);
     setSelectedMetric(""); // Reset the metric when changing types
+    if (type !== goalType) {
+      setTargetMode(type === "skill" ? "level" : "gain");
+      setTargetValue("");
+    }
     setError(null); // Clear any existing errors
   };
 
@@ -106,7 +125,13 @@ export default function CreateGoal({
       return;
     }
 
-    const targetValueInput = parseInt(targetValue, 10);
+    // Number, not parseInt: a number box also accepts forms like ".5e2" (50),
+    // which parseInt reads as NaN and would save a goal with no target.
+    const targetValueInput = Number(targetValue);
+    if (!Number.isInteger(targetValueInput)) {
+      setError("Enter a whole number.");
+      return;
+    }
     let currentValue, startValue, actualTargetValue;
 
     if (goalType === "skill") {
@@ -120,11 +145,26 @@ export default function CreateGoal({
         return;
       }
 
-      // Calculate the target value based on mode
-      actualTargetValue =
-        targetMode === "total"
-          ? targetValueInput
-          : currentValue + targetValueInput;
+      if (targetMode === "level") {
+        const currentLevel = levelForXp(currentValue);
+        if (targetValueInput > MAX_LEVEL) {
+          setError(`The highest level is ${MAX_LEVEL}.`);
+          return;
+        }
+        if (targetValueInput <= currentLevel) {
+          setError(
+            `You're already level ${currentLevel} in ${titleize(selectedMetric)}. Pick a higher level.`
+          );
+          return;
+        }
+        // Stored and tracked as XP like any other skill goal.
+        actualTargetValue = xpForLevel(targetValueInput);
+      } else {
+        actualTargetValue =
+          targetMode === "total"
+            ? targetValueInput
+            : currentValue + targetValueInput;
+      }
     } else {
       // 0 kills is a valid starting point for a boss goal; only a boss WOM
       // has no entry for is an error.
@@ -178,6 +218,19 @@ export default function CreateGoal({
       setError("Failed to create goal. Please try again.");
     }
   };
+
+  // Values the form shows while it is filled in.
+  const levelsOffered = goalType === "skill" && (!selectedMetric || hasLevels(selectedMetric));
+  const currentValue = selectedMetric
+    ? currentValueOf(currentStats, goalType, selectedMetric)
+    : undefined;
+  const currentLevel =
+    goalType === "skill" && currentValue !== undefined ? levelForXp(currentValue) : undefined;
+  const typedLevel = Number(targetValue);
+  const levelTargetXp =
+    targetMode === "level" && Number.isInteger(typedLevel) && typedLevel >= 1 && typedLevel <= MAX_LEVEL
+      ? xpForLevel(typedLevel)
+      : null;
 
   return (
     <div className="ui-create-goal-container">
@@ -251,6 +304,12 @@ export default function CreateGoal({
                   <div className="ui-stats-value">
                     {currentValueOf(currentStats, goalType, selectedMetric)?.toLocaleString() ?? "-"}
                   </div>
+                  {goalType === "skill" && hasLevels(selectedMetric) &&
+                    currentValueOf(currentStats, "skill", selectedMetric) !== undefined && (
+                      <div className="ui-stats-level">
+                        Level {levelForXp(currentValueOf(currentStats, "skill", selectedMetric))}
+                      </div>
+                    )}
                   {fresh.status !== "fresh" && (
                     <div className="ui-stats-note" role="note">
                       WiseOldMan could not fetch your latest hiscores just now, so
@@ -272,15 +331,35 @@ export default function CreateGoal({
         {/* Target Mode Selection */}
         <div className="ui-form-group">
           <label className="ui-form-label">Target Type</label>
-          <div className="ui-option-cards">
+          <div className={`ui-option-cards ${levelsOffered ? "ui-option-cards-3" : ""}`}>
+            {levelsOffered && (
+              <Card
+                className={`ui-option-card ${
+                  targetMode === "level" ? "ui-selected" : ""
+                }`}
+                onClick={() => changeTargetMode("level")}
+                variant={targetMode === "level" ? "primary" : "dark"}
+                clickable
+              >
+                <Card.Body className="ui-option-card-body">
+                  <div className="ui-option-card-icon">
+                    <FaStar />
+                  </div>
+                  <div className="ui-option-card-content">
+                    <span className="ui-option-card-title">Reach Level</span>
+                    <span className="ui-option-card-description">
+                      Pick the level you want
+                    </span>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
+
             <Card
               className={`ui-option-card ${
                 targetMode === "gain" ? "ui-selected" : ""
               }`}
-              onClick={() => {
-                setTargetMode("gain");
-                setHasInteracted(true);
-              }}
+              onClick={() => changeTargetMode("gain")}
               variant={targetMode === "gain" ? "primary" : "dark"}
               clickable
             >
@@ -301,10 +380,7 @@ export default function CreateGoal({
               className={`ui-option-card ${
                 targetMode === "total" ? "ui-selected" : ""
               }`}
-              onClick={() => {
-                setTargetMode("total");
-                setHasInteracted(true);
-              }}
+              onClick={() => changeTargetMode("total")}
               variant={targetMode === "total" ? "primary" : "dark"}
               clickable
             >
@@ -325,19 +401,27 @@ export default function CreateGoal({
 
         <div className="ui-form-row">
           <div className="ui-form-group ui-flex-grow">
-            <label className="ui-form-label">
-              {targetMode === "total" ? "Target Value" : "Amount to Gain"}
+            <label className="ui-form-label" htmlFor="goal-target-value">
+              {targetMode === "level"
+                ? "Target Level"
+                : targetMode === "total"
+                  ? "Target Value"
+                  : "Amount to Gain"}
             </label>
             <input
+              id="goal-target-value"
               type="number"
               className="ui-form-input"
               min={
                 // The player object has no top-level experience or kills, so
                 // this used to be 1 whatever the current value was.
-                targetMode === "total"
-                  ? (currentValueOf(currentStats, goalType, selectedMetric) ?? 0) + 1
-                  : 1
+                targetMode === "level"
+                  ? Math.min(MAX_LEVEL, (currentLevel ?? 1) + 1)
+                  : targetMode === "total"
+                    ? (currentValue ?? 0) + 1
+                    : 1
               }
+              max={targetMode === "level" ? MAX_LEVEL : undefined}
               value={targetValue}
               onChange={(e) => {
                 setTargetValue(e.target.value);
@@ -345,6 +429,13 @@ export default function CreateGoal({
               }}
               required
             />
+            {levelTargetXp !== null && (
+              <div className="ui-form-hint">
+                {levelTargetXp.toLocaleString()} XP
+                {currentValue !== undefined && levelTargetXp > currentValue &&
+                  ` (${(levelTargetXp - currentValue).toLocaleString()} to go)`}
+              </div>
+            )}
           </div>
 
           <div className="ui-form-group ui-flex-grow">

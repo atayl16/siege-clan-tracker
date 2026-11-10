@@ -37,6 +37,8 @@ const renderForm = () =>
 
 async function fillGain(amount) {
   await userEvent.selectOptions(screen.getByLabelText('Metric'), 'sailing');
+  // Skill goals open on Reach Level; these tests set an XP gain.
+  await userEvent.click(screen.getByText('Gain Amount'));
   await userEvent.type(screen.getByRole('spinbutton'), String(amount));
 }
 

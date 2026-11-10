@@ -144,6 +144,10 @@
   gap: var(--spacing-2, 1rem);
 }
 
+.ui-option-cards-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .ui-option-card {
   cursor: pointer;
   height: 100%;
@@ -215,7 +219,8 @@
     flex-direction: column;
   }
   
-  .ui-option-cards {
+  .ui-option-cards,
+  .ui-option-cards-3 {
     grid-template-columns: 1fr;
   }
 }
@@ -239,4 +244,16 @@
   margin-top: 0.5rem;
   font-size: 0.8rem;
   color: #c9a227;
+}
+
+.ui-stats-level {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.ui-create-goal-container .ui-form-hint {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #aaa;
 }
