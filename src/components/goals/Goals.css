@@ -91,10 +91,11 @@
   margin-bottom: var(--spacing-3, 1.5rem);
 }
 
-/* Goals grid */
+/* Goals grid. auto-fit, so two goals share the row rather than leaving an
+   empty third column on a wide screen. */
 .ui-goals-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18.75rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18.75rem), 1fr));
   gap: var(--spacing-3, 1.5rem);
 }
 
