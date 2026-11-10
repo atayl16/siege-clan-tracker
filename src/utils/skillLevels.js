@@ -8,6 +8,15 @@
 
 export const MAX_LEVEL = 99;
 
+// WOM's skill metrics. Race participants store only the metric, so this tells
+// a skill row from a boss row.
+export const SKILL_METRICS = new Set([
+  "overall", "attack", "defence", "strength", "hitpoints", "ranged", "prayer",
+  "magic", "cooking", "woodcutting", "fletching", "fishing", "firemaking",
+  "crafting", "smithing", "mining", "herblore", "agility", "thieving", "slayer",
+  "farming", "runecrafting", "hunter", "construction", "sailing",
+]);
+
 // XP_TABLE[level] is the XP needed to reach that level (XP_TABLE[1] = 0).
 const XP_TABLE = (() => {
   const table = [0, 0];
