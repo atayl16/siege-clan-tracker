@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import ClaimPlayer from "../components/ClaimPlayer";
@@ -8,6 +8,7 @@ import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
 import { FaUser, FaFlag, FaClock, FaCog, FaTrophy } from "react-icons/fa";
 import { displayUsername } from "../utils/stringUtils";
+import { isBuiltInAdmin } from "../utils/builtInAdmin";
 import { mainFirst, mainCharacterId } from "../utils/characters";
 import { supabase } from "../supabaseClient";
 
@@ -64,7 +65,19 @@ function CharacterGoalCard({ claim, user }) {
   );
 }
 
+/**
+ * The built-in admin has no profile: no characters, goals or races of its
+ * own, and its username and password must never change (the server refuses
+ * both too). Its sessions go to the admin page instead. Checked here rather
+ * than inside ProfileContent so that component's hooks always run in order.
+ */
 export default function ProfilePage() {
+  const { user } = useAuth();
+  if (isBuiltInAdmin(user)) return <Navigate to="/admin" replace />;
+  return <ProfileContent />;
+}
+
+function ProfileContent() {
   // userClaims and fetchUserClaims come from AuthContext, which already joins
   // get_user_claims() to the member rows and shapes each claim as
   // { ..., members: { name, current_lvl, ehb, siege_score } } - exactly what

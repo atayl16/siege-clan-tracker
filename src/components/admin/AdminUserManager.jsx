@@ -4,11 +4,11 @@ import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { supabase } from "../../supabaseClient";
 import Card from "../ui/Card";
+import { isBuiltInAdmin } from "../../utils/builtInAdmin";
 import "./AdminUserManager.css";
 
 // The built-in admin login's account. Its admin status and password are
 // never changed from here (the server refuses too).
-const isBuiltInAdmin = (user) => String(user?.username).toLowerCase() === "admin";
 
 /**
  * Every account in one table, with that account's actions on its row:
