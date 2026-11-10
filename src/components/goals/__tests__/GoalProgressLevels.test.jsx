@@ -12,20 +12,29 @@ const thieving = {
   completed: false,
 };
 
-test('shows the levels alongside the XP of a skill goal', () => {
-  render(<GoalProgress goal={thieving} />);
-  expect(screen.getByText(/Current: 2,500,000 \(level 82\)/)).toBeInTheDocument();
-  expect(screen.getByText('Target: 3,258,594 (level 85)')).toBeInTheDocument();
+const valuesOf = (container) =>
+  [...container.querySelectorAll('.ui-progress-stat')].map((stat) => stat.textContent);
+
+test('shows a skill goal as levels, with the XP underneath', () => {
+  const { container } = render(<GoalProgress goal={thieving} />);
+  // Label, level, XP and gain on separate lines rather than one run of text.
+  expect(valuesOf(container)).toEqual([
+    'CurrentLevel 822,500,000 XP+300,000',
+    'TargetLevel 853,258,594 XP',
+  ]);
+  expect(screen.getByText('Level 82')).toHaveClass('ui-progress-stat-main');
+  expect(screen.getByText('+300,000')).toHaveClass('ui-gained-value');
 });
 
-test('shows no level for a boss goal or overall', () => {
-  const { rerender } = render(
-    <GoalProgress goal={{ ...thieving, goal_type: 'boss', metric: 'zulrah', start_value: 0, current_value: 50, target_value: 100 }} />
+test('shows a boss goal in kills and overall in XP, with no level', () => {
+  const { container, rerender } = render(
+    <GoalProgress goal={{ ...thieving, goal_type: 'boss', metric: 'zulrah', start_value: 10, current_value: 50, target_value: 100 }} />
   );
-  expect(screen.queryByText(/level/)).not.toBeInTheDocument();
+  expect(valuesOf(container)).toEqual(['Current50 kills+40', 'Target100 kills']);
 
   rerender(<GoalProgress goal={{ ...thieving, metric: 'overall' }} />);
-  expect(screen.queryByText(/level/)).not.toBeInTheDocument();
+  expect(valuesOf(container)).toEqual(['Current2,500,000 XP+300,000', 'Target3,258,594 XP']);
+  expect(screen.queryByText(/Level/)).not.toBeInTheDocument();
 });
 
 test('the community goal card shows the level journey', () => {

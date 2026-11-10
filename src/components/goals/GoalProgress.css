@@ -94,20 +94,49 @@
   background-color: #fff;
 }
 
+/* Current on the left, target on the right, each as a short stack:
+   label, then the headline (a level, or the count), then the XP. */
 .ui-progress-values {
   display: flex;
   justify-content: space-between;
+  gap: 1rem;
   color: #aaa;
   font-size: 0.875rem;
 }
 
-.ui-gained-value {
-  color: var(--color-success, #28a745);
-  margin-left: 0.25rem;
+.ui-progress-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
-.ui-target-value {
-  font-weight: 500;
+.ui-progress-stat-target {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.ui-progress-stat-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.ui-progress-stat-main {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-progress-stat-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.4rem;
+}
+
+.ui-gained-value {
+  color: var(--color-success, #28a745);
 }
 
 /* Responsive adjustments */
@@ -118,14 +147,6 @@
   }
   
   .ui-status {
-    margin-top: 0.25rem;
-  }
-  
-  .ui-progress-values {
-    flex-direction: column;
-  }
-  
-  .ui-target-value {
     margin-top: 0.25rem;
   }
 }
