@@ -139,8 +139,13 @@ describe('refresh', () => {
 
 test("says who created the race, when known", () => {
   const { unmount } = renderCard({ race: { ...race, creator_name: 'roinrin' } });
-  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by roinrin$/);
+  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by Roinrin$/);
   unmount();
+
+  // Shown without the underscore; the account is still dan_xo.
+  const second = renderCard({ race: { ...race, creator_name: 'dan_xo' } });
+  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by Dan xo$/);
+  second.unmount();
 
   renderCard({ race: { ...race, creator_name: null } });
   expect(screen.queryByText(/ by /)).not.toBeInTheDocument();

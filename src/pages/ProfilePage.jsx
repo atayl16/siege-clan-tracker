@@ -7,7 +7,7 @@ import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
 import { FaUser, FaFlag, FaClock, FaCog, FaTrophy } from "react-icons/fa";
-import { titleize } from "../utils/stringUtils";
+import { displayUsername } from "../utils/stringUtils";
 import { mainFirst, mainCharacterId } from "../utils/characters";
 import { supabase } from "../supabaseClient";
 
@@ -226,7 +226,7 @@ export default function ProfilePage() {
     <div className="profile-container">
       <div className="profile-header">
         <div className="user-summary">
-          <div className="username">{titleize(user.username)}</div>
+          <div className="username">{displayUsername(user.username)}</div>
           <div className="member-since">
             Member since {new Date(user.created_at).toLocaleDateString()}
           </div>

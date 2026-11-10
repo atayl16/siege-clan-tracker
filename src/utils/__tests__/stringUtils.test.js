@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { titleize } from '../stringUtils';
+import { titleize, displayUsername } from '../stringUtils';
 
 describe('stringUtils', () => {
   describe('titleize', () => {
@@ -150,6 +150,27 @@ describe('stringUtils', () => {
         // Non-string types should return '-'
         expect(titleize({})).toBe('-');
       });
+    });
+  });
+
+  describe('displayUsername', () => {
+    it('shows underscores as spaces and capitalises the first letter', () => {
+      expect(displayUsername('Dan_xo')).toBe('Dan xo');
+      expect(displayUsername('dan_xo')).toBe('Dan xo');
+      expect(displayUsername('roinrin')).toBe('Roinrin');
+    });
+
+    it('leaves the rest of the name as it is', () => {
+      // Unlike titleize, which would make this "Dan Xo".
+      expect(displayUsername('dan_xo')).not.toBe('Dan Xo');
+      expect(displayUsername('iron.man-99')).toBe('Iron.man-99');
+      expect(displayUsername('a__b_')).toBe('A b');
+    });
+
+    it('is empty for a missing name', () => {
+      expect(displayUsername(null)).toBe('');
+      expect(displayUsername(undefined)).toBe('');
+      expect(displayUsername('')).toBe('');
     });
   });
 });
