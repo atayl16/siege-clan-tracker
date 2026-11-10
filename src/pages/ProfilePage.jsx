@@ -370,7 +370,9 @@ export default function ProfilePage() {
               description="You need to claim a character before setting goals."
             />
           ) : (
-            <CardGrid>
+            // Each character's card holds its own grid of goals, so the
+            // cards take a full row each rather than squeezing side by side.
+            <CardGrid className="ui-card-grid-stack">
               {orderedClaims.map((claim) => (
                 <CharacterGoalCard
                   key={`goal-card-${claim.wom_id}`}

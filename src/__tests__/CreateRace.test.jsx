@@ -9,6 +9,8 @@ const updateRace = vi.fn().mockResolvedValue(undefined);
 let claims = [];
 
 vi.mock('../hooks/useRaces', () => ({ useRaces: () => ({ createRace, updateRace }) }));
+// Level targets look up the racer's current XP; these tests set XP gains.
+vi.mock('../services/playerRefresh', () => ({ fetchFreshPlayerStats: async () => ({ latestSnapshot: { data: { skills: {} } } }) }));
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ userClaims: claims }) }));
 // Stand-ins: the member picker shows its selection and can pick "Dan";
 // the metric picker can pick "sailing".
@@ -29,6 +31,8 @@ vi.mock('../components/MetricSelector', () => ({
 const fillAndSubmit = async () => {
   await userEvent.type(screen.getByPlaceholderText(/woodcutting challenge/i), 'Sailing Challenge');
   await userEvent.click(screen.getByText('pick sailing'));
+  // Skill rows open on a level target; these tests set an XP gain.
+  await userEvent.click(screen.getByRole('button', { name: 'XP Gain' }));
   await userEvent.type(screen.getByPlaceholderText(/target value/i), '20000');
   await userEvent.click(screen.getByRole('button', { name: /create race/i }));
 };

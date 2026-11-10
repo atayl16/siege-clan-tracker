@@ -182,3 +182,14 @@ input[type="date"] {
     width: 100%;
   }
 }
+
+/* The Level / XP Gain switch stands in for the target's label. */
+.ui-target-mode {
+  margin-bottom: 0.5rem;
+}
+
+.ui-race-form .ui-race-level-hint {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #aaa;
+}

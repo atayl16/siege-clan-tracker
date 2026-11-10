@@ -67,11 +67,40 @@
 }
 
 /* Responsive grid layout for cards */
+/*
+ * Responsive grid for cards. Columns come from the grid's own width, not the
+ * window's: the grid usually sits inside padded containers, so a window
+ * breakpoint gave it more columns than it had room for (two ~300px columns
+ * in a 650px profile tab) and, with auto-fill, an empty column beside a lone
+ * card. auto-fit lets one card take the row; min() keeps a card from being
+ * wider than a narrow screen.
+ */
 .ui-card-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 450px), 1fr));
   gap: var(--spacing-3, 1.5rem);
   width: 100%;
+}
+
+/*
+ * Cards in a grid row are stretched to the row's height. Let the body take
+ * the spare room so footers (Delete Goal, Manage Goals) line up along the
+ * bottom of the row instead of following each card's content.
+ */
+.ui-card-grid > .ui-card,
+.ui-goals-grid > .ui-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-card-grid > .ui-card > .ui-card-body,
+.ui-goals-grid > .ui-card > .ui-card-body {
+  flex: 1 1 auto;
+}
+
+/* One card per row, for cards that hold a grid of their own. */
+.ui-card-grid.ui-card-grid-stack {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .ui-card-clickable {
@@ -86,16 +115,4 @@
 
 .ui-card-clickable:active {
   transform: translateY(0);
-}
-
-@media (min-width: 768px) {
-  .ui-card-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1200px) {
-  .ui-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-  }
 }
