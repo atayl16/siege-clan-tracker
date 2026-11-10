@@ -124,6 +124,22 @@
   text-transform: capitalize;
 }
 
+/* The pills wrap as a group on the right, rather than one dropping under
+   the title on a narrow card. */
+.ui-goal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.ui-goal-privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 /* Goal details */
 .ui-goal-details {
   margin-top: var(--spacing-2, 1rem);

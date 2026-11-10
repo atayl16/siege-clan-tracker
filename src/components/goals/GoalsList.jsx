@@ -4,7 +4,7 @@ import GoalProgress from "./GoalProgress";
 import CreateGoal from "./CreateGoal";
 import { updatePlayerGoals } from "../../services/goalProgressService";
 import { titleize } from "../../utils/stringUtils";
-import { FaSync, FaPlus, FaTimes, FaTrash } from "react-icons/fa";
+import { FaSync, FaPlus, FaTimes, FaTrash, FaGlobe, FaLock } from "react-icons/fa";
 
 // Import UI components
 import Card from "../ui/Card";
@@ -191,20 +191,32 @@ export default function GoalsList({ player, userId, onClose }) {
             >
               <Card.Header className="ui-goal-header">
                 <h3 className="ui-goal-metric">{titleize(goal.metric)}</h3>
-                <Badge
-                  variant={getGoalTypeVariant(goal.goal_type)}
-                  className="ui-goal-type-badge"
-                >
-                  {goal.goal_type}
-                </Badge>
-                {goal.completed && (
+                <div className="ui-goal-badges">
                   <Badge
-                    variant="success"
-                    className="ui-goal-completed-badge"
+                    variant={getGoalTypeVariant(goal.goal_type)}
+                    className="ui-goal-type-badge"
                   >
-                    Completed
+                    {goal.goal_type}
                   </Badge>
-                )}
+                  {/* Who can see it: public goals also show on the community
+                      goals board. */}
+                  <Badge
+                    variant="secondary"
+                    className="ui-goal-privacy-badge"
+                    title={goal.public ? "Visible to other players" : "Only visible to you"}
+                  >
+                    {goal.public ? <FaGlobe aria-hidden="true" /> : <FaLock aria-hidden="true" />}
+                    {goal.public ? "Public" : "Private"}
+                  </Badge>
+                  {goal.completed && (
+                    <Badge
+                      variant="success"
+                      className="ui-goal-completed-badge"
+                    >
+                      Completed
+                    </Badge>
+                  )}
+                </div>
               </Card.Header>
 
               <Card.Body>
