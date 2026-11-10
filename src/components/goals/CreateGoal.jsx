@@ -125,7 +125,13 @@ export default function CreateGoal({
       return;
     }
 
-    const targetValueInput = parseInt(targetValue, 10);
+    // Number, not parseInt: a number box also accepts forms like ".5e2" (50),
+    // which parseInt reads as NaN and would save a goal with no target.
+    const targetValueInput = Number(targetValue);
+    if (!Number.isInteger(targetValueInput)) {
+      setError("Enter a whole number.");
+      return;
+    }
     let currentValue, startValue, actualTargetValue;
 
     if (goalType === "skill") {
@@ -220,9 +226,9 @@ export default function CreateGoal({
     : undefined;
   const currentLevel =
     goalType === "skill" && currentValue !== undefined ? levelForXp(currentValue) : undefined;
-  const typedLevel = parseInt(targetValue, 10);
+  const typedLevel = Number(targetValue);
   const levelTargetXp =
-    targetMode === "level" && typedLevel >= 1 && typedLevel <= MAX_LEVEL
+    targetMode === "level" && Number.isInteger(typedLevel) && typedLevel >= 1 && typedLevel <= MAX_LEVEL
       ? xpForLevel(typedLevel)
       : null;
 

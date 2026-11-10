@@ -86,6 +86,27 @@ test('will not set a level the player already has', async () => {
   expect(createGoal).not.toHaveBeenCalled();
 });
 
+test('reads a level typed in exponent form, and refuses one that is not whole', async () => {
+  renderForm();
+  await userEvent.selectOptions(screen.getByLabelText('Metric'), 'thieving');
+  await screen.findByText('Level 81');
+  const input = screen.getByLabelText('Target Level');
+  const form = input.closest('form');
+  form.noValidate = true;
+
+  // A number box accepts ".85e2"; parseInt read it as NaN and saved no target.
+  await userEvent.type(input, '.85e2');
+  await userEvent.click(screen.getByRole('button', { name: 'Create Goal' }));
+  expect(createGoal).toHaveBeenLastCalledWith(expect.objectContaining({ target_value: 3_258_594 }));
+
+  createGoal.mockClear();
+  await userEvent.clear(input);
+  await userEvent.type(input, '85.5');
+  await userEvent.click(screen.getByRole('button', { name: 'Create Goal' }));
+  expect(await screen.findByText('Enter a whole number.')).toBeInTheDocument();
+  expect(createGoal).not.toHaveBeenCalled();
+});
+
 test('clears the number when switching between a level and an XP amount', async () => {
   renderForm();
   await userEvent.selectOptions(screen.getByLabelText('Metric'), 'thieving');
