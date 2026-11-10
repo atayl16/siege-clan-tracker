@@ -114,6 +114,19 @@ describe('renameUser', () => {
     expect(supabase.calls.authUpdates).toHaveLength(0);
   });
 
+  it("refuses the admin users row even when it is linked to another login email", async () => {
+    supabase = fakeSupabase({ users: [{ id: 'auth-7', username: 'admin' }] });
+    const err = await renameUser({
+      supabase,
+      authUser: { id: 'auth-7', email: 'someone@example.com' },
+      newUsername: 'boss',
+    }).catch((e) => e);
+    expect(err).toBeInstanceOf(RenameError);
+    expect(err.statusCode).toBe(403);
+    expect(supabase.calls.authUpdates).toHaveLength(0);
+    expect(supabase.calls.rowUpdates).toHaveLength(0);
+  });
+
   it('reports a name whose login email another auth account holds as taken', async () => {
     supabase = fakeSupabase({
       users: users(),

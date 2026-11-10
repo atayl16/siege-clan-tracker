@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { isBuiltInAdmin } from "../utils/builtInAdmin";
 import { getSeasonalIcon } from "../utils/seasonalIcons";
 import "./Navbar.css";
 
@@ -141,12 +142,16 @@ export default function Navbar() {
                 as duplicates but go to different pages. The username is already
                 shown on the profile page itself.
               */}
-              <Link
-                to="/profile"
-                className={location.pathname === "/profile" ? "active" : ""}
-              >
-                Profile
-              </Link>
+              {/* The built-in admin has no profile: nothing on it applies, and
+                  its username and password must never change. */}
+              {!isBuiltInAdmin(user) && (
+                <Link
+                  to="/profile"
+                  className={location.pathname === "/profile" ? "active" : ""}
+                >
+                  Profile
+                </Link>
+              )}
               <button onClick={handleLogout} className="navbar-logout-btn">
                 Logout
               </button>
