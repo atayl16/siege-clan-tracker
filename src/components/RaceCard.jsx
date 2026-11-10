@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaLock, FaGlobe, FaCalendarAlt, FaTrophy, FaSyncAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { titleize } from '../utils/stringUtils';
+import { titleize, displayUsername } from '../utils/stringUtils';
 import { formatDistanceToNow } from 'date-fns';
 import './RaceCard.css';
 
@@ -94,7 +94,7 @@ export default function RaceCard({ race, isOwner, onRefresh }) {
               {race.creator_name && (
                 <>
                   {" by "}
-                  <span className="ui-race-creator">{race.creator_name}</span>
+                  <span className="ui-race-creator">{displayUsername(race.creator_name)}</span>
                 </>
               )}
             </span>

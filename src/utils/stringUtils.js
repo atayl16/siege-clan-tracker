@@ -10,3 +10,15 @@ export const titleize = (str) => {
     .map((token) => token.split("_").map(capitalize).join(" "))
     .join(" ");
 };
+
+/**
+ * An account username as members see it: underscores read as spaces and the
+ * first letter is capitalised ("dan_xo" shows as "Dan xo"). Display only:
+ * the stored username, and what people sign in with, stays "dan_xo".
+ * Usernames cannot contain spaces, so two accounts never display the same.
+ */
+export const displayUsername = (username) => {
+  if (!username || typeof username !== "string") return "";
+  const spaced = username.replace(/_+/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+};
