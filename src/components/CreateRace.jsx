@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { FaPlus, FaTimes, FaGlobe, FaLock } from 'react-icons/fa';
 import { useRaces } from '../hooks/useRaces'; // Updated to use new hook
 import { useAuth } from '../context/AuthContext';
@@ -9,15 +9,24 @@ import './CreateRace.css';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { mainFirst } from "../utils/characters";
+import { titleize } from "../utils/stringUtils";
+import { MAX_LEVEL, SKILL_METRICS, hasLevels, levelForXp, xpForLevel } from "../utils/skillLevels";
+import { fetchFreshPlayerStats } from "../services/playerRefresh";
+import { fetchPlayerStats } from "../services/goalProgressService";
 
-// WOM's skill metrics. Participants store only the metric, so this tells the
-// edit form whether to open the skill or the boss picker for a saved row.
-const SKILL_METRICS = new Set([
-  "overall", "attack", "defence", "strength", "hitpoints", "ranged", "prayer",
-  "magic", "cooking", "woodcutting", "fletching", "fishing", "firemaking",
-  "crafting", "smithing", "mining", "herblore", "agility", "thieving", "slayer",
-  "farming", "runecrafting", "hunter", "construction", "sailing",
-]);
+/**
+ * A row's target is either "gain" (XP or kills to gain, which is what
+ * race_participants.target_value stores) or, for a skill, "level": the level
+ * to reach, turned into the XP gain it needs when the race is saved.
+ */
+const newRow = () => ({
+  playerId: "",
+  playerName: "",
+  metricType: "skill",
+  metric: "",
+  targetMode: "level",
+  targetValue: "",
+});
 
 /** A saved race_participants row, as the form's editable row. */
 function toFormRow(p) {
@@ -27,9 +36,23 @@ function toFormRow(p) {
     playerName: p.player_name,
     metricType: SKILL_METRICS.has(p.metric) ? "skill" : "boss",
     metric: p.metric,
+    // Only the gain is saved, so a saved row opens as one.
+    targetMode: "gain",
     targetValue: String(p.target_value ?? ""),
+    // Its starting point, which a level target on this row is measured from
+    // while the character and metric stay the same (updateRace keeps it).
+    saved: p.baseline_set_at
+      ? { womId: Number(p.wom_id), metric: p.metric, startValue: p.start_value ?? 0 }
+      : null,
   };
 }
+
+const isLevelRow = (row) =>
+  row.targetMode === "level" && row.metricType === "skill" && hasLevels(row.metric);
+
+/** True when the row's level target is measured from its saved starting point. */
+const usesSavedStart = (row) =>
+  Boolean(row.saved) && row.saved.womId === Number(row.playerId) && row.saved.metric === row.metric;
 
 /**
  * Create a race, or - given `race` - edit it. Editing reuses the same fields
@@ -55,15 +78,7 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   const [participants, setParticipants] = useState(
     savedParticipants.length
       ? savedParticipants.map(toFormRow)
-      : [
-          {
-            playerId: "",
-            playerName: "",
-            metricType: "skill",
-            metric: "",
-            targetValue: "",
-          },
-        ]
+      : [newRow()]
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -98,16 +113,7 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   }, [myCharacters, isEditing]);
 
   const handleAddParticipant = () => {
-    setParticipants([
-      ...participants,
-      {
-        playerId: "",
-        playerName: "",
-        metricType: "skill",
-        metric: "",
-        targetValue: "",
-      },
-    ]);
+    setParticipants([...participants, newRow()]);
   };
 
   const handleRemoveParticipant = (index) => {
@@ -132,8 +138,69 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   };
 
   const handleMetricTypeChange = (index, type) => {
+    const row = participants[index];
     handleParticipantChange(index, "metricType", type);
     handleParticipantChange(index, "metric", "");
+    if (type !== row.metricType) {
+      handleParticipantChange(index, "targetMode", type === "skill" ? "level" : "gain");
+      handleParticipantChange(index, "targetValue", "");
+    }
+  };
+
+  const handleMetricChange = (index, metric) => {
+    handleParticipantChange(index, "metric", metric);
+    // Overall's "level" is the total level, which has no XP table.
+    if (participants[index].targetMode === "level" && metric && !hasLevels(metric)) {
+      handleTargetModeChange(index, "gain");
+    }
+  };
+
+  // A level and an XP amount are different scales: 85 as a level is 3.2M XP.
+  const handleTargetModeChange = (index, mode) => {
+    if (participants[index].targetMode === mode) return;
+    handleParticipantChange(index, "targetMode", mode);
+    handleParticipantChange(index, "targetValue", "");
+  };
+
+  // Current skills per character, for rows with a level target and no saved
+  // starting point. Fresh from the hiscores, like the starting point the race
+  // records when it is created, so the XP gain worked out here matches it;
+  // WOM's saved snapshot only if that fails, as the race itself would.
+  const [skillsByPlayer, setSkillsByPlayer] = useState({});
+  const neededPlayers = [
+    ...new Set(
+      participants
+        .filter((row) => row.playerId && isLevelRow(row) && !usesSavedStart(row))
+        .map((row) => Number(row.playerId))
+    ),
+  ];
+  const neededKey = neededPlayers.join(",");
+  const requested = useRef(new Set());
+  useEffect(() => {
+    neededPlayers
+      .filter((womId) => !requested.current.has(womId))
+      .forEach((womId) => {
+        requested.current.add(womId);
+        setSkillsByPlayer((now) => ({ ...now, [womId]: { status: "loading" } }));
+        fetchFreshPlayerStats(womId)
+          .catch(() => fetchPlayerStats(womId))
+          .then((stats) =>
+            setSkillsByPlayer((now) => ({
+              ...now,
+              [womId]: { status: "ready", skills: stats?.latestSnapshot?.data?.skills ?? {} },
+            }))
+          )
+          .catch(() => setSkillsByPlayer((now) => ({ ...now, [womId]: { status: "failed" } })));
+      });
+    // neededKey stands for neededPlayers, which is rebuilt every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [neededKey]);
+
+  /** The XP a level target is measured from, or undefined while unknown. */
+  const startXpFor = (row) => {
+    if (usesSavedStart(row)) return row.saved.startValue;
+    const xp = skillsByPlayer[Number(row.playerId)]?.skills?.[row.metric]?.experience;
+    return typeof xp === "number" ? Math.max(0, xp) : undefined;
   };
 
   const handleSubmit = async (e) => {
@@ -148,6 +215,42 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
     if (participants.some((p) => !p.playerId || !p.metric || !p.targetValue)) {
       setError("All participant details must be complete");
       return;
+    }
+
+    // Number, not parseInt: a number box also accepts forms like ".85e2".
+    if (participants.some((p) => !Number.isInteger(Number(p.targetValue)) || Number(p.targetValue) < 1)) {
+      setError("Targets must be whole numbers above zero.");
+      return;
+    }
+
+    // A level target becomes the XP gain it needs from the racer's start.
+    const targets = [];
+    for (const p of participants) {
+      if (!isLevelRow(p)) {
+        targets.push(Number(p.targetValue));
+        continue;
+      }
+      const level = Number(p.targetValue);
+      const startXp = startXpFor(p);
+      const name = p.playerName || "this racer";
+      if (startXp === undefined) {
+        setError(
+          skillsByPlayer[Number(p.playerId)]?.status === "failed"
+            ? `Could not get ${name}'s current XP. Set an XP gain instead.`
+            : `Still getting ${name}'s current XP. Try again in a moment.`
+        );
+        return;
+      }
+      if (level > MAX_LEVEL) {
+        setError(`The highest level is ${MAX_LEVEL}.`);
+        return;
+      }
+      const currentLevel = levelForXp(startXp);
+      if (level <= currentLevel) {
+        setError(`${name} is already level ${currentLevel} in ${titleize(p.metric)}. Pick a higher level.`);
+        return;
+      }
+      targets.push(xpForLevel(level) - startXp);
     }
 
     if (!myCharacters.length) {
@@ -170,12 +273,12 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
         description,
         public: isPublic,
         end_date: endDate || null,
-        participants: participants.map((p) => ({
+        participants: participants.map((p, i) => ({
           ...(p.id ? { id: p.id } : {}),
           wom_id: p.playerId,
           player_name: p.playerName,
           metric: p.metric,
-          target_value: parseInt(p.targetValue, 10),
+          target_value: targets[i],
         })),
       };
 
@@ -328,31 +431,41 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
                     playerId={participant.playerId} // Pass the playerId to fetch metrics
                     metricType={participant.metricType} // Pass the metricType ("skill" or "boss")
                     selectedMetric={participant.metric} // The currently selected metric
-                    onMetricChange={(metric) =>
-                      handleParticipantChange(index, "metric", metric)
-                    }
+                    onMetricChange={(metric) => handleMetricChange(index, metric)}
                     disabled={!participant.playerId} // Disable if no player is selected
                     placeholderText="Select metric"
                   />
                 </div>
 
                 <div className="ui-form-group ui-form-group-half">
-                  <label className="ui-form-label">Target Value</label>
-                  <input
-                    type="number"
-                    className="ui-form-input"
-                    value={participant.targetValue}
-                    onChange={(e) =>
-                      handleParticipantChange(
-                        index,
-                        "targetValue",
-                        e.target.value
-                      )
-                    }
-                    disabled={!participant.metric}
-                    placeholder="Target value"
-                    min="1"
-                    required
+                  {participant.metricType === "skill" && hasLevels(participant.metric || "skill") ? (
+                    <div className="ui-toggle-container ui-target-mode" role="group" aria-label="Target type">
+                      <button
+                        type="button"
+                        className={`ui-toggle-button ${participant.targetMode === "level" ? "active" : ""}`}
+                        onClick={() => handleTargetModeChange(index, "level")}
+                      >
+                        Level
+                      </button>
+                      <button
+                        type="button"
+                        className={`ui-toggle-button ${participant.targetMode === "gain" ? "active" : ""}`}
+                        onClick={() => handleTargetModeChange(index, "gain")}
+                      >
+                        XP Gain
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="ui-form-label" htmlFor={`race-target-${index}`}>
+                      {participant.metricType === "boss" ? "Kills to Gain" : "XP to Gain"}
+                    </label>
+                  )}
+                  <RaceTarget
+                    row={participant}
+                    index={index}
+                    startXp={isLevelRow(participant) && participant.playerId ? startXpFor(participant) : undefined}
+                    status={skillsByPlayer[Number(participant.playerId)]?.status}
+                    onChange={(value) => handleParticipantChange(index, "targetValue", value)}
                   />
                 </div>
               </div>
@@ -392,5 +505,45 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
         </form>
       </Card.Body>
     </Card>
+  );
+}
+
+/**
+ * One racer's target box. For a level target it also says the racer's level
+ * now and the XP gain the chosen level needs, which is what gets saved.
+ */
+function RaceTarget({ row, index, startXp, status, onChange }) {
+  const levelRow = isLevelRow(row);
+  const currentLevel = startXp === undefined ? undefined : levelForXp(startXp);
+  const typed = Number(row.targetValue);
+
+  let hint = null;
+  if (levelRow && row.metric && row.playerId) {
+    if (startXp === undefined) {
+      hint = status === "failed" ? "Could not get current XP. Use XP Gain instead." : "Getting current XP...";
+    } else if (Number.isInteger(typed) && typed > currentLevel && typed <= MAX_LEVEL) {
+      hint = `Level ${currentLevel} now. Level ${typed} is +${(xpForLevel(typed) - startXp).toLocaleString()} XP.`;
+    } else {
+      hint = `Level ${currentLevel} now (${startXp.toLocaleString()} XP).`;
+    }
+  }
+
+  return (
+    <>
+      <input
+        id={`race-target-${index}`}
+        type="number"
+        className="ui-form-input"
+        aria-label={levelRow ? "Target level" : "Target value"}
+        value={row.targetValue}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={!row.metric}
+        placeholder={levelRow ? "Target level" : "Target value"}
+        min={levelRow ? Math.min(MAX_LEVEL, (currentLevel ?? 1) + 1) : 1}
+        max={levelRow ? MAX_LEVEL : undefined}
+        required
+      />
+      {hint && <div className="ui-form-hint ui-race-level-hint">{hint}</div>}
+    </>
   );
 }

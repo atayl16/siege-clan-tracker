@@ -145,3 +145,24 @@ test("says who created the race, when known", () => {
   renderCard({ race: { ...race, creator_name: null } });
   expect(screen.queryByText(/ by /)).not.toBeInTheDocument();
 });
+
+test('shows a skill racer\'s levels once their start is recorded', () => {
+  render(
+    <MemoryRouter>
+      <RaceCard
+        race={{
+          id: 'lv', title: 'Thieving race', status: 'active', created_at: new Date().toISOString(),
+          participants: [
+            // 2,200,000 + 300,000 = level 82 now; + 1,058,594 = level 85.
+            { id: 'a', player_name: 'Roinrin', metric: 'thieving', start_value: 2_200_000, current_value: 300_000, target_value: 1_058_594, baseline_set_at: '2026-11-01T00:00:00Z' },
+            { id: 'b', player_name: 'Dan', metric: 'zulrah', start_value: 10, current_value: 5, target_value: 50, baseline_set_at: '2026-11-01T00:00:00Z' },
+            { id: 'c', player_name: 'New', metric: 'thieving', start_value: 0, current_value: 0, target_value: 100_000, baseline_set_at: null },
+          ],
+        }}
+      />
+    </MemoryRouter>
+  );
+  expect(screen.getByText(/Level 82 → 85/)).toBeInTheDocument();
+  // Bosses have no levels, and a racer with no start yet has none to show.
+  expect(screen.getAllByText(/Level \d+ →/)).toHaveLength(1);
+});

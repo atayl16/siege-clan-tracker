@@ -2,11 +2,22 @@ import React, { useState } from 'react';
 import { FaLock, FaGlobe, FaCalendarAlt, FaTrophy, FaSyncAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { titleize } from '../utils/stringUtils';
+import { SKILL_METRICS, hasLevels, levelForXp } from '../utils/skillLevels';
 import { formatDistanceToNow } from 'date-fns';
 import './RaceCard.css';
 
 import Card from "./ui/Card";
 import ProgressBar from "./ui/ProgressBar";
+
+/**
+ * "Level 81 → 85" for a skill racer whose starting point is recorded: the
+ * level they are at now, and the level their XP target takes them to.
+ */
+function levelJourney(p) {
+  if (!SKILL_METRICS.has(p.metric) || !hasLevels(p.metric) || !p.baseline_set_at) return null;
+  const start = p.start_value ?? 0;
+  return `Level ${levelForXp(start + (p.current_value ?? 0))} → ${levelForXp(start + (p.target_value ?? 0))}`;
+}
 
 /**
  * @param {object} props
@@ -122,6 +133,9 @@ export default function RaceCard({ race, isOwner, onRefresh }) {
                 </span>
                 <span className="ui-participant-metric">
                   {titleize(participant.metric)}
+                  {levelJourney(participant) && (
+                    <span className="ui-participant-levels"> · {levelJourney(participant)}</span>
+                  )}
                 </span>
               </div>
 
