@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 // Import clan icons
 import clanIconExecutive from "../assets/images/Clan_icon_-_Executive.png";
@@ -19,7 +18,6 @@ import { preloadMetricIcons } from "../components/OsrsIcons";
 
 function BackgroundLoader() {
   const [appHasLoaded, setAppHasLoaded] = useState(false);
-  const queryClient = useQueryClient();
 
   // Wait until after initial render to start background loading
   useEffect(() => {
@@ -42,55 +40,12 @@ function BackgroundLoader() {
   useEffect(() => {
     if (!appHasLoaded) return;
     
-    // Start API prefetching in priority order    
-    const prefetchApiData = () => {
-      // Helper function to safely prefetch with error handling
-      const safePrefetch = (queryKey, endpoint) => {
-        queryClient.prefetchQuery(queryKey, () => 
-          fetch(endpoint)
-            .then(res => {
-              if (!res.ok) {
-                return {}; // Return empty object instead of failing
-              }
-              return res.json();
-            })
-            .catch(err => {
-              return {}; // Return empty object on network errors
-            })
-        );
-      };
-      
-      // Check if we're in a preview environment
-      const isPreviewEnvironment = window.location.hostname.includes('deploy-preview');
-      
-      // Tier 1: Most critical data for navigation (highest priority)
-      safePrefetch(["wom-group"], "/api/wom-group");
-      
-      // Tier 2: Commonly viewed pages (medium priority)
-      setTimeout(() => {
-        safePrefetch(["wom-group-stats"], "/api/wom-group-stats");
-        safePrefetch(["members"], "/api/members");
-      }, 500);
-      
-      // Tier 3: Less frequently accessed pages (lower priority)
-      setTimeout(() => {
-        safePrefetch(["events"], "/api/events");
-        safePrefetch(["wom-group-achievements"], "/api/wom-group-achievements");
-      }, 1500);
-      
-      // Tier 4: Rarely accessed pages (lowest priority)
-      // Only attempt in production environments unless overridden
-      setTimeout(() => {
-        // These endpoints are commonly failing in preview environments
-        if (!isPreviewEnvironment || window.FORCE_LOAD_ALL_APIS) {
-          safePrefetch(["wom-competitions"], "/api/wom-competitions");
-          safePrefetch(["claim-requests"], "/api/claim-requests");
-          safePrefetch(["races"], "/api/races");
-          safePrefetch(["users"], "/api/users");
-          safePrefetch(["user-goals"], "/api/user-goals");
-        }
-      }, 3000);
-    };
+    // API data is not prefetched here. DataProvider (context/DataContext.jsx)
+    // wraps the whole app and loads the WOM group, stats, achievements and
+    // competitions through SWR on every visit. This used to call React
+    // Query's prefetchQuery with the v3 signature, which v5 rejects ("queryKey
+    // needs to be an Array"), so it fetched nothing and only logged errors -
+    // and nothing reads React Query's cache anyway.
 
     // Start image preloading with prioritization
     const preloadImages = () => {
@@ -131,7 +86,6 @@ function BackgroundLoader() {
     // Use requestIdleCallback for background loading if available
     if ('requestIdleCallback' in window) {
       // Load during browser idle time
-      const apiIdleCallback = window.requestIdleCallback(prefetchApiData, { timeout: 2000 });
       const imageIdleCallback = window.requestIdleCallback(preloadImages, { timeout: 3000 });
       const metricIconCallback = window.requestIdleCallback(() => {
         // Start metric icon preloading after some delay to let other assets load first
@@ -140,24 +94,21 @@ function BackgroundLoader() {
       
       return () => {
         // Clean up idle callbacks if component unmounts
-        window.cancelIdleCallback(apiIdleCallback);
         window.cancelIdleCallback(imageIdleCallback);
         window.cancelIdleCallback(metricIconCallback);
       };
     } else {
       // Fallback - start after a short delay
-      const apiTimeout = setTimeout(prefetchApiData, 2000);
       const imageTimeout = setTimeout(preloadImages, 3000);
       const metricIconTimeout = setTimeout(preloadGameIcons, 4000);
       
       return () => {
         // Clean up timeouts if component unmounts
-        clearTimeout(apiTimeout);
         clearTimeout(imageTimeout);
         clearTimeout(metricIconTimeout);
       };
     }
-  }, [appHasLoaded, queryClient]);
+  }, [appHasLoaded]);
 
   return null; // Component doesn't render anything visible
 }
