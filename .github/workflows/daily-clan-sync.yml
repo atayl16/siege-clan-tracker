@@ -8,22 +8,50 @@ on:
     # different time each evening. Same UTC day either way.
     - cron: '43 13 * * *'
 
+  # Started on time by a Netlify scheduled function (netlify.toml), because
+  # GitHub runs the cron above hours late. The cron stays as a backup.
+  workflow_dispatch:
+
+# Never run two at once: Netlify and the backup cron can both start one.
+concurrency:
+  group: daily-clan-sync
+  cancel-in-progress: false
+
 jobs:
   sync-data:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     steps:
+      # Netlify and the backup cron can both start this on the same day.
+      # Anniversary posts must go out once, so if a run already succeeded
+      # today (UTC), this one stops here.
+      - name: Skip if today's run already succeeded
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          today=$(date -u +%F)
+          done=$(gh api "repos/${{ github.repository }}/actions/workflows/daily-clan-sync.yml/runs?status=success&created=>=${today}&per_page=1" --jq '.total_count')
+          echo "Successful runs today: ${done}"
+          if [ "${done:-0}" -gt 0 ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+
       - uses: actions/checkout@v3
+        if: steps.guard.outputs.skip != 'true'
       
       - name: Setup Node.js
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/setup-node@v3
         with:
           node-version: '20'
           
       - name: Install dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: npm ci --force
               
       - name: Run Anniversary Notifications
-        if: ${{ github.event.inputs.job_to_run == 'anniversaries' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        if: steps.guard.outputs.skip != 'true'
         run: node scripts/sync-tasks/anniversaries.cjs
         continue-on-error: true
         env:
@@ -33,20 +61,10 @@ jobs:
           DISCORD_ANNIVERSARY_WEBHOOK_URL: ${{ secrets.DISCORD_ANNIVERSARY_WEBHOOK_URL }}
       
       - name: Run RuneWatch Check
-        if: ${{ github.event.inputs.job_to_run == 'runewatch' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
+        if: steps.guard.outputs.skip != 'true'
         run: node scripts/sync-tasks/runewatch-check.cjs
         continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
- 
-      # Optional summary step to report overall status
-      - name: Summary
-        run: |
-          echo "🔍 Daily clan sync process completed"
-          if [[ "${{ github.event.inputs.job_to_run }}" != "" ]]; then
-            echo "Executed job: ${{ github.event.inputs.job_to_run }}"
-          else
-            echo "Ran all jobs via scheduled execution"
-          fi

@@ -4,6 +4,15 @@
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"  # Explicitly specify edge functions dir
   
+# Scheduled functions start the sync workflows on GitHub, because GitHub's own
+# cron runs them hours late (see netlify/functions/utils/githubDispatch.cjs).
+# Times are UTC. They run only on the published production deploy.
+[functions."scheduled-hourly-sync"]
+  schedule = "17 * * * *"
+
+[functions."scheduled-daily-sync"]
+  schedule = "43 13 * * *"
+
 # Redirects for client-side routing and API
 [[redirects]]
   from = "/api/*"
