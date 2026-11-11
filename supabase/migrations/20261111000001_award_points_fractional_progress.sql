@@ -12,10 +12,16 @@
 -- seen on competition 158975 on 2026-11-11.
 --
 -- event_results.progress is already NUMERIC (20260907000013), so the value
--- fits once it is cast to numeric. Nothing else changes: this is the
--- function exactly as it is in production (pg_get_functiondef, 2026-11-11)
--- with that one cast changed. The function was not in the migrations before,
--- so a database built from them now has it too.
+-- fits once it is cast to numeric.
+--
+-- One more change while the function is being replaced: scores were set to
+-- the payload's newScore, which the sync computes from a score it read before
+-- calling this. Points an admin added in between were overwritten. Scores now
+-- go up by pointsToAward (also in the payload) on the row's current value.
+--
+-- Otherwise this is the function exactly as it is in production
+-- (pg_get_functiondef, 2026-11-11). It was not in the migrations before, so a
+-- database built from them now has it too.
 --
 -- Idempotent: CREATE OR REPLACE keeps the owner and grants. Apply to
 -- production by hand in the SQL editor.
@@ -57,11 +63,13 @@ BEGIN
       );
     END LOOP;
 
-    -- Update all members' scores
+    -- Add each member's points to their current score. Not newScore, which
+    -- the sync computed from a score it read earlier: a change made in
+    -- between (an admin adding points) would be overwritten.
     FOR member_update IN SELECT * FROM jsonb_array_elements(member_updates)
     LOOP
       UPDATE members
-      SET siege_score = (member_update->>'newScore')::int
+      SET siege_score = COALESCE(siege_score, 0) + (member_update->>'pointsToAward')::int
       WHERE wom_id = (member_update->>'wom_id')::bigint;  -- Cast to BIGINT explicitly
     END LOOP;
 

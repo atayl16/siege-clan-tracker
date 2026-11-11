@@ -124,6 +124,35 @@ describe.skipIf(!stack)('award_competition_points against a real database', () =
     expect(event).toEqual({ points_processed: true, status: 'completed' });
   });
 
+  // The sync reads scores, then awards. A change made in between must survive.
+  it('adds points to the current score, not the score the sync read earlier', async () => {
+    const { data: second, error: insertError } = await supabase
+      .from('events')
+      .insert({ name: 'Integration second comp', wom_id: COMPETITION + 1, is_wom: true, points_processed: false })
+      .select('id')
+      .single();
+    expect(insertError).toBeNull();
+
+    try {
+      const { data: read } = await supabase.from('members').select('siege_score').eq('wom_id', WINNER).single();
+      // An admin adds 5 points after the sync read the score.
+      await supabase.from('members').update({ siege_score: read.siege_score + 5 }).eq('wom_id', WINNER);
+
+      const { error } = await supabase.rpc('award_competition_points', {
+        competition_id: COMPETITION + 1,
+        points_data: [{ event_id: second.id, wom_id: WINNER, player_name: 'winner', placement: 1, points_awarded: 2, progress: 1.5 }],
+        member_updates: [{ wom_id: WINNER, oldScore: read.siege_score, pointsToAward: 2, newScore: read.siege_score + 2 }],
+      });
+      expect(error).toBeNull();
+
+      const { data: after } = await supabase.from('members').select('siege_score').eq('wom_id', WINNER).single();
+      expect(after.siege_score).toBe(read.siege_score + 5 + 2);
+    } finally {
+      await supabase.from('event_results').delete().eq('event_id', second.id);
+      await supabase.from('events').delete().eq('id', second.id);
+    }
+  });
+
   it('refuses to award the same competition twice', async () => {
     const { data, error } = await supabase.rpc('award_competition_points', {
       competition_id: COMPETITION,
