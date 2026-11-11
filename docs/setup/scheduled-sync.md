@@ -19,6 +19,13 @@ a backup. A concurrency group stops two runs overlapping, and the daily
 workflow skips itself if a run already succeeded that UTC day, so
 anniversary posts go out once.
 
+Anniversary posts are currently turned off in the script itself
+(`scripts/sync-tasks/anniversaries.cjs` returns at the top, logging
+"Anniversary notifications are currently disabled.") because some members'
+join dates are wrong. The daily run still runs that step, but it posts
+nothing. When the dates are fixed and the early return is removed, the guard
+above keeps the posts to once a day.
+
 Cost on Netlify's free plan: each function runs about a second, about 750
 times a month, a few credits at most.
 
@@ -36,18 +43,23 @@ else.
    Leave everything else at No access (Metadata: Read-only is added
    automatically).
 5. Generate it and copy it. GitHub shows it once.
-6. In Netlify: **Site configuration → Environment variables → Add a
-   variable.** Key `GITHUB_DISPATCH_TOKEN`, the token as the value, scope
-   **Functions**. Mark it as a secret if offered.
+6. In Netlify: **Project configuration → Environment variables → Add a
+   variable.** Key `GITHUB_DISPATCH_TOKEN`, the token as the value. Tick
+   **Contains secret values**. Scopes: **All scopes** (the free plan cannot
+   pick specific ones; that is fine, because no browser code reads this
+   variable, so it never reaches the site's JavaScript). **Same value for
+   all deploy contexts.**
 7. Trigger a deploy (or wait for the next one), so the functions pick up the
    variable.
 
 ## Checking it works
 
-- Netlify → **Logs & metrics → Functions**: `scheduled-hourly-sync` and
-  `scheduled-daily-sync` should be listed as scheduled, with their next run.
-  **Run now** starts one immediately; its log should say
-  `Started hourly-clan-sync.yml`.
+- Netlify → **Cloud compute → Functions** (not Logs, and not Analytics &
+  metrics → Function metrics, which only updates hourly): open
+  `scheduled-hourly-sync` or `scheduled-daily-sync`. Each shows a
+  **Scheduled** badge, its schedule and its next execution in your local
+  time. **Run now** starts one immediately; its log should say
+  `Started hourly-clan-sync.yml` (or `daily-clan-sync.yml`).
 - GitHub → **Actions**: runs started this way show the event
   `workflow_dispatch`; backup runs show `schedule`.
 - If the log says `Did not start ... GITHUB_DISPATCH_TOKEN is not set`, the
