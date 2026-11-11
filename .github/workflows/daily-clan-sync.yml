@@ -37,14 +37,14 @@ jobs:
           echo "Successful runs today: ${done}"
           if [ "${done:-0}" -gt 0 ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         if: steps.guard.outputs.skip != 'true'
       
       - name: Setup Node.js
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           
       - name: Install dependencies
         if: steps.guard.outputs.skip != 'true'

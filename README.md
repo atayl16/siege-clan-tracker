@@ -58,7 +58,7 @@ Siege Clan Tracker is a comprehensive clan management system for Old School Rune
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 24 and npm (`nvm use` reads `.nvmrc`)
 - Supabase account (for database)
 - Netlify account (for deployment)
 - WiseOldMan API access

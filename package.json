@@ -94,5 +94,8 @@
       "git add"
     ]
   },
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  }
 }

@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       # No npm install: the script uses only built-in fetch, fs and path.
       # WOM_GROUP_ID is not set here - the script defaults to 2928. Set it as a
