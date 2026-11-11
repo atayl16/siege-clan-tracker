@@ -44,7 +44,7 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '24'
           
       - name: Install dependencies
         if: steps.guard.outputs.skip != 'true'
