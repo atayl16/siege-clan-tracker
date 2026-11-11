@@ -60,7 +60,7 @@ Opens at http://localhost:8888
 ## What You Need to Install
 
 ### Required (You Already Have These)
-- ✅ Node.js 18+ (you have v24.10.0)
+- ✅ Node.js 24 (the version in `.nvmrc`; CI, the Netlify build and the functions all run 24)
 - ✅ npm (comes with Node)
 - ✅ Git
 
