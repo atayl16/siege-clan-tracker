@@ -8,6 +8,15 @@ on:
     # (the races page refreshes them itself), but members, events and goals do.
     - cron: "17 * * * *"
 
+  # Started on time by a Netlify scheduled function (netlify.toml), because
+  # GitHub runs the cron above hours late. The cron stays as a backup.
+  workflow_dispatch:
+
+# Never run two at once: Netlify and the backup cron can both start one.
+concurrency:
+  group: hourly-clan-sync
+  cancel-in-progress: false
+
 jobs:
   sync-data:
     runs-on: ubuntu-latest
@@ -23,7 +32,6 @@ jobs:
         run: npm ci --force
         
       - name: Run WOM Sync
-        if: ${{ github.event.inputs.job_to_run == 'wom-sync' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
         run: node scripts/sync-tasks/sync-wom.cjs
         continue-on-error: true
         env:
@@ -34,7 +42,6 @@ jobs:
           WOM_VERIFICATION_CODE: ${{ secrets.WOM_VERIFICATION_CODE }}
           
       - name: Run WOM Events Sync
-        if: ${{ github.event.inputs.job_to_run == 'wom-events' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
         run: node scripts/sync-tasks/wom-events.cjs
         continue-on-error: true
         env:
@@ -51,13 +58,3 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
-           
-      # Optional summary step to report overall status
-      - name: Summary
-        run: |
-          echo "🔍 Daily clan sync process completed"
-          if [[ "${{ github.event.inputs.job_to_run }}" != "" ]]; then
-            echo "Executed job: ${{ github.event.inputs.job_to_run }}"
-          else
-            echo "Ran all jobs via scheduled execution"
-          fi
