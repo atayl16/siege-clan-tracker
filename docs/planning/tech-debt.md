@@ -44,48 +44,24 @@ git rm scripts/update-siege-scores.js
 ---
 
 ### 2. Remove Unused Dependencies
-**Impact:** Medium - Reduces bundle size, eliminates confusion
-**Effort:** Low
-**Risk:** Low
+**Status:** Done
 
-#### Dependencies to Remove:
+An earlier version of this entry had it backwards: it said the app had moved
+to React Query and SWR could go. The reverse was true. SWR is what the app
+fetches with (the hooks in `src/hooks/`), and React Query was installed and
+wrapped around the app in `App.jsx` but never queried anything.
 
-**`swr` (v2.3.3)** - `package.json:26`
-- Application migrated to React Query (@tanstack/react-query)
-- SWR is no longer used anywhere in the codebase
-- Saving ~50KB in bundle size
+Removed:
+- `@tanstack/react-query` and `@tanstack/react-query-devtools`, with the
+  provider and `src/queryClient.js`
+- `pako`: nothing imported it
 
-**Potentially Unused:**
-- **`cheerio`** (v1.0.0) - HTML parsing library
-  - Search codebase to verify if used
-  - May have been used in legacy scraping code
+Kept:
+- `swr`: the app's data fetching
+- `cheerio`: `scripts/sync-tasks/runewatch-check.cjs` parses RuneWatch pages
+  with it
 
-- **`pako`** (v2.1.0) - Compression library
-  - Verify usage in codebase
-  - May be unused after refactoring
-
-- **`sql.js`** (v1.13.0) - SQLite library
-  - Using Supabase (PostgreSQL), not SQLite
-  - Likely can be removed
-
-**Steps:**
-```bash
-# 1. Verify SWR is not used
-grep -r "useSWR" src/
-grep -r "from 'swr'" src/
-
-# 2. Check other dependencies
-grep -r "cheerio" src/ netlify/ scripts/
-grep -r "pako" src/ netlify/ scripts/
-grep -r "sql.js" src/ netlify/ scripts/
-
-# 3. Remove unused ones
-npm uninstall swr cheerio pako sql.js
-
-# 4. Test the application
-npm run build
-npm test
-```
+`sql.js` is no longer a dependency.
 
 ---
 

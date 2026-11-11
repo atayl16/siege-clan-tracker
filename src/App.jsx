@@ -1,5 +1,3 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./queryClient";
 import {
   BrowserRouter as Router,
   Routes,
@@ -114,16 +112,14 @@ function App() {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <DataProvider>
-        <BackgroundLoader />
-        <AuthProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </AuthProvider>
-      </DataProvider>
-    </QueryClientProvider>
+    <DataProvider>
+      <BackgroundLoader />
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </DataProvider>
   );
 }
 
