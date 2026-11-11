@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@sentry/react": "^10.24.0",
-    "@supabase/supabase-js": "~2.50.0",
+    "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.8.4",
     "bcryptjs": "^2.4.3",
