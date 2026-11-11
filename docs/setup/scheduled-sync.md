@@ -19,6 +19,13 @@ a backup. A concurrency group stops two runs overlapping, and the daily
 workflow skips itself if a run already succeeded that UTC day, so
 anniversary posts go out once.
 
+Anniversary posts are currently turned off in the script itself
+(`scripts/sync-tasks/anniversaries.cjs` returns at the top, logging
+"Anniversary notifications are currently disabled.") because some members'
+join dates are wrong. The daily run still runs that step, but it posts
+nothing. When the dates are fixed and the early return is removed, the guard
+above keeps the posts to once a day.
+
 Cost on Netlify's free plan: each function runs about a second, about 750
 times a month, a few credits at most.
 
