@@ -44,8 +44,9 @@ supabase/.temp/
 # Local planning docs
 tasks.md
 
-# Claude Code
-.claude/
+# Claude Code: personal files stay local; the shared permission rules are committed.
+.claude/*
+!.claude/settings.json
 
 
 # Claude Code local files
