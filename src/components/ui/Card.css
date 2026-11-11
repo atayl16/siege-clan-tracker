@@ -83,6 +83,28 @@
 }
 
 /*
+ * Race and goal grids: the Races & Goals page and the profile's Goals and
+ * Races tabs. Defined here because every page that uses them imports Card.
+ * auto-fit, not auto-fill: auto-fill kept empty columns, so a lone card took
+ * a third of the row beside dead space. min() keeps a card from being wider
+ * than a narrow screen.
+ */
+.ui-races-grid,
+.ui-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .ui-races-grid,
+  .ui-goals-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
  * Cards in a grid row are stretched to the row's height. Let the body take
  * the spare room so footers (Delete Goal, Manage Goals) line up along the
  * bottom of the row instead of following each card's content.
