@@ -55,6 +55,8 @@ Removed:
 - `@tanstack/react-query` and `@tanstack/react-query-devtools`, with the
   provider and `src/queryClient.js`
 - `pako`: nothing imported it
+- `@tanstack/react-table-devtools`: nothing imported it (`@tanstack/react-table`
+  itself stays; the member table uses it)
 
 Kept:
 - `swr`: the app's data fetching
