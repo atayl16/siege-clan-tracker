@@ -204,7 +204,7 @@ export default function WeeklyXpLeaderboard({
                 />
                 <p className="xp-week-note">
                   {formatUkTime(lastWeek.start)} to {formatUkTime(lastWeek.end)} UK
-                  {!lastIsPrevious && " · last week's are paid shortly after it closes"}
+                  {!lastIsPrevious && " · last week's points are awarded shortly after it closes"}
                 </p>
               </>
             ) : lastWeekLoading ? (
@@ -215,7 +215,7 @@ export default function WeeklyXpLeaderboard({
               </div>
             ) : (
               <div className="xp-week-message">
-                The first winners are paid when this week ends.
+                The first points are awarded when this week ends.
               </div>
             )}
           </div>

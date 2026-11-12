@@ -75,7 +75,7 @@ describe("WeeklyXpLeaderboard", () => {
     render(<WeeklyXpLeaderboard variant="full" />);
     expect(screen.getByText("Last week's winners")).toBeInTheDocument();
     expect(screen.getByText("Last Winner")).toBeInTheDocument();
-    expect(screen.queryByText(/paid shortly after/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/awarded shortly after/)).not.toBeInTheDocument();
   });
 
   it("calls an older paid week 'Previous winners' until last week is paid", () => {
@@ -88,14 +88,14 @@ describe("WeeklyXpLeaderboard", () => {
     });
     render(<WeeklyXpLeaderboard variant="full" />);
     expect(screen.getByText("Previous winners")).toBeInTheDocument();
-    expect(screen.getByText(/last week's are paid shortly after it closes/)).toBeInTheDocument();
+    expect(screen.getByText(/last week's points are awarded shortly after it closes/)).toBeInTheDocument();
   });
 
   it("says last week's winners are loading rather than that none were paid", () => {
     hookState.value = state({ lastWeekLoading: true });
     render(<WeeklyXpLeaderboard variant="full" />);
     expect(screen.getByText("Loading last week's winners...")).toBeInTheDocument();
-    expect(screen.queryByText(/first winners are paid/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/first points are awarded/)).not.toBeInTheDocument();
   });
 
   it("lists everyone gaining XP on the full version, with the paid places marked off", () => {
@@ -129,7 +129,7 @@ describe("WeeklyXpLeaderboard", () => {
 
   it("explains that nobody has been paid yet before the first week ends", () => {
     render(<WeeklyXpLeaderboard variant="full" />);
-    expect(screen.getByText(/first winners are paid when this week ends/)).toBeInTheDocument();
+    expect(screen.getByText(/first points are awarded when this week ends/)).toBeInTheDocument();
   });
 });
 
