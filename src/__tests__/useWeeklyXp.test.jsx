@@ -1,5 +1,5 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
-import { SWRConfig } from "swr";
+import { SWRConfig, useSWRConfig } from "swr";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // A chainable stand-in for supabase-js: every call is recorded, and awaiting
@@ -79,11 +79,27 @@ describe("useWeeklyXp", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("ranks everyone if the member list cannot be read", async () => {
+  it("keeps showing good standings when a later refresh fails", async () => {
+    const { result } = renderHook(() => ({ xp: useWeeklyXp(), cache: useSWRConfig() }), { wrapper });
+    await waitFor(() => expect(result.current.xp.ranking).toHaveLength(3));
+
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ error: "rate limited" }), { status: 429 }));
+    await act(async () => {
+      await result.current.cache
+        .mutate((key) => typeof key === "string" && key.startsWith("/api/wom-group-gained"))
+        .catch(() => {});
+    });
+    expect(globalThis.fetch).toHaveBeenCalled();
+    expect(result.current.xp.error).toBeUndefined();
+    expect(result.current.xp.ranking).toHaveLength(3);
+  });
+
+  it("reports an error, not unchecked places, if the member list cannot be read", async () => {
     db.tables.members = () => ({ data: null, error: new Error("down") });
     const { result } = renderHook(() => useWeeklyXp(), { wrapper });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.ranking.map((r) => r.womId)).toEqual([1, 2, 3, 4]);
+    await waitFor(() => expect(result.current.error).toBeTruthy());
+    expect(result.current.loading).toBe(false);
+    expect(result.current.ranking).toEqual([]);
   });
 });
 

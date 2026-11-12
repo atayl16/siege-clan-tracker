@@ -13,6 +13,19 @@
  * was down) is still paid once a run gets through, even after the next week
  * has closed. award_weekly_xp pays a week only once, so offering a paid week
  * again is harmless, and a paid week is skipped before WOM is asked.
+ *
+ * Every week still unpaid after a run (an error, or WOM showing no gains at
+ * all, which never happens for a real week) makes the job exit non-zero, so
+ * the hourly workflow goes red and GitHub emails about it, every hour, for
+ * the LOOKBACK_WEEKS weeks the week stays in reach.
+ *
+ * To pay a week that has aged out of reach, run the job by hand as if it were
+ * a time inside the following week:
+ *
+ *   node scripts/sync-tasks/weekly-xp-awards.cjs --now 2026-11-17T12:00:00Z
+ *
+ * (with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set). That pays the week
+ * that closed before that time, and up to three before it, if still unpaid.
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -122,9 +135,11 @@ async function runWeeklyXpAwards({ supabase, fetchGains, now = new Date(), log =
   const failures = [];
   for (const week of unpaid) {
     try {
-      results.push(
-        await payWeek({ week, supabase, fetchGains, memberIds, rankXpGains: xpWeek.rankXpGains, log })
-      );
+      const result = await payWeek({ week, supabase, fetchGains, memberIds, rankXpGains: xpWeek.rankXpGains, log });
+      results.push(result);
+      if (result.status === 'no_gains') {
+        failures.push(new Error(`week ${week.start.toISOString()} is unpaid: WOM showed no member gaining XP`));
+      }
     } catch (err) {
       // Carry on to the next week; report every failure at the end.
       log(`Week ${week.start.toISOString()}: ${err.message}`);
@@ -139,9 +154,22 @@ async function runWeeklyXpAwards({ supabase, fetchGains, now = new Date(), log =
   return { weeks: results };
 }
 
+/** `--now <ISO time>` from the command line, for paying an aged-out week by hand. */
+function parseNow(argv) {
+  const i = argv.indexOf('--now');
+  if (i === -1) return new Date();
+  const now = new Date(argv[i + 1]);
+  if (Number.isNaN(now.getTime())) throw new Error(`--now needs an ISO time, got "${argv[i + 1]}"`);
+  return now;
+}
+
 if (require.main === module) {
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  runWeeklyXpAwards({ supabase, fetchGains: fetchGroupGained })
+  Promise.resolve()
+    .then(() => {
+      const now = parseNow(process.argv);
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      return runWeeklyXpAwards({ supabase, fetchGains: fetchGroupGained, now });
+    })
     .then(() => process.exit(0))
     .catch((err) => {
       console.error('Weekly XP award failed:', err);
@@ -149,4 +177,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { runWeeklyXpAwards, FIRST_WEEK_START, LOOKBACK_WEEKS };
+module.exports = { runWeeklyXpAwards, parseNow, FIRST_WEEK_START, LOOKBACK_WEEKS };

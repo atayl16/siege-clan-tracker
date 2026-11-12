@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { runWeeklyXpAwards } = require('../weekly-xp-awards.cjs');
+const { runWeeklyXpAwards, parseNow } = require('../weekly-xp-awards.cjs');
 
 const row = (id, gained, name = `p${id}`) => ({
   player: { id, username: name.toLowerCase(), displayName: name },
@@ -100,16 +100,16 @@ describe('runWeeklyXpAwards', () => {
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
-  it('leaves a week unpaid when WOM shows no gains, so a later run can pay it', async () => {
+  it('leaves a week unpaid when WOM shows no gains, and fails so it is noticed', async () => {
     const supabase = fakeSupabase({ paidWeeks: [W9] });
-    const { weeks } = await runWeeklyXpAwards({
-      supabase,
-      fetchGains: vi.fn().mockResolvedValue([row(1, 0)]),
-      now: NOW,
-      log: quiet,
-    });
-
-    expect(weeks.map((w) => w.status)).toEqual(['already_paid', 'no_gains']);
+    await expect(
+      runWeeklyXpAwards({
+        supabase,
+        fetchGains: vi.fn().mockResolvedValue([row(1, 0)]),
+        now: NOW,
+        log: quiet,
+      })
+    ).rejects.toThrow(/1 week\(s\) could not be paid.*no member gaining XP/);
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
@@ -138,7 +138,7 @@ describe('runWeeklyXpAwards', () => {
 
   it('looks back at most four weeks', async () => {
     const supabase = fakeSupabase();
-    const fetchGains = vi.fn().mockResolvedValue([]);
+    const fetchGains = vi.fn().mockResolvedValue([row(1, 5)]);
     const { weeks } = await runWeeklyXpAwards({
       supabase,
       fetchGains,
@@ -149,6 +149,18 @@ describe('runWeeklyXpAwards', () => {
     expect(weeks).toHaveLength(4);
     expect(fetchGains).toHaveBeenCalledTimes(4);
     expect(supabase.gte).toHaveBeenCalledWith('week_start', weeks[0].week.start.toISOString());
+  });
+
+  it('pays an aged-out week when run by hand with --now inside the week after it', async () => {
+    const now = parseNow(['node', 'weekly-xp-awards.cjs', '--now', '2026-11-17T12:00:00Z']);
+    const supabase = fakeSupabase({ paidWeeks: [W16] });
+    await runWeeklyXpAwards({ supabase, fetchGains: vi.fn().mockResolvedValue([row(1, 5)]), now, log: quiet });
+    expect(paidStarts(supabase)).toEqual([W9]);
+  });
+
+  it('refuses a --now that is not a time', () => {
+    expect(() => parseNow(['node', 'x', '--now', 'monday'])).toThrow(/ISO time/);
+    expect(parseNow(['node', 'x']).getTime()).toBeLessThanOrEqual(Date.now());
   });
 
   it('tries every unpaid week, then fails loudly if any failed', async () => {

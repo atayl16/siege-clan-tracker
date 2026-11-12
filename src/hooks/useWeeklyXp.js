@@ -111,29 +111,33 @@ export function useWeeklyXp({ withLastWeek = false } = {}) {
   });
 
   // Everyone eligible with a gain, ranked; the top five are the ones who would
-  // be paid. If the member list cannot be read, rank everyone rather than
-  // show nothing.
+  // be paid. Without the member list the places cannot be checked against the
+  // payout, so that is reported as an error rather than shown unchecked.
   const memberIds = members.data;
   const ranking = useMemo(
     () =>
-      rankXpGains(current.data, {
-        limit: Infinity,
-        isEligible: memberIds ? (row) => memberIds.has(Number(row.player.id)) : undefined,
-      }),
+      memberIds
+        ? rankXpGains(current.data, {
+            limit: Infinity,
+            isEligible: (row) => memberIds.has(Number(row.player.id)),
+          })
+        : [],
     [current.data, memberIds]
   );
   const standings = useMemo(() => ranking.filter((r) => r.points > 0), [ranking]);
 
-  // Wait for the member list too, so places do not shift once it arrives;
-  // but a failed WOM request is shown at once, not held up by it.
-  const membersPending = !members.data && !members.error;
+  // Either request failing with nothing to show is an error, shown at once;
+  // otherwise wait for both, so places do not shift once the member list
+  // arrives. SWR keeps the last good data when a refresh fails, so a failed
+  // background refresh keeps showing it rather than replacing it with an error.
+  const error = (!current.data && current.error) || (!members.data && members.error) || undefined;
 
   return {
     week,
     ranking,
     standings,
-    loading: !current.error && (!current.data || membersPending),
-    error: current.error,
+    loading: !error && (!current.data || !members.data),
+    error,
     lastWeek: last.data ?? null,
     lastWeekLoading: withLastWeek && last.data === undefined && !last.error,
     lastWeekError: last.error,

@@ -151,7 +151,7 @@ export default function WeeklyXpLeaderboard({
   } else if (error) {
     body = (
       <div className="xp-week-message">
-        Couldn't load this week's XP from Wise Old Man.
+        Couldn't load this week's XP standings. Try again in a few minutes.
       </div>
     );
   } else if (standings.length === 0) {
