@@ -39,6 +39,24 @@ async function fetchGroupCompetitions() {
   return competitions;
 }
 
+/**
+ * Overall XP each group member gained between two instants, highest first.
+ * Used by the weekly XP award (scripts/sync-tasks/weekly-xp-awards.cjs).
+ * WOM counts snapshots inside the window, so a gain made before endDate but
+ * only recorded after it falls into the next window, as in a competition.
+ */
+async function fetchGroupGained(startDate, endDate) {
+  const query = new URLSearchParams({
+    metric: 'overall',
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+    limit: '50',
+  });
+  const rows = await womGet(`/groups/${groupId()}/gained?${query}`);
+  if (!Array.isArray(rows)) throw new Error('WOM group gained response was not a list');
+  return rows;
+}
+
 /** Every boss metric WOM currently tracks. */
 async function fetchBossMetrics() {
   const stats = await womGet(`/groups/${groupId()}/statistics`);
@@ -81,6 +99,7 @@ const competitionUrl = (id) => `https://wiseoldman.net/competitions/${id}`;
 module.exports = {
   fetchGroupCompetitions,
   fetchBossMetrics,
+  fetchGroupGained,
   createGroupCompetition,
   competitionUrl,
 };

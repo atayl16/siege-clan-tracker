@@ -13,16 +13,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
   margin-bottom: 1.875rem; /* 30px */
   padding-bottom: 1.25rem; /* 20px */
   border-bottom: 1px solid #444;
 }
 
+/* Name with the main character's weekly XP place underneath; the right of
+   the header holds the weekly XP top five. */
 .user-summary {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 .username {
@@ -31,11 +36,11 @@
   text-align: left;
 }
 
-.member-since {
-  color: #aaa;
-  font-size: 0.9rem;
-  text-align: right;
-  margin-left: auto;
+/* Fixed width: the name side wraps first, so the top five never get
+   squeezed and clip their points. */
+.profile-xp-week {
+  flex: 0 0 24rem;
+  max-width: 100%;
 }
 
 /* Tab Header */
@@ -207,19 +212,26 @@
     text-align: center;
   }
   
+  .profile-header {
+    align-items: stretch;
+  }
+
   .user-summary {
-    flex-direction: column;
+    align-items: center;
     text-align: center;
   }
-  
+
   .username {
     text-align: center;
   }
-  
-  .member-since {
-    margin-left: 0;
-    margin-top: 0.625rem; /* 10px */
-    text-align: center;
+
+  .user-summary .your-xp {
+    justify-content: center;
+  }
+
+  .profile-xp-week {
+    flex-basis: auto;
+    text-align: left;
   }
   
   .ui-character-card-header {

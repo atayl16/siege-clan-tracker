@@ -1,0 +1,172 @@
+/* Weekly Overall XP leaderboard (Profile header and Leaderboards page).
+   Rows reuse .ui-mini-player and .ui-rank-badge from Leaderboard.css. */
+
+.xp-week {
+  color: var(--color-text, #e0e0e0);
+}
+
+.xp-week-compact {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 0.75rem 1rem;
+}
+
+.xp-week-columns {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.xp-week-full .xp-week-columns {
+  grid-template-columns: 1fr 1fr;
+}
+
+.xp-week-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-orange, #ff9800);
+}
+
+.xp-week-compact .xp-week-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.xp-week-icon {
+  font-size: 0.95em;
+}
+
+.xp-week-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.xp-week-row {
+  gap: 0.5rem;
+  padding: 0.3rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.xp-week-row .ui-rank-badge {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.xp-week-row .ui-player-name {
+  min-width: 0;
+}
+
+.xp-week-row-yours {
+  background-color: rgba(255, 152, 0, 0.1);
+}
+
+.xp-week-you {
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 0.25rem;
+  background-color: var(--color-orange, #ff9800);
+  color: #111;
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.xp-week-gained {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.xp-week-points {
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-orange, #ff9800);
+}
+
+/* The full list: a line between the paid top five and everyone else. */
+.xp-week-row-cutoff {
+  margin-top: 0.4rem;
+  border-top: 1px dashed rgba(255, 152, 0, 0.5);
+  border-radius: 0;
+  padding-top: 0.5rem;
+}
+
+.xp-week-toggle {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.xp-week-full .xp-week-columns {
+  align-items: start;
+}
+
+.xp-week-message {
+  padding: 0.5rem 0;
+  color: #999;
+  font-style: italic;
+}
+
+.xp-week-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* "Your" line under the name in the Profile header. */
+.your-xp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.4rem;
+  row-gap: 0.15rem;
+  font-size: 0.95rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+.your-xp-icon {
+  align-self: center;
+  color: var(--color-orange, #ff9800);
+}
+
+.your-xp-place {
+  font-weight: 800;
+  color: var(--color-orange, #ff9800);
+}
+
+.your-xp-main {
+  font-weight: 600;
+}
+
+.your-xp-muted {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.your-xp-target {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: var(--color-orange, #ff9800);
+}
+
+/* Without a place there is only one line: keep it beside the icon. */
+.your-xp-icon + .your-xp-muted {
+  flex-basis: auto;
+}
+
+@media (max-width: 768px) {
+  .xp-week-full .xp-week-columns {
+    grid-template-columns: 1fr;
+  }
+}
