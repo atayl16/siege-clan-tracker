@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import Leaderboard from "../components/Leaderboard";
 import { useMembers } from "../hooks/useMembers";
 import { useEvents } from "../hooks/useEvents";
-import { FaTrophy, FaTimes, FaMedal, FaInfoCircle } from "react-icons/fa";
+import { FaTrophy, FaMedal, FaInfoCircle, FaChartLine } from "react-icons/fa";
+import WeeklyXpLeaderboard from "../components/WeeklyXpLeaderboard";
+import { XP_AWARD_POINTS } from "../utils/xpWeek";
 
 // Import UI components
 import Card from "../components/ui/Card";
@@ -44,6 +46,14 @@ export default function LeaderboardPage() {
         <h2>Clan Leaderboards</h2>
       </div>
       
+      {/* Weekly Overall XP: the top five earn Siege Score each week. */}
+      <div className="ui-section-container">
+        <h3 className="ui-section-title">
+          <FaChartLine className="ui-section-icon" /> Weekly XP Leaderboard
+        </h3>
+        <WeeklyXpLeaderboard variant="full" />
+      </div>
+
       {/* Side-by-side container for the leaderboards */}
       <div className="ui-leaderboards-container">
         {/* Points Leaderboard Section */}
@@ -113,7 +123,7 @@ export default function LeaderboardPage() {
           </h3>
           <p>
             Points are earned by participating in clan events and
-            competitions:
+            competitions, and by gaining the most XP each week:
           </p>
           <div className="ui-points-categories">
             <div className="ui-points-category ui-points-category-long">
@@ -129,6 +139,17 @@ export default function LeaderboardPage() {
               <h4>Short Events (1-2 hours)</h4>
               <ul>
                 <li>All participants: 2 points</li>
+              </ul>
+            </div>
+            <div className="ui-points-category">
+              <h4>Weekly XP</h4>
+              <ul>
+                {XP_AWARD_POINTS.map((points, i) => (
+                  <li key={i}>
+                    {["1st", "2nd", "3rd", "4th", "5th"][i]} most Overall XP: {points} points
+                  </li>
+                ))}
+                <li>Weeks run Monday 19:00 to Monday 19:00 UK, with SotW and BotW</li>
               </ul>
             </div>
           </div>

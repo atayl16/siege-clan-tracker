@@ -1,0 +1,166 @@
+/* Small total-XP chart on the Profile page's character cards. */
+
+.xp-chart {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: var(--border-radius-md, 0.5rem);
+  color: var(--color-text, #e0e0e0);
+}
+
+.xp-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.xp-chart-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #aaa;
+}
+
+.xp-chart-periods {
+  display: inline-flex;
+  border: 1px solid #444;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.xp-chart-period {
+  padding: 0.15rem 0.5rem;
+  border: none;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.xp-chart-period + .xp-chart-period {
+  border-left: 1px solid #444;
+}
+
+.xp-chart-period:hover {
+  color: #fff;
+}
+
+.xp-chart-period.is-active {
+  background-color: #333;
+  color: var(--color-orange, #ff9800);
+  font-weight: 600;
+}
+
+.xp-chart-period:focus-visible {
+  outline: 2px solid var(--color-orange, #ff9800);
+  outline-offset: -2px;
+}
+
+.xp-chart-headline {
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.xp-chart-gain {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.xp-chart-muted {
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+.xp-chart-plot {
+  position: relative;
+}
+
+.xp-chart-svg {
+  display: block;
+  width: 100%;
+  height: 4.5rem;
+  overflow: visible;
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.xp-chart-svg:focus-visible {
+  outline: 2px solid var(--color-orange, #ff9800);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+.xp-chart-area {
+  fill: var(--color-orange, #ff9800);
+  fill-opacity: 0.12;
+}
+
+.xp-chart-line {
+  fill: none;
+  stroke: var(--color-orange, #ff9800);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.xp-chart-crosshair {
+  stroke: #888;
+  stroke-width: 1;
+}
+
+.xp-chart-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--color-orange, #ff9800);
+  box-shadow: 0 0 0 2px #1e1e1e;
+  pointer-events: none;
+}
+
+.xp-chart-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.25rem);
+  transform: translateX(0.5rem);
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem 0.5rem;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: #ccc;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.xp-chart-tooltip strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Past the middle, open the tooltip leftwards so it stays on the card. */
+.xp-chart-tooltip-left {
+  transform: translateX(calc(-100% - 0.5rem));
+}
+
+.xp-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.xp-chart-message {
+  padding: 0.75rem 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #999;
+}

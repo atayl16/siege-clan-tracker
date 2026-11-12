@@ -50,6 +50,17 @@ jobs:
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
 
+      # Pays last week's top Overall XP gainers once the week closes
+      # (Monday 19:00 UK). Every later run that week is a no-op.
+      - name: Run Weekly XP Awards
+        run: node scripts/sync-tasks/weekly-xp-awards.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+          WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
+
       # After the WOM sync, so player snapshots are as fresh as they get.
       - name: Run Race Progress Sync
         run: node scripts/sync-tasks/race-progress.cjs

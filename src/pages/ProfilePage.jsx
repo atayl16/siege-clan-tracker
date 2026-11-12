@@ -24,6 +24,8 @@ import LoadingIndicator from "../components/ui/LoadingIndicator";
 import RaceCard from "../components/RaceCard";
 import CharacterEventStandings from "../components/CharacterEventStandings";
 import CreateRace from "../components/CreateRace";
+import WeeklyXpLeaderboard, { YourWeeklyXp } from "../components/WeeklyXpLeaderboard";
+import XpProgressChart from "../components/XpProgressChart";
 
 import "./ProfilePage.css";
 import { racesForUser, canEditRace } from "../utils/races";
@@ -240,10 +242,24 @@ function ProfileContent() {
       <div className="profile-header">
         <div className="user-summary">
           <div className="username">{displayUsername(user.username)}</div>
-          <div className="member-since">
-            Member since {new Date(user.created_at).toLocaleDateString()}
-          </div>
+          {/* "Member since" lives on the Account tab; the header shows how
+              the main character is doing in this week's XP race instead. */}
+          <YourWeeklyXp
+            character={
+              orderedClaims[0]
+                ? {
+                    womId: orderedClaims[0].members?.wom_id ?? orderedClaims[0].wom_id,
+                    name: orderedClaims[0].members?.name,
+                  }
+                : null
+            }
+          />
         </div>
+        <WeeklyXpLeaderboard
+          variant="compact"
+          className="profile-xp-week"
+          highlightIds={(userClaims || []).map((c) => c.members?.wom_id ?? c.wom_id)}
+        />
       </div>
 
       <Tabs
@@ -318,6 +334,8 @@ function ProfileContent() {
                         value={claim.members.siege_score || 0}
                       />
                     </StatGroup>
+
+                    <XpProgressChart womId={claim.members.wom_id ?? claim.wom_id} />
 
                     <CharacterEventStandings womId={claim.members.wom_id} />
 
