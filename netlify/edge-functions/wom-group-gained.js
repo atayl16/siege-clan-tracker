@@ -51,7 +51,12 @@ export default async (request, _context) => {
     if (!res.ok) return womError(res);
 
     const rows = await res.json();
-    const trimmed = (Array.isArray(rows) ? rows : [])
+    // Anything but a list is not an answer we can rank. Caching it as an
+    // empty list would show "no XP gained" to every visitor for ten minutes.
+    if (!Array.isArray(rows)) {
+      return jsonError(502, 'WOM returned an unexpected response for group gains');
+    }
+    const trimmed = rows
       .filter((row) => (row?.data?.gained ?? 0) > 0)
       .sort((a, b) => b.data.gained - a.data.gained)
       .map((row) => ({

@@ -7,10 +7,12 @@
  * and the ranking, which the site uses too, so the standings members watch
  * during the week are the ones that get paid.
  *
- * Runs every hour from the hourly sync. Each run offers the most recently
- * finished week; award_weekly_xp pays a week only once, so every run after the
- * first is a no-op. Running hourly is deliberate: GitHub's cron starts late or
- * not at all here, and any one run that gets through is enough.
+ * Runs every hour from the hourly sync. Each run pays every finished week that
+ * is still unpaid, oldest first, looking back LOOKBACK_WEEKS weeks. So a week
+ * whose runs all failed (GitHub's cron starts late or not at all here, or WOM
+ * was down) is still paid once a run gets through, even after the next week
+ * has closed. award_weekly_xp pays a week only once, so offering a paid week
+ * again is harmless, and a paid week is skipped before WOM is asked.
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -20,42 +22,29 @@ const { fetchGroupGained } = require('../comp-polls/wom.cjs');
 // weeks were never announced, so they are never paid out retroactively.
 const FIRST_WEEK_START = new Date('2026-11-09T19:00:00Z');
 
+// How far back an unpaid week is still offered. Bounded so a week WOM never
+// had gains for is not re-checked every hour forever.
+const LOOKBACK_WEEKS = 4;
+
+const HOUR_MS = 60 * 60 * 1000;
+
 // src/ is ES modules; a dynamic import loads it from CommonJS.
 const loadXpWeek = () => import('../../src/utils/xpWeek.js');
 
-/**
- * @param {{
- *   supabase: import('@supabase/supabase-js').SupabaseClient,
- *   fetchGains: (start: Date, end: Date) => Promise<object[]>,
- *   now?: Date,
- *   log?: (msg: string) => void,
- * }} deps
- * @returns {Promise<{ status: string, week?: { start: Date, end: Date }, paid?: number, awards?: object[] }>}
- */
-async function runWeeklyXpAwards({ supabase, fetchGains, now = new Date(), log = console.log }) {
-  const { lastCompletedXpWeek, rankXpGains } = await loadXpWeek();
-  const week = lastCompletedXpWeek(now);
+/** Finished weeks to consider, oldest first, never before FIRST_WEEK_START. */
+function candidateWeeks(xpWeek, now) {
+  const weeks = [];
+  let week = xpWeek.lastCompletedXpWeek(now);
+  while (weeks.length < LOOKBACK_WEEKS && week.start >= FIRST_WEEK_START) {
+    weeks.unshift(week);
+    week = xpWeek.xpWeekContaining(new Date(week.start.getTime() - HOUR_MS));
+  }
+  return weeks;
+}
+
+/** Pay one week. Returns { status, week, paid?, awards? }. */
+async function payWeek({ week, supabase, fetchGains, memberIds, rankXpGains, log }) {
   const label = `${week.start.toISOString()} to ${week.end.toISOString()}`;
-
-  if (week.start < FIRST_WEEK_START) {
-    log(`Week ${label} is before the award started; nothing to pay.`);
-    return { status: 'before_start', week };
-  }
-
-  const { data: existing, error: existingError } = await supabase
-    .from('xp_awards')
-    .select('id')
-    .eq('week_start', week.start.toISOString())
-    .limit(1);
-  if (existingError) throw new Error(`Could not read xp_awards: ${existingError.message}`);
-  if (existing.length > 0) {
-    log(`Week ${label} is already paid.`);
-    return { status: 'already_paid', week };
-  }
-
-  const { data: members, error: membersError } = await supabase.from('members').select('wom_id');
-  if (membersError) throw new Error(`Could not read members: ${membersError.message}`);
-  const memberIds = new Set(members.map((m) => Number(m.wom_id)));
 
   const gains = await fetchGains(week.start, week.end);
   const ranked = rankXpGains(gains, { isEligible: (row) => memberIds.has(Number(row.player.id)) });
@@ -80,13 +69,74 @@ async function runWeeklyXpAwards({ supabase, fetchGains, now = new Date(), log =
     p_week_end: week.end.toISOString(),
     p_awards: awards,
   });
-  if (rpcError) throw new Error(`award_weekly_xp failed: ${rpcError.message}`);
+  if (rpcError) throw new Error(`award_weekly_xp failed for week ${label}: ${rpcError.message}`);
 
   for (const a of awards) {
     log(`  #${a.placement} ${a.player_name}: ${a.xp_gained.toLocaleString('en-GB')} XP, +${a.points_awarded} Siege Score`);
   }
   log(`Week ${label}: paid ${paid} member(s).`);
   return { status: 'paid', week, paid, awards };
+}
+
+/**
+ * @param {{
+ *   supabase: import('@supabase/supabase-js').SupabaseClient,
+ *   fetchGains: (start: Date, end: Date) => Promise<object[]>,
+ *   now?: Date,
+ *   log?: (msg: string) => void,
+ * }} deps
+ * @returns {Promise<{ weeks: { status: string, week: { start: Date, end: Date }, paid?: number, awards?: object[] }[] }>}
+ *   One entry per week considered. Throws, after trying every unpaid week, if
+ *   any of them failed, so the job exits non-zero.
+ */
+async function runWeeklyXpAwards({ supabase, fetchGains, now = new Date(), log = console.log }) {
+  const xpWeek = await loadXpWeek();
+  const weeks = candidateWeeks(xpWeek, now);
+
+  if (weeks.length === 0) {
+    log('No finished week since the award started; nothing to pay.');
+    return { weeks: [] };
+  }
+
+  const { data: paidRows, error: paidError } = await supabase
+    .from('xp_awards')
+    .select('week_start')
+    .gte('week_start', weeks[0].start.toISOString());
+  if (paidError) throw new Error(`Could not read xp_awards: ${paidError.message}`);
+  const paidWeeks = new Set(paidRows.map((r) => new Date(r.week_start).getTime()));
+
+  const unpaid = weeks.filter((w) => !paidWeeks.has(w.start.getTime()));
+  const results = weeks
+    .filter((w) => paidWeeks.has(w.start.getTime()))
+    .map((week) => ({ status: 'already_paid', week }));
+
+  if (unpaid.length === 0) {
+    log(`All ${weeks.length} recent week(s) are already paid.`);
+    return { weeks: results };
+  }
+
+  const { data: members, error: membersError } = await supabase.from('members').select('wom_id');
+  if (membersError) throw new Error(`Could not read members: ${membersError.message}`);
+  const memberIds = new Set(members.map((m) => Number(m.wom_id)));
+
+  const failures = [];
+  for (const week of unpaid) {
+    try {
+      results.push(
+        await payWeek({ week, supabase, fetchGains, memberIds, rankXpGains: xpWeek.rankXpGains, log })
+      );
+    } catch (err) {
+      // Carry on to the next week; report every failure at the end.
+      log(`Week ${week.start.toISOString()}: ${err.message}`);
+      failures.push(err);
+      results.push({ status: 'failed', week });
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(`${failures.length} week(s) could not be paid: ${failures.map((e) => e.message).join('; ')}`);
+  }
+  return { weeks: results };
 }
 
 if (require.main === module) {
@@ -99,4 +149,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { runWeeklyXpAwards, FIRST_WEEK_START };
+module.exports = { runWeeklyXpAwards, FIRST_WEEK_START, LOOKBACK_WEEKS };

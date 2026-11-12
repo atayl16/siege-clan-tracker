@@ -66,14 +66,36 @@ describe("WeeklyXpLeaderboard", () => {
   it("shows last week's paid winners on the full version", () => {
     hookState.value = state({
       lastWeek: {
-        start: new Date("2026-11-09T19:00:00Z"),
-        end: new Date("2026-11-16T19:00:00Z"),
+        // The week that ended as this one began.
+        start: new Date("2026-11-02T19:00:00Z"),
+        end: new Date("2026-11-09T19:00:00Z"),
         winners: [{ womId: 1, name: "Last Winner", gained: 5e6, place: 1, points: 15 }],
       },
     });
     render(<WeeklyXpLeaderboard variant="full" />);
     expect(screen.getByText("Last week's winners")).toBeInTheDocument();
     expect(screen.getByText("Last Winner")).toBeInTheDocument();
+    expect(screen.queryByText(/paid shortly after/)).not.toBeInTheDocument();
+  });
+
+  it("calls an older paid week 'Previous winners' until last week is paid", () => {
+    hookState.value = state({
+      lastWeek: {
+        start: new Date("2026-10-26T19:00:00Z"),
+        end: new Date("2026-11-02T19:00:00Z"),
+        winners: [{ womId: 1, name: "Older Winner", gained: 5e6, place: 1, points: 15 }],
+      },
+    });
+    render(<WeeklyXpLeaderboard variant="full" />);
+    expect(screen.getByText("Previous winners")).toBeInTheDocument();
+    expect(screen.getByText(/last week's are paid shortly after it closes/)).toBeInTheDocument();
+  });
+
+  it("says last week's winners are loading rather than that none were paid", () => {
+    hookState.value = state({ lastWeekLoading: true });
+    render(<WeeklyXpLeaderboard variant="full" />);
+    expect(screen.getByText("Loading last week's winners...")).toBeInTheDocument();
+    expect(screen.queryByText(/first winners are paid/)).not.toBeInTheDocument();
   });
 
   it("lists everyone gaining XP on the full version, with the paid places marked off", () => {

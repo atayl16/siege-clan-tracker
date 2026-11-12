@@ -82,6 +82,13 @@ describe('wom-group-gained', () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  it('answers 502, uncached, when WOM sends something other than a list', async () => {
+    globalThis.fetch.mockResolvedValue(new Response(JSON.stringify({ message: 'odd' }), { status: 200 }));
+    const res = await call(`startDate=${START}&endDate=${END}`);
+    expect(res.status).toBe(502);
+    expect(res.headers.get('Netlify-CDN-Cache-Control')).toBeNull();
+  });
+
   it('passes a WOM rate limit through as 429', async () => {
     globalThis.fetch.mockResolvedValue(new Response('{}', { status: 429 }));
     const res = await call(`startDate=${START}&endDate=${END}`);

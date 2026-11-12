@@ -50,9 +50,12 @@ jobs:
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ secrets.WOM_GROUP_ID }}
 
-      # Pays last week's top Overall XP gainers once the week closes
-      # (Monday 19:00 UK). Every later run that week is a no-op.
+      # Pays the top Overall XP gainers of any finished week not yet paid
+      # (weeks close Monday 19:00 UK). A run with nothing to pay is a no-op.
+      # Non-blocking so the steps after it still run; the last step turns a
+      # failure here into a failed job, so GitHub emails about it.
       - name: Run Weekly XP Awards
+        id: weekly_xp_awards
         run: node scripts/sync-tasks/weekly-xp-awards.cjs
         continue-on-error: true
         env:
@@ -69,3 +72,11 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+
+      # A failed award means Siege Score went unpaid. Fail the job (after the
+      # other steps have run) so it is not hidden in a green run's log.
+      - name: Fail if the weekly XP award failed
+        if: steps.weekly_xp_awards.outcome == 'failure'
+        run: |
+          echo "::error::Weekly XP award failed; see the Run Weekly XP Awards step log."
+          exit 1

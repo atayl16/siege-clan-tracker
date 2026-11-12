@@ -135,9 +135,13 @@ export default function WeeklyXpLeaderboard({
   highlightIds = [],
   className = "",
 }) {
-  const { week, ranking, standings, loading, error, lastWeek, lastWeekError } = useWeeklyXp();
-  const highlight = new Set(highlightIds.map(Number));
   const full = variant === "full";
+  const { week, ranking, standings, loading, error, lastWeek, lastWeekLoading, lastWeekError } =
+    useWeeklyXp({ withLastWeek: full });
+  const highlight = new Set(highlightIds.map(Number));
+  // The newest paid week is "last week" only once the job has paid the week
+  // that just closed (shortly after Monday 19:00 UK). Until then it is older.
+  const lastIsPrevious = lastWeek && lastWeek.end.getTime() === week.start.getTime();
   const [showAll, setShowAll] = useState(false);
   const canShowAll = full && ranking.length > standings.length;
 
@@ -189,7 +193,7 @@ export default function WeeklyXpLeaderboard({
           <div className="xp-week-column">
             <h3 className="xp-week-title">
               <FaCrown className="xp-week-icon" aria-hidden="true" />
-              Last week's winners
+              {lastWeek && !lastIsPrevious ? "Previous winners" : "Last week's winners"}
             </h3>
             {lastWeek?.winners?.length ? (
               <>
@@ -200,8 +204,11 @@ export default function WeeklyXpLeaderboard({
                 />
                 <p className="xp-week-note">
                   {formatUkTime(lastWeek.start)} to {formatUkTime(lastWeek.end)} UK
+                  {!lastIsPrevious && " · last week's are paid shortly after it closes"}
                 </p>
               </>
+            ) : lastWeekLoading ? (
+              <div className="xp-week-message">Loading last week's winners...</div>
             ) : lastWeekError ? (
               <div className="xp-week-message">
                 Couldn't load last week's winners.

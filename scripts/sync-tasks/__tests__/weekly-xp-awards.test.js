@@ -9,24 +9,18 @@ const row = (id, gained, name = `p${id}`) => ({
   data: { gained },
 });
 
-/** Just enough of supabase-js for the job: two reads and one RPC. */
+/**
+ * Just enough of supabase-js for the job. paidWeeks are week_start values as
+ * Postgres returns them (+00:00, not Z), to check the job compares instants.
+ */
 function fakeSupabase({ paidWeeks = [], memberIds = [1, 2, 3, 4, 5, 6], rpcResult = 5 } = {}) {
   const rpc = vi.fn().mockResolvedValue({ data: rpcResult, error: null });
+  const gte = vi.fn(async () => ({ data: paidWeeks.map((week_start) => ({ week_start })), error: null }));
   return {
     rpc,
+    gte,
     from(table) {
-      if (table === 'xp_awards') {
-        return {
-          select: () => ({
-            eq: (_col, weekStart) => ({
-              limit: async () => ({
-                data: paidWeeks.includes(weekStart) ? [{ id: 1 }] : [],
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
+      if (table === 'xp_awards') return { select: () => ({ gte }) };
       if (table === 'members') {
         return { select: async () => ({ data: memberIds.map((wom_id) => ({ wom_id })), error: null }) };
       }
@@ -35,27 +29,33 @@ function fakeSupabase({ paidWeeks = [], memberIds = [1, 2, 3, 4, 5, 6], rpcResul
   };
 }
 
-// Tuesday after the week of 16-23 Nov closed.
-const NOW = new Date('2026-11-24T10:00:00Z');
-const WEEK_START = '2026-11-16T19:00:00.000Z';
-const WEEK_END = '2026-11-23T19:00:00.000Z';
 const quiet = () => {};
+const paidStarts = (supabase) => supabase.rpc.mock.calls.map(([, args]) => args.p_week_start);
+
+// Weeks, all Monday 19:00 UK (GMT, so 19:00Z).
+const W9 = '2026-11-09T19:00:00.000Z';
+const W16 = '2026-11-16T19:00:00.000Z';
+const W23 = '2026-11-23T19:00:00.000Z';
+
+// Tuesday after the week of 16-23 Nov closed: weeks 9-16 and 16-23 are done.
+const NOW = new Date('2026-11-24T10:00:00Z');
 
 describe('runWeeklyXpAwards', () => {
-  it('pays the top five members for the week that just closed', async () => {
-    const supabase = fakeSupabase();
+  it('pays the top five members of a closed week', async () => {
+    const supabase = fakeSupabase({ paidWeeks: ['2026-11-09T19:00:00+00:00'] });
     const fetchGains = vi.fn().mockResolvedValue([
       row(1, 9_000_000), row(2, 8_000_000), row(3, 7_000_000),
       row(4, 6_000_000), row(5, 5_000_000), row(6, 4_000_000),
     ]);
 
-    const result = await runWeeklyXpAwards({ supabase, fetchGains, now: NOW, log: quiet });
+    const { weeks } = await runWeeklyXpAwards({ supabase, fetchGains, now: NOW, log: quiet });
 
-    expect(result.status).toBe('paid');
-    expect(fetchGains).toHaveBeenCalledWith(new Date(WEEK_START), new Date(WEEK_END));
+    expect(weeks.map((w) => w.status)).toEqual(['already_paid', 'paid']);
+    expect(fetchGains).toHaveBeenCalledTimes(1);
+    expect(fetchGains).toHaveBeenCalledWith(new Date(W16), new Date(W23));
     expect(supabase.rpc).toHaveBeenCalledWith('award_weekly_xp', {
-      p_week_start: WEEK_START,
-      p_week_end: WEEK_END,
+      p_week_start: W16,
+      p_week_end: W23,
       p_awards: [
         { wom_id: 1, player_name: 'p1', placement: 1, xp_gained: 9_000_000, points_awarded: 15 },
         { wom_id: 2, player_name: 'p2', placement: 2, xp_gained: 8_000_000, points_awarded: 10 },
@@ -66,8 +66,18 @@ describe('runWeeklyXpAwards', () => {
     });
   });
 
+  it('still pays a week whose runs all failed, after the next week has closed', async () => {
+    const supabase = fakeSupabase(); // neither week paid
+    const fetchGains = vi.fn().mockResolvedValue([row(1, 100)]);
+
+    const { weeks } = await runWeeklyXpAwards({ supabase, fetchGains, now: NOW, log: quiet });
+
+    expect(weeks.map((w) => w.status)).toEqual(['paid', 'paid']);
+    expect(paidStarts(supabase)).toEqual([W9, W16]); // oldest first
+  });
+
   it('skips players with no members row, so the next one is paid instead', async () => {
-    const supabase = fakeSupabase({ memberIds: [2, 3] });
+    const supabase = fakeSupabase({ paidWeeks: [W9], memberIds: [2, 3] });
     const fetchGains = vi.fn().mockResolvedValue([row(99, 9e6), row(2, 8e6), row(3, 7e6)]);
 
     await runWeeklyXpAwards({ supabase, fetchGains, now: NOW, log: quiet });
@@ -79,27 +89,27 @@ describe('runWeeklyXpAwards', () => {
     ]);
   });
 
-  it('does nothing for a week already paid, without calling WOM', async () => {
-    const supabase = fakeSupabase({ paidWeeks: [WEEK_START] });
+  it('does nothing when every recent week is paid, without calling WOM', async () => {
+    const supabase = fakeSupabase({ paidWeeks: [W9, W16] });
     const fetchGains = vi.fn();
 
-    const result = await runWeeklyXpAwards({ supabase, fetchGains, now: NOW, log: quiet });
+    const { weeks } = await runWeeklyXpAwards({ supabase, fetchGains, now: NOW, log: quiet });
 
-    expect(result.status).toBe('already_paid');
+    expect(weeks.map((w) => w.status)).toEqual(['already_paid', 'already_paid']);
     expect(fetchGains).not.toHaveBeenCalled();
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
-  it('leaves the week unpaid when WOM shows no gains, so a later run can pay it', async () => {
-    const supabase = fakeSupabase();
-    const result = await runWeeklyXpAwards({
+  it('leaves a week unpaid when WOM shows no gains, so a later run can pay it', async () => {
+    const supabase = fakeSupabase({ paidWeeks: [W9] });
+    const { weeks } = await runWeeklyXpAwards({
       supabase,
       fetchGains: vi.fn().mockResolvedValue([row(1, 0)]),
       now: NOW,
       log: quiet,
     });
 
-    expect(result.status).toBe('no_gains');
+    expect(weeks.map((w) => w.status)).toEqual(['already_paid', 'no_gains']);
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
@@ -107,37 +117,50 @@ describe('runWeeklyXpAwards', () => {
     const supabase = fakeSupabase();
     const fetchGains = vi.fn();
     // During the first week: the last completed one is 2-9 Nov.
-    const result = await runWeeklyXpAwards({
+    const { weeks } = await runWeeklyXpAwards({
       supabase,
       fetchGains,
       now: new Date('2026-11-12T12:00:00Z'),
       log: quiet,
     });
 
-    expect(result.status).toBe('before_start');
+    expect(weeks).toEqual([]);
     expect(fetchGains).not.toHaveBeenCalled();
   });
 
   it('pays the first week (9-16 Nov) once it closes', async () => {
     const supabase = fakeSupabase();
     const fetchGains = vi.fn().mockResolvedValue([row(1, 100)]);
-    const result = await runWeeklyXpAwards({
+    await runWeeklyXpAwards({ supabase, fetchGains, now: new Date('2026-11-16T19:17:00Z'), log: quiet });
+
+    expect(paidStarts(supabase)).toEqual([W9]);
+  });
+
+  it('looks back at most four weeks', async () => {
+    const supabase = fakeSupabase();
+    const fetchGains = vi.fn().mockResolvedValue([]);
+    const { weeks } = await runWeeklyXpAwards({
       supabase,
       fetchGains,
-      now: new Date('2026-11-16T19:17:00Z'),
+      now: new Date('2027-02-02T12:00:00Z'),
       log: quiet,
     });
 
-    expect(result.status).toBe('paid');
-    expect(supabase.rpc.mock.calls[0][1].p_week_start).toBe('2026-11-09T19:00:00.000Z');
+    expect(weeks).toHaveLength(4);
+    expect(fetchGains).toHaveBeenCalledTimes(4);
+    expect(supabase.gte).toHaveBeenCalledWith('week_start', weeks[0].week.start.toISOString());
   });
 
-  it('fails loudly when the RPC fails', async () => {
+  it('tries every unpaid week, then fails loudly if any failed', async () => {
     const supabase = fakeSupabase();
-    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'permission denied' } });
+    supabase.rpc
+      .mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } })
+      .mockResolvedValueOnce({ data: 1, error: null });
 
     await expect(
       runWeeklyXpAwards({ supabase, fetchGains: vi.fn().mockResolvedValue([row(1, 5)]), now: NOW, log: quiet })
-    ).rejects.toThrow(/permission denied/);
+    ).rejects.toThrow(/1 week\(s\) could not be paid.*permission denied/);
+    // The second week was still paid after the first failed.
+    expect(paidStarts(supabase)).toEqual([W9, W16]);
   });
 });
