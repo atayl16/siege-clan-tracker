@@ -71,15 +71,15 @@ const row = (id, gained, name = `p${id}`) => ({
 });
 
 describe("rankXpGains", () => {
-  it("takes the top five with a gain and pays 15/10/5/2/2", () => {
+  it("takes the top five with a gain and pays 150/100/50/20/20", () => {
     const rows = [row(1, 900), row(2, 800), row(3, 700), row(4, 600), row(5, 500), row(6, 400), row(7, 0)];
     const ranked = rankXpGains(rows);
     expect(ranked.map((r) => [r.womId, r.place, r.points])).toEqual([
-      [1, 1, 15],
-      [2, 2, 10],
-      [3, 3, 5],
-      [4, 4, 2],
-      [5, 5, 2],
+      [1, 1, 150],
+      [2, 2, 100],
+      [3, 3, 50],
+      [4, 4, 20],
+      [5, 5, 20],
     ]);
   });
 
@@ -90,10 +90,10 @@ describe("rankXpGains", () => {
   it("shares a place on equal gains, and the next player skips ahead", () => {
     const ranked = rankXpGains([row(1, 900), row(2, 800), row(3, 800), row(4, 700)]);
     expect(ranked.map((r) => [r.womId, r.place, r.points])).toEqual([
-      [1, 1, 15],
-      [2, 2, 10],
-      [3, 2, 10],
-      [4, 4, 2],
+      [1, 1, 150],
+      [2, 2, 100],
+      [3, 2, 100],
+      [4, 4, 20],
     ]);
   });
 
@@ -148,12 +148,12 @@ describe("weeklyTargets", () => {
 
   it("measures the gap to the closest player ahead, not one tied with you", () => {
     const { next } = weeklyTargets(ranked, 3); // tied 2nd with player 2
-    expect(next).toMatchObject({ place: 1, gap: 100, points: 15 });
+    expect(next).toMatchObject({ place: 1, gap: 100, points: 150 });
   });
 
   it("points someone outside the paid places at the last paid place", () => {
     const { topFive, next } = weeklyTargets(ranked, 7);
-    expect(topFive).toEqual({ place: 5, points: 2, gap: 200, open: false });
+    expect(topFive).toEqual({ place: 5, points: 20, gap: 200, open: false });
     expect(next).toMatchObject({ place: 6, gap: 100 });
   });
 
@@ -174,7 +174,7 @@ describe("weeklyTargets", () => {
   it("says any gain gets in while the paid places are not full", () => {
     expect(weeklyTargets(ranked.slice(0, 3), 999).topFive).toEqual({
       place: 4,
-      points: 2,
+      points: 20,
       gap: 1,
       open: true,
     });

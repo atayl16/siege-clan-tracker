@@ -55,9 +55,9 @@ describe("useWeeklyXp", () => {
     const { result } = renderHook(() => useWeeklyXp(), { wrapper });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.ranking.map((r) => [r.womId, r.place, r.points])).toEqual([
-      [2, 1, 15],
-      [3, 2, 10],
-      [4, 3, 5],
+      [2, 1, 150],
+      [3, 2, 100],
+      [4, 3, 50],
     ]);
   });
 

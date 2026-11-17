@@ -11,15 +11,15 @@ const week = {
   end: new Date("2026-11-16T19:00:00Z"),
 };
 const standings = [
-  { womId: 597199, name: "FinPunisher", gained: 9381451, place: 1, points: 15 },
-  { womId: 2810612, name: "acid scum", gained: 4200000, place: 2, points: 10 },
-  { womId: 323559, name: "Dan xo", gained: 731670, place: 3, points: 5 },
+  { womId: 597199, name: "FinPunisher", gained: 9381451, place: 1, points: 150 },
+  { womId: 2810612, name: "acid scum", gained: 4200000, place: 2, points: 100 },
+  { womId: 323559, name: "Dan xo", gained: 731670, place: 3, points: 50 },
 ];
 
 const ranking = [
   ...standings,
-  { womId: 4, name: "Four", gained: 600000, place: 4, points: 2 },
-  { womId: 5, name: "Five", gained: 500000, place: 5, points: 2 },
+  { womId: 4, name: "Four", gained: 600000, place: 4, points: 20 },
+  { womId: 5, name: "Five", gained: 500000, place: 5, points: 20 },
   { womId: 6, name: "Six", gained: 100000, place: 6, points: 0 },
   { womId: 777, name: "Far Down", gained: 12000, place: 7, points: 0 },
 ];
@@ -46,7 +46,7 @@ describe("WeeklyXpLeaderboard", () => {
     expect(rows).toHaveLength(3);
     expect(within(rows[0]).getByText("FinPunisher")).toBeInTheDocument();
     expect(within(rows[0]).getByText("9.38M XP")).toBeInTheDocument();
-    expect(within(rows[0]).getByText("+15")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("+150")).toBeInTheDocument();
     expect(screen.getByText(/Top 5 earn Siege Score · ends Mon 16 Nov, 19:00 UK/)).toBeInTheDocument();
   });
 
@@ -69,7 +69,7 @@ describe("WeeklyXpLeaderboard", () => {
         // The week that ended as this one began.
         start: new Date("2026-11-02T19:00:00Z"),
         end: new Date("2026-11-09T19:00:00Z"),
-        winners: [{ womId: 1, name: "Last Winner", gained: 5e6, place: 1, points: 15 }],
+        winners: [{ womId: 1, name: "Last Winner", gained: 5e6, place: 1, points: 150 }],
       },
     });
     render(<WeeklyXpLeaderboard variant="full" />);
@@ -83,7 +83,7 @@ describe("WeeklyXpLeaderboard", () => {
       lastWeek: {
         start: new Date("2026-10-26T19:00:00Z"),
         end: new Date("2026-11-02T19:00:00Z"),
-        winners: [{ womId: 1, name: "Older Winner", gained: 5e6, place: 1, points: 15 }],
+        winners: [{ womId: 1, name: "Older Winner", gained: 5e6, place: 1, points: 150 }],
       },
     });
     render(<WeeklyXpLeaderboard variant="full" />);
@@ -145,32 +145,32 @@ describe("YourWeeklyXp", () => {
     expect(line()).toHaveTextContent("3rd of 7 this week · 732K XP");
     expect(line()).toHaveTextContent("Tracking Dan xo");
     // 4,200,000 - 731,670 = 3,468,330
-    expect(line()).toHaveTextContent("+5 Siege Score if it ends now · 3.47M XP to catch 2nd (+10)");
+    expect(line()).toHaveTextContent("+50 Siege Score if it ends now · 3.47M XP to catch 2nd (+100)");
   });
 
   it("in first: how far ahead of second", () => {
     render(<YourWeeklyXp character={{ womId: 597199, name: "FinPunisher" }} />);
     // 9,381,451 - 4,200,000 = 5,181,451
-    expect(line()).toHaveTextContent("+15 Siege Score if it ends now · 5.18M XP ahead of 2nd");
+    expect(line()).toHaveTextContent("+150 Siege Score if it ends now · 5.18M XP ahead of 2nd");
   });
 
   it("outside the top five: the gap to 5th and to the next place up", () => {
     render(<YourWeeklyXp character={{ womId: 777, name: "Far Down" }} />);
     expect(line()).toHaveTextContent("7th of 7 this week · 12K XP");
     // 500,000 - 12,000 to reach 5th; 100,000 - 12,000 to catch 6th
-    expect(line()).toHaveTextContent("488K XP to reach 5th (+2 Siege Score) · 88K to catch 6th");
+    expect(line()).toHaveTextContent("488K XP to reach 5th (+20 Siege Score) · 88K to catch 6th");
   });
 
   it("with nothing gained yet: the gap to 5th", () => {
     render(<YourWeeklyXp character={{ womId: 1, name: "Idle" }} />);
     expect(line()).toHaveTextContent("Idle has no XP gained yet this week");
-    expect(line()).toHaveTextContent("500K XP to reach 5th (+2 Siege Score)");
+    expect(line()).toHaveTextContent("500K XP to reach 5th (+20 Siege Score)");
   });
 
   it("early in the week, when the top five is not full: any XP gets in", () => {
     hookState.value = state({ ranking: standings.slice(0, 2) });
     render(<YourWeeklyXp character={{ womId: 1, name: "Idle" }} />);
-    expect(line()).toHaveTextContent("Gain any XP to place 3rd (+5 Siege Score)");
+    expect(line()).toHaveTextContent("Gain any XP to place 3rd (+50 Siege Score)");
   });
 
   it("asks a member with no character to claim one", () => {

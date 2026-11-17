@@ -188,7 +188,7 @@ export default function AdminMemberTable({
   };
 
   // Function implementations - Updated to take a pointValue parameter
-  const handleAddPoints = async (member, pointValue = 2) => {
+  const handleAddPoints = async (member, pointValue = 20) => {
     try {
       // Add validation to ensure wom_id exists
       if (!member.wom_id) {
@@ -368,16 +368,16 @@ export default function AdminMemberTable({
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAddPoints(member, 2);
+                            handleAddPoints(member, 20);
                           }}
-                          title="Add 2 points to Siege Score"
+                          title="Add 20 points to Siege Score"
                           disabled={isRefreshing}
                           className="ui-add-points-btn"
                         >
                           {refreshing === `score-${member.wom_id}` ? (
                             <div className="ui-button-spinner"></div>
                           ) : (
-                            <>+2 Points</>
+                            <>+20 Points</>
                           )}
                         </Button>
                       </div>
@@ -556,33 +556,33 @@ export default function AdminMemberTable({
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleAddPoints(member, 5);
+                                      handleAddPoints(member, 50);
                                     }}
                                     disabled={isRefreshing}
                                   >
-                                    +5
+                                    +50
                                   </Button>
                                   <Button
                                     variant="info"
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleAddPoints(member, 10);
+                                      handleAddPoints(member, 100);
                                     }}
                                     disabled={isRefreshing}
                                   >
-                                    +10
+                                    +100
                                   </Button>
                                   <Button
                                     variant="info"
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleAddPoints(member, 15);
+                                      handleAddPoints(member, 150);
                                     }}
                                     disabled={isRefreshing}
                                   >
-                                    +15
+                                    +150
                                   </Button>
                                 </div>
                               </div>

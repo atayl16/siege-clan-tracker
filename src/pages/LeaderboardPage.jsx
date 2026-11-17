@@ -129,16 +129,16 @@ export default function LeaderboardPage() {
             <div className="ui-points-category ui-points-category-long">
               <h4>Long Events</h4>
               <ul>
-                <li>1st place: 15 points</li>
-                <li>2nd place: 10 points</li>
-                <li>3rd place: 5 points</li>
-                <li>Participation: 2 points</li>
+                <li>1st place: 150 points</li>
+                <li>2nd place: 100 points</li>
+                <li>3rd place: 50 points</li>
+                <li>Participation: 20 points</li>
               </ul>
             </div>
             <div className="ui-points-category ui-points-category-short">
               <h4>Short Events (1-2 hours)</h4>
               <ul>
-                <li>All participants: 2 points</li>
+                <li>All participants: 20 points</li>
               </ul>
             </div>
             <div className="ui-points-category">

@@ -15,8 +15,11 @@ const ZONE = "Europe/London";
 const HOUR = 19;
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-/** Points by finishing place: 1st 15, 2nd 10, 3rd 5, 4th and 5th 2. */
-export const XP_AWARD_POINTS = [15, 10, 5, 2, 2];
+/**
+ * Points by finishing place: 1st 150, 2nd 100, 3rd 50, 4th and 5th 20. (10x
+ * the original 15/10/5/2/2 since 2026-11-17, like every Siege Score award.)
+ */
+export const XP_AWARD_POINTS = [150, 100, 50, 20, 20];
 export const XP_AWARD_PLACES = XP_AWARD_POINTS.length;
 
 const partsFormatter = new Intl.DateTimeFormat("en-GB", {

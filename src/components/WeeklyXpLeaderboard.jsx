@@ -56,7 +56,7 @@ function StandingsList({ rows, highlightIds, pointsLabel }) {
   );
 }
 
-/** What to aim for, e.g. "1.78M XP to reach 5th (+2 Siege Score) · 14K to catch 25th". */
+/** What to aim for, e.g. "1.78M XP to reach 5th (+20 Siege Score) · 14K to catch 25th". */
 function targetText(mine, next, topFive, lead) {
   if (topFive) {
     const aim = topFive.open
