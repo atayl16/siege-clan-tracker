@@ -214,10 +214,16 @@
     width: 70%;
     max-width: 300px;
     height: 100vh;
+    height: 100dvh; /* the visible height on phones, under browser toolbars */
     background-color: #111;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
+    /* The links are taller than a short window (a laptop with a small
+       browser, a phone in landscape): scroll the menu, not the page. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    gap: 0;
     padding: 5rem 2rem 2rem;
     transition: right 0.3s ease;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
@@ -230,7 +236,7 @@
   
   .navbar-links a {
     width: 100%;
-    padding: 1rem 0;
+    padding: 0.75rem 0;
     font-size: 1.1rem;
   }
   
