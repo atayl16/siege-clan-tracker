@@ -24,21 +24,19 @@ This document tracks technical debt, code quality issues, and refactoring opport
   - One-time migration script no longer needed
   - Already mentioned in TASKS.md
 
-- **`scripts/update-siege-scores.js`** (if exists)
-  - Manual script with hardcoded data
-  - Already mentioned in TASKS.md
+- ~~**`scripts/update-siege-scores.js`**~~ Deleted 2026-11-17. It reset
+  every member's Siege Score and wrote a hard-coded list of old-scale scores,
+  so running it after the 10x change would have wiped everyone's points.
 
 **Steps:**
 ```bash
 # 1. Search for any imports
 grep -r "DataContext-OLD" src/
 grep -r "import-legacy-player-data" .
-grep -r "update-siege-scores" .
 
 # 2. If no results, safe to delete
 git rm src/context/DataContext-OLD.js
 git rm scripts/import-legacy-player-data.js
-git rm scripts/update-siege-scores.js
 ```
 
 ---
