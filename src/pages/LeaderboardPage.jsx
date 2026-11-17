@@ -35,7 +35,7 @@ function WeekBar() {
         </div>
       </div>
       <div className="leaderboard-week-bar-end">
-        Ends <strong>{formatUkTime(week.end)} UK</strong> · points land within the hour
+        Ends <strong>{formatUkTime(week.end)} UK</strong>
       </div>
     </div>
   );
