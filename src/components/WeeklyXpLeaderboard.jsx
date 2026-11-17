@@ -4,7 +4,7 @@ import { FaChartLine } from "react-icons/fa";
 import PlaceBadge from "./PlaceBadge";
 import { TitleIcon } from "./WeeklyTitles";
 import { useWeeklyXp } from "../hooks/useWeeklyXp";
-import { formatXp, formatUkTime, ordinal, weeklyTargets, XP_AWARD_POINTS, XP_AWARD_PLACES } from "../utils/xpWeek";
+import { formatXp, formatUkTime, ordinal, weeklyTargets, XP_AWARD_PLACES } from "../utils/xpWeek";
 import { GAINER } from "../utils/weeklyTitles";
 import "./Leaderboard.css";
 import "./WeeklyXpLeaderboard.css";
@@ -179,10 +179,7 @@ export default function WeeklyXpLeaderboard({
             <TitleIcon icon={GAINER.icon} />
             <div>
               <h3 id="gainer-h">{GAINER.name}</h3>
-              <p>
-                {GAINER.ranked} · top {XP_AWARD_PLACES} earn {XP_AWARD_POINTS.join(" / ")} · ends{" "}
-                {formatUkTime(week.end)} UK
-              </p>
+              <p>{GAINER.ranked}</p>
             </div>
           </div>
           {rest.length > 0 && (

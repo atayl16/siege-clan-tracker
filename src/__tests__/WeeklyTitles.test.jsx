@@ -109,7 +109,7 @@ describe("TitleHolders", () => {
     ]);
     expect(within(tiles[0]).getByText("16.31M XP")).toBeInTheDocument();
     expect(within(tiles[2]).getByText("A & B")).toBeInTheDocument();
-    expect(screen.getByText(/Won Mon 9 Nov, 19:00 to Mon 16 Nov, 19:00 UK/)).toBeInTheDocument();
+    expect(screen.getByText("Last week's winners")).toBeInTheDocument();
   });
 
   it("explains that nothing has been awarded yet", () => {

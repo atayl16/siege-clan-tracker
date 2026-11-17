@@ -87,19 +87,11 @@ export function TitleHolders() {
     );
   }
 
-  // The Gainer and the titles are awarded by separate jobs, so for an hour or
-  // so after Monday 19:00 one can be a week ahead of the other; date the
-  // section by the titles, which are most of the tiles.
-  const week = (holders.find((h) => h.title.id !== "gainer") || holders[0])?.week;
   return (
     <section className="titles-section" aria-labelledby="title-holders-h">
       <div className="titles-section-head">
         <h2 id="title-holders-h">Title holders</h2>
-        <p>
-          {week
-            ? `Won ${formatUkTime(week.start)} to ${formatUkTime(week.end)} UK. Holders wear the title next to their name until the next week is awarded.`
-            : "Each week's winners hold their title until the next week is awarded."}
-        </p>
+        <p>Last week's winners</p>
       </div>
       {body}
     </section>
@@ -172,7 +164,7 @@ export function TitleRaces() {
         <h2 id="title-races-h">This week's title races</h2>
         <p>
           Top 3 over the minimum earn 150 / 100 / 50 Siege Score, and 1st takes the title.
-          {updatedAt && ` Updated hourly; last ${formatUkTime(updatedAt)} UK.`}
+          {updatedAt && ` Last updated ${formatUkTime(updatedAt)} UK.`}
         </p>
       </div>
       {body}
