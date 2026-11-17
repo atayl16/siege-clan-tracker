@@ -42,9 +42,8 @@ async function fetchTitleHolders() {
 }
 
 /**
- * Every title race this week: [{ title, top, entrants, updatedAt }], in the
- * config's order. `top` is the places that would earn points if the week
- * ended now; `entrants` is everyone who has gained anything in the race.
+ * Every title race this week: [{ title, top }], in the config's order.
+ * `top` is the places that would earn points if the week ended now.
  */
 export function useTitleRaces() {
   const week = useCurrentXpWeek();
@@ -61,7 +60,7 @@ export function useTitleRaces() {
       const rows = data
         .filter((r) => r.title === title.id)
         .map((r) => ({ womId: r.wom_id, name: r.player_name, value: Number(r.value) }));
-      return { title, top: rankTitle(title, rows), entrants: rows.length };
+      return { title, top: rankTitle(title, rows) };
     });
   }, [data]);
 

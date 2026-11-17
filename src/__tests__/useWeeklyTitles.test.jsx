@@ -61,7 +61,6 @@ describe("useTitleRaces", () => {
       ["K aura", 1, 150],
       ["m2giaivar", 2, 100],
     ]);
-    expect(clogger.entrants).toBe(3);
     expect(result.current.races.find((r) => r.title.id === "warrior").top[0].value).toBe(8.47);
     expect(result.current.races).toHaveLength(9);
     expect(result.current.updatedAt.toISOString()).toBe("2026-11-17T15:17:00.000Z");
