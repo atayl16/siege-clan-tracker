@@ -6,9 +6,12 @@
 -- weekly announcements can use the same table with their own kind.
 --
 -- The job inserts the row BEFORE posting, as a claim: the unique constraint
--- means two runs that overlap cannot both post. If the post then fails the
--- job deletes its claim, so a later run tries again. message_id is filled in
--- once Discord has accepted the post.
+-- means two runs that overlap cannot both post. message_id is filled in once
+-- Discord has accepted the post. If Discord refuses the post the job deletes
+-- its claim, so a later run tries again. A row with no message_id is an
+-- unfinished post (a cancelled run, or Discord's answer was lost): the hourly
+-- run leaves it alone, and a manual "post" run takes it over once it is 10
+-- minutes old.
 --
 -- Service role only: nothing on the site reads it.
 --
@@ -22,7 +25,7 @@ CREATE TABLE IF NOT EXISTS discord_announcements (
   week_start TIMESTAMPTZ NOT NULL,
   channel_id TEXT NOT NULL,
   message_id TEXT,
-  posted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  claimed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT discord_announcements_once UNIQUE (kind, week_start)
 );
 
