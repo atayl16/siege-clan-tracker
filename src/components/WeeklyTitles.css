@@ -153,19 +153,6 @@
   font-weight: 800;
 }
 
-.title-race-open,
-.title-race-empty {
-  padding: 9px 0;
-  border-top: 1px dashed #444;
-  color: #999;
-  font-style: italic;
-  font-size: 0.875rem;
-}
-
-.title-race-empty {
-  margin: 0;
-}
-
 .title-race-foot {
   margin: 10px 0 0;
   padding-top: 12px;

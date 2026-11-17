@@ -96,49 +96,6 @@
   gap: 28px;
 }
 
-.leaderboard-week-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 20px;
-  padding: 14px 20px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 10px;
-}
-
-.leaderboard-week-bar-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.leaderboard-week-bar-icon {
-  flex-shrink: 0;
-  font-size: 22px;
-  color: var(--color-orange, #ff9800);
-}
-
-.leaderboard-week-bar-title {
-  font-weight: 700;
-  color: #fff;
-}
-
-.leaderboard-week-bar-sub {
-  font-size: 0.8125rem;
-  color: #aaa;
-}
-
-.leaderboard-week-bar-end {
-  font-size: 0.875rem;
-  color: #ccc;
-}
-
-.leaderboard-week-bar-end strong {
-  color: #fff;
-}
-
 .leaderboard-how {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

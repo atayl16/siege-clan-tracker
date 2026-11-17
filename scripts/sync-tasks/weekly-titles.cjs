@@ -43,8 +43,25 @@ const loadModules = async () => ({
 const realSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Whether a failed WOM call is worth trying again, and how long to wait:
+ * a rate limit (429) waits 20s; a WOM server error (5xx) or a dropped
+ * connection ("terminated", "fetch failed", a reset socket) waits 5s. Anything
+ * else (a 4xx, bad data) is a real error and fails at once.
+ */
+function retryDelay(err) {
+  const message = String(err?.message || err);
+  if (/\b429\b/.test(message)) return 20000;
+  if (/returned 5\d\d\b/.test(message)) return 5000;
+  if (/terminated|fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|other side closed/i.test(message)) {
+    return 5000;
+  }
+  return null;
+}
+
+/**
  * WOM access for one run: each (metric, window) is fetched once, calls are
- * spaced by gapMs, and a 429 waits and retries.
+ * spaced by gapMs, and a rate limit, server error or dropped connection waits
+ * and retries (up to 3 times) instead of failing the whole run.
  */
 function makeWom({ fetchGains, fetchBosses, gapMs, sleep }) {
   const cache = new Map();
@@ -57,8 +74,9 @@ function makeWom({ fetchGains, fetchBosses, gapMs, sleep }) {
         if (gapMs) await sleep(gapMs);
         return result;
       } catch (err) {
-        if (!/\b429\b/.test(err.message) || attempt >= 3) throw err;
-        await sleep(20000);
+        const wait = retryDelay(err);
+        if (wait === null || attempt >= 3) throw err;
+        await sleep(wait);
       }
     }
   }
@@ -266,4 +284,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { runWeeklyTitles, parseNow, FIRST_WEEK_START, LOOKBACK_WEEKS };
+module.exports = { runWeeklyTitles, parseNow, retryDelay, FIRST_WEEK_START, LOOKBACK_WEEKS };

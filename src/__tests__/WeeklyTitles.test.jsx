@@ -41,10 +41,25 @@ describe("TitleRaces", () => {
     hooks.races = { races: races(), updatedAt: null, loading: false, error: undefined };
   });
 
-  it("shows a card for every title, in the config's order", () => {
+  it("shows only races somebody is over the minimum in, in the config's order", () => {
+    const clue = titleById("clue_hunter");
+    const warrior = titleById("warrior");
+    hooks.races = {
+      ...hooks.races,
+      races: races({
+        clue_hunter: { top: rankTitle(clue, [row(1, "K aura", 32)]), entrants: 3 },
+        warrior: { top: rankTitle(warrior, [row(2, "noon air", 6.1)]), entrants: 8 },
+      }),
+    };
     render(<TitleRaces />);
     const cards = screen.getAllByRole("region", { name: /race$/ });
-    expect(cards.map((c) => c.getAttribute("aria-label"))).toEqual(WEEKLY_TITLES.map((t) => `${t.name} race`));
+    expect(cards.map((c) => c.getAttribute("aria-label"))).toEqual(["The Warrior race", "The Clue Hunter race"]);
+  });
+
+  it("says so, instead of showing empty cards, when nobody has reached any minimum", () => {
+    render(<TitleRaces />);
+    expect(screen.queryAllByRole("region", { name: /race$/ })).toHaveLength(0);
+    expect(screen.getByText("Nobody has reached a title's minimum yet this week.")).toBeInTheDocument();
   });
 
   it("lists the top 3 with their badge, value and points, and the minimum", () => {
@@ -66,17 +81,19 @@ describe("TitleRaces", () => {
     expect(within(card).getByText("7 members in the race this week")).toBeInTheDocument();
   });
 
-  it("says when fewer than 3 are over the minimum, or nobody is", () => {
+  it("lists only the players over the minimum when fewer than 3 are, with no filler", () => {
     const resurrected = titleById("resurrected");
     const top = rankTitle(resurrected, [row(1, "IlZion", 310064), row(2, "resnesv2", 206444), row(3, "fgiml", 51000)]);
     hooks.races = { ...hooks.races, races: races({ resurrected: { top, entrants: 3 } }) };
     render(<TitleRaces />);
 
     const card = screen.getByRole("region", { name: "The Resurrected race" });
-    expect(within(card).getByText("Nobody else over the minimum yet")).toBeInTheDocument();
-    const empty = screen.getByRole("region", { name: "The Warrior race" });
-    expect(within(empty).getByText("Nobody over the minimum yet")).toBeInTheDocument();
-    expect(within(empty).getByText("Nobody in the race yet this week")).toBeInTheDocument();
+    expect(within(card).getAllByRole("listitem").map((li) => li.querySelector(".title-race-name").textContent)).toEqual([
+      "IlZion",
+      "resnesv2",
+    ]);
+    expect(within(card).queryByText(/Nobody/)).not.toBeInTheDocument();
+    expect(within(card).getByText("3 members in the race this week")).toBeInTheDocument();
   });
 
   it("says when the races cannot be loaded", () => {

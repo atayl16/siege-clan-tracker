@@ -98,9 +98,9 @@ export function TitleHolders() {
   );
 }
 
+/** One title's race: only shown once somebody is over the minimum. */
 function TitleRaceCard({ race }) {
   const { title, top, entrants } = race;
-  const openPlaces = top.length ? 3 - new Set(top.map((r) => r.place)).size : 0;
 
   return (
     <section className="title-race" aria-label={`${title.name} race`}>
@@ -113,45 +113,44 @@ function TitleRaceCard({ race }) {
           </p>
         </div>
       </div>
-      {top.length ? (
-        <ol className="title-race-list">
-          {top.map((row) => (
-            <li key={row.womId} className="title-race-row">
-              <PlaceBadge place={row.place} size={28} />
-              <span className="title-race-name" title={row.name}>
-                {row.name}
-              </span>
-              <span className="title-race-value">{formatTitleValue(title, row.value)}</span>
-              <span className="title-race-points">+{row.points}</span>
-            </li>
-          ))}
-          {openPlaces > 0 && <li className="title-race-open">Nobody else over the minimum yet</li>}
-        </ol>
-      ) : (
-        <p className="title-race-empty">Nobody over the minimum yet</p>
-      )}
+      <ol className="title-race-list">
+        {top.map((row) => (
+          <li key={row.womId} className="title-race-row">
+            <PlaceBadge place={row.place} size={28} />
+            <span className="title-race-name" title={row.name}>
+              {row.name}
+            </span>
+            <span className="title-race-value">{formatTitleValue(title, row.value)}</span>
+            <span className="title-race-points">+{row.points}</span>
+          </li>
+        ))}
+      </ol>
       <p className="title-race-foot">
-        {entrants === 0
-          ? "Nobody in the race yet this week"
-          : `${entrants} member${entrants === 1 ? "" : "s"} in the race this week`}
+        {entrants} member{entrants === 1 ? "" : "s"} in the race this week
       </p>
     </section>
   );
 }
 
-/** The nine title races this week, top 3 each. */
+/**
+ * This week's title races, top 3 each. A race nobody is over the minimum in
+ * yet is left out rather than shown as an empty card.
+ */
 export function TitleRaces() {
   const { races, updatedAt, loading, error } = useTitleRaces();
+  const running = races.filter((race) => race.top.length > 0);
 
   let body;
   if (loading) {
     body = <p className="titles-message">Loading this week's races...</p>;
   } else if (error) {
     body = <p className="titles-message">Couldn't load this week's races. Try again in a few minutes.</p>;
+  } else if (!running.length) {
+    body = <p className="titles-message">Nobody has reached a title's minimum yet this week.</p>;
   } else {
     body = (
       <div className="title-races">
-        {races.map((race) => (
+        {running.map((race) => (
           <TitleRaceCard key={race.title.id} race={race} />
         ))}
       </div>
