@@ -137,10 +137,14 @@ function TitleRaceCard({ race }) {
         {top.map((row) => (
           <li key={row.womId} className="title-race-row">
             <PlaceBadge place={row.place} size={28} />
-            <span className="title-race-name" title={row.name}>
-              {row.name}
+            {/* Name over value, like the Gainer tiles, so the name keeps most
+                of the card's width when three cards sit side by side. */}
+            <span className="title-race-who">
+              <span className="title-race-name" title={row.name}>
+                {row.name}
+              </span>
+              <span className="title-race-value">{formatTitleValue(title, row.value)}</span>
             </span>
-            <span className="title-race-value">{formatTitleValue(title, row.value)}</span>
             <span className="title-race-points">+{row.points}</span>
           </li>
         ))}
