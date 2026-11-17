@@ -12,15 +12,6 @@
   padding: 0.75rem 1rem;
 }
 
-.xp-week-columns {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.xp-week-full .xp-week-columns {
-  grid-template-columns: 1fr 1fr;
-}
-
 .xp-week-title {
   display: flex;
   align-items: center;
@@ -107,10 +98,6 @@
   margin-top: 0.75rem;
 }
 
-.xp-week-full .xp-week-columns {
-  align-items: start;
-}
-
 .xp-week-message {
   padding: 0.5rem 0;
   color: #999;
@@ -165,8 +152,74 @@
   flex-basis: auto;
 }
 
-@media (max-width: 768px) {
-  .xp-week-full .xp-week-columns {
-    grid-template-columns: 1fr;
-  }
+/* The Gainer strip on the Leaderboard: the top five as tiles in one row. */
+.xp-strip {
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
+
+.xp-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.xp-strip-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.xp-strip-heading h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: #fff;
+}
+
+.xp-strip-heading p {
+  margin: 1px 0 0;
+  font-size: 0.8125rem;
+  color: #aaa;
+}
+
+.xp-strip-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(160px, calc((100% - 48px) / 5)), 1fr));
+  gap: 12px;
+}
+
+.xp-strip-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+
+.xp-strip-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.xp-strip-tile-name {
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

@@ -1,26 +1,13 @@
 import React, { useState } from "react";
 import Button from "./ui/Button";
-import { FaCrown, FaMedal, FaChartLine } from "react-icons/fa";
+import { FaChartLine } from "react-icons/fa";
+import PlaceBadge from "./PlaceBadge";
+import { TitleIcon } from "./WeeklyTitles";
 import { useWeeklyXp } from "../hooks/useWeeklyXp";
-import { formatXp, formatUkTime, ordinal, weeklyTargets, XP_AWARD_PLACES } from "../utils/xpWeek";
+import { formatXp, formatUkTime, ordinal, weeklyTargets, XP_AWARD_POINTS, XP_AWARD_PLACES } from "../utils/xpWeek";
+import { GAINER } from "../utils/weeklyTitles";
 import "./Leaderboard.css";
 import "./WeeklyXpLeaderboard.css";
-
-function PlaceBadge({ place }) {
-  return (
-    <span className={`ui-rank-badge ui-rank-${place}`} aria-label={`Place ${place}`}>
-      {place === 1 ? (
-        <FaCrown className="ui-gold-icon" />
-      ) : place === 2 ? (
-        <FaMedal className="ui-silver-icon" />
-      ) : place === 3 ? (
-        <FaMedal className="ui-bronze-icon" />
-      ) : (
-        place
-      )}
-    </span>
-  );
-}
 
 function StandingsList({ rows, highlightIds, pointsLabel }) {
   return (
@@ -36,7 +23,7 @@ function StandingsList({ rows, highlightIds, pointsLabel }) {
               firstUnpaid ? " xp-week-row-cutoff" : ""
             }`}
           >
-            <PlaceBadge place={row.place} />
+            <PlaceBadge place={row.place} size={26} />
             <span className="ui-player-name" title={row.name}>
               {row.name}
               {isYours && <span className="xp-week-you">You</span>}
@@ -121,14 +108,15 @@ export function YourWeeklyXp({ character }) {
 }
 
 /**
- * The weekly Overall XP leaderboard: the top five XP gainers this week, who
+ * The weekly Overall XP race, The Gainer: the top five XP gainers this week
  * earn Siege Score when the week closes (Monday 19:00 UK, with SotW/BotW).
  *
- *   variant="compact"  this week only, for the Profile header
- *   variant="full"     this week and last week's paid winners, for Leaderboards,
- *                      with a toggle to list everyone who has gained XP
+ *   variant="compact"  a list of the top five, for the Profile header
+ *   variant="full"     the Leaderboard's strip: the top five as tiles, and a
+ *                      toggle listing everyone else who has gained XP
  *
- * highlightIds marks the viewer's own characters.
+ * highlightIds marks the viewer's own characters. Last week's winner shows
+ * with the other title holders (TitleHolders), not here.
  */
 export default function WeeklyXpLeaderboard({
   variant = "compact",
@@ -136,14 +124,10 @@ export default function WeeklyXpLeaderboard({
   className = "",
 }) {
   const full = variant === "full";
-  const { week, ranking, standings, loading, error, lastWeek, lastWeekLoading, lastWeekError } =
-    useWeeklyXp({ withLastWeek: full });
+  const { week, ranking, standings, loading, error } = useWeeklyXp();
   const highlight = new Set(highlightIds.map(Number));
-  // The newest paid week is "last week" only once the job has paid the week
-  // that just closed (shortly after Monday 19:00 UK). Until then it is older.
-  const lastIsPrevious = lastWeek && lastWeek.end.getTime() === week.start.getTime();
   const [showAll, setShowAll] = useState(false);
-  const canShowAll = full && ranking.length > standings.length;
+  const rest = ranking.filter((r) => r.points === 0);
 
   let body;
   if (loading) {
@@ -156,71 +140,72 @@ export default function WeeklyXpLeaderboard({
     );
   } else if (standings.length === 0) {
     body = <div className="xp-week-message">No XP gained yet this week.</div>;
+  } else if (!full) {
+    body = <StandingsList rows={standings} highlightIds={highlight} pointsLabel="if it ends now" />;
   } else {
     body = (
       <>
-        <StandingsList
-          rows={showAll && canShowAll ? ranking : standings}
-          highlightIds={highlight}
-          pointsLabel="if it ends now"
-        />
-        {canShowAll && (
-          <div className="xp-week-toggle">
-            <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
-              {showAll ? "Show top 5" : `Show all ${ranking.length} gaining XP`}
-            </Button>
-          </div>
+        <ol className="xp-strip-tiles">
+          {standings.map((row) => (
+            <li
+              key={row.womId}
+              className={`xp-strip-tile${highlight.has(Number(row.womId)) ? " xp-week-row-yours" : ""}`}
+            >
+              <div className="xp-strip-tile-top">
+                <PlaceBadge place={row.place} size={30} />
+                <span className="xp-week-points" title={`${row.points} Siege Score if it ends now`}>
+                  +{row.points}
+                </span>
+              </div>
+              <span className="xp-strip-tile-name" title={row.name}>
+                {row.name}
+              </span>
+              <span className="xp-week-gained">{formatXp(row.gained)} XP</span>
+            </li>
+          ))}
+        </ol>
+        {showAll && rest.length > 0 && (
+          <StandingsList rows={rest} highlightIds={highlight} pointsLabel="if it ends now" />
         )}
       </>
     );
   }
 
+  if (full) {
+    return (
+      <section className={`xp-week xp-week-full xp-strip ${className}`.trim()} aria-labelledby="gainer-h">
+        <div className="xp-strip-head">
+          <div className="xp-strip-heading">
+            <TitleIcon icon={GAINER.icon} />
+            <div>
+              <h3 id="gainer-h">{GAINER.name}</h3>
+              <p>
+                {GAINER.ranked} · top {XP_AWARD_PLACES} earn {XP_AWARD_POINTS.join(" / ")} · ends{" "}
+                {formatUkTime(week.end)} UK
+              </p>
+            </div>
+          </div>
+          {rest.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
+              {showAll ? "Show top 5" : `Show all ${ranking.length} gaining XP`}
+            </Button>
+          )}
+        </div>
+        {body}
+      </section>
+    );
+  }
+
   return (
     <section className={`xp-week xp-week-${variant} ${className}`.trim()}>
-      <div className="xp-week-columns">
-        <div className="xp-week-column">
-          <h3 className="xp-week-title">
-            <FaChartLine className="xp-week-icon" aria-hidden="true" />
-            {full ? "This week" : "Top XP this week"}
-          </h3>
-          {body}
-          <p className="xp-week-note">
-            Top {XP_AWARD_PLACES} earn Siege Score · ends {formatUkTime(week.end)} UK
-          </p>
-        </div>
-
-        {full && (
-          <div className="xp-week-column">
-            <h3 className="xp-week-title">
-              <FaCrown className="xp-week-icon" aria-hidden="true" />
-              {lastWeek && !lastIsPrevious ? "Previous winners" : "Last week's winners"}
-            </h3>
-            {lastWeek?.winners?.length ? (
-              <>
-                <StandingsList
-                  rows={lastWeek.winners}
-                  highlightIds={highlight}
-                  pointsLabel="awarded"
-                />
-                <p className="xp-week-note">
-                  {formatUkTime(lastWeek.start)} to {formatUkTime(lastWeek.end)} UK
-                  {!lastIsPrevious && " · last week's points are awarded shortly after it closes"}
-                </p>
-              </>
-            ) : lastWeekLoading ? (
-              <div className="xp-week-message">Loading last week's winners...</div>
-            ) : lastWeekError ? (
-              <div className="xp-week-message">
-                Couldn't load last week's winners.
-              </div>
-            ) : (
-              <div className="xp-week-message">
-                The first points are awarded when this week ends.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <h3 className="xp-week-title">
+        <FaChartLine className="xp-week-icon" aria-hidden="true" />
+        Top XP this week
+      </h3>
+      {body}
+      <p className="xp-week-note">
+        Top {XP_AWARD_PLACES} earn Siege Score · ends {formatUkTime(week.end)} UK
+      </p>
     </section>
   );
 }

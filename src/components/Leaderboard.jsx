@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { FaCrown, FaMedal, FaTrophy } from "react-icons/fa";
+import PlaceBadge from "./PlaceBadge";
 import { titleize } from "../utils/stringUtils";
 import "./Leaderboard.css";
 
@@ -109,17 +109,7 @@ export default function SiegeLeaderboard({
         ) : (
           leaderboardData.map((player, index) => (
             <div key={player.wom_id || index} className="ui-mini-player">
-              <span className={`ui-rank-badge ui-rank-${index + 1}`}>
-                {index === 0 ? (
-                  <FaCrown className="ui-gold-icon" />
-                ) : index === 1 ? (
-                  <FaMedal className="ui-silver-icon" />
-                ) : index === 2 ? (
-                  <FaMedal className="ui-bronze-icon" />
-                ) : (
-                  index + 1
-                )}
-              </span>
+              <PlaceBadge place={index + 1} size={26} />
               <span className="ui-player-name">
                 {titleize(player.name) ||
                   titleize(player.wom_name) ||
@@ -168,15 +158,7 @@ export default function SiegeLeaderboard({
                   className={index < 3 ? `ui-top-${index + 1}` : ""}
                 >
                   <td>
-                    {index === 0 ? (
-                      <FaCrown className="ui-gold-icon" title="1st Place" />
-                    ) : index === 1 ? (
-                      <FaMedal className="ui-silver-icon" title="2nd Place" />
-                    ) : index === 2 ? (
-                      <FaMedal className="ui-bronze-icon" title="3rd Place" />
-                    ) : (
-                      index + 1
-                    )}
+                    <PlaceBadge place={index + 1} size={28} />
                   </td>
                   <td>
                     {titleize(player.name) ||

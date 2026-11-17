@@ -63,57 +63,24 @@ describe("WeeklyXpLeaderboard", () => {
     expect(screen.getByText(/Couldn't load this week's XP/)).toBeInTheDocument();
   });
 
-  it("shows last week's paid winners on the full version", () => {
-    hookState.value = state({
-      lastWeek: {
-        // The week that ended as this one began.
-        start: new Date("2026-11-02T19:00:00Z"),
-        end: new Date("2026-11-09T19:00:00Z"),
-        winners: [{ womId: 1, name: "Last Winner", gained: 5e6, place: 1, points: 150 }],
-      },
-    });
-    render(<WeeklyXpLeaderboard variant="full" />);
-    expect(screen.getByText("Last week's winners")).toBeInTheDocument();
-    expect(screen.getByText("Last Winner")).toBeInTheDocument();
-    expect(screen.queryByText(/awarded shortly after/)).not.toBeInTheDocument();
-  });
-
-  it("calls an older paid week 'Previous winners' until last week is paid", () => {
-    hookState.value = state({
-      lastWeek: {
-        start: new Date("2026-10-26T19:00:00Z"),
-        end: new Date("2026-11-02T19:00:00Z"),
-        winners: [{ womId: 1, name: "Older Winner", gained: 5e6, place: 1, points: 150 }],
-      },
-    });
-    render(<WeeklyXpLeaderboard variant="full" />);
-    expect(screen.getByText("Previous winners")).toBeInTheDocument();
-    expect(screen.getByText(/last week's points are awarded shortly after it closes/)).toBeInTheDocument();
-  });
-
-  it("says last week's winners are loading rather than that none were paid", () => {
-    hookState.value = state({ lastWeekLoading: true });
-    render(<WeeklyXpLeaderboard variant="full" />);
-    expect(screen.getByText("Loading last week's winners...")).toBeInTheDocument();
-    expect(screen.queryByText(/first points are awarded/)).not.toBeInTheDocument();
-  });
-
-  it("lists everyone gaining XP on the full version, with the paid places marked off", () => {
+  it("shows the top five as tiles on the Leaderboard strip, and everyone else on demand", () => {
     hookState.value = state({ standings: ranking.filter((r) => r.points > 0) });
     render(<WeeklyXpLeaderboard variant="full" />);
-    const thisWeek = () => within(screen.getAllByRole("list")[0]);
-    expect(thisWeek().getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getByRole("heading", { name: "The Gainer" })).toBeInTheDocument();
+    const tiles = () => within(screen.getAllByRole("list")[0]).getAllByRole("listitem");
+    expect(tiles()).toHaveLength(5);
+    expect(within(tiles()[0]).getByText("FinPunisher")).toBeInTheDocument();
+    expect(within(tiles()[0]).getByText("+150")).toBeInTheDocument();
+    expect(within(tiles()[0]).getByRole("img", { name: "1st place" })).toBeInTheDocument();
+    expect(screen.getAllByRole("list")).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Show all 7 gaining XP" }));
-    const rows = thisWeek().getAllByRole("listitem");
-    expect(rows).toHaveLength(7);
-    expect(within(rows[5]).getByText("Six")).toBeInTheDocument();
-    expect(rows[5]).toHaveClass("xp-week-row-cutoff");
-    expect(rows[4]).not.toHaveClass("xp-week-row-cutoff");
-    expect(within(rows[5]).queryByText(/^\+/)).not.toBeInTheDocument();
+    const rest = within(screen.getAllByRole("list")[1]).getAllByRole("listitem");
+    expect(rest.map((li) => li.querySelector(".ui-player-name").textContent)).toEqual(["Six", "Far Down"]);
+    expect(within(rest[0]).queryByText(/^\+/)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Show top 5" }));
-    expect(thisWeek().getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getAllByRole("list")).toHaveLength(1);
   });
 
   it("offers no toggle in the Profile header, or when everyone is already shown", () => {
@@ -125,11 +92,6 @@ describe("WeeklyXpLeaderboard", () => {
     hookState.value = state({ ranking: standings });
     render(<WeeklyXpLeaderboard variant="full" />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-  });
-
-  it("explains that nobody has been paid yet before the first week ends", () => {
-    render(<WeeklyXpLeaderboard variant="full" />);
-    expect(screen.getByText(/first points are awarded when this week ends/)).toBeInTheDocument();
   });
 });
 

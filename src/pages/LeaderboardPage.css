@@ -41,39 +41,6 @@
   margin-top: 1.25rem;
 }
 
-.ui-leaderboard-info {
-  margin-top: 2rem;
-  background-color: #222;
-}
-
-.ui-points-categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  margin-top: 1rem;
-}
-
-.ui-points-category {
-  flex: 1;
-  min-width: 200px;
-}
-
-.ui-points-category h4 {
-  margin-bottom: 0.625rem;
-  font-weight: 600;
-  color: var(--accent-color, #2196f3);
-}
-
-.ui-points-category ul {
-  list-style-type: disc;
-  padding-left: 1.25rem;
-  margin-bottom: 0;
-}
-
-.ui-points-category li {
-  margin-bottom: 0.375rem;
-}
-
 /* Responsive adjustments */
 @media (max-width: 992px) {
   /* Switch to stacked layout on tablet and below */
@@ -91,11 +58,6 @@
   .ui-page-container {
     width: 98%;
     padding: 1rem;
-  }
-  
-  .ui-points-categories {
-    flex-direction: column;
-    gap: 1rem;
   }
   
   .ui-section-title {
@@ -122,8 +84,122 @@
   align-items: start;
 }
 
-/* Orange headings like the rest of the site, instead of blue. */
-.ui-points-category h4 {
-  color: var(--color-orange, #ff9800);
-  font-size: 1rem;
+/* ---- Tabs: This week / All-time / How points work ---- */
+
+.leaderboard-tabs .ui-tabs-content {
+  padding-top: 1.25rem;
 }
+
+.leaderboard-week {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.leaderboard-week-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 14px 20px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+
+.leaderboard-week-bar-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.leaderboard-week-bar-icon {
+  flex-shrink: 0;
+  font-size: 22px;
+  color: var(--color-orange, #ff9800);
+}
+
+.leaderboard-week-bar-title {
+  font-weight: 700;
+  color: #fff;
+}
+
+.leaderboard-week-bar-sub {
+  font-size: 0.8125rem;
+  color: #aaa;
+}
+
+.leaderboard-week-bar-end {
+  font-size: 0.875rem;
+  color: #ccc;
+}
+
+.leaderboard-week-bar-end strong {
+  color: #fff;
+}
+
+.leaderboard-how {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.leaderboard-how-wide {
+  grid-column: 1 / -1;
+}
+
+.leaderboard-how-card h3 {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  color: var(--color-orange, #ff9800);
+}
+
+.leaderboard-how-sub {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  color: #aaa;
+}
+
+.leaderboard-how-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leaderboard-how-card strong {
+  color: var(--color-orange, #ff9800);
+}
+
+.leaderboard-how-table-wrap {
+  overflow-x: auto;
+}
+
+.leaderboard-how-table {
+  width: 100%;
+  min-width: 460px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.leaderboard-how-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: #aaa;
+  font-weight: 600;
+  border-bottom: 1px solid #444;
+}
+
+.leaderboard-how-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #333;
+}
+
+.leaderboard-how-table td:first-child {
+  color: #fff;
+  font-weight: 700;
+}
+

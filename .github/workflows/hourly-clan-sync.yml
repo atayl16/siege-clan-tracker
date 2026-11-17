@@ -64,6 +64,19 @@ jobs:
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
 
+      # Awards any finished week of weekly titles not yet awarded, then
+      # refreshes this week's live title standings for the Leaderboard.
+      # About 90 WOM calls, spaced for the API key's limit (roughly a minute).
+      - name: Run Weekly Titles
+        id: weekly_titles
+        run: node scripts/sync-tasks/weekly-titles.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+          WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
+
       # After the WOM sync, so player snapshots are as fresh as they get.
       - name: Run Race Progress Sync
         run: node scripts/sync-tasks/race-progress.cjs
@@ -75,8 +88,8 @@ jobs:
 
       # A failed award means Siege Score went unpaid. Fail the job (after the
       # other steps have run) so it is not hidden in a green run's log.
-      - name: Fail if the weekly XP award failed
-        if: steps.weekly_xp_awards.outcome == 'failure'
+      - name: Fail if a weekly award failed
+        if: steps.weekly_xp_awards.outcome == 'failure' || steps.weekly_titles.outcome == 'failure'
         run: |
-          echo "::error::Weekly XP award failed; see the Run Weekly XP Awards step log."
+          echo "::error::A weekly award failed; see the Run Weekly XP Awards / Run Weekly Titles step logs."
           exit 1
