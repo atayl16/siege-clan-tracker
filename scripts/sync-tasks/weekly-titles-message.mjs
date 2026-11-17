@@ -1,7 +1,11 @@
 /**
- * The Discord message announcing a week's title holders: one embed (The
- * Gainer full width, then one side-by-side field per title, which Discord
- * lays out three to a row) and a link button to the Leaderboard.
+ * The Discord message announcing a week's title holders: one embed listing
+ * each title's winner on its own line (The Gainer first, then the titles in
+ * site order), a line on the points, and a link button to the Leaderboard,
+ * where 2nd and 3rd are shown.
+ *
+ * Kept to one line per title so it reads the same on a phone, where Discord
+ * stacks side-by-side fields into one long column.
  *
  * Pure: the same week always gives the same message, so the preview, the
  * test post and the live post are identical. Title names, order and value
@@ -10,14 +14,12 @@
  * No @mentions: names are plain text and allowed_mentions turns pings off.
  */
 
-import { WEEKLY_TITLES, GAINER, formatTitleValue } from '../../src/utils/weeklyTitles.js';
-import { ordinal } from '../../src/utils/xpWeek.js';
+import { WEEKLY_TITLES, GAINER, TITLE_POINTS, formatTitleValue } from '../../src/utils/weeklyTitles.js';
 
 export const LEADERBOARD_URL = 'https://siege-clan.com/leaderboard';
 export const EMBED_COLOR = 0xff9800; // the site's orange
 
-const PLACES_SHOWN = 3;
-// A big tie at one place lists this many names, then "(+N more)".
+// A big tie for first lists this many names, then "(+N more)".
 const NAMES_SHOWN = 3;
 const LINK_BUTTON = 5;
 
@@ -45,41 +47,14 @@ export function weekLabel(weekStart, weekEnd) {
 }
 
 /**
- * Rows ({ name, placement, value }) grouped into places 1-3, ties together:
- * [{ place, names, value }], best first.
+ * "**The Warrior** · noon air (8.5 EHB)" from rows ({ name, placement,
+ * value }), first place only, joint winners together. Null when nobody won.
  */
-function places(rows) {
-  const byPlace = new Map();
-  for (const row of rows) {
-    if (!(row.placement >= 1 && row.placement <= PLACES_SHOWN)) continue;
-    const entry = byPlace.get(row.placement) || { place: row.placement, names: [], value: row.value };
-    entry.names.push(row.name);
-    byPlace.set(row.placement, entry);
-  }
-  for (const entry of byPlace.values()) entry.names.sort((x, y) => x.localeCompare(y));
-  return [...byPlace.values()].sort((x, y) => x.place - y.place);
-}
-
-/** "8.0" from "8.0 EHB", "8.26M" from "8.26M XP", "9" from "9 raids". */
-const bareValue = (title, value) => formatTitleValue(title, value).split(' ')[0];
-
-/**
- * The winner in bold with their value, then the runners-up. Null when nobody
- * placed. `oneLine` puts the runners-up on one line (The Gainer, full width).
- */
-function fieldValue(title, rows, { oneLine = false } = {}) {
-  const ranked = places(rows);
-  if (!ranked.length) return null;
-  const [first, ...rest] = ranked;
-  const winner = first.place === 1
-    ? `**${joinNames(first.names)}** · ${formatTitleValue(title, first.value)}`
-    : null;
-  const runnersUp = (winner ? rest : ranked).map(
-    (p) => `${ordinal(p.place)} ${joinNames(p.names)} ${bareValue(title, p.value)}`
-  );
-  const lines = winner ? [winner] : [];
-  if (runnersUp.length) lines.push(...(oneLine ? [runnersUp.join(' · ')] : runnersUp));
-  return lines.join('\n');
+function winnerLine(title, rows) {
+  const winners = rows.filter((r) => r.placement === 1);
+  if (!winners.length) return null;
+  const names = winners.map((r) => r.name).sort((x, y) => x.localeCompare(y));
+  return `**${title.name}** · ${joinNames(names)} (${formatTitleValue(title, winners[0].value)})`;
 }
 
 /**
@@ -93,36 +68,31 @@ function fieldValue(title, rows, { oneLine = false } = {}) {
  * @returns a Discord message body
  */
 export function renderWeeklyTitlesMessage({ weekStart, weekEnd, gainer = [], awards = [] }) {
-  const fields = [];
+  const lines = [
+    winnerLine(
+      GAINER,
+      gainer.map((r) => ({ name: r.player_name, placement: r.placement, value: Number(r.xp_gained) }))
+    ),
+    ...WEEKLY_TITLES.map((title) =>
+      winnerLine(
+        title,
+        awards
+          .filter((a) => a.title === title.id)
+          .map((a) => ({ name: a.player_name, placement: a.placement, value: Number(a.value) }))
+      )
+    ),
+  ].filter(Boolean);
 
-  const gainerValue = fieldValue(
-    GAINER,
-    gainer.map((r) => ({ name: r.player_name, placement: r.placement, value: Number(r.xp_gained) })),
-    { oneLine: true }
-  );
-  if (gainerValue) {
-    const ranked = GAINER.ranked.charAt(0).toLowerCase() + GAINER.ranked.slice(1); // "most Overall XP"
-    fields.push({ name: `${GAINER.name} · ${ranked}`, value: gainerValue, inline: false });
-  }
-
-  for (const title of WEEKLY_TITLES) {
-    const rows = awards
-      .filter((a) => a.title === title.id)
-      .map((a) => ({ name: a.player_name, placement: a.placement, value: Number(a.value) }));
-    const value = fieldValue(title, rows);
-    if (value) fields.push({ name: title.name, value, inline: true });
-  }
+  const [first, second, third] = TITLE_POINTS;
+  const points = `Winners earned ${first} Siege Score points, with ${second} for 2nd and ${third} for 3rd.`;
 
   return {
     embeds: [
       {
         color: EMBED_COLOR,
-        author: { name: 'Siege Clan · siege-clan.com', url: LEADERBOARD_URL },
         title: `Weekly titles · ${weekLabel(weekStart, weekEnd)}`,
         url: LEADERBOARD_URL,
-        description: "Last week's winners. The top 3 in each race earned **150 / 100 / 50** Siege Score.",
-        fields,
-        footer: { text: "Titles are held until next week's winners are announced" },
+        description: `${lines.join('\n')}\n\n${points}`,
       },
     ],
     components: [
@@ -138,10 +108,11 @@ export function renderWeeklyTitlesMessage({ weekStart, weekEnd, gainer = [], awa
 /** The message as plain text, for the preview log. */
 export function messageAsText(message) {
   const embed = message.embeds[0];
-  const lines = [embed.title, embed.description, ''];
-  for (const field of embed.fields) {
-    lines.push(field.name, field.value, '');
-  }
-  lines.push(embed.footer.text, `[ ${message.components[0].components[0].label} ] ${LEADERBOARD_URL}`);
-  return lines.join('\n');
+  return [
+    embed.title,
+    '',
+    embed.description,
+    '',
+    `[ ${message.components[0].components[0].label} ] ${LEADERBOARD_URL}`,
+  ].join('\n');
 }
