@@ -79,7 +79,7 @@ export function useTitleRaces() {
  *
  *   holders   [{ title, players: [{ womId, name, value }], week }], The
  *             Gainer first, then the config's order; titles nobody won left out
- *   byMember  Map womId -> [title names], for badges next to names
+ *   byMember  Map womId -> [titles held], for the marks next to names
  */
 export function useTitleHolders() {
   const week = useCurrentXpWeek();
@@ -118,7 +118,7 @@ export function useTitleHolders() {
     for (const { title, players } of holders) {
       for (const p of players) {
         const id = Number(p.womId);
-        byMember.set(id, [...(byMember.get(id) || []), title.name]);
+        byMember.set(id, [...(byMember.get(id) || []), title]);
       }
     }
 

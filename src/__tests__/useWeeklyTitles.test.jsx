@@ -104,8 +104,8 @@ describe("useTitleHolders", () => {
       ["The Clogger", ["K aura"]],
       ["The Clue Hunter", ["K aura"]],
     ]);
-    expect(result.current.byMember.get(1)).toEqual(["The Clogger", "The Clue Hunter"]);
-    expect(result.current.byMember.get(9)).toEqual(["The Gainer"]);
+    expect(result.current.byMember.get(1).map((t) => t.name)).toEqual(["The Clogger", "The Clue Hunter"]);
+    expect(result.current.byMember.get(9).map((t) => t.name)).toEqual(["The Gainer"]);
     // Only 1st places are holders.
     const awardsQuery = db.queries.find((q) => q.table === "weekly_title_awards").calls;
     expect(awardsQuery).toContainEqual(["eq", "placement", 1]);

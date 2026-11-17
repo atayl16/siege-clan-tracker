@@ -39,22 +39,42 @@ export function TitleIcon({ icon, size = "md" }) {
   );
 }
 
-/** The pill shown next to a title holder's name ("The Warrior"). */
-export function TitleBadge({ name }) {
-  return <span className="title-badge">{name}</span>;
+/**
+ * A title shown next to a holder's name: the title's icon, with its name in a
+ * tooltip on hover, on keyboard focus, and on tap (focus) on a phone. The
+ * name is also the accessible label, so screen readers read it.
+ */
+export function TitleMark({ title }) {
+  return (
+    <span
+      className="title-mark"
+      role="img"
+      aria-label={title.name}
+      data-tooltip={title.name}
+      tabIndex={0}
+      // A tap shows the name; it should not also open the member's row.
+      onClick={(e) => e.stopPropagation()}
+    >
+      <TitleIcon icon={title.icon} size="sm" />
+    </span>
+  );
 }
 
-/** Every title a member holds, as pills; nothing when they hold none. */
-export function TitleBadges({ womId, byMember }) {
-  const names = byMember?.get(Number(womId));
-  if (!names?.length) return null;
+/** Every title a member holds, as icons; nothing when they hold none. */
+export function TitleMarks({ titles }) {
+  if (!titles?.length) return null;
   return (
-    <span className="title-badges">
-      {names.map((name) => (
-        <TitleBadge key={name} name={name} />
+    <span className="title-marks">
+      {titles.map((title) => (
+        <TitleMark key={title.id} title={title} />
       ))}
     </span>
   );
+}
+
+/** The marks for one member, looked up in useTitleHolders()'s byMember. */
+export function TitleBadges({ womId, byMember }) {
+  return <TitleMarks titles={byMember?.get(Number(womId))} />;
 }
 
 /** The tiles for who holds each title now (The Gainer first). */

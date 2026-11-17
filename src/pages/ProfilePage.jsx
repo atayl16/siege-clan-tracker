@@ -25,7 +25,7 @@ import RaceCard from "../components/RaceCard";
 import CharacterEventStandings from "../components/CharacterEventStandings";
 import CreateRace from "../components/CreateRace";
 import WeeklyXpLeaderboard, { YourWeeklyXp } from "../components/WeeklyXpLeaderboard";
-import { TitleBadge } from "../components/WeeklyTitles";
+import { TitleMarks } from "../components/WeeklyTitles";
 import { useTitleHolders } from "../hooks/useWeeklyTitles";
 import XpProgressChart from "../components/XpProgressChart";
 
@@ -112,9 +112,11 @@ function ProfileContent() {
   // Titles any of the viewer's characters hold this week, for the header.
   const { byMember: titleHolders } = useTitleHolders();
   const heldTitles = [
-    ...new Set(
-      (userClaims || []).flatMap((c) => titleHolders.get(Number(c.members?.wom_id ?? c.wom_id)) || [])
-    ),
+    ...new Map(
+      (userClaims || [])
+        .flatMap((c) => titleHolders.get(Number(c.members?.wom_id ?? c.wom_id)) || [])
+        .map((title) => [title.id, title])
+    ).values(),
   ];
   const hasSeveralCharacters = (userClaims?.length ?? 0) > 1;
   const [settingMainId, setSettingMainId] = useState(null);
@@ -252,13 +254,7 @@ function ProfileContent() {
         <div className="user-summary">
           <div className="username">
             {displayUsername(user.username)}
-            {heldTitles.length > 0 && (
-              <span className="title-badges">
-                {heldTitles.map((name) => (
-                  <TitleBadge key={name} name={name} />
-                ))}
-              </span>
-            )}
+            <TitleMarks titles={heldTitles} />
           </div>
           {/* "Member since" lives on the Account tab; the header shows how
               the main character is doing in this week's XP race instead. */}
