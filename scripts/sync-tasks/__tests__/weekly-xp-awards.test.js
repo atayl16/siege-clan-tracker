@@ -57,11 +57,11 @@ describe('runWeeklyXpAwards', () => {
       p_week_start: W16,
       p_week_end: W23,
       p_awards: [
-        { wom_id: 1, player_name: 'p1', placement: 1, xp_gained: 9_000_000, points_awarded: 15 },
-        { wom_id: 2, player_name: 'p2', placement: 2, xp_gained: 8_000_000, points_awarded: 10 },
-        { wom_id: 3, player_name: 'p3', placement: 3, xp_gained: 7_000_000, points_awarded: 5 },
-        { wom_id: 4, player_name: 'p4', placement: 4, xp_gained: 6_000_000, points_awarded: 2 },
-        { wom_id: 5, player_name: 'p5', placement: 5, xp_gained: 5_000_000, points_awarded: 2 },
+        { wom_id: 1, player_name: 'p1', placement: 1, xp_gained: 9_000_000, points_awarded: 150 },
+        { wom_id: 2, player_name: 'p2', placement: 2, xp_gained: 8_000_000, points_awarded: 100 },
+        { wom_id: 3, player_name: 'p3', placement: 3, xp_gained: 7_000_000, points_awarded: 50 },
+        { wom_id: 4, player_name: 'p4', placement: 4, xp_gained: 6_000_000, points_awarded: 20 },
+        { wom_id: 5, player_name: 'p5', placement: 5, xp_gained: 5_000_000, points_awarded: 20 },
       ],
     });
   });
@@ -84,8 +84,8 @@ describe('runWeeklyXpAwards', () => {
 
     const awards = supabase.rpc.mock.calls[0][1].p_awards;
     expect(awards.map((a) => [a.wom_id, a.placement, a.points_awarded])).toEqual([
-      [2, 1, 15],
-      [3, 2, 10],
+      [2, 1, 150],
+      [3, 2, 100],
     ]);
   });
 

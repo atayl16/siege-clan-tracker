@@ -595,15 +595,16 @@ async function processCompetitionResults(competitionId) {
     }
 
     for (const group of progressGroups) {
-      // Determine points for this place
-      let pointsToAward = 2; // Default participation points
+      // Determine points for this place. Every amount went up 10x on
+      // 2026-11-17 (migration 20261117000001 scaled existing scores to match).
+      let pointsToAward = 20; // Default participation points
 
       if (currentPlace === 1) {
-        pointsToAward = 15; // First place
+        pointsToAward = 150; // First place
       } else if (currentPlace === 2) {
-        pointsToAward = 10; // Second place
+        pointsToAward = 100; // Second place
       } else if (currentPlace === 3) {
-        pointsToAward = 5; // Third place
+        pointsToAward = 50; // Third place
       }
 
       console.log(
