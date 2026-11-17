@@ -5,12 +5,13 @@ import {
   messageAsText,
   weekLabel,
   escapeName,
+  titleEmojis,
   LEADERBOARD_URL,
 } from '../weekly-titles-message.mjs';
 
 const award = (title, placement, player_name, value) => ({ title, placement, player_name, value });
 
-// The real week of 9 to 16 Nov 2026, as stored (some titles left out).
+// The real week of 9 to 16 Nov 2026, as stored (some titles and places left out).
 const WEEK = {
   weekStart: '2026-11-09T19:00:00+00:00',
   weekEnd: '2026-11-16T19:00:00+00:00',
@@ -40,7 +41,7 @@ describe('renderWeeklyTitlesMessage', () => {
   const embed = message.embeds[0];
 
   it('titles the week in UK dates and links the Leaderboard', () => {
-    expect(embed.title).toBe('Weekly titles · 9 to 16 Nov');
+    expect(embed.title).toBe("Last week's champions · 9 to 16 Nov");
     expect(embed.url).toBe(LEADERBOARD_URL);
     expect(embed.color).toBe(0xff9800);
     expect(message.components[0].components[0]).toMatchObject({ style: 5, label: 'View the leaderboard', url: LEADERBOARD_URL });
@@ -50,14 +51,18 @@ describe('renderWeeklyTitlesMessage', () => {
     expect(message.allowed_mentions).toEqual({ parse: [] });
   });
 
-  it('lists one winner per line, The Gainer first, titles in site order, nobody-won titles left out', () => {
+  it('lists each winner with 2nd and 3rd in small text underneath, The Gainer first, nobody-won titles left out', () => {
     expect(embed.description).toBe(
       [
         '**The Gainer** · FinPunisher (16.31M XP)',
+        '-# 2nd acid scum · 3rd ottogodblest',
         '**The Warrior** · noon air (8.5 EHB)',
+        '-# 2nd TheLastAesir · 3rd xijaffa',
         '**The Resurrected** · IlZion (310K XP)',
         '**The Raider** · 1819 B (17 raids)',
+        '-# 3rd elegant hobo & Sloth Bone',
         '**The Boss Hunter** · FinPunisher (533 kills)',
+        '-# 2nd CursedClover',
         '',
         POINTS,
       ].join('\n')
@@ -68,6 +73,21 @@ describe('renderWeeklyTitlesMessage', () => {
     expect(embed.fields).toBeUndefined();
     expect(embed.author).toBeUndefined();
     expect(embed.footer).toBeUndefined();
+  });
+
+  it('starts each line with the title emoji the server has, and goes without otherwise', () => {
+    const emojis = titleEmojis([
+      { id: '111', name: 'title_warrior' },
+      { id: '222', name: 'title_gainer', animated: true },
+      { id: '333', name: 'title_raider', available: false },
+      { id: '444', name: 'Farming' },
+    ]);
+    expect(Object.keys(emojis).sort()).toEqual(['gainer', 'warrior']);
+
+    const lines = renderWeeklyTitlesMessage(WEEK, { emojis }).embeds[0].description.split('\n');
+    expect(lines[0]).toBe('<a:title_gainer:222> **The Gainer** · FinPunisher (16.31M XP)');
+    expect(lines[2]).toBe('<:title_warrior:111> **The Warrior** · noon air (8.5 EHB)');
+    expect(lines[5]).toBe('**The Raider** · 1819 B (17 raids)');
   });
 
   it('puts joint winners on one line, and cuts a big tie short', () => {
@@ -81,9 +101,12 @@ describe('renderWeeklyTitlesMessage', () => {
     const five = renderWeeklyTitlesMessage({
       ...WEEK,
       gainer: [],
-      awards: ['e', 'd', 'c', 'b', 'a'].map((n) => award('clue_hunter', 1, n, 10)),
+      awards: [award('clue_hunter', 1, 'z', 12), ...['e', 'd', 'c', 'b', 'a'].map((n) => award('clue_hunter', 2, n, 10))],
     });
-    expect(five.embeds[0].description.split('\n')[0]).toBe('**The Clue Hunter** · a & b & c (+2 more) (10 clues)');
+    expect(five.embeds[0].description.split('\n').slice(0, 2)).toEqual([
+      '**The Clue Hunter** · z (12 clues)',
+      '-# 2nd a & b & c (+2 more)',
+    ]);
   });
 
   it('escapes Discord markdown in names', () => {
@@ -102,7 +125,7 @@ describe('renderWeeklyTitlesMessage', () => {
 
   it('reads as text for the preview', () => {
     const text = messageAsText(message);
-    expect(text.startsWith('Weekly titles · 9 to 16 Nov\n\n**The Gainer**')).toBe(true);
+    expect(text.startsWith("Last week's champions · 9 to 16 Nov\n\n**The Gainer**")).toBe(true);
     expect(text).toContain(POINTS);
     expect(text).toContain(LEADERBOARD_URL);
   });

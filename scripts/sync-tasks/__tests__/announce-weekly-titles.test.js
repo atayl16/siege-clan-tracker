@@ -104,21 +104,23 @@ describe('announceWeeklyTitles, hourly', () => {
     expect(result).toEqual({ status: 'posted', messageId: 'msg-1' });
     const [channel, message] = postMessage.mock.calls[0];
     expect(channel).toBe('live');
-    expect(message.embeds[0].title).toBe('Weekly titles · 9 to 16 Nov');
+    expect(message.embeds[0].title).toBe("Last week's champions · 9 to 16 Nov");
     expect(supabase.table.announced).toEqual([
       { id: 100, kind: 'weekly_titles', week_start: W9, channel_id: 'live', claimed_at: NOW.toISOString(), message_id: 'msg-1' },
     ]);
   });
 
-  it('posts a week only once', async () => {
+  it('posts a week only once, and a run that skips makes no Discord calls', async () => {
     const supabase = fakeSupabase();
     const postMessage = poster();
+    const getEmojis = vi.fn(async () => []);
 
-    await announceWeeklyTitles({ ...base, supabase, postMessage });
-    const second = await announceWeeklyTitles({ ...base, supabase, postMessage });
+    await announceWeeklyTitles({ ...base, supabase, postMessage, getEmojis });
+    const second = await announceWeeklyTitles({ ...base, supabase, postMessage, getEmojis });
 
     expect(second.status).toBe('skipped');
     expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(getEmojis).toHaveBeenCalledTimes(1);
   });
 
   it('waits until The Gainer is awarded too', async () => {
@@ -223,7 +225,7 @@ describe('announceWeeklyTitles, by hand', () => {
     const result = await announceWeeklyTitles({ ...base, log, supabase, postMessage, mode: 'preview' });
 
     expect(result.status).toBe('preview');
-    expect(log.mock.calls.flat().join('\n')).toContain('Weekly titles · 9 to 16 Nov');
+    expect(log.mock.calls.flat().join('\n')).toContain("Last week's champions · 9 to 16 Nov");
     expect(postMessage).not.toHaveBeenCalled();
     expect(supabase.table.announced).toEqual([]);
   });
@@ -238,6 +240,23 @@ describe('announceWeeklyTitles, by hand', () => {
 
     expect(postMessage.mock.calls.map(([channel]) => channel)).toEqual(['test', 'test']);
     expect(supabase.table.announced).toHaveLength(1);
+  });
+
+  it("uses the title emojis of the channel's server, and posts without them if they cannot be read", async () => {
+    const postMessage = poster();
+    const getEmojis = vi.fn(async () => [{ id: '111', name: 'title_warrior' }]);
+    await announceWeeklyTitles({ ...base, supabase: fakeSupabase(), postMessage, getEmojis, mode: 'test' });
+    expect(getEmojis).toHaveBeenCalledWith('test');
+    expect(postMessage.mock.calls[0][1].embeds[0].description).toContain('<:title_warrior:111> **The Warrior**');
+
+    const log = vi.fn();
+    const failing = vi.fn(async () => {
+      throw new Error('Discord GET returned 403');
+    });
+    const result = await announceWeeklyTitles({ ...base, log, supabase: fakeSupabase(), postMessage, getEmojis: failing, mode: 'test' });
+    expect(result.status).toBe('posted');
+    expect(postMessage.mock.calls[1][1].embeds[0].description).toContain('**The Warrior** · noon air');
+    expect(log.mock.calls.flat().join('\n')).toMatch(/without title icons/);
   });
 
   it('test fails when the test channel is not configured', async () => {

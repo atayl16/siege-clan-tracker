@@ -1,26 +1,34 @@
 /**
  * The Discord message announcing a week's title holders: one embed listing
  * each title's winner on its own line (The Gainer first, then the titles in
- * site order), a line on the points, and a link button to the Leaderboard,
- * where 2nd and 3rd are shown.
+ * site order), with 2nd and 3rd in small grey text underneath, a line on the
+ * points, and a link button to the Leaderboard.
  *
- * Kept to one line per title so it reads the same on a phone, where Discord
- * stacks side-by-side fields into one long column.
+ * One column, so it reads the same on a phone, where Discord stacks
+ * side-by-side fields into one long column.
  *
- * Pure: the same week always gives the same message, so the preview, the
- * test post and the live post are identical. Title names, order and value
- * formats come from src/utils/weeklyTitles.js, as on the site.
+ * Each line starts with the title's icon when the server has a custom emoji
+ * named for it (title_warrior, title_gainer, ...: TITLE_EMOJI_PREFIX plus
+ * the title id), and goes without when it does not.
+ *
+ * Pure: the same week and emojis always give the same message, so the
+ * preview, the test post and the live post are identical. Title names, order
+ * and value formats come from src/utils/weeklyTitles.js, as on the site.
  *
  * No @mentions: names are plain text and allowed_mentions turns pings off.
  */
 
 import { WEEKLY_TITLES, GAINER, TITLE_POINTS, formatTitleValue } from '../../src/utils/weeklyTitles.js';
+import { ordinal } from '../../src/utils/xpWeek.js';
 
 export const LEADERBOARD_URL = 'https://siege-clan.com/leaderboard';
 export const EMBED_COLOR = 0xff9800; // the site's orange
+export const TITLE_EMOJI_PREFIX = 'title_';
+export const HEADING = "Last week's champions";
 
-// A big tie for first lists this many names, then "(+N more)".
+// A big tie lists this many names, then "(+N more)".
 const NAMES_SHOWN = 3;
+const PLACES_SHOWN = 3;
 const LINK_BUTTON = 5;
 
 /** Discord markdown would eat "_" and "*" in a name like "big_dave". */
@@ -29,8 +37,9 @@ export function escapeName(name) {
 }
 
 function joinNames(names) {
-  const shown = names.slice(0, NAMES_SHOWN).map(escapeName).join(' & ');
-  const more = names.length - NAMES_SHOWN;
+  const sorted = [...names].sort((x, y) => x.localeCompare(y));
+  const shown = sorted.slice(0, NAMES_SHOWN).map(escapeName).join(' & ');
+  const more = sorted.length - NAMES_SHOWN;
   return more > 0 ? `${shown} (+${more} more)` : shown;
 }
 
@@ -47,14 +56,48 @@ export function weekLabel(weekStart, weekEnd) {
 }
 
 /**
- * "**The Warrior** · noon air (8.5 EHB)" from rows ({ name, placement,
- * value }), first place only, joint winners together. Null when nobody won.
+ * The server's title emojis, by title id, from its custom emoji list
+ * (Discord's { id, name, animated, available }). Others are ignored.
  */
-function winnerLine(title, rows) {
-  const winners = rows.filter((r) => r.placement === 1);
-  if (!winners.length) return null;
-  const names = winners.map((r) => r.name).sort((x, y) => x.localeCompare(y));
-  return `**${title.name}** · ${joinNames(names)} (${formatTitleValue(title, winners[0].value)})`;
+export function titleEmojis(guildEmojis) {
+  const byTitle = {};
+  for (const emoji of guildEmojis || []) {
+    if (emoji?.available === false || !emoji?.id || !emoji?.name?.startsWith(TITLE_EMOJI_PREFIX)) continue;
+    byTitle[emoji.name.slice(TITLE_EMOJI_PREFIX.length)] = emoji;
+  }
+  return byTitle;
+}
+
+function emojiText(emoji) {
+  if (!emoji) return '';
+  return `<${emoji.animated ? 'a' : ''}:${emoji.name}:${emoji.id}> `;
+}
+
+/**
+ * One title: "{icon} **The Warrior** · noon air (8.5 EHB)", then
+ * "-# 2nd TheLastAesir · 3rd xijaffa" (Discord's small grey text) when
+ * anyone else placed. Joint places share a line. Null when nobody won.
+ */
+function titleLines(title, rows, emoji) {
+  const byPlace = new Map();
+  for (const row of rows) {
+    if (!(row.placement >= 1 && row.placement <= PLACES_SHOWN)) continue;
+    const entry = byPlace.get(row.placement) || { place: row.placement, names: [], value: row.value };
+    entry.names.push(row.name);
+    byPlace.set(row.placement, entry);
+  }
+  const winner = byPlace.get(1);
+  if (!winner) return null;
+
+  const lines = [
+    `${emojiText(emoji)}**${title.name}** · ${joinNames(winner.names)} (${formatTitleValue(title, winner.value)})`,
+  ];
+  const others = [...byPlace.values()]
+    .filter((p) => p.place > 1)
+    .sort((x, y) => x.place - y.place)
+    .map((p) => `${ordinal(p.place)} ${joinNames(p.names)}`);
+  if (others.length) lines.push(`-# ${others.join(' · ')}`);
+  return lines.join('\n');
 }
 
 /**
@@ -65,23 +108,26 @@ function winnerLine(title, rows) {
  *   that week's xp_awards rows
  * @param {Array<{ title: string, player_name: string, placement: number, value: number }>} week.awards
  *   that week's weekly_title_awards rows
+ * @param {{ emojis?: Record<string, { id: string, name: string, animated?: boolean }> }} [options]
+ *   the server's title emojis, from titleEmojis()
  * @returns a Discord message body
  */
-export function renderWeeklyTitlesMessage({ weekStart, weekEnd, gainer = [], awards = [] }) {
-  const lines = [
-    winnerLine(
-      GAINER,
-      gainer.map((r) => ({ name: r.player_name, placement: r.placement, value: Number(r.xp_gained) }))
-    ),
-    ...WEEKLY_TITLES.map((title) =>
-      winnerLine(
-        title,
-        awards
-          .filter((a) => a.title === title.id)
-          .map((a) => ({ name: a.player_name, placement: a.placement, value: Number(a.value) }))
-      )
-    ),
-  ].filter(Boolean);
+export function renderWeeklyTitlesMessage({ weekStart, weekEnd, gainer = [], awards = [] }, { emojis = {} } = {}) {
+  const races = [
+    {
+      title: GAINER,
+      rows: gainer.map((r) => ({ name: r.player_name, placement: r.placement, value: Number(r.xp_gained) })),
+    },
+    ...WEEKLY_TITLES.map((title) => ({
+      title,
+      rows: awards
+        .filter((a) => a.title === title.id)
+        .map((a) => ({ name: a.player_name, placement: a.placement, value: Number(a.value) })),
+    })),
+  ];
+  const blocks = races
+    .map(({ title, rows }) => titleLines(title, rows, Object.hasOwn(emojis, title.id) ? emojis[title.id] : null))
+    .filter(Boolean);
 
   const [first, second, third] = TITLE_POINTS;
   const points = `Winners earned ${first} Siege Score points, with ${second} for 2nd and ${third} for 3rd.`;
@@ -90,9 +136,9 @@ export function renderWeeklyTitlesMessage({ weekStart, weekEnd, gainer = [], awa
     embeds: [
       {
         color: EMBED_COLOR,
-        title: `Weekly titles · ${weekLabel(weekStart, weekEnd)}`,
+        title: `${HEADING} · ${weekLabel(weekStart, weekEnd)}`,
         url: LEADERBOARD_URL,
-        description: `${lines.join('\n')}\n\n${points}`,
+        description: `${blocks.join('\n')}\n\n${points}`,
       },
     ],
     components: [
