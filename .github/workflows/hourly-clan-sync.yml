@@ -77,6 +77,22 @@ jobs:
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
           WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
 
+      # Posts the latest awarded week's title holders to the polls channel,
+      # once per week (scripts/sync-tasks/announce-weekly-titles.cjs). Off
+      # unless the repository variable TITLES_DISCORD_ENABLED is "true". A
+      # Discord failure never touches the awards; it fails this step, and the
+      # next run tries again.
+      - name: Announce Weekly Titles
+        id: announce_titles
+        if: vars.TITLES_DISCORD_ENABLED == 'true'
+        run: node scripts/sync-tasks/announce-weekly-titles.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_POLLS_CHANNEL_ID: ${{ vars.DISCORD_POLLS_CHANNEL_ID }}
+
       # After the WOM sync, so player snapshots are as fresh as they get.
       - name: Run Race Progress Sync
         run: node scripts/sync-tasks/race-progress.cjs
@@ -86,10 +102,11 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
 
-      # A failed award means Siege Score went unpaid. Fail the job (after the
-      # other steps have run) so it is not hidden in a green run's log.
-      - name: Fail if a weekly award failed
-        if: steps.weekly_xp_awards.outcome == 'failure' || steps.weekly_titles.outcome == 'failure'
+      # A failed award means Siege Score went unpaid, and a failed announcement
+      # means the week is not in Discord. Fail the job (after the other steps
+      # have run) so neither is hidden in a green run's log.
+      - name: Fail if a weekly award or announcement failed
+        if: steps.weekly_xp_awards.outcome == 'failure' || steps.weekly_titles.outcome == 'failure' || steps.announce_titles.outcome == 'failure'
         run: |
-          echo "::error::A weekly award failed; see the Run Weekly XP Awards / Run Weekly Titles step logs."
+          echo "::error::A weekly step failed; see the Run Weekly XP Awards / Run Weekly Titles / Announce Weekly Titles step logs."
           exit 1
