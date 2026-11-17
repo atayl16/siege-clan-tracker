@@ -38,42 +38,85 @@
 .title-icon-md { width: 38px; height: 38px; font-size: 20px; }
 .title-icon-lg { width: 40px; height: 40px; font-size: 20px; }
 
-/* Holder tiles: up to five across, then wrapping down. */
-.title-holders {
+/* Tile grids. Column counts are chosen to divide the usual numbers evenly
+   (10 holders: 5 or 2 across; races: 3 or 2 across), and any tiles left
+   over on the last row (a week where a title was not awarded, or only some
+   races have a qualifier) are centred under the others rather than hanging
+   to the left. Columns follow the section's own width, not the window's. */
+.titles-section {
+  container-type: inline-size;
+}
+
+.title-holders,
+.title-races {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(max(170px, calc((100% - 48px) / 5)), 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
+.title-holders { gap: 12px; }
+.title-races { gap: 16px; }
+
+.title-holder,
+.title-race {
+  box-sizing: border-box;
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+@container (min-width: 260px) {
+  .title-holder { flex-basis: calc((100% - 12px) / 2); }
+}
+
+@container (min-width: 700px) {
+  .title-holder { flex-basis: calc((100% - 48px) / 5); }
+}
+
+@container (min-width: 640px) {
+  .title-race { flex-basis: calc((100% - 16px) / 2); }
+}
+
+@container (min-width: 960px) {
+  .title-race { flex-basis: calc((100% - 32px) / 3); }
+}
+
+/* Holder tiles: stacked and centred like a small award card, so the title,
+   name and value each get the tile's full width (no wrapped titles or
+   clipped names) and tiles in a row match in height. */
 .title-holder {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 16px 8px;
+  text-align: center;
   background: #1a1a1a;
   border: 1px solid #3a2a10;
   border-radius: 10px;
-  min-width: 0;
 }
 
 .title-holder-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  width: 100%;
   min-width: 0;
 }
 
 .title-holder-title {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
   text-transform: uppercase;
   color: var(--color-orange, #ff9800);
 }
 
 .title-holder-name {
+  max-width: 100%;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -84,14 +127,6 @@
 .title-holder-value {
   font-size: 0.8125rem;
   color: #aaa;
-}
-
-/* Race cards: three across, then two, then one. */
-.title-races {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(max(300px, calc((100% - 32px) / 3)), 1fr));
-  gap: 16px;
-  align-items: start;
 }
 
 .title-race {

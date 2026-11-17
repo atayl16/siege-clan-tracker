@@ -189,13 +189,34 @@
   color: #aaa;
 }
 
+/* The top five in one row of five, or 2 + 2 + 1 with the last centred when
+   narrower (phones included): never 4 + 1. Columns follow the strip's own
+   width. */
+.xp-strip {
+  container-type: inline-size;
+}
+
 .xp-strip-tiles {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(max(160px, calc((100% - 48px) / 5)), 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
+}
+
+.xp-strip-tile {
+  box-sizing: border-box;
+  flex: 0 0 100%;
+}
+
+@container (min-width: 260px) {
+  .xp-strip-tile { flex-basis: calc((100% - 12px) / 2); }
+}
+
+@container (min-width: 640px) {
+  .xp-strip-tile { flex-basis: calc((100% - 48px) / 5); }
 }
 
 .xp-strip-tile {
