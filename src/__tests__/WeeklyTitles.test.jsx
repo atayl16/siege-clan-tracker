@@ -35,7 +35,7 @@ describe("PlaceBadge", () => {
 
 describe("TitleRaces", () => {
   const races = (overrides = {}) =>
-    WEEKLY_TITLES.map((title) => ({ title, top: [], entrants: 0, ...(overrides[title.id] || {}) }));
+    WEEKLY_TITLES.map((title) => ({ title, top: [], ...(overrides[title.id] || {}) }));
 
   beforeEach(() => {
     hooks.races = { races: races(), updatedAt: null, loading: false, error: undefined };
@@ -47,8 +47,8 @@ describe("TitleRaces", () => {
     hooks.races = {
       ...hooks.races,
       races: races({
-        clue_hunter: { top: rankTitle(clue, [row(1, "K aura", 32)]), entrants: 3 },
-        warrior: { top: rankTitle(warrior, [row(2, "noon air", 6.1)]), entrants: 8 },
+        clue_hunter: { top: rankTitle(clue, [row(1, "K aura", 32)]) },
+        warrior: { top: rankTitle(warrior, [row(2, "noon air", 6.1)]) },
       }),
     };
     render(<TitleRaces />);
@@ -65,7 +65,7 @@ describe("TitleRaces", () => {
   it("lists the top 3 with their badge, value and points, and the minimum", () => {
     const raider = titleById("raider");
     const top = rankTitle(raider, [row(1, "1819 B", 17), row(2, "Hezz", 13), row(3, "elegant hobo", 9), row(4, "Sloth Bone", 9)]);
-    hooks.races = { ...hooks.races, races: races({ raider: { top, entrants: 7 } }) };
+    hooks.races = { ...hooks.races, races: races({ raider: { top } }) };
     render(<TitleRaces />);
 
     const card = screen.getByRole("region", { name: "The Raider race" });
@@ -78,13 +78,14 @@ describe("TitleRaces", () => {
     // The tie for 3rd: both get the bronze rosette and 50.
     expect(within(rows[3]).getByRole("img", { name: "3rd place" })).toBeInTheDocument();
     expect(within(rows[3]).getByText("+50")).toBeInTheDocument();
-    expect(within(card).getByText("7 members in the race this week")).toBeInTheDocument();
+    // No count of everyone who gained anything: only who is placing.
+    expect(within(card).queryByText(/members? in the race/)).not.toBeInTheDocument();
   });
 
   it("lists only the players over the minimum when fewer than 3 are, with no filler", () => {
     const resurrected = titleById("resurrected");
     const top = rankTitle(resurrected, [row(1, "IlZion", 310064), row(2, "resnesv2", 206444), row(3, "fgiml", 51000)]);
-    hooks.races = { ...hooks.races, races: races({ resurrected: { top, entrants: 3 } }) };
+    hooks.races = { ...hooks.races, races: races({ resurrected: { top } }) };
     render(<TitleRaces />);
 
     const card = screen.getByRole("region", { name: "The Resurrected race" });
@@ -93,7 +94,7 @@ describe("TitleRaces", () => {
       "resnesv2",
     ]);
     expect(within(card).queryByText(/Nobody/)).not.toBeInTheDocument();
-    expect(within(card).getByText("3 members in the race this week")).toBeInTheDocument();
+
   });
 
   it("says when the races cannot be loaded", () => {

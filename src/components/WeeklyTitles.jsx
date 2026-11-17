@@ -120,7 +120,7 @@ export function TitleHolders() {
 
 /** One title's race: only shown once somebody is over the minimum. */
 function TitleRaceCard({ race }) {
-  const { title, top, entrants } = race;
+  const { title, top } = race;
 
   return (
     <section className="title-race" aria-label={`${title.name} race`}>
@@ -145,9 +145,6 @@ function TitleRaceCard({ race }) {
           </li>
         ))}
       </ol>
-      <p className="title-race-foot">
-        {entrants} member{entrants === 1 ? "" : "s"} in the race this week
-      </p>
     </section>
   );
 }
