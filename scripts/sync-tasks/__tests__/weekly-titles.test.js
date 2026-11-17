@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { runWeeklyTitles } = require('../weekly-titles.cjs');
+const { runWeeklyTitles, retryDelay } = require('../weekly-titles.cjs');
 
 const W = 7 * 864e5;
 const W9 = '2026-11-09T19:00:00.000Z'; // first week awarded
@@ -176,5 +176,46 @@ describe('runWeeklyTitles', () => {
 
     expect(sleep).toHaveBeenCalledWith(20000);
     expect(awardCall(supabase, W9).p_awards[0].wom_id).toBe(1);
+  });
+
+  it('retries a dropped connection instead of failing the run (16:08 UTC, 17 Nov)', async () => {
+    const supabase = fakeSupabase({ doneWeeks: ['2026-11-09T19:00:00+00:00'] });
+    let calls = 0;
+    const fetchGains = vi.fn(async (start, end, metric) => {
+      calls++;
+      if (calls === 1) throw new TypeError('terminated');
+      return metric === 'ehb' ? [gain(1, 9)] : [];
+    });
+    const sleep = vi.fn(async () => {});
+
+    await runWeeklyTitles({ supabase, fetchGains, fetchBosses: async () => [], now: NOW, log: quiet, gapMs: 0, sleep });
+
+    expect(sleep).toHaveBeenCalledWith(5000);
+    expect(standingsCall(supabase).p_rows.find((r) => r.title === 'warrior').wom_id).toBe(1);
+  });
+
+  it('still fails after repeated drops, so a real outage is noticed', async () => {
+    const supabase = fakeSupabase({ doneWeeks: ['2026-11-09T19:00:00+00:00'] });
+    const fetchGains = vi.fn(async () => {
+      throw new TypeError('fetch failed');
+    });
+    await expect(
+      runWeeklyTitles({ supabase, fetchGains, fetchBosses: async () => [], now: NOW, log: quiet, gapMs: 0, sleep: async () => {} })
+    ).rejects.toThrow(/fetch failed/);
+    expect(fetchGains).toHaveBeenCalledTimes(4);
+  });
+});
+
+describe('retryDelay', () => {
+  it.each([
+    ['WOM returned 429 for https://api.wiseoldman.net/v2/...', 20000],
+    ['WOM returned 502 for https://api.wiseoldman.net/v2/...: Bad Gateway', 5000],
+    ['terminated', 5000],
+    ['fetch failed', 5000],
+    ['read ECONNRESET', 5000],
+    ['WOM returned 404 for https://api.wiseoldman.net/v2/...', null],
+    ['WOM group gained response was not a list', null],
+  ])('%s -> %s', (message, wait) => {
+    expect(retryDelay(new Error(message))).toBe(wait);
   });
 });

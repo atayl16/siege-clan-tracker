@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import Leaderboard from "../components/Leaderboard";
 import { useMembers } from "../hooks/useMembers";
 import { useEvents } from "../hooks/useEvents";
-import { useCurrentXpWeek } from "../hooks/useWeeklyXp";
-import { FaTrophy, FaMedal, FaInfoCircle, FaRegCalendarAlt, FaRegClock } from "react-icons/fa";
+import { FaTrophy, FaMedal, FaInfoCircle, FaRegCalendarAlt } from "react-icons/fa";
 import WeeklyXpLeaderboard from "../components/WeeklyXpLeaderboard";
 import { TitleHolders, TitleRaces } from "../components/WeeklyTitles";
-import { XP_AWARD_POINTS, formatUkTime } from "../utils/xpWeek";
+import { XP_AWARD_POINTS } from "../utils/xpWeek";
 import { WEEKLY_TITLES, GAINER, TITLE_POINTS, formatMinimum } from "../utils/weeklyTitles";
 
 // Import UI components
@@ -18,28 +17,6 @@ import "./LeaderboardPage.css";
 import LoadError from "../components/ui/LoadError";
 
 const ORDINALS = ["1st", "2nd", "3rd", "4th", "5th"];
-
-const dayMonth = (date) =>
-  new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short" }).format(date);
-
-/** Which week is running and when it closes. */
-function WeekBar() {
-  const week = useCurrentXpWeek();
-  return (
-    <div className="leaderboard-week-bar">
-      <div className="leaderboard-week-bar-main">
-        <FaRegClock className="leaderboard-week-bar-icon" aria-hidden="true" />
-        <div>
-          <div className="leaderboard-week-bar-title">Week of {dayMonth(week.start)}</div>
-          <div className="leaderboard-week-bar-sub">Monday 19:00 to Monday 19:00 UK, with SotW and BotW</div>
-        </div>
-      </div>
-      <div className="leaderboard-week-bar-end">
-        Ends <strong>{formatUkTime(week.end)} UK</strong>
-      </div>
-    </div>
-  );
-}
 
 /** Every way to earn Siege Score, from the same settings the awards use. */
 function HowPointsWork() {
@@ -133,7 +110,6 @@ export default function LeaderboardPage() {
       <Tabs activeTab={activeTab} onChange={setActiveTab} className="leaderboard-tabs">
         <Tabs.Tab tabId="week" label="This week" icon={<FaRegCalendarAlt />}>
           <div className="leaderboard-week">
-            <WeekBar />
             <TitleHolders />
             <WeeklyXpLeaderboard variant="full" />
             <TitleRaces />
