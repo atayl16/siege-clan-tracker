@@ -1,0 +1,53 @@
+name: Weekly Titles Discord
+
+# Manual runs of the weekly titles Discord post. The weekly post itself runs
+# in the hourly sync (Announce Weekly Titles step) while the repository
+# variable TITLES_DISCORD_ENABLED is "true". These work whether or not it is.
+#
+#   preview  print the latest awarded week's message in the log; posts nothing
+#   test     post it to the bot-test channel (DISCORD_TEST_CHANNEL_ID); never
+#            recorded, so run it as often as you like
+#   post     post it to the live channel (DISCORD_POLLS_CHANNEL_ID) now, if it
+#            has not been posted already: for a week the hourly run missed
+#
+# Plan: .claude/workspace/DISCORD_TITLES_PLAN.md (local only).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to run'
+        type: choice
+        options:
+          - preview
+          - test
+          - post
+        default: preview
+
+jobs:
+  announce:
+    name: ${{ inputs.mode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --force
+
+      - name: Run
+        env:
+          MODE: ${{ inputs.mode }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_POLLS_CHANNEL_ID: ${{ vars.DISCORD_POLLS_CHANNEL_ID }}
+          DISCORD_TEST_CHANNEL_ID: ${{ vars.DISCORD_TEST_CHANNEL_ID }}
+        run: node scripts/sync-tasks/announce-weekly-titles.cjs "--$MODE"
