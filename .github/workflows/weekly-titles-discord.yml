@@ -22,6 +22,13 @@ on:
           - test
           - post
         default: preview
+      style:
+        description: 'Message style: winners (one line per title) or podium (medals, 1st to 3rd, no values)'
+        type: choice
+        options:
+          - winners
+          - podium
+        default: winners
 
 jobs:
   announce:
@@ -45,6 +52,7 @@ jobs:
       - name: Run
         env:
           MODE: ${{ inputs.mode }}
+          TITLES_DISCORD_STYLE: ${{ inputs.style }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}

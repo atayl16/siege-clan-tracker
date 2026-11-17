@@ -31,7 +31,8 @@
  * STALE_CLAIM_MS old (a run that is really posting finishes in seconds).
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DISCORD_BOT_TOKEN (not for
- * --preview), DISCORD_POLLS_CHANNEL_ID (live), DISCORD_TEST_CHANNEL_ID (--test).
+ * --preview), DISCORD_POLLS_CHANNEL_ID (live), DISCORD_TEST_CHANNEL_ID (--test),
+ * TITLES_DISCORD_STYLE (optional: a message style to try, from the manual workflow).
  */
 
 const KIND = 'weekly_titles';
@@ -125,6 +126,7 @@ async function claimWeek({ supabase, mode, weekStart, channelId, now, log }) {
  *   supabase: import('@supabase/supabase-js').SupabaseClient,
  *   postMessage?: (channelId: string, message: object) => Promise<{ id: string }>,
  *   mode?: 'auto' | 'preview' | 'test' | 'post',
+ *   style?: 'winners' | 'podium',
  *   liveChannelId?: string,
  *   testChannelId?: string,
  *   now?: Date,
@@ -136,6 +138,7 @@ async function announceWeeklyTitles({
   supabase,
   postMessage,
   mode = 'auto',
+  style,
   liveChannelId,
   testChannelId,
   now = new Date(),
@@ -150,7 +153,7 @@ async function announceWeeklyTitles({
   if (week.wait) return skip(week.wait);
 
   const { renderWeeklyTitlesMessage, messageAsText } = await loadMessage();
-  const message = renderWeeklyTitlesMessage(week);
+  const message = renderWeeklyTitlesMessage(week, { style });
 
   if (mode === 'preview') {
     log(messageAsText(message));
@@ -234,6 +237,8 @@ if (require.main === module) {
       supabase,
       postMessage,
       mode,
+      // Which message style (weekly-titles-message.mjs STYLES); blank = the default.
+      style: process.env.TITLES_DISCORD_STYLE || undefined,
       liveChannelId: process.env.DISCORD_POLLS_CHANNEL_ID,
       testChannelId: process.env.DISCORD_TEST_CHANNEL_ID,
     });

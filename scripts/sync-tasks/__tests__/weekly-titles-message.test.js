@@ -108,6 +108,40 @@ describe('renderWeeklyTitlesMessage', () => {
   });
 });
 
+describe('renderWeeklyTitlesMessage, podium style', () => {
+  const G = '\u{1F947}';
+  const S = '\u{1F948}';
+  const B = '\u{1F949}';
+  const message = renderWeeklyTitlesMessage(WEEK, { style: 'podium' });
+  const embed = message.embeds[0];
+
+  it('has the same title, link, button and points line', () => {
+    expect(embed.title).toBe('Weekly titles · 9 to 16 Nov');
+    expect(embed.description).toBe(POINTS);
+    expect(message.components[0].components[0].url).toBe(LEADERBOARD_URL);
+    expect(message.allowed_mentions).toEqual({ parse: [] });
+  });
+
+  it('lists 1st to 3rd behind medals, no values, The Gainer full width', () => {
+    expect(embed.fields).toEqual([
+      { name: 'The Gainer', value: `${G} FinPunisher\n${S} acid scum\n${B} ottogodblest`, inline: false },
+      { name: 'The Warrior', value: `${G} noon air\n${S} TheLastAesir\n${B} xijaffa`, inline: true },
+      { name: 'The Resurrected', value: `${G} IlZion`, inline: true },
+      // Two tied for 2nd would leave no 3rd; here a 3rd with no 2nd keeps its bronze.
+      { name: 'The Raider', value: `${G} 1819 B\n${B} elegant hobo & Sloth Bone`, inline: true },
+      { name: 'The Boss Hunter', value: `${G} FinPunisher\n${S} CursedClover`, inline: true },
+    ]);
+  });
+
+  it('reads as text for the preview', () => {
+    expect(messageAsText(message)).toContain(`The Warrior\n${G} noon air`);
+  });
+
+  it('rejects an unknown style', () => {
+    expect(() => renderWeeklyTitlesMessage(WEEK, { style: 'toString' })).toThrow('Unknown style');
+  });
+});
+
 describe('weekLabel', () => {
   it('names the month once inside a month, twice across one', () => {
     expect(weekLabel('2026-11-09T19:00:00Z', '2026-11-16T19:00:00Z')).toBe('9 to 16 Nov');

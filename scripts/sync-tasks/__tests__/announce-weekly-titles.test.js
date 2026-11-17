@@ -240,6 +240,13 @@ describe('announceWeeklyTitles, by hand', () => {
     expect(supabase.table.announced).toHaveLength(1);
   });
 
+  it('test posts the style asked for', async () => {
+    const postMessage = poster();
+    await announceWeeklyTitles({ ...base, supabase: fakeSupabase(), postMessage, mode: 'test', style: 'podium' });
+    const [, message] = postMessage.mock.calls[0];
+    expect(message.embeds[0].fields.map((f) => f.name)).toEqual(['The Gainer', 'The Warrior']);
+  });
+
   it('test fails when the test channel is not configured', async () => {
     await expect(
       announceWeeklyTitles({ ...base, testChannelId: undefined, supabase: fakeSupabase(), postMessage: poster(), mode: 'test' })
