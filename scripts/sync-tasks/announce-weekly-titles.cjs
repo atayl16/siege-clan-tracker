@@ -31,8 +31,7 @@
  * STALE_CLAIM_MS old (a run that is really posting finishes in seconds).
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DISCORD_BOT_TOKEN (not for
- * --preview), DISCORD_POLLS_CHANNEL_ID (live), DISCORD_TEST_CHANNEL_ID (--test),
- * TITLES_DISCORD_STYLE (optional: a message style to try, from the manual workflow).
+ * --preview), DISCORD_POLLS_CHANNEL_ID (live), DISCORD_TEST_CHANNEL_ID (--test).
  */
 
 const KIND = 'weekly_titles';
@@ -126,7 +125,7 @@ async function claimWeek({ supabase, mode, weekStart, channelId, now, log }) {
  *   supabase: import('@supabase/supabase-js').SupabaseClient,
  *   postMessage?: (channelId: string, message: object) => Promise<{ id: string }>,
  *   mode?: 'auto' | 'preview' | 'test' | 'post',
- *   style?: 'winners' | 'podium',
+ *   getEmojis?: (channelId: string) => Promise<object[]>,
  *   liveChannelId?: string,
  *   testChannelId?: string,
  *   now?: Date,
@@ -138,7 +137,7 @@ async function announceWeeklyTitles({
   supabase,
   postMessage,
   mode = 'auto',
-  style,
+  getEmojis = async () => [],
   liveChannelId,
   testChannelId,
   now = new Date(),
@@ -152,10 +151,26 @@ async function announceWeeklyTitles({
   const week = await latestWeek(supabase);
   if (week.wait) return skip(week.wait);
 
-  const { renderWeeklyTitlesMessage, messageAsText } = await loadMessage();
-  const message = renderWeeklyTitlesMessage(week, { style });
+  const { renderWeeklyTitlesMessage, messageAsText, titleEmojis } = await loadMessage();
+
+  // Built only when about to post or preview, so an hourly run that skips
+  // makes no Discord calls. The title icons are the server's custom emojis;
+  // without them the post simply goes without icons, so a failure reading
+  // them never stops it.
+  const render = async (channelId) => {
+    let emojis = {};
+    if (channelId) {
+      try {
+        emojis = titleEmojis(await getEmojis(channelId));
+      } catch (err) {
+        log(`Could not read the server's emojis, posting without title icons: ${err.message}`);
+      }
+    }
+    return renderWeeklyTitlesMessage(week, { emojis });
+  };
 
   if (mode === 'preview') {
+    const message = await render(liveChannelId);
     log(messageAsText(message));
     log('\nAs sent to Discord:');
     log(JSON.stringify(message, null, 2));
@@ -164,7 +179,7 @@ async function announceWeeklyTitles({
 
   if (mode === 'test') {
     if (!testChannelId) throw new Error('DISCORD_TEST_CHANNEL_ID is not set');
-    const posted = await postMessage(testChannelId, message);
+    const posted = await postMessage(testChannelId, await render(testChannelId));
     log(`Posted the week of ${week.weekStart} to the test channel (message ${posted.id}). Not recorded.`);
     return { status: 'posted', messageId: posted.id };
   }
@@ -179,6 +194,7 @@ async function announceWeeklyTitles({
   if (claim.skip) return skip(claim.skip);
   const claimId = claim.id;
 
+  const message = await render(liveChannelId);
   let posted;
   try {
     posted = await postMessage(liveChannelId, message);
@@ -229,7 +245,7 @@ if (require.main === module) {
     const mode = parseMode(process.argv.slice(2));
     requireEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', ...(mode === 'preview' ? [] : ['DISCORD_BOT_TOKEN'])]);
     const { createClient } = require('@supabase/supabase-js');
-    const { postMessage } = require('../comp-polls/discord.cjs');
+    const { postMessage, getChannel, getGuildEmojis } = require('../comp-polls/discord.cjs');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -237,8 +253,8 @@ if (require.main === module) {
       supabase,
       postMessage,
       mode,
-      // Which message style (weekly-titles-message.mjs STYLES); blank = the default.
-      style: process.env.TITLES_DISCORD_STYLE || undefined,
+      // The server the channel is in, then its custom emojis.
+      getEmojis: async (channelId) => getGuildEmojis((await getChannel(channelId)).guild_id),
       liveChannelId: process.env.DISCORD_POLLS_CHANNEL_ID,
       testChannelId: process.env.DISCORD_TEST_CHANNEL_ID,
     });
