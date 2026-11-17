@@ -1,0 +1,60 @@
+/* Place badges. The rosette is Font Awesome's "award" icon (viewBox 384x512):
+   its centre hole is a circle at (192, 176), radius 94. The number disc sits
+   over that hole: 49% of the width across, its centre 34.4% down. */
+
+.place-badge {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+/* The site's existing medal colours. */
+.place-badge-1 { --place-badge-medal: #ffd700; }
+.place-badge-2 { --place-badge-medal: #c0c0c0; }
+.place-badge-3 { --place-badge-medal: #cd7f32; }
+
+.place-badge-rosette {
+  width: calc(var(--place-badge-size) * 0.75);
+  height: var(--place-badge-size);
+  color: var(--place-badge-medal);
+}
+
+.place-badge-icon {
+  width: 100%;
+  height: 100%;
+}
+
+/* Dark number on the medal colour: white would not read on gold or silver. */
+.place-badge-number {
+  position: absolute;
+  left: 50%;
+  top: 34.4%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: 49%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: max(1.5px, calc(var(--place-badge-size) * 0.03)) solid #fff;
+  background: var(--place-badge-medal);
+  color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--place-badge-size) * 0.24);
+  line-height: 1;
+}
+
+.place-badge-circle {
+  width: var(--place-badge-size);
+  height: var(--place-badge-size);
+  border-radius: 50%;
+  background: #3a3a3a;
+  color: #e0e0e0;
+  font-weight: 800;
+  font-size: calc(var(--place-badge-size) * 0.5);
+}

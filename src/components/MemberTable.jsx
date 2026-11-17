@@ -8,6 +8,8 @@ import { ClanIcon, GemIcon, AdminIcon, IronmanIcon } from "./RankIcons";
 import { useMembers } from "../hooks/useMembers"; // Updated to use new hook
 import { useGroup } from "../hooks/useGroup"; // Added to get WOM group data
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { TitleBadges } from "./WeeklyTitles";
+import { useTitleHolders } from "../hooks/useWeeklyTitles";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -169,6 +171,7 @@ export default function MemberTable({ filteredMembers = null }) {
   const { members: allMembers, loading: membersLoading } = useMembers(); // Use the new hook for member data
   const { groupData, loading: groupLoading } = useGroup(); // Use the new hook for WOM group data
   const [expandedRow, setExpandedRow] = useState(null);
+  const { byMember: titleHolders } = useTitleHolders();
 
   const members = filteredMembers || allMembers;
 
@@ -317,6 +320,8 @@ export default function MemberTable({ filteredMembers = null }) {
                 <span className="ui-member-name">
                   {row.original.name || row.original.wom_name || "N/A"}
                 </span>
+                {/* Titles this member holds this week ("The Warrior"). */}
+                <TitleBadges womId={row.original.wom_id} byMember={titleHolders} />
                 
                 {/* Ironman icon on the right */}
                 {ironmanType && (
@@ -376,7 +381,7 @@ export default function MemberTable({ filteredMembers = null }) {
         },
       },
     ],
-    [expandedRow]
+    [expandedRow, titleHolders]
   );
 
   const table = useReactTable({

@@ -40,14 +40,15 @@ async function fetchGroupCompetitions() {
 }
 
 /**
- * Overall XP each group member gained between two instants, highest first.
- * Used by the weekly XP award (scripts/sync-tasks/weekly-xp-awards.cjs).
- * WOM counts snapshots inside the window, so a gain made before endDate but
- * only recorded after it falls into the next window, as in a competition.
+ * What each group member gained in one WOM metric (Overall XP unless given)
+ * between two instants. Used by the weekly XP award and the weekly titles
+ * (scripts/sync-tasks/weekly-xp-awards.cjs, weekly-titles.cjs). WOM counts
+ * snapshots inside the window, so a gain made before endDate but only
+ * recorded after it falls into the next window, as in a competition.
  */
-async function fetchGroupGained(startDate, endDate) {
+async function fetchGroupGained(startDate, endDate, metric = 'overall') {
   const query = new URLSearchParams({
-    metric: 'overall',
+    metric,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
     limit: '50',
