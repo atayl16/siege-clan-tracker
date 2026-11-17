@@ -137,12 +137,29 @@ describe("TitleHolders", () => {
 });
 
 describe("TitleBadges", () => {
-  it("shows every title a member holds, and nothing for a member who holds none", () => {
-    const byMember = new Map([[7, ["The Clogger", "The Clue Hunter"]]]);
+  it("shows each title a member holds as its icon, named for screen readers and in a tooltip", () => {
+    const byMember = new Map([[7, [titleById("clogger"), titleById("clue_hunter")]]]);
     const { container, rerender } = render(<TitleBadges womId="7" byMember={byMember} />);
-    expect(screen.getByText("The Clogger")).toBeInTheDocument();
-    expect(screen.getByText("The Clue Hunter")).toBeInTheDocument();
+    const marks = screen.getAllByRole("img");
+    expect(marks.map((m) => m.getAttribute("aria-label"))).toEqual(["The Clogger", "The Clue Hunter"]);
+    expect(marks[0]).toHaveAttribute("data-tooltip", "The Clogger");
+    // Reachable by keyboard, which is also how a tap shows the tooltip.
+    expect(marks[0]).toHaveAttribute("tabindex", "0");
+    // No text pills.
+    expect(screen.queryByText("The Clogger")).not.toBeInTheDocument();
+
     rerender(<TitleBadges womId={8} byMember={byMember} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("does not open the member's row when the icon is tapped", () => {
+    const onRowClick = vi.fn();
+    render(
+      <div onClick={onRowClick}>
+        <TitleBadges womId={7} byMember={new Map([[7, [titleById("sailor")]]])} />
+      </div>
+    );
+    screen.getByRole("img", { name: "The Sailor" }).click();
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 });
