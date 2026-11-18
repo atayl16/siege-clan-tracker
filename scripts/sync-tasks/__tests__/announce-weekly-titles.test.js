@@ -67,8 +67,8 @@ function announcementsTable(rows, { failDelete }) {
 /** Supabase stand-in for the four tables the job touches. */
 function fakeSupabase({
   weeks = [{ week_start: W9, week_end: W16 }],
-  gainer = [{ player_name: 'FinPunisher', placement: 1, xp_gained: 16310000 }],
-  awards = [{ title: 'warrior', player_name: 'noon air', placement: 1, value: 8.47 }],
+  gainer = [{ player_name: 'OakSmasher', placement: 1, xp_gained: 16310000 }],
+  awards = [{ title: 'warrior', player_name: 'dusk owl', placement: 1, value: 8.47 }],
   announced = [],
   failDelete = false,
 } = {}) {
@@ -255,7 +255,7 @@ describe('announceWeeklyTitles, by hand', () => {
     });
     const result = await announceWeeklyTitles({ ...base, log, supabase: fakeSupabase(), postMessage, getEmojis: failing, mode: 'test' });
     expect(result.status).toBe('posted');
-    expect(postMessage.mock.calls[1][1].embeds[0].description).toContain('**The Warrior** · noon air');
+    expect(postMessage.mock.calls[1][1].embeds[0].description).toContain('**The Warrior** · dusk owl');
     expect(log.mock.calls.flat().join('\n')).toMatch(/without title icons/);
   });
 

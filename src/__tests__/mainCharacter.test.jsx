@@ -35,7 +35,7 @@ const fetchUserClaims = vi.fn();
 let mockClaims = [];
 vi.mock("../context/AuthContext", () => ({
   useAuth: () => ({
-    user: { id: "u1", username: "roin", created_at: "2026-01-01T00:00:00Z" },
+    user: { id: "u1", username: "moon", created_at: "2026-01-01T00:00:00Z" },
     userClaims: mockClaims,
     fetchUserClaims,
   }),
@@ -67,10 +67,10 @@ describe("ProfilePage main character", () => {
   });
 
   it("lists the main first and labels main and alt", () => {
-    mockClaims = [claim(1, "Oldalt", true), claim(2, "Roinrin", false)];
+    mockClaims = [claim(1, "Oldalt", true), claim(2, "Moonfern", false)];
     renderPage();
-    const names = screen.getAllByText(/^(Oldalt|Roinrin)$/).map((el) => el.textContent);
-    expect(names).toEqual(["Roinrin", "Oldalt"]);
+    const names = screen.getAllByText(/^(Oldalt|Moonfern)$/).map((el) => el.textContent);
+    expect(names).toEqual(["Moonfern", "Oldalt"]);
     expect(screen.getByText("Main")).toBeInTheDocument();
     // current_lvl is the total level; it was labelled "Combat Level".
     expect(screen.getAllByText("Total Level").length).toBeGreaterThan(0);
@@ -79,7 +79,7 @@ describe("ProfilePage main character", () => {
   });
 
   it("Make Main calls set_main_character and reloads the claims", async () => {
-    mockClaims = [claim(1, "Oldalt", true), claim(2, "Roinrin", false)];
+    mockClaims = [claim(1, "Oldalt", true), claim(2, "Moonfern", false)];
     renderPage();
     const buttons = screen.getAllByRole("button", { name: "Make Main" });
     expect(buttons).toHaveLength(1); // only on the alt
@@ -92,7 +92,7 @@ describe("ProfilePage main character", () => {
   });
 
   it("shows the error when the change is refused", async () => {
-    mockClaims = [claim(1, "Oldalt", true), claim(2, "Roinrin", false)];
+    mockClaims = [claim(1, "Oldalt", true), claim(2, "Moonfern", false)];
     supabase.rpc = vi
       .fn()
       .mockResolvedValue({ data: null, error: { message: "You have not claimed this character" } });
@@ -106,7 +106,7 @@ describe("ProfilePage main character", () => {
 
   it("labels a single character Main, with no Make Main button", () => {
     // It used to say "Claimed", which every character on this page is.
-    mockClaims = [claim(2, "Roinrin", true)];
+    mockClaims = [claim(2, "Moonfern", true)];
     renderPage();
     expect(screen.getByText("Main")).toBeInTheDocument();
     expect(screen.queryByText("Claimed")).toBeNull();

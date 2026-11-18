@@ -74,8 +74,8 @@ function emojiText(emoji) {
 }
 
 /**
- * One title: "{icon} **The Warrior** · noon air (8.5 EHB)", then
- * "-# 2nd TheLastAesir · 3rd xijaffa" (Discord's small grey text) when
+ * One title: "{icon} **The Warrior** · dusk owl (8.5 EHB)", then
+ * "-# 2nd TheFirstRaven · 3rd qelmoss" (Discord's small grey text) when
  * anyone else placed. Joint places share a line. Null when nobody won.
  */
 function titleLines(title, rows, emoji) {

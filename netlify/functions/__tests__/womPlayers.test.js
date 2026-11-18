@@ -13,11 +13,11 @@ function fakeWom({ saved, fresh, updateStatus = 200 }) {
     if (url.endsWith('/players/id/7')) {
       return saved === undefined
         ? json({ message: 'Not found' }, 404)
-        : json({ id: 7, username: 'roinrin', latestSnapshot: { data: snapshot(saved) } });
+        : json({ id: 7, username: 'moonfern', latestSnapshot: { data: snapshot(saved) } });
     }
-    if (url.endsWith('/players/roinrin') && method === 'POST') {
+    if (url.endsWith('/players/moonfern') && method === 'POST') {
       return updateStatus === 200
-        ? json({ id: 7, username: 'roinrin', latestSnapshot: { data: snapshot(fresh) } })
+        ? json({ id: 7, username: 'moonfern', latestSnapshot: { data: snapshot(fresh) } })
         : json({ message: 'Failed' }, updateStatus);
     }
     return json({}, 404);

@@ -11,9 +11,9 @@ const week = {
   end: new Date("2026-11-16T19:00:00Z"),
 };
 const standings = [
-  { womId: 597199, name: "FinPunisher", gained: 9381451, place: 1, points: 150 },
-  { womId: 2810612, name: "acid scum", gained: 4200000, place: 2, points: 100 },
-  { womId: 323559, name: "Dan xo", gained: 731670, place: 3, points: 50 },
+  { womId: 597199, name: "OakSmasher", gained: 9381451, place: 1, points: 150 },
+  { womId: 2810612, name: "iron wisp", gained: 4200000, place: 2, points: 100 },
+  { womId: 323559, name: "Ash ko", gained: 731670, place: 3, points: 50 },
 ];
 
 const ranking = [
@@ -44,7 +44,7 @@ describe("WeeklyXpLeaderboard", () => {
     render(<WeeklyXpLeaderboard />);
     const rows = screen.getAllByRole("listitem");
     expect(rows).toHaveLength(3);
-    expect(within(rows[0]).getByText("FinPunisher")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("OakSmasher")).toBeInTheDocument();
     expect(within(rows[0]).getByText("9.38M XP")).toBeInTheDocument();
     expect(within(rows[0]).getByText("+150")).toBeInTheDocument();
     expect(screen.getByText(/Top 5 earn Siege Score · ends Mon 16 Nov, 19:00 UK/)).toBeInTheDocument();
@@ -52,7 +52,7 @@ describe("WeeklyXpLeaderboard", () => {
 
   it("marks the viewer's own character", () => {
     render(<WeeklyXpLeaderboard highlightIds={[323559]} />);
-    const row = screen.getByText("Dan xo").closest("li");
+    const row = screen.getByText("Ash ko").closest("li");
     expect(row).toHaveClass("xp-week-row-yours");
     expect(within(row).getByText("You")).toBeInTheDocument();
   });
@@ -69,7 +69,7 @@ describe("WeeklyXpLeaderboard", () => {
     expect(screen.getByRole("heading", { name: "The Gainer" })).toBeInTheDocument();
     const tiles = () => within(screen.getAllByRole("list")[0]).getAllByRole("listitem");
     expect(tiles()).toHaveLength(5);
-    expect(within(tiles()[0]).getByText("FinPunisher")).toBeInTheDocument();
+    expect(within(tiles()[0]).getByText("OakSmasher")).toBeInTheDocument();
     expect(within(tiles()[0]).getByText("+150")).toBeInTheDocument();
     expect(within(tiles()[0]).getByRole("img", { name: "1st place" })).toBeInTheDocument();
     expect(screen.getAllByRole("list")).toHaveLength(1);
@@ -103,15 +103,15 @@ describe("YourWeeklyXp", () => {
   const line = () => screen.getByTestId("your-weekly-xp");
 
   it("in the top five: the points it would earn and the gap to the place above", () => {
-    render(<YourWeeklyXp character={{ womId: 323559, name: "Dan xo" }} />);
+    render(<YourWeeklyXp character={{ womId: 323559, name: "Ash ko" }} />);
     expect(line()).toHaveTextContent("3rd of 7 this week · 732K XP");
-    expect(line()).toHaveTextContent("Tracking Dan xo");
+    expect(line()).toHaveTextContent("Tracking Ash ko");
     // 4,200,000 - 731,670 = 3,468,330
     expect(line()).toHaveTextContent("+50 Siege Score if it ends now · 3.47M XP to catch 2nd (+100)");
   });
 
   it("in first: how far ahead of second", () => {
-    render(<YourWeeklyXp character={{ womId: 597199, name: "FinPunisher" }} />);
+    render(<YourWeeklyXp character={{ womId: 597199, name: "OakSmasher" }} />);
     // 9,381,451 - 4,200,000 = 5,181,451
     expect(line()).toHaveTextContent("+150 Siege Score if it ends now · 5.18M XP ahead of 2nd");
   });
@@ -142,7 +142,7 @@ describe("YourWeeklyXp", () => {
 
   it("copes with WOM being unreachable", () => {
     hookState.value = state({ ranking: [], standings: [], error: new Error("429") });
-    render(<YourWeeklyXp character={{ womId: 323559, name: "Dan xo" }} />);
+    render(<YourWeeklyXp character={{ womId: 323559, name: "Ash ko" }} />);
     expect(line()).toHaveTextContent("Weekly XP is unavailable right now");
   });
 });

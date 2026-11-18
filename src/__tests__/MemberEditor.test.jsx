@@ -12,7 +12,7 @@ import MemberEditor from "../components/MemberEditor";
 
 const member = (overrides = {}) => ({
   wom_id: 1234,
-  name: "Roinrin",
+  name: "Moonfern",
   womrole: "opal",
   join_date: "2024-01-01",
   alt: true,

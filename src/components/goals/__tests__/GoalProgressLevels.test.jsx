@@ -38,6 +38,6 @@ test('shows a boss goal in kills and overall in XP, with no level', () => {
 });
 
 test('the community goal card shows the level journey', () => {
-  render(<GoalCard goal={{ ...thieving, player_name: 'roinrin' }} />);
+  render(<GoalCard goal={{ ...thieving, player_name: 'moonfern' }} />);
   expect(screen.getByText('Level 82 → 85')).toBeInTheDocument();
 });

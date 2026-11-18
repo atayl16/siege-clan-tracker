@@ -32,7 +32,7 @@ const race = {
   created_at: new Date().toISOString(),
   end_date: new Date(Date.now() + 4 * 86400000).toISOString(),
   participants: [
-    { id: 'p1', player_name: 'Roinrin', metric: 'sailing', current_value: 500, target_value: 1000 },
+    { id: 'p1', player_name: 'Moonfern', metric: 'sailing', current_value: 500, target_value: 1000 },
     { id: 'p2', player_name: 'Zezima', metric: 'sailing', current_value: 900, target_value: 1000 },
   ],
 };
@@ -49,8 +49,8 @@ test('shows the participants useRaces returns, leader first', () => {
   // sets, so every race rendered with nobody in it.
   renderCard();
 
-  const names = screen.getAllByText(/Roinrin|Zezima/).map((el) => el.textContent);
-  expect(names).toEqual(['Zezima', 'Roinrin']);
+  const names = screen.getAllByText(/Moonfern|Zezima/).map((el) => el.textContent);
+  expect(names).toEqual(['Zezima', 'Moonfern']);
   expect(screen.getByText('+900 / 1,000')).toBeInTheDocument();
   expect(screen.getAllByText('Sailing')).toHaveLength(2);
 });
@@ -70,14 +70,14 @@ test('the winner leads with a trophy, and unsynced participants say their starti
   const card = {
     ...race,
     participants: [
-      { id: 'p1', player_name: 'Roinrin', metric: 'sailing', current_value: 1000, target_value: 1000, is_winner: true, baseline_set_at: '2026-11-09T00:00:00Z' },
+      { id: 'p1', player_name: 'Moonfern', metric: 'sailing', current_value: 1000, target_value: 1000, is_winner: true, baseline_set_at: '2026-11-09T00:00:00Z' },
       { id: 'p2', player_name: 'Zezima', metric: 'sailing', current_value: 0, target_value: 500, is_winner: false, baseline_set_at: null },
     ],
   };
   renderCard({ race: card });
 
-  const names = screen.getAllByText(/^(Roinrin|Zezima)$/).map((el) => el.textContent);
-  expect(names[0]).toBe('Roinrin');
+  const names = screen.getAllByText(/^(Moonfern|Zezima)$/).map((el) => el.textContent);
+  expect(names[0]).toBe('Moonfern');
   expect(screen.getByLabelText('Winner')).toBeInTheDocument();
   expect(screen.getByText('+1,000 / 1,000')).toBeInTheDocument();
   expect(screen.getAllByText(/starting point not recorded yet/i)).toHaveLength(1);
@@ -138,13 +138,13 @@ describe('refresh', () => {
 });
 
 test("says who created the race, when known", () => {
-  const { unmount } = renderCard({ race: { ...race, creator_name: 'roinrin' } });
-  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by Roinrin$/);
+  const { unmount } = renderCard({ race: { ...race, creator_name: 'moonfern' } });
+  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by Moonfern$/);
   unmount();
 
-  // Shown without the underscore; the account is still dan_xo.
-  const second = renderCard({ race: { ...race, creator_name: 'dan_xo' } });
-  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by Dan xo$/);
+  // Shown without the underscore; the account is still ash_ko.
+  const second = renderCard({ race: { ...race, creator_name: 'ash_ko' } });
+  expect(screen.getByText(/Created .* by/)).toHaveTextContent(/by Ash ko$/);
   second.unmount();
 
   renderCard({ race: { ...race, creator_name: null } });
@@ -159,7 +159,7 @@ test('shows a skill racer\'s levels once their start is recorded', () => {
           id: 'lv', title: 'Thieving race', status: 'active', created_at: new Date().toISOString(),
           participants: [
             // 2,200,000 + 300,000 = level 82 now; + 1,058,594 = level 85.
-            { id: 'a', player_name: 'Roinrin', metric: 'thieving', start_value: 2_200_000, current_value: 300_000, target_value: 1_058_594, baseline_set_at: '2026-11-01T00:00:00Z' },
+            { id: 'a', player_name: 'Moonfern', metric: 'thieving', start_value: 2_200_000, current_value: 300_000, target_value: 1_058_594, baseline_set_at: '2026-11-01T00:00:00Z' },
             { id: 'b', player_name: 'Dan', metric: 'zulrah', start_value: 10, current_value: 5, target_value: 50, baseline_set_at: '2026-11-01T00:00:00Z' },
             { id: 'c', player_name: 'New', metric: 'thieving', start_value: 0, current_value: 0, target_value: 100_000, baseline_set_at: null },
           ],

@@ -46,10 +46,10 @@ describe("useTitleRaces", () => {
   it("reads this week's standings and ranks each title by its minimum", async () => {
     db.tables.weekly_title_standings = () => ({
       data: [
-        standing("clogger", 1, "K aura", 22),
-        standing("clogger", 2, "m2giaivar", 16),
+        standing("clogger", 1, "R ember", 22),
+        standing("clogger", 2, "t4lonwick", 16),
         standing("clogger", 3, "tiny", 2), // under the minimum of 5
-        standing("warrior", 4, "noon air", "8.47"),
+        standing("warrior", 4, "dusk owl", "8.47"),
       ],
       error: null,
     });
@@ -58,8 +58,8 @@ describe("useTitleRaces", () => {
 
     const clogger = result.current.races.find((r) => r.title.id === "clogger");
     expect(clogger.top.map((r) => [r.name, r.place, r.points])).toEqual([
-      ["K aura", 1, 150],
-      ["m2giaivar", 2, 100],
+      ["R ember", 1, 150],
+      ["t4lonwick", 2, 100],
     ]);
     expect(result.current.races.find((r) => r.title.id === "warrior").top[0].value).toBe(8.47);
     expect(result.current.races).toHaveLength(9);
@@ -80,15 +80,15 @@ describe("useTitleHolders", () => {
     });
     db.tables.weekly_title_awards = () => ({
       data: [
-        { title: "clogger", wom_id: 1, player_name: "K aura", value: "22" },
-        { title: "clue_hunter", wom_id: 1, player_name: "K aura", value: "50" },
-        { title: "warrior", wom_id: 4, player_name: "noon air", value: "8.47" },
+        { title: "clogger", wom_id: 1, player_name: "R ember", value: "22" },
+        { title: "clue_hunter", wom_id: 1, player_name: "R ember", value: "50" },
+        { title: "warrior", wom_id: 4, player_name: "dusk owl", value: "8.47" },
       ],
       error: null,
     });
     db.tables.xp_awards = (calls) =>
       calls.some(([m]) => m === "eq")
-        ? { data: [{ wom_id: 9, player_name: "FinPunisher", placement: 1, xp_gained: "16314915", points_awarded: 150 }], error: null }
+        ? { data: [{ wom_id: 9, player_name: "OakSmasher", placement: 1, xp_gained: "16314915", points_awarded: 150 }], error: null }
         : { data: [{ week_start: "2026-11-09T19:00:00+00:00", week_end: "2026-11-16T19:00:00+00:00" }], error: null };
   });
   afterEach(() => vi.useRealTimers());
@@ -98,10 +98,10 @@ describe("useTitleHolders", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.holders.map((h) => [h.title.name, h.players.map((p) => p.name)])).toEqual([
-      ["The Gainer", ["FinPunisher"]],
-      ["The Warrior", ["noon air"]],
-      ["The Clogger", ["K aura"]],
-      ["The Clue Hunter", ["K aura"]],
+      ["The Gainer", ["OakSmasher"]],
+      ["The Warrior", ["dusk owl"]],
+      ["The Clogger", ["R ember"]],
+      ["The Clue Hunter", ["R ember"]],
     ]);
     expect(result.current.byMember.get(1).map((t) => t.name)).toEqual(["The Clogger", "The Clue Hunter"]);
     expect(result.current.byMember.get(9).map((t) => t.name)).toEqual(["The Gainer"]);

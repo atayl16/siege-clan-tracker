@@ -39,7 +39,7 @@ describe('wom-player-events', () => {
   describe('with WOM answering', () => {
     beforeEach(() => {
       globalThis.fetch = vi.fn(async (url) => {
-        if (url.endsWith('/players/id/1234')) return ok({ id: 1234, username: 'roin rin' });
+        if (url.endsWith('/players/id/1234')) return ok({ id: 1234, username: 'moon fern' });
         return ok([
           standing(2, '2026-12-01T00:00:00Z', 7, 500),
           standing(1, '2026-11-20T00:00:00Z', 1, 12000),
@@ -57,7 +57,7 @@ describe('wom-player-events', () => {
       );
       expect(globalThis.fetch).toHaveBeenNthCalledWith(
         2,
-        'https://api.wiseoldman.net/v2/players/roin%20rin/competitions/standings?status=ongoing',
+        'https://api.wiseoldman.net/v2/players/moon%20fern/competitions/standings?status=ongoing',
         expect.anything()
       );
     });

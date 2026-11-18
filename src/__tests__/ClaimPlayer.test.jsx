@@ -16,7 +16,7 @@ vi.mock('../hooks/useClaimRequests', () => ({
 }));
 vi.mock('../hooks/useMembers', () => ({
   useMembers: () => ({
-    members: [{ wom_id: 7, name: 'Roinrin' }],
+    members: [{ wom_id: 7, name: 'Moonfern' }],
     loading: false,
     error: null,
     refreshMembers: vi.fn(),
@@ -47,10 +47,10 @@ test('shows a confirmation after submitting a request', async () => {
   // Regression: the success message only rendered inside the old code tab,
   // so a request from this tab gave no feedback at all.
   createClaimRequest.mockResolvedValue({});
-  await submitFor('Roinrin');
+  await submitFor('Moonfern');
 
   expect(createClaimRequest).toHaveBeenCalledWith(
-    expect.objectContaining({ user_id: 'u1', wom_id: 7, rsn: 'Roinrin' })
+    expect.objectContaining({ user_id: 'u1', wom_id: 7, rsn: 'Moonfern' })
   );
   expect(await screen.findByRole('status')).toHaveTextContent('Your claim request has been submitted');
 });
@@ -58,7 +58,7 @@ test('shows a confirmation after submitting a request', async () => {
 test('shows the error when a request fails', async () => {
   createClaimRequest.mockRejectedValue(new Error('already requested'));
   const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
-  await submitFor('Roinrin');
+  await submitFor('Moonfern');
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Request failed: already requested');
   errorLog.mockRestore();

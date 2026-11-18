@@ -3,14 +3,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
-// Roinrin has 2,200,000 Thieving XP: level 81. Level 85 is 3,258,594 XP.
+// Moonfern has 2,200,000 Thieving XP: level 81. Level 85 is 3,258,594 XP.
 const createRace = vi.fn().mockResolvedValue({ id: 'r1' });
 const updateRace = vi.fn().mockResolvedValue(undefined);
 const fetchFreshPlayerStats = vi.fn();
 
 vi.mock('../hooks/useRaces', () => ({ useRaces: () => ({ createRace, updateRace }) }));
 vi.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ userClaims: [{ wom_id: 1, members: { wom_id: 1, name: 'Roinrin' } }] }),
+  useAuth: () => ({ userClaims: [{ wom_id: 1, members: { wom_id: 1, name: 'Moonfern' } }] }),
 }));
 vi.mock('../services/playerRefresh', () => ({ fetchFreshPlayerStats: (...args) => fetchFreshPlayerStats(...args) }));
 vi.mock('../services/goalProgressService', () => ({ fetchPlayerStats: async () => { throw new Error('down'); } }));
@@ -68,7 +68,7 @@ test('refuses a level the racer already has', async () => {
   await userEvent.type(screen.getByLabelText('Target level'), '80');
   await userEvent.click(screen.getByRole('button', { name: /create race/i }));
 
-  expect(screen.getByText('Roinrin is already level 81 in Thieving. Pick a higher level.')).toBeInTheDocument();
+  expect(screen.getByText('Moonfern is already level 81 in Thieving. Pick a higher level.')).toBeInTheDocument();
   expect(createRace).not.toHaveBeenCalled();
 });
 
@@ -81,7 +81,7 @@ test('says so, and saves nothing, when the current XP cannot be found', async ()
   expect(await screen.findByText('Could not get current XP. Use XP Gain instead.')).toBeInTheDocument();
   await userEvent.type(screen.getByLabelText('Target level'), '85');
   await userEvent.click(screen.getByRole('button', { name: /create race/i }));
-  expect(screen.getByText("Could not get Roinrin's current XP. Set an XP gain instead.")).toBeInTheDocument();
+  expect(screen.getByText("Could not get Moonfern's current XP. Set an XP gain instead.")).toBeInTheDocument();
   expect(createRace).not.toHaveBeenCalled();
 });
 
@@ -91,7 +91,7 @@ test('editing measures a level from the racer\'s recorded start, not their XP to
   const race = {
     id: 'r9', title: 'Thieving race', description: '', public: false, end_date: null,
     participants: [{
-      id: 'p1', wom_id: 1, player_name: 'Roinrin', metric: 'thieving',
+      id: 'p1', wom_id: 1, player_name: 'Moonfern', metric: 'thieving',
       target_value: 500_000, start_value: 2_000_000, current_value: 200_000,
       baseline_set_at: '2026-11-01T00:00:00Z',
     }],

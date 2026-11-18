@@ -1,7 +1,7 @@
 import { racesForUser, canEditRace } from '../utils/races';
 
 const user = { id: 'u1' };
-const claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Roinrin' } }];
+const claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Moonfern' } }];
 
 const race = (over) => ({ id: 'r', creator_id: 'someone-else', participants: [], ...over });
 

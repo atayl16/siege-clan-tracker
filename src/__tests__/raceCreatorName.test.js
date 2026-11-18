@@ -44,7 +44,7 @@ describe("race creator names", () => {
   it("names each race's creator, matching either users.id or supabase_auth_id", async () => {
     usersResult = {
       data: [
-        { id: A, supabase_auth_id: A, username: "roinrin" },
+        { id: A, supabase_auth_id: A, username: "moonfern" },
         // e.g. the built-in admin, whose row id is not its auth id
         { id: "admin-row", supabase_auth_id: B, username: "admin" },
       ],
@@ -53,7 +53,7 @@ describe("race creator names", () => {
     const { result } = renderHook(() => useRaces("u1"));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.races.map((r) => r.creator_name)).toEqual(["roinrin", "admin", null]);
+    expect(result.current.races.map((r) => r.creator_name)).toEqual(["moonfern", "admin", null]);
     // Only the username is read from users, never the rest of the row.
     expect(usersQuery.select).toBe("id, supabase_auth_id, username");
     expect(usersQuery.or).toBe(`id.in.(${A},${B}),supabase_auth_id.in.(${A},${B})`);

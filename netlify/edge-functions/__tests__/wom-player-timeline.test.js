@@ -17,7 +17,7 @@ const call = (query) =>
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
 
 /** WOM answers the id lookup, then the timeline (newest first, as WOM does). */
-function womAnswers(timeline, username = 'dan xo') {
+function womAnswers(timeline, username = 'ash ko') {
   globalThis.fetch.mockImplementation(async (url) =>
     String(url).includes('/players/id/') ? json({ id: 323559, username }) : json(timeline)
   );
@@ -47,7 +47,7 @@ describe('wom-player-timeline', () => {
     await call('id=323559&period=year');
     const [lookup, timeline] = globalThis.fetch.mock.calls.map(([url]) => new URL(url));
     expect(lookup.pathname).toBe('/v2/players/id/323559');
-    expect(timeline.pathname).toBe('/v2/players/dan%20xo/snapshots/timeline');
+    expect(timeline.pathname).toBe('/v2/players/ash%20ko/snapshots/timeline');
     expect(timeline.searchParams.get('metric')).toBe('overall');
     expect(timeline.searchParams.get('period')).toBe('year');
   });
