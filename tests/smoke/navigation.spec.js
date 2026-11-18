@@ -73,7 +73,7 @@ test.describe('a registered member', () => {
     // ProfilePage read userClaims from useClaimRequests(), which never returned
     // that key, so `userClaims.length` threw before the first paint.
     await expect(page).toHaveURL(/\/profile$/, { timeout: 15_000 });
-    await expect(page.getByText('Your Characters')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your Characters', exact: true })).toBeVisible();
     expect(errors).toEqual([]);
 
     const nav = page.locator('nav');
