@@ -13,6 +13,15 @@
   # build runs.
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src public index.html vite.config.js package.json package-lock.json netlify.toml .nvmrc deno.lock netlify scripts/comp-polls"
   
+# Deploy previews (a build for every push to a pull request) cost build
+# minutes, so they only run when asked for: put [preview] in the latest
+# commit message, e.g.
+#   git commit --allow-empty -m "[preview]" && git push
+# and push again without it to stop. This replaces the ignore rule above for
+# pull requests only; merges to main still build whenever the site changed.
+[context.deploy-preview]
+  ignore = "! git log -1 --pretty=%B | grep -qF '[preview]'"
+
 # Scheduled functions start the sync workflows on GitHub, because GitHub's own
 # cron runs them hours late (see netlify/functions/utils/githubDispatch.cjs).
 # Times are UTC. They run only on the published production deploy.
