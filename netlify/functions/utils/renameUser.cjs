@@ -19,8 +19,11 @@ const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,22})[a-z0-9]$/;
 
 const loginEmail = (username) => `${username}@example.com`;
 
+// Spaces become underscores, as at signup ("Test user" is stored as "test_user"
+// and shown with a space again): an email address cannot hold a space.
+// Same rules as src/utils/username.js.
 function normaliseUsername(raw) {
-  return String(raw ?? '').trim().toLowerCase();
+  return String(raw ?? '').trim().toLowerCase().replace(/\s+/g, '_');
 }
 
 /** @returns {string|null} an error message, or null when the name is valid */
@@ -29,7 +32,7 @@ function validateUsername(username) {
     return 'Usernames must be 3 to 24 characters.';
   }
   if (!USERNAME_PATTERN.test(username)) {
-    return 'Use only letters, numbers, dots, dashes and underscores, starting and ending with a letter or number.';
+    return 'Use only letters, numbers, spaces, dots, dashes and underscores, starting and ending with a letter or number.';
   }
   return null;
 }

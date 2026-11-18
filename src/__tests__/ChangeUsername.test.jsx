@@ -33,7 +33,7 @@ describe("ChangeUsername", () => {
     globalThis.fetch.mockResolvedValue(
       new Response(JSON.stringify({ username: "clan_main" }), { status: 200 })
     );
-    render(<ChangeUsername currentUsername="roin" onRenamed={onRenamed} />);
+    render(<ChangeUsername currentUsername="moon" onRenamed={onRenamed} />);
     await userEvent.type(await open(), " Clan_Main ");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -48,7 +48,7 @@ describe("ChangeUsername", () => {
     globalThis.fetch.mockResolvedValue(
       new Response(JSON.stringify({ error: "That username is taken." }), { status: 409 })
     );
-    render(<ChangeUsername currentUsername="roin" onRenamed={onRenamed} />);
+    render(<ChangeUsername currentUsername="moon" onRenamed={onRenamed} />);
     await userEvent.type(await open(), "dan");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -57,10 +57,10 @@ describe("ChangeUsername", () => {
   });
 
   it.each([
-    ["an invalid name", "has space", /letters, numbers/],
-    ["the current name", "roin", /already your username/],
+    ["an invalid name", "semi;colon", /letters, numbers/],
+    ["the current name", "moon", /already your username/],
   ])("catches %s before sending anything", async (_label, typed, message) => {
-    render(<ChangeUsername currentUsername="roin" onRenamed={onRenamed} />);
+    render(<ChangeUsername currentUsername="moon" onRenamed={onRenamed} />);
     await userEvent.type(await open(), typed);
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -71,7 +71,7 @@ describe("ChangeUsername", () => {
 
 describe("usernameProblem", () => {
   it("matches the server's rule", () => {
-    expect(usernameProblem("roin_rin")).toBeNull();
+    expect(usernameProblem("moon_fern")).toBeNull();
     expect(usernameProblem("ab")).not.toBeNull();
     expect(usernameProblem("trail-")).not.toBeNull();
   });
