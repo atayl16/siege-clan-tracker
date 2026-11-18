@@ -44,6 +44,19 @@ describe("ChangeUsername", () => {
     expect(JSON.parse(init.body)).toEqual({ username: "clan_main" });
   });
 
+  it("applies the 24-character limit after spaces become underscores", async () => {
+    globalThis.fetch.mockResolvedValue(
+      new Response(JSON.stringify({ username: "abcdefghijklmnopqrstu_vw" }), { status: 200 })
+    );
+    render(<ChangeUsername currentUsername="moon" onRenamed={onRenamed} />);
+    // 25 characters as typed; 24 once the two spaces become one underscore.
+    await userEvent.type(await open(), "abcdefghijklmnopqrstu  vw");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onRenamed).toHaveBeenCalled());
+    expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).toEqual({ username: "abcdefghijklmnopqrstu_vw" });
+  });
+
   it("shows the server's reason when the rename is refused", async () => {
     globalThis.fetch.mockResolvedValue(
       new Response(JSON.stringify({ error: "That username is taken." }), { status: 409 })

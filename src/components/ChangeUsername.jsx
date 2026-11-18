@@ -75,7 +75,7 @@ export default function ChangeUsername({ currentUsername, onRenamed }) {
         onChange={(e) => setValue(e.target.value)}
         autoComplete="username"
         autoFocus
-        maxLength={24}
+        maxLength={64}
       />
       <p className="change-username-hint">
         You'll log in with this name from now on. Your password stays the same.

@@ -26,7 +26,7 @@ export function normaliseUsername(raw) {
 /** @returns {string|null} what is wrong with a normalised name, or null */
 export function usernameProblem(name) {
   if (name.length < 3 || name.length > 24) return "Usernames must be 3 to 24 characters.";
-  if (!USERNAME_PATTERN.test(name)) {
+  if (!USERNAME_PATTERN.test(name) || name.includes("..")) {
     return "Use only letters, numbers, spaces, dots, dashes and underscores, starting and ending with a letter or number.";
   }
   return null;
@@ -35,13 +35,17 @@ export function usernameProblem(name) {
 /**
  * Signup's check. Looser than usernameProblem: signup has never had a length
  * rule, and members with short names (OSRS allows one character) already
- * have accounts. It only rejects what the auth email cannot hold.
+ * have accounts. It only rejects what the auth email cannot hold, which
+ * includes a dot at either end or two dots in a row.
  * @returns {string|null}
  */
 export function signupUsernameProblem(name) {
   if (!name) return "Enter a username.";
   if (!/^[a-z0-9._-]+$/.test(name)) {
     return "Use only letters, numbers, spaces, dots, dashes and underscores.";
+  }
+  if (name.startsWith(".") || name.endsWith(".") || name.includes("..")) {
+    return "A username cannot start or end with a dot, or have two dots in a row.";
   }
   return null;
 }

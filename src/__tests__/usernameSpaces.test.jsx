@@ -106,6 +106,14 @@ describe("username checks", () => {
     expect(signupUsernameProblem("semi;colon")).not.toBeNull();
     expect(signupUsernameProblem("ümlaut")).not.toBeNull();
   });
+
+  it("rejects dots the auth email cannot hold", () => {
+    expect(signupUsernameProblem(normaliseUsername("Test.. User"))).toMatch(/two dots/);
+    expect(signupUsernameProblem(".test")).toMatch(/start or end/);
+    expect(signupUsernameProblem("test.")).toMatch(/start or end/);
+    expect(signupUsernameProblem("test.user")).toBeNull();
+    expect(usernameProblem("test..user")).not.toBeNull();
+  });
 });
 
 describe("signing up and in with a space in the name", () => {

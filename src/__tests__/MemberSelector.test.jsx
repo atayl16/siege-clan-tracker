@@ -30,7 +30,7 @@ describe("searchMembers", () => {
   });
 
   it("caps the number of results", () => {
-    expect(searchMembers(members, "a", 2)).toHaveLength(2);
+    expect(searchMembers(members, "toby", 2)).toHaveLength(2);
   });
 });
 

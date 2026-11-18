@@ -31,7 +31,7 @@ function validateUsername(username) {
   if (username.length < 3 || username.length > 24) {
     return 'Usernames must be 3 to 24 characters.';
   }
-  if (!USERNAME_PATTERN.test(username)) {
+  if (!USERNAME_PATTERN.test(username) || username.includes('..')) {
     return 'Use only letters, numbers, spaces, dots, dashes and underscores, starting and ending with a letter or number.';
   }
   return null;

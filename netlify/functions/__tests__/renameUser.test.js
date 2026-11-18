@@ -60,7 +60,7 @@ describe('validateUsername', () => {
   it.each(['abc', 'moon_fern', 'r.o-n9', 'a'.repeat(24)])('accepts %s', (name) => {
     expect(validateUsername(name)).toBeNull();
   });
-  it.each(['ab', 'a'.repeat(25), 'has space', '_lead', 'trail-', 'ümlaut', 'semi;colon'])(
+  it.each(['ab', 'a'.repeat(25), 'has space', '_lead', 'trail-', 'ümlaut', 'semi;colon', 'two..dots'])(
     'rejects %s',
     (name) => {
       expect(validateUsername(name)).not.toBeNull();
