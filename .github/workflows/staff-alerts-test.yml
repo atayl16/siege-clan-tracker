@@ -1,0 +1,33 @@
+name: Staff Alerts Test
+
+# Posts a sample claim request alert and a sample RuneWatch alert to the
+# bot-test channel (DISCORD_TEST_CHANNEL_ID), to check how they look. Made-up
+# names; touches no database. The real alerts go to DISCORD_STAFF_CHANNEL_ID:
+# claim requests from the Netlify function user-claim-request-notify,
+# RuneWatch from the daily sync.
+on:
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --force
+
+      - name: Post samples
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_TEST_CHANNEL_ID: ${{ vars.DISCORD_TEST_CHANNEL_ID }}
+        run: node scripts/sync-tasks/staff-alerts-test.cjs

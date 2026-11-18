@@ -4,14 +4,15 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 // Main function to check RuneWatch
 async function checkRunewatch() {
+  // Created here rather than at load, so the alert renderer below can be
+  // required (by tests and staff-alerts-test.cjs) without database settings.
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
   try {
     console.log("🔍 Starting RuneWatch check...");
     
@@ -19,7 +20,8 @@ async function checkRunewatch() {
     console.log('Environment check:');
     console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set ✓' : 'Missing ❌'}`);
     console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set ✓' : 'Missing ❌'}`);
-    console.log(`- DISCORD_WEBHOOK_URL: ${process.env.DISCORD_WEBHOOK_URL ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- DISCORD_BOT_TOKEN: ${process.env.DISCORD_BOT_TOKEN ? 'Set ✓' : 'Missing ❌'}`);
+    console.log(`- DISCORD_STAFF_CHANNEL_ID: ${process.env.DISCORD_STAFF_CHANNEL_ID ? 'Set ✓' : 'Missing ❌'}`);
     
     // Get active clan members from database
     const { data: members, error: membersError } = await supabase
@@ -184,37 +186,55 @@ async function fetchRunewatchUsernames() {
   }
 }
 
-async function sendDiscordNotification(reportedMembers) {
-  if (!process.env.DISCORD_WEBHOOK_URL) {
-    console.log("No Discord webhook URL configured");
+const ALERTS_URL = 'https://siege-clan.com/admin?tab=alerts';
+
+/** Discord markdown would eat "_" and "*" in a name like "big_dave". */
+function escapeName(name) {
+  return String(name).replace(/([\\*_~`|>[\]])/g, '\\$1');
+}
+
+/**
+ * The staff-channel alert for members newly found on RuneWatch. No pings.
+ * @param {string[]} reportedMembers
+ * @returns a Discord message body
+ */
+function renderRunewatchAlert(reportedMembers) {
+  const names = reportedMembers.map((name) => `- ${escapeName(name)}`).join('\n');
+  return {
+    embeds: [
+      {
+        color: 0xe74c3c, // red
+        title: 'RuneWatch: members found on the list',
+        description: `These clan members are newly listed on RuneWatch:\n${names}\n\nReview them on the admin page.`,
+      },
+    ],
+    components: [
+      {
+        type: 1,
+        components: [{ type: 2, style: 5, label: 'Review alerts', url: ALERTS_URL }],
+      },
+    ],
+    allowed_mentions: { parse: [] },
+  };
+}
+
+/**
+ * Post the alert to the staff channel as the bot (Siege Herald), the same
+ * channel as the claim request alerts. DISCORD_STAFF_CHANNEL_ID is a
+ * repository variable; DISCORD_BOT_TOKEN a secret.
+ */
+async function sendDiscordNotification(reportedMembers, { postMessage = require('../comp-polls/discord.cjs').postMessage } = {}) {
+  const channelId = process.env.DISCORD_STAFF_CHANNEL_ID;
+  if (!channelId || !process.env.DISCORD_BOT_TOKEN) {
+    console.log('DISCORD_STAFF_CHANNEL_ID or DISCORD_BOT_TOKEN is not set; no Discord alert sent');
     return;
   }
-  
+
   try {
-    const message = {
-      content: "🚨 **RuneWatch Alert: Reported Players Found**",
-      embeds: [{
-        title: "Reported Players in Clan",
-        description: "The following clan members have been found on RuneWatch:",
-        color: 15158332, // Red color
-        fields: [{
-          name: "Players",
-          value: reportedMembers.map(name => `• ${name}`).join('\n')
-        }, {
-          name: "Action Required",
-          value: "Please review these players on the Admin Dashboard"
-        }],
-        footer: {
-          text: `Generated on ${new Date().toISOString().split('T')[0]} ${new Date().toTimeString().split(' ')[0]}`
-        }
-      }]
-    };
-    
-    await axios.post(process.env.DISCORD_WEBHOOK_URL, message);
-    console.log("Discord notification sent successfully!");
-    
+    await postMessage(channelId, renderRunewatchAlert(reportedMembers));
+    console.log('Discord notification sent successfully!');
   } catch (error) {
-    console.error("Error sending Discord notification:", error);
+    console.error('Error sending Discord notification:', error);
   }
 }
 
@@ -236,4 +256,4 @@ if (require.main === module) {
 }
 
 // Export the function for potential reuse
-module.exports = { checkRunewatch };
+module.exports = { checkRunewatch, renderRunewatchAlert, sendDiscordNotification };
