@@ -52,7 +52,7 @@ test('shows a confirmation after submitting a request', async () => {
   expect(createClaimRequest).toHaveBeenCalledWith(
     expect.objectContaining({ user_id: 'u1', wom_id: 7, rsn: 'Moonfern' })
   );
-  expect(await screen.findByRole('status')).toHaveTextContent('Your claim request has been submitted');
+  expect(await screen.findByRole('status')).toHaveTextContent('Claim sent. A staff member will review it');
 });
 
 test('shows the error when a request fails', async () => {

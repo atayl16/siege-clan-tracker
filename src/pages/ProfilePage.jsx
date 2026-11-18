@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import ClaimPlayer from "../components/ClaimPlayer";
@@ -69,6 +69,9 @@ function CharacterGoalCard({ claim, user }) {
   );
 }
 
+// Profile tabs a link can open with ?tab=, e.g. /profile?tab=requests.
+const PROFILE_TABS = ["characters", "goals", "races", "requests", "account"];
+
 /**
  * The built-in admin has no profile: no characters, goals or races of its
  * own, and its username and password must never change (the server refuses
@@ -89,7 +92,11 @@ function ProfileContent() {
   // and never had a userClaims or refreshUserClaims key, so both were
   // undefined and `userClaims.length` threw before the page could paint.
   const { user, userClaims, fetchUserClaims } = useAuth();
-  const [activeTab, setActiveTab] = useState("characters");
+  // ?tab=requests opens the claim form directly (the home page links there).
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() =>
+    PROFILE_TABS.includes(searchParams.get("tab")) ? searchParams.get("tab") : "characters"
+  );
   const [showCreateRace, setShowCreateRace] = useState(false);
 
   // useRaces returns { races, loading, error, refresh }; the old names here
@@ -298,11 +305,23 @@ function ProfileContent() {
             </div>
           )}
 
+          {userClaims?.length === 1 && (
+            <p className="profile-claim-hint">
+              Have more than one account? Claim each of them with Claim New Character, then choose which one is
+              your Main.
+            </p>
+          )}
+
           {!userClaims?.length ? (
             <EmptyState
-              title="No Characters Yet"
-              description="You haven't claimed any characters yet. Click 'Claim New Character' to get started."
+              title="Claim your characters"
+              description="Claiming links your in-game characters to this account, so you can set goals, join races and follow your progress. Have alts? Claim each one. A staff member approves every claim."
               icon={<FaUser />}
+              action={
+                <Button variant="primary" onClick={() => setActiveTab("requests")}>
+                  Claim a character
+                </Button>
+              }
             />
           ) : (
             <CardGrid>

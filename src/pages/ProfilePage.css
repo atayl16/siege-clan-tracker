@@ -319,3 +319,10 @@
     font-size: 0.65rem;
   }
 }
+
+/* Shown with exactly one claimed character: many members have alts. */
+.profile-claim-hint {
+  margin: 0 0 1rem;
+  color: #aaa;
+  font-size: 0.9rem;
+}

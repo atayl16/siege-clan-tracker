@@ -112,4 +112,35 @@ describe("ProfilePage main character", () => {
     expect(screen.queryByText("Claimed")).toBeNull();
     expect(screen.queryByRole("button", { name: "Make Main" })).toBeNull();
   });
+
+  it("tells someone with one character they can claim their alts too", () => {
+    mockClaims = [claim(2, "Wrenfield", false)];
+    renderPage();
+    expect(screen.getByText(/Have more than one account\?/)).toBeInTheDocument();
+  });
+
+  it("does not repeat that once they have more than one", () => {
+    mockClaims = [claim(1, "Oldalt", true), claim(2, "Wrenfield", false)];
+    renderPage();
+    expect(screen.queryByText(/Have more than one account\?/)).toBeNull();
+  });
+
+  it("explains claiming, and opens the claim form, when nothing is claimed", () => {
+    mockClaims = [];
+    renderPage();
+    expect(screen.getByText("Claim your characters")).toBeInTheDocument();
+    expect(screen.getByText(/Have alts\? Claim each one/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Claim a character" }));
+    expect(screen.getByRole("heading", { name: "Character Claims" })).toBeInTheDocument();
+  });
+
+  it("opens the tab a link names", () => {
+    mockClaims = [claim(2, "Wrenfield", false)];
+    render(
+      <MemoryRouter initialEntries={["/profile?tab=requests"]}>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("heading", { name: "Character Claims" })).toBeInTheDocument();
+  });
 });

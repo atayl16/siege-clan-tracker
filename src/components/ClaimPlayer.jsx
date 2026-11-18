@@ -92,7 +92,8 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
       setNotification({
         type: "success",
-        message: "Your claim request has been submitted",
+        message:
+          "Claim sent. A staff member will review it, usually within a day. You'll see it under Characters once it's approved.",
       });
       setSelectedMember("");
       setMessage("");
@@ -127,7 +128,8 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
             <div className="ui-claim-tab-content">
               <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
               <p className="ui-claim-description">
-                Select your character from the list to request access.
+                Choose one of your characters. You can claim more than one, such as your main and your alts:
+                send a request for each.
               </p>
 
               {notification && (
@@ -254,6 +256,9 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                       </Card.Header>
                       <Card.Body>
                         <div className="ui-request-details">
+                          {request.status === "pending" && (
+                            <p className="ui-request-waiting">Waiting for a staff member to approve it.</p>
+                          )}
                           <p>
                             <strong>Requested:</strong>{" "}
                             {new Date(request.created_at).toLocaleDateString()}

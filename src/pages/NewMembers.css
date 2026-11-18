@@ -312,3 +312,80 @@
 .nm-hero-title {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.6);
 }
+
+/* "Using the site" steps (components/UsingTheSite.jsx), styled like the
+   Join Us cards above them. */
+.nm-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.nm-step {
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.nm-step h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--color-text, #e0e0e0);
+}
+
+.nm-step p {
+  margin: 0;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+.nm-step-number {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: rgba(255, 152, 0, 0.15);
+  color: var(--color-orange, #ff9800);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nm-step-button {
+  margin-top: 0.25rem;
+  background: var(--color-orange, #ff9800);
+  color: #111;
+  font-weight: 700;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  padding: 0.45rem 0.9rem;
+  text-decoration: none;
+}
+
+.nm-step-button:hover {
+  filter: brightness(1.1);
+}
+
+.nm-step-link,
+.nm-step-aside a {
+  color: var(--accent-color, #2196f3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nm-step-link:hover,
+.nm-step-aside a:hover {
+  text-decoration: underline;
+}
+
+.nm-step-aside {
+  font-size: 0.875rem;
+  color: #999;
+}
