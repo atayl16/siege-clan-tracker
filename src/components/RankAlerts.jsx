@@ -1,67 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from "react";
 import { useMembers } from "../hooks/useMembers";
-import { titleize } from '../utils/stringUtils';
-import Button from './ui/Button';
-import { FaExclamationTriangle, FaCheck, FaExchangeAlt } from 'react-icons/fa';
-import './RankAlerts.css';
+import { titleize } from "../utils/stringUtils";
+import { memberNeedsRankUpdate, rankPromotionFor, safeFormat, safeParseInt } from "../utils/rankUtils";
+import { FaExclamationTriangle, FaCheck } from "react-icons/fa";
+import "./RankAlerts.css";
 
-const safeFormat = (num) => {
-  if (num === undefined || num === null) return '0';
-  return num.toLocaleString();
-};
+/**
+ * Members who have earned a higher rank than they hold (rankPromotionFor:
+ * ranks only go up), for the Alerts tab. The staff Discord channel gets
+ * the same list once per rank (scripts/sync-tasks/rank-up-alerts.cjs).
+ *
+ * There is no button to change the rank here: the hourly sync copies each
+ * member's rank from Wise Old Man, so a rank set on the site would be put
+ * back within the hour. Promote them in game, and they drop off this list
+ * once Wise Old Man shows the new rank.
+ */
+export function rankUpsDue(members) {
+  return (members || [])
+    .filter(memberNeedsRankUpdate)
+    .map((member) => ({ member, promotion: rankPromotionFor(member) }))
+    .filter(({ promotion }) => promotion)
+    .sort((a, b) => String(a.member.name || "").localeCompare(String(b.member.name || "")));
+}
 
-// Constants (assuming these are in the original file)
-const SKILLER_RANK_NAMES = ['Skiller', 'High-Level Skiller', 'Elite Skiller'];
-
-export default function RankAlerts({ onRankUpdate }) {
-  const {
-    members,
-    loading,
-    error: membersError,
-    updateMember,
-  } = useMembers();
-  
-  const [alerts, setAlerts] = useState([]);
-  const [error, setError] = useState(null);
-
-  // Filter members who need rank updates
-  useEffect(() => {
-    if (!members) return;
-    
-    const needsUpdate = members.filter(member => {
-      // Logic to determine if a member needs a rank update
-      return member.calculated_rank && member.calculated_rank !== member.womrole;
-    });
-    
-    setAlerts(needsUpdate);
-  }, [members]);
-
-  // Handle update rank
-  const handleUpdateRank = async (member) => {
-    if (!member.calculated_rank) return;
-    
-    try {
-      await updateMember({
-        ...member,
-        womrole: member.calculated_rank
-      });
-      
-      if (onRankUpdate) {
-        onRankUpdate();
-      }
-    } catch (err) {
-      console.error("Error updating rank:", err);
-      setError(`Failed to update rank: ${err.message}`);
-    }
-  };
-
-  // Function to determine the priority of rank updates
-  const getRankUpdatePriority = (member) => {
-    // Determine priority based on rank discrepancy
-    if (!member.womrole) return 'high';
-    if (member.womrole === 'recruit' && member.calculated_rank !== 'recruit') return 'high';
-    return 'normal';
-  };
+export default function RankAlerts() {
+  const { members, loading, error } = useMembers();
+  const due = useMemo(() => rankUpsDue(members), [members]);
 
   if (loading) {
     return (
@@ -72,78 +36,57 @@ export default function RankAlerts({ onRankUpdate }) {
     );
   }
 
-  if (membersError) {
+  if (error) {
     return (
       <div className="ui-message ui-message-error">
         <FaExclamationTriangle className="ui-message-icon" />
-        <span>{membersError.message || String(membersError)}</span>
+        <span>{error.message || String(error)}</span>
       </div>
     );
   }
 
-  if (alerts.length === 0) {
+  if (due.length === 0) {
     return (
       <div className="ui-no-alerts">
         <FaCheck className="ui-success-icon" />
-        <span>No rank updates required</span>
+        <span>No rank-ups due</span>
       </div>
     );
   }
 
-  // Main return - content only, no card or header
   return (
     <div className="ui-rank-alerts-content">
-      {error && (
-        <div className="ui-message ui-message-error">
-          <FaExclamationTriangle className="ui-message-icon" />
-          <span>{error}</span>
-        </div>
-      )}
-      
+      <p className="ui-rank-alerts-note">
+        Promote these members in game. Each drops off this list once Wise Old Man shows their new rank.
+      </p>
       <ul className="ui-reported-members-list">
-        {alerts.map((member) => {
-          const priority = getRankUpdatePriority(member);
-          
-          return (
-            <li
-              key={member.wom_id}
-              className={`ui-reported-member-item ui-priority-${priority}`}
-            >
-              <div className="ui-member-info">
-                <div className="ui-reported-member-name">{member.name}</div>
-                <div className="ui-rank-details">
-                  <div className="ui-current-rank">
-                    Current: <strong>{titleize(member.womrole)}</strong>
-                  </div>
-                  <div className="ui-recommended-rank">
-                    Should be: <strong>{member.calculated_rank}</strong>
-                  </div>
-                  
-                  {/* Show relevant stats based on whether they're a skiller or fighter */}
-                  {member.calculated_rank &&
-                  SKILLER_RANK_NAMES.includes(member.calculated_rank) ? (
-                    <div className="ui-member-stats">
-                      XP: <strong>{safeFormat(member.current_xp - member.first_xp)}</strong>
-                    </div>
+        {due.map(({ member, promotion }) => (
+          <li key={member.wom_id} className="ui-reported-member-item ui-priority-normal">
+            <div className="ui-member-info">
+              <div className="ui-reported-member-name">{member.name}</div>
+              <div className="ui-rank-details">
+                <div className="ui-current-rank">
+                  Current: <strong>{titleize(member.womrole)}</strong>
+                </div>
+                <div className="ui-recommended-rank">
+                  Earned: <strong>{titleize(promotion.rank)}</strong>
+                </div>
+                <div className="ui-member-stats">
+                  {promotion.type === "skiller" ? (
+                    <>
+                      Clan XP:{" "}
+                      <strong>{safeFormat(safeParseInt(member.current_xp) - safeParseInt(member.first_xp))}</strong>
+                    </>
                   ) : (
-                    <div className="ui-member-stats">
-                      EHB: <strong>{safeFormat(member.ehb)}</strong>
-                    </div>
+                    <>
+                      EHB: <strong>{safeFormat(Math.floor(Number(member.ehb) || 0))}</strong>
+                    </>
                   )}
                 </div>
               </div>
-              
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => handleUpdateRank(member)}
-                icon={<FaExchangeAlt />}
-              >
-                Update Rank
-              </Button>
-            </li>
-          );
-        })}
+            </div>
+          </li>
+        ))}
       </ul>
     </div>
   );

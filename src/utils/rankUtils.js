@@ -145,85 +145,51 @@ export const calculateAppropriateRank = (member) => {
   return appropriateRank;
 };
 
+/**
+ * The rank a member should be moved UP to, or null when there is none.
+ *
+ * Ranks only ever go up. A fighter's EHB can fall without them doing
+ * anything, when Wise Old Man changes a boss's EHB rate, and that must not
+ * suggest moving them back down a rank they earned. So a member whose
+ * EHB (or clan XP, for skillers) now falls short of their current rank is
+ * treated as correctly ranked; a demotion is an admin's decision, made by
+ * hand.
+ *
+ * Maxed is awarded for total level, not XP, so it is never moved.
+ *
+ * @returns {{ rank: string, type: "skiller" | "fighter" } | null}
+ *   rank in lowercase, as in womrole
+ */
+export const rankPromotionFor = (member) => {
+  const womRole = String(member?.womrole || "").toLowerCase();
+  if (!womRole || womRole.includes("maxed")) return null;
+
+  const paths = [
+    {
+      type: "skiller",
+      ranks: SKILLER_RANKS.filter((rank) => rank.range !== null),
+      value: safeParseInt(member.current_xp) - safeParseInt(member.first_xp),
+    },
+    { type: "fighter", ranks: FIGHTER_RANKS, value: Number(member.ehb) || 0 },
+  ];
+
+  for (const { type, ranks, value } of paths) {
+    const current = ranks.findIndex((rank) => womRole.includes(rank.name.toLowerCase()));
+    if (current === -1) continue;
+
+    let earned = 0;
+    ranks.forEach((rank, i) => {
+      if (value >= rank.range[0]) earned = i;
+    });
+    return earned > current ? { rank: ranks[earned].name.toLowerCase(), type } : null;
+  }
+  return null;
+};
+
 export const memberNeedsRankUpdate = (member) => {
-  // Skip hidden members or those with missing wom_id
-  if (!member || member.hidden || !member.wom_id) {
+  // Skip hidden members, former members, and those with missing wom_id
+  if (!member || member.hidden || member.left_date || !member.wom_id) {
     return false;
   }
-  
-  // Must have a role to determine current status
-  if (!member.womrole) {
-    return false;
-  }
-  
-  const womRole = (member.womrole || "").toLowerCase();
-  
-  // Determine if member is skiller or fighter based on current role
-  const isSkiller =
-    womRole.includes("opal") || womRole.includes("sapphire") ||
-    womRole.includes("emerald") || womRole.includes("ruby") ||
-    womRole.includes("diamond") || womRole.includes("dragonstone") ||
-    womRole.includes("onyx") || womRole.includes("zenyte") ||
-    womRole.includes("maxed");
-  
-  const isFighter = 
-    womRole.includes("mentor") || womRole.includes("prefect") || 
-    womRole.includes("leader") || womRole.includes("supervisor") || 
-    womRole.includes("superior") || womRole.includes("executive") || 
-    womRole.includes("senator") || womRole.includes("monarch") || 
-    womRole.includes("tzkal");
-  
-  // If we can't determine the type, then they don't need an update
-  if (!isSkiller && !isFighter) {
-    return false;
-  }
-  
-  if (isSkiller) {
-    // Maxed is a special rank based on total level, not XP progression
-    // Members with Maxed rank don't need automatic rank updates
-    if (womRole.includes("maxed")) {
-      return false;
-    }
-
-    // Use safe parsing to handle string or number types
-    const firstXp = parseInt(member.first_xp) || 0;
-    const currentXp = parseInt(member.current_xp) || 0;
-    const clanXp = currentXp - firstXp;
-
-    // Determine correct role based on XP
-    let correctRole;
-    if (clanXp >= 500000000) correctRole = "zenyte";
-    else if (clanXp >= 150000000) correctRole = "onyx";
-    else if (clanXp >= 90000000) correctRole = "dragonstone";
-    else if (clanXp >= 40000000) correctRole = "diamond";
-    else if (clanXp >= 15000000) correctRole = "ruby";
-    else if (clanXp >= 8000000) correctRole = "emerald";
-    else if (clanXp >= 3000000) correctRole = "sapphire";
-    else correctRole = "opal";
-    
-    // Check if current role includes the correct role
-    return !womRole.includes(correctRole);
-  }
-  
-  if (isFighter) {
-    // Use safe parsing for EHB
-    const ehb = parseInt(member.ehb) || 0;
-    
-    // Determine correct role based on EHB
-    let correctRole;
-    if (ehb >= 1500) correctRole = "tzkal";
-    else if (ehb >= 1300) correctRole = "monarch";
-    else if (ehb >= 1100) correctRole = "senator";
-    else if (ehb >= 900) correctRole = "executive";
-    else if (ehb >= 700) correctRole = "superior";
-    else if (ehb >= 500) correctRole = "supervisor";
-    else if (ehb >= 300) correctRole = "leader";
-    else if (ehb >= 100) correctRole = "prefect";
-    else correctRole = "mentor";
-    
-    // Check if current role includes the correct role
-    return !womRole.includes(correctRole);
-  }
-  
-  return false;
+  return rankPromotionFor(member) !== null;
 };
