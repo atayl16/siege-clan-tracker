@@ -2,6 +2,28 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 
 /**
+ * Ask the server to tell the staff Discord channel about a new request, so an
+ * admin knows to approve it. Best effort: the request is already saved and
+ * shows in the admin queue either way, so a failure here is only logged and
+ * never reaches the member. Not awaited.
+ */
+async function notifyStaff(requestId) {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token || !requestId) return;
+    const res = await fetch("/.netlify/functions/user-claim-request-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ requestId }),
+    });
+    if (!res.ok) console.warn("Could not alert staff about the claim request:", res.status);
+  } catch (err) {
+    console.warn("Could not alert staff about the claim request:", err);
+  }
+}
+
+/**
  * Claim requests, for both the member view and the admin queue.
  *
  * Previously this fetched /api/claim-requests with SWR and returned
@@ -88,6 +110,7 @@ export function useClaimRequests({ admin = false } = {}) {
         .single();
 
       if (insertError) throw insertError;
+      notifyStaff(data.id);
       await fetchRequests();
       return data;
     },

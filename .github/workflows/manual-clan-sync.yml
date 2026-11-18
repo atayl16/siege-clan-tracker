@@ -76,7 +76,8 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_STAFF_CHANNEL_ID: ${{ vars.DISCORD_STAFF_CHANNEL_ID }}
       
       - name: Run Anniversary Notifications
         if: ${{ github.event.inputs.job_to_run == 'anniversaries' || github.event.inputs.job_to_run == 'all' || github.event_name == 'schedule' }}
