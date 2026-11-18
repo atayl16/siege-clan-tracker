@@ -492,7 +492,7 @@ function ProfileContent() {
               </div>
               <div className="account-field">
                 <label>Password</label>
-                <ChangePassword />
+                <ChangePassword username={user.username} />
               </div>
               <div className="account-field">
                 <label>Member Since</label>

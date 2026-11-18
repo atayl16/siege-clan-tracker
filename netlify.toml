@@ -3,6 +3,15 @@
   publish = "build"
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"  # Explicitly specify edge functions dir
+  # Skip the build (exit 0) when nothing the deployed site uses changed since
+  # the last build, e.g. a change only to the GitHub sync scripts, workflows,
+  # migrations or docs. Saves Netlify build minutes on the free plan.
+  # scripts/comp-polls is listed because Netlify functions require it.
+  # Anything else that a function or the front end starts to import from
+  # outside these paths must be added here, or its changes will not deploy.
+  # On a first build CACHED_COMMIT_REF is unset, git diff fails, and the
+  # build runs.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src public index.html vite.config.js package.json package-lock.json netlify.toml .nvmrc deno.lock netlify scripts/comp-polls"
   
 # Scheduled functions start the sync workflows on GitHub, because GitHub's own
 # cron runs them hours late (see netlify/functions/utils/githubDispatch.cjs).

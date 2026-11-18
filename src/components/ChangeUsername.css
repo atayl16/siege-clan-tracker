@@ -82,3 +82,17 @@
   color: #ddd;
   cursor: pointer;
 }
+
+/* ChangePassword's username, there only for password managers. Kept in the
+   page (not display: none, which some managers skip) but out of sight. */
+.change-password-username {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
