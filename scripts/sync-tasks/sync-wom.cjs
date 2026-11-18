@@ -15,6 +15,29 @@ const WOM_VERIFICATION_CODE = process.env.WOM_VERIFICATION_CODE;
 const WOM_API_BASE = 'https://api.wiseoldman.net/v2';
 
 // Helper function to add delay with exponential backoff
+/**
+ * Members whose stored rank differs from their rank in the WOM group.
+ *
+ * Ranks are copied on every run, for every member, from the group data the
+ * run already fetched. The per-member refresh below only covers a quarter
+ * of the clan each hour, and only writes when XP, level or EHB changed, so
+ * a member promoted while not gaining XP used to keep their old rank here
+ * for good. That stale rank made the rank-up alert announce promotions that
+ * had already happened.
+ *
+ * @param {Array<{ wom_id: number, womrole: string|null }>} existingMembers
+ * @param {Map<number, { womrole: string|null }>} womIdsMap
+ * @returns {Array<{ wom_id: number, from: string|null, to: string }>}
+ */
+function rankChanges(existingMembers, womIdsMap) {
+  const changes = [];
+  for (const member of existingMembers) {
+    const role = womIdsMap.get(member.wom_id)?.womrole;
+    if (role && role !== member.womrole) changes.push({ wom_id: member.wom_id, from: member.womrole ?? null, to: role });
+  }
+  return changes;
+}
+
 async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -181,6 +204,22 @@ async function syncWomMembers() {
     
     // Create a map for our members for easier lookup
     const existingMembersMap = new Map(existingMembers.map(m => [m.wom_id, m]));
+
+    // Copy every member's rank from the group data (see rankChanges).
+    const changedRanks = rankChanges(existingMembers, womIdsMap);
+    for (const change of changedRanks) {
+      const { error: rankError } = await supabase
+        .from('members')
+        .update({ womrole: change.to })
+        .eq('wom_id', change.wom_id);
+      if (rankError) {
+        console.error(`Error updating rank for ${change.wom_id}:`, rankError);
+      } else {
+        existingMembersMap.get(change.wom_id).womrole = change.to;
+        console.log(`Rank for ${change.wom_id}: ${change.from || 'none'} -> ${change.to}`);
+      }
+    }
+    console.log(`Updated ${changedRanks.length} rank(s) from WOM`);
     
     // Process new members (those in WOM but not in our database)
     const newMembers = womMembers.filter(m => !existingMembersMap.has(m.wom_id));
@@ -718,4 +757,4 @@ if (require.main === module) {
 }
 
 // Export the function for potential reuse in other scripts
-module.exports = { syncWomMembers };
+module.exports = { syncWomMembers, rankChanges };
