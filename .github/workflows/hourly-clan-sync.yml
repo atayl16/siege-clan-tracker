@@ -41,6 +41,19 @@ jobs:
           WOM_GROUP_ID: ${{ vars.WOM_GROUP_ID || secrets.WOM_GROUP_ID }}
           WOM_VERIFICATION_CODE: ${{ secrets.WOM_VERIFICATION_CODE }}
           
+      # Tells the staff channel about members who have earned a rank-up, once
+      # per rank (scripts/sync-tasks/rank-up-alerts.cjs). After the WOM sync,
+      # so EHB and XP are fresh. Ranks only go up.
+      - name: Announce Rank-ups
+        id: rank_up_alerts
+        run: node scripts/sync-tasks/rank-up-alerts.cjs
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_STAFF_CHANNEL_ID: ${{ vars.DISCORD_STAFF_CHANNEL_ID }}
+
       - name: Run WOM Events Sync
         run: node scripts/sync-tasks/wom-events.cjs
         continue-on-error: true
@@ -105,8 +118,8 @@ jobs:
       # A failed award means Siege Score went unpaid, and a failed announcement
       # means the week is not in Discord. Fail the job (after the other steps
       # have run) so neither is hidden in a green run's log.
-      - name: Fail if a weekly award or announcement failed
-        if: steps.weekly_xp_awards.outcome == 'failure' || steps.weekly_titles.outcome == 'failure' || steps.announce_titles.outcome == 'failure'
+      - name: Fail if an award or announcement failed
+        if: steps.weekly_xp_awards.outcome == 'failure' || steps.weekly_titles.outcome == 'failure' || steps.announce_titles.outcome == 'failure' || steps.rank_up_alerts.outcome == 'failure'
         run: |
-          echo "::error::A weekly step failed; see the Run Weekly XP Awards / Run Weekly Titles / Announce Weekly Titles step logs."
+          echo "::error::A weekly step or announcement failed; see the Run Weekly XP Awards / Run Weekly Titles / Announce Weekly Titles / Announce Rank-ups step logs."
           exit 1

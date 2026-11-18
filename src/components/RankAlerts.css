@@ -186,3 +186,9 @@
     font-size: 1rem; /* 16px */
   }
 }
+
+.ui-rank-alerts-note {
+  margin: 0 0 0.75rem;
+  color: #aaa;
+  font-size: 0.9rem;
+}

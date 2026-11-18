@@ -10,6 +10,7 @@ import {
   FaChevronUp,
 } from "react-icons/fa";
 import { titleize } from "../../utils/stringUtils";
+import { rankPromotionFor } from "../../utils/rankUtils";
 
 // Import UI components
 import Button from "../ui/Button";
@@ -77,72 +78,13 @@ export default function AdminMemberTable({
     );
   };
 
-  // Calculate the correct role
+  // Whether the member has earned a higher rank than they hold. Only ever a
+  // promotion: see rankPromotionFor in utils/rankUtils.js.
   const calculateCorrectRole = (member) => {
-    const womRole = (member.womrole || "").toLowerCase();
-    const isSkiller =
-      womRole.includes("opal") ||
-      womRole.includes("sapphire") ||
-      womRole.includes("emerald") ||
-      womRole.includes("ruby") ||
-      womRole.includes("diamond") ||
-      womRole.includes("dragonstone") ||
-      womRole.includes("onyx") ||
-      womRole.includes("zenyte");
-
-    const isFighter =
-      womRole.includes("mentor") ||
-      womRole.includes("prefect") ||
-      womRole.includes("leader") ||
-      womRole.includes("supervisor") ||
-      womRole.includes("superior") ||
-      womRole.includes("executive") ||
-      womRole.includes("senator") ||
-      womRole.includes("monarch") ||
-      womRole.includes("tzkal");
-
-    // If current role is skiller, check if it's the correct skiller rank
-    if (isSkiller) {
-      const clanXp =
-        (parseInt(member.current_xp) || 0) - (parseInt(member.first_xp) || 0);
-
-      let correctRole;
-      if (clanXp >= 500000000) correctRole = "zenyte";
-      else if (clanXp >= 150000000) correctRole = "onyx";
-      else if (clanXp >= 90000000) correctRole = "dragonstone";
-      else if (clanXp >= 40000000) correctRole = "diamond";
-      else if (clanXp >= 15000000) correctRole = "ruby";
-      else if (clanXp >= 8000000) correctRole = "emerald";
-      else if (clanXp >= 3000000) correctRole = "sapphire";
-      else correctRole = "opal";
-
-      if (!womRole.includes(correctRole)) {
-        return { hasCorrectRole: false, correctRole, currentType: "skiller" };
-      }
-    }
-
-    // If current role is fighter, check if it's the correct fighter rank
-    else if (isFighter) {
-      const ehb = parseInt(member.ehb) || 0;
-
-      let correctRole;
-      if (ehb >= 1500) correctRole = "tzkal";
-      else if (ehb >= 1300) correctRole = "monarch";
-      else if (ehb >= 1100) correctRole = "senator";
-      else if (ehb >= 900) correctRole = "executive";
-      else if (ehb >= 700) correctRole = "superior";
-      else if (ehb >= 500) correctRole = "supervisor";
-      else if (ehb >= 300) correctRole = "leader";
-      else if (ehb >= 100) correctRole = "prefect";
-      else correctRole = "mentor";
-
-      if (!womRole.includes(correctRole)) {
-        return { hasCorrectRole: false, correctRole, currentType: "fighter" };
-      }
-    }
-
-    // Default - role is correct or couldn't determine
-    return { hasCorrectRole: true, currentType: isSkiller ? "skiller" : isFighter ? "fighter" : "unknown" };
+    const promotion = rankPromotionFor(member);
+    return promotion
+      ? { hasCorrectRole: false, correctRole: promotion.rank, currentType: promotion.type }
+      : { hasCorrectRole: true };
   };
 
   const calculateAlternativeRank = (member) => {

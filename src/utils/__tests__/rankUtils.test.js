@@ -18,7 +18,8 @@ import {
   safeParseInt,
   calculateNextLevel,
   calculateAppropriateRank,
-  memberNeedsRankUpdate
+  memberNeedsRankUpdate,
+  rankPromotionFor
 } from '../rankUtils';
 
 describe('Rank Constants', () => {
@@ -709,5 +710,35 @@ describe('memberNeedsRankUpdate - Case Sensitivity', () => {
       ehb: 0
     };
     expect(memberNeedsRankUpdate(member)).toBe(false);
+  });
+});
+
+describe('rankPromotionFor: ranks only go up', () => {
+  it('suggests the rank a fighter has earned above their current one', () => {
+    expect(rankPromotionFor({ womrole: 'Leader', ehb: 512.4 })).toEqual({ rank: 'supervisor', type: 'fighter' });
+  });
+
+  it('never suggests moving a fighter down after WOM lowers their EHB', () => {
+    // Promoted to Supervisor at 500+ EHB; a rate change took them to 480.
+    expect(rankPromotionFor({ womrole: 'Supervisor', ehb: 480 })).toBeNull();
+    expect(memberNeedsRankUpdate({ wom_id: 1, womrole: 'Supervisor', ehb: 480 })).toBe(false);
+  });
+
+  it('never suggests moving a skiller down either', () => {
+    expect(rankPromotionFor({ womrole: 'Diamond', current_xp: 30000000, first_xp: 0 })).toBeNull();
+  });
+
+  it('suggests a skiller promotion, and can skip ranks', () => {
+    expect(rankPromotionFor({ womrole: 'Emerald', current_xp: 95000000, first_xp: 5000000 })).toEqual({
+      rank: 'dragonstone',
+      type: 'skiller',
+    });
+  });
+
+  it('leaves Maxed, a correct rank, and unknown roles alone', () => {
+    expect(rankPromotionFor({ womrole: 'Maxed', current_xp: 900000000, first_xp: 0 })).toBeNull();
+    expect(rankPromotionFor({ womrole: 'Executive', ehb: 950 })).toBeNull();
+    expect(rankPromotionFor({ womrole: 'recruit', ehb: 2000 })).toBeNull();
+    expect(rankPromotionFor({ womrole: null })).toBeNull();
   });
 });

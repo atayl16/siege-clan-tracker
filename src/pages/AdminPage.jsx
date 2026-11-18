@@ -539,11 +539,7 @@ export default function AdminPage() {
                   </h3>
                 </Card.Header>
                 <Card.Body className="alert-section-content">
-                  <RankAlerts
-                    onRankUpdate={() => {
-                      refreshMembers();
-                    }}
-                  />
+                  <RankAlerts />
                 </Card.Body>
               </Card>
 
