@@ -59,6 +59,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="ui-auth-form">
             <FormInput
               id="username"
+              name="username"
               label="Username"
               type="text"
               value={username}
@@ -71,6 +72,7 @@ export default function Login() {
 
             <FormInput
               id="password"
+              name="password"
               label="Password"
               type="password"
               value={password}

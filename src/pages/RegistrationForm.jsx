@@ -74,8 +74,10 @@ export default function RegistrationForm() {
           <form onSubmit={handleSubmit} className="ui-auth-form">
             <FormInput
               id="username"
+              name="username"
               label="Username"
               type="text"
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter a username"
@@ -85,8 +87,10 @@ export default function RegistrationForm() {
             
             <FormInput
               id="password"
+              name="password"
               label="Password"
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
@@ -96,8 +100,10 @@ export default function RegistrationForm() {
             
             <FormInput
               id="confirm-password"
+              name="confirm-password"
               label="Confirm Password"
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm password"

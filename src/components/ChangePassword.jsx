@@ -5,8 +5,11 @@ import "./ChangeUsername.css";
 /**
  * Change your own password, e.g. after an admin reset gave you a temporary
  * one. Reuses ChangeUsername's styles; the two sit together on the Account tab.
+ *
+ * The form carries the username in a hidden field so password managers know
+ * which saved login the new password belongs to, and offer to update it.
  */
-export default function ChangePassword() {
+export default function ChangePassword({ username = "" }) {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -72,9 +75,20 @@ export default function ChangePassword() {
 
   return (
     <form className="change-username" onSubmit={submit}>
+      <input
+        type="text"
+        name="username"
+        className="change-password-username"
+        value={username}
+        autoComplete="username"
+        readOnly
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <label htmlFor="current-password" className="change-username-label">Current password</label>
       <input
         id="current-password"
+        name="current-password"
         type="password"
         className="change-username-input"
         value={current}
@@ -85,6 +99,7 @@ export default function ChangePassword() {
       <label htmlFor="new-password" className="change-username-label">New password</label>
       <input
         id="new-password"
+        name="new-password"
         type="password"
         className="change-username-input"
         value={next}
@@ -94,6 +109,7 @@ export default function ChangePassword() {
       <label htmlFor="confirm-password" className="change-username-label">Confirm new password</label>
       <input
         id="confirm-password"
+        name="confirm-password"
         type="password"
         className="change-username-input"
         value={confirm}
