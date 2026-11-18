@@ -11,7 +11,7 @@ const CHANNEL = 'staff-channel';
  * A stand-in for the service-role client, over two tables. Filters are
  * applied for real, so the conditional claim behaves as it would in Postgres.
  */
-function fakeSupabase({ requests, users = [] }) {
+function fakeSupabase({ requests, users = [], readAs = null, releaseErrors = 0 }) {
   const tables = { claim_requests: requests, users };
   const updates = [];
   const from = (table) => {
@@ -31,9 +31,15 @@ function fakeSupabase({ requests, users = [] }) {
       or(expr) { q.or = expr; return builder; },
       limit() { return builder; },
       update(values) { q.update = values; return builder; },
-      async maybeSingle() { return { data: matches()[0] ?? null, error: null }; },
+      // readAs: what the first read sees, standing in for a row an admin
+      // changes between the read and the claim.
+      async maybeSingle() { return { data: readAs ?? matches()[0] ?? null, error: null }; },
       then(resolve) {
         const rows = matches();
+        if (q.update && q.update.notified_at === null && releaseErrors > 0) {
+          releaseErrors -= 1;
+          return Promise.resolve({ data: null, error: { message: 'connection reset' } }).then(resolve);
+        }
         if (q.update) {
           updates.push({ table, values: q.update });
           rows.forEach((r) => Object.assign(r, q.update));
@@ -112,6 +118,37 @@ describe('alertClaimRequest', () => {
     await expect(run(supabase)).rejects.toThrow('Missing Access');
     expect(requests[0].notified_at).toBeNull();
     expect(await run(supabase)).toEqual({ notified: true });
+  });
+
+  it('posts nothing about a request an admin handles between the read and the claim', async () => {
+    const requests = [pending({ status: 'denied' })];
+    const supabase = fakeSupabase({ requests, readAs: pending() });
+
+    expect(await run(supabase)).toEqual({ notified: false, reason: 'already announced' });
+    expect(postMessage).not.toHaveBeenCalled();
+    expect(requests[0].notified_at).toBeNull();
+  });
+
+  it('tries the release again when it fails once', async () => {
+    const requests = [pending()];
+    const supabase = fakeSupabase({ requests, releaseErrors: 1 });
+    postMessage.mockRejectedValueOnce(Object.assign(new Error('Missing Access'), { status: 403 }));
+
+    await expect(run(supabase)).rejects.toThrow('Missing Access');
+    expect(requests[0].notified_at).toBeNull();
+    expect(await run(supabase)).toEqual({ notified: true });
+  });
+
+  it('logs a claim it could not release, by request id', async () => {
+    const requests = [pending()];
+    const supabase = fakeSupabase({ requests, releaseErrors: 2 });
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    postMessage.mockRejectedValueOnce(Object.assign(new Error('Missing Access'), { status: 403 }));
+
+    await expect(run(supabase)).rejects.toThrow('Missing Access');
+    expect(requests[0].notified_at).not.toBeNull();
+    expect(logged.mock.calls[0][0]).toContain('claim request 7');
+    logged.mockRestore();
   });
 
   it('keeps the claim when the post may have gone through, rather than risk a second post', async () => {

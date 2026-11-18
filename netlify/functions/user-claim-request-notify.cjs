@@ -41,9 +41,12 @@ exports.handler = async function (event) {
     const { data, error: authError } = await supabase.auth.getUser(authHeader.slice(7));
     if (authError || !data?.user) return reply(401, { error: 'Your session has expired. Sign in again.' });
 
+    // Both checked before anything is claimed: with no token the post would
+    // fail before reaching Discord, and the request would stay marked as
+    // announced although nothing was posted.
     const channelId = process.env.DISCORD_STAFF_CHANNEL_ID;
-    if (!channelId) {
-      console.warn('user-claim-request-notify: DISCORD_STAFF_CHANNEL_ID is not set; nothing posted');
+    if (!channelId || !process.env.DISCORD_BOT_TOKEN) {
+      console.warn('user-claim-request-notify: DISCORD_STAFF_CHANNEL_ID or DISCORD_BOT_TOKEN is not set; nothing posted');
       return reply(200, { notified: false, reason: 'not set up' });
     }
 

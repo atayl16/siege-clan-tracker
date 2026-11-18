@@ -65,6 +65,27 @@ function renderClaimRequestAlert({ request, username }) {
 }
 
 /**
+ * Undo a claim after Discord refused the post, so the request can be
+ * announced later. Tries twice; if both fail the request stays marked as
+ * announced although nothing was posted, so say so in the log, by id, for
+ * an admin to clear by hand. The request itself is unaffected and still
+ * shows in the admin queue.
+ */
+async function releaseClaim(supabase, id) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { error } = await supabase.from('claim_requests').update({ notified_at: null }).eq('id', id);
+    if (!error) return true;
+    lastError = error;
+  }
+  console.error(
+    `claim request ${id}: Discord refused the alert and notified_at could not be cleared, so it will not be announced:`,
+    lastError?.message || lastError
+  );
+  return false;
+}
+
+/**
  * @param {object} args
  * @param {object} args.supabase - service-role client
  * @param {{ id: string }} args.authUser - the caller, from supabase.auth.getUser(token)
@@ -90,11 +111,13 @@ async function alertClaimRequest({ supabase, authUser, requestId, channelId, pos
   if (request.status !== 'pending') return { notified: false, reason: 'not pending' };
   if (request.notified_at) return { notified: false, reason: 'already announced' };
 
-  // Claim it. Only one caller can move notified_at off NULL.
+  // Claim it. Only one caller can move notified_at off NULL, and not once
+  // an admin has handled the request since it was read above.
   const { data: claimed, error: claimError } = await supabase
     .from('claim_requests')
     .update({ notified_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('status', 'pending')
     .is('notified_at', null)
     .select('id');
   if (claimError) throw claimError;
@@ -114,9 +137,7 @@ async function alertClaimRequest({ supabase, authUser, requestId, channelId, pos
     // Discord refused it (4xx): nothing was posted, so release the claim.
     // On a timeout or 5xx the post may have gone through, so keep it rather
     // than risk posting twice.
-    if (error?.status >= 400 && error?.status < 500) {
-      await supabase.from('claim_requests').update({ notified_at: null }).eq('id', id);
-    }
+    if (error?.status >= 400 && error?.status < 500) await releaseClaim(supabase, id);
     throw error;
   }
   return { notified: true };
