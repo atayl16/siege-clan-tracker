@@ -1,3 +1,10 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+# Signed-in and admin pages have nothing for search results.
+Disallow: /admin
+Disallow: /profile
+Disallow: /races/
+Disallow: /api/
+Disallow: /.netlify/
+
+Sitemap: https://www.siege-clan.com/sitemap.xml

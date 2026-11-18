@@ -28,6 +28,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
+import PageMeta from "./components/PageMeta";
 import SeasonalFavicon from "./utils/seasonalIcons";
 
 import "./styles/App.css";
@@ -41,6 +42,7 @@ function App() {
     return (
       <div className="App has-navbar">
         <SeasonalFavicon />
+        <PageMeta />
         <Navbar />
         {/* <AnniversaryBanner /> */}
         <Routes>
