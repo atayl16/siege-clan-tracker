@@ -18,7 +18,7 @@ vi.mock('../components/MemberSelector', () => ({
   default: ({ selectedMemberId, onMemberSelect }) => (
     <div>
       <span>selected:{String(selectedMemberId)}</span>
-      <button type="button" onClick={() => onMemberSelect({ wom_id: 99, name: 'Dan xo' })}>pick Dan</button>
+      <button type="button" onClick={() => onMemberSelect({ wom_id: 99, name: 'Ash ko' })}>pick Dan</button>
     </div>
   ),
 }));
@@ -40,7 +40,7 @@ const fillAndSubmit = async () => {
 beforeEach(() => {
   createRace.mockClear();
   updateRace.mockClear();
-  claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Roinrin' } }];
+  claims = [{ wom_id: 1, members: { wom_id: 1, name: 'Moonfern' } }];
 });
 
 test("starts the race with the creator's own character", () => {
@@ -64,7 +64,7 @@ test('creates the race when the creator is in it', async () => {
 
   expect(createRace).toHaveBeenCalledWith(
     expect.objectContaining({
-      participants: [expect.objectContaining({ wom_id: 1, player_name: 'Roinrin', metric: 'sailing', target_value: 20000 })],
+      participants: [expect.objectContaining({ wom_id: 1, player_name: 'Moonfern', metric: 'sailing', target_value: 20000 })],
     })
   );
 });
@@ -89,7 +89,7 @@ test('edit mode starts from the saved race and saves the user\'s changes through
     // fixed past date keeps this test from depending on today's date.
     end_date: '2025-01-31T00:00:00+00:00',
     participants: [
-      { id: 'p1', wom_id: 1, player_name: 'Roinrin', metric: 'sailing', target_value: 20000 },
+      { id: 'p1', wom_id: 1, player_name: 'Moonfern', metric: 'sailing', target_value: 20000 },
     ],
   };
   const onCreated = vi.fn();
@@ -126,7 +126,7 @@ test('editing an ended race still requires any newly picked end date to be today
     public: false,
     end_date: '2025-01-31T00:00:00+00:00',
     participants: [
-      { id: 'p1', wom_id: 1, player_name: 'Roinrin', metric: 'sailing', target_value: 20000 },
+      { id: 'p1', wom_id: 1, player_name: 'Moonfern', metric: 'sailing', target_value: 20000 },
     ],
   };
   const { container } = render(<CreateRace userId="u1" race={race} onCreated={vi.fn()} onCancel={vi.fn()} />);

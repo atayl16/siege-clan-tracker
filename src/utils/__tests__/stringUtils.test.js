@@ -155,14 +155,14 @@ describe('stringUtils', () => {
 
   describe('displayUsername', () => {
     it('shows underscores as spaces and capitalises the first letter', () => {
-      expect(displayUsername('Dan_xo')).toBe('Dan xo');
-      expect(displayUsername('dan_xo')).toBe('Dan xo');
-      expect(displayUsername('roinrin')).toBe('Roinrin');
+      expect(displayUsername('Ash_ko')).toBe('Ash ko');
+      expect(displayUsername('ash_ko')).toBe('Ash ko');
+      expect(displayUsername('moonfern')).toBe('Moonfern');
     });
 
     it('leaves the rest of the name as it is', () => {
-      // Unlike titleize, which would make this "Dan Xo".
-      expect(displayUsername('dan_xo')).not.toBe('Dan Xo');
+      // Unlike titleize, which would make this "Ash Ko".
+      expect(displayUsername('ash_ko')).not.toBe('Ash Ko');
       expect(displayUsername('iron.man-99')).toBe('Iron.man-99');
       expect(displayUsername('a__b_')).toBe('A b');
     });

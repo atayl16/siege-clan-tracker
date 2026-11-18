@@ -11,7 +11,7 @@ const {
   PasswordError,
 } = require('../utils/passwords.cjs');
 
-const ROW = { id: 'u-1', username: 'roinrin', password_hash: sha256Hex('old-password'), supabase_auth_id: 'auth-1' };
+const ROW = { id: 'u-1', username: 'moonfern', password_hash: sha256Hex('old-password'), supabase_auth_id: 'auth-1' };
 
 /** Stand-in service-role client over one users row; records every write. */
 function fakeSupabase({ rows = [ROW], authError = null, hashError = null } = {}) {
@@ -73,7 +73,7 @@ describe('resetPassword', () => {
     const supabase = fakeSupabase();
     const { username, temporaryPassword } = await resetPassword(supabase, 'u-1');
 
-    expect(username).toBe('roinrin');
+    expect(username).toBe('moonfern');
     expect(supabase.calls.auth).toEqual([{ id: 'auth-1', password: temporaryPassword }]);
     expect(supabase.calls.hash).toEqual([
       { values: { password_hash: sha256Hex(temporaryPassword) }, eq: [['id', 'u-1']] },

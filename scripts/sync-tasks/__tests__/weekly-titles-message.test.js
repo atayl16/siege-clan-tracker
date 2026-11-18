@@ -16,21 +16,21 @@ const WEEK = {
   weekStart: '2026-11-09T19:00:00+00:00',
   weekEnd: '2026-11-16T19:00:00+00:00',
   gainer: [
-    { placement: 1, player_name: 'FinPunisher', xp_gained: 16310000 },
-    { placement: 2, player_name: 'acid scum', xp_gained: 8260000 },
-    { placement: 3, player_name: 'ottogodblest', xp_gained: 6680000 },
+    { placement: 1, player_name: 'OakSmasher', xp_gained: 16310000 },
+    { placement: 2, player_name: 'iron wisp', xp_gained: 8260000 },
+    { placement: 3, player_name: 'pebbleking', xp_gained: 6680000 },
   ],
   awards: [
     // Out of order on purpose: the message orders by the title list.
-    award('boss_hunter', 1, 'FinPunisher', 533),
-    award('boss_hunter', 2, 'CursedClover', 454),
-    award('warrior', 1, 'noon air', 8.47),
-    award('warrior', 2, 'TheLastAesir', 7.98),
-    award('warrior', 3, 'xijaffa', 7.94),
-    award('resurrected', 1, 'IlZion', 310000),
-    award('raider', 1, '1819 B', 17),
-    award('raider', 3, 'Sloth Bone', 9),
-    award('raider', 3, 'elegant hobo', 9),
+    award('boss_hunter', 1, 'OakSmasher', 533),
+    award('boss_hunter', 2, 'GildedFern', 454),
+    award('warrior', 1, 'dusk owl', 8.47),
+    award('warrior', 2, 'TheFirstRaven', 7.98),
+    award('warrior', 3, 'qelmoss', 7.94),
+    award('resurrected', 1, 'MoBeacon', 310000),
+    award('raider', 1, '4402 K', 17),
+    award('raider', 3, 'Moss Crab', 9),
+    award('raider', 3, 'gentle yak', 9),
   ],
 };
 
@@ -54,15 +54,15 @@ describe('renderWeeklyTitlesMessage', () => {
   it('lists each winner with 2nd and 3rd in small text underneath, The Gainer first, nobody-won titles left out', () => {
     expect(embed.description).toBe(
       [
-        '**The Gainer** · FinPunisher (16.31M XP)',
-        '-# 2nd acid scum · 3rd ottogodblest',
-        '**The Warrior** · noon air (8.5 EHB)',
-        '-# 2nd TheLastAesir · 3rd xijaffa',
-        '**The Resurrected** · IlZion (310K XP)',
-        '**The Raider** · 1819 B (17 raids)',
-        '-# 3rd elegant hobo & Sloth Bone',
-        '**The Boss Hunter** · FinPunisher (533 kills)',
-        '-# 2nd CursedClover',
+        '**The Gainer** · OakSmasher (16.31M XP)',
+        '-# 2nd iron wisp · 3rd pebbleking',
+        '**The Warrior** · dusk owl (8.5 EHB)',
+        '-# 2nd TheFirstRaven · 3rd qelmoss',
+        '**The Resurrected** · MoBeacon (310K XP)',
+        '**The Raider** · 4402 K (17 raids)',
+        '-# 3rd gentle yak & Moss Crab',
+        '**The Boss Hunter** · OakSmasher (533 kills)',
+        '-# 2nd GildedFern',
         '',
         POINTS,
       ].join('\n')
@@ -85,18 +85,18 @@ describe('renderWeeklyTitlesMessage', () => {
     expect(Object.keys(emojis).sort()).toEqual(['gainer', 'warrior']);
 
     const lines = renderWeeklyTitlesMessage(WEEK, { emojis }).embeds[0].description.split('\n');
-    expect(lines[0]).toBe('<a:title_gainer:222> **The Gainer** · FinPunisher (16.31M XP)');
-    expect(lines[2]).toBe('<:title_warrior:111> **The Warrior** · noon air (8.5 EHB)');
-    expect(lines[5]).toBe('**The Raider** · 1819 B (17 raids)');
+    expect(lines[0]).toBe('<a:title_gainer:222> **The Gainer** · OakSmasher (16.31M XP)');
+    expect(lines[2]).toBe('<:title_warrior:111> **The Warrior** · dusk owl (8.5 EHB)');
+    expect(lines[5]).toBe('**The Raider** · 4402 K (17 raids)');
   });
 
   it('puts joint winners on one line, and cuts a big tie short', () => {
     const two = renderWeeklyTitlesMessage({
       ...WEEK,
       gainer: [],
-      awards: [award('clue_hunter', 1, 'K aura', 50), award('clue_hunter', 1, 'B', 50)],
+      awards: [award('clue_hunter', 1, 'R ember', 50), award('clue_hunter', 1, 'B', 50)],
     });
-    expect(two.embeds[0].description.split('\n')[0]).toBe('**The Clue Hunter** · B & K aura (50 clues)');
+    expect(two.embeds[0].description.split('\n')[0]).toBe('**The Clue Hunter** · B & R ember (50 clues)');
 
     const five = renderWeeklyTitlesMessage({
       ...WEEK,

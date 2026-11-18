@@ -7,7 +7,7 @@ import ProgressPage from '../pages/ProgressPage';
 
 const races = [
   { id: 'r1', title: 'Sailing sprint', public: true, status: 'active', created_at: new Date().toISOString(),
-    participants: [{ id: 'p1', player_name: 'Dan xo', metric: 'sailing', current_value: 0, target_value: 10 }] },
+    participants: [{ id: 'p1', player_name: 'Ash ko', metric: 'sailing', current_value: 0, target_value: 10 }] },
   { id: 'r2', title: 'Zulrah week', public: true, status: 'completed', created_at: new Date().toISOString(), participants: [] },
 ];
 const goals = [
@@ -20,7 +20,7 @@ vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: null, userCla
 vi.mock('../hooks/useRaces', () => ({ useRaces: () => ({ races, loading: false, refreshProgress: vi.fn() }) }));
 vi.mock('../hooks/useUserGoals', () => ({ useUserGoals: () => ({ publicGoals: goals, loading: false }) }));
 vi.mock('../hooks/useMembers', () => ({
-  useMembers: () => ({ members: [{ wom_id: 1, name: 'Roinrin' }, { wom_id: 2, name: 'Dan xo' }] }),
+  useMembers: () => ({ members: [{ wom_id: 1, name: 'Moonfern' }, { wom_id: 2, name: 'Ash ko' }] }),
 }));
 
 const renderPage = () => render(<MemoryRouter><ProgressPage /></MemoryRouter>);
@@ -32,7 +32,7 @@ test('searches races by racer and filters them by status', async () => {
   renderPage();
   const search = screen.getByRole('searchbox', { name: 'Search races or racers' });
 
-  await userEvent.type(search, 'dan');
+  await userEvent.type(search, 'ash');
   expect(screen.getByText('Sailing sprint')).toBeInTheDocument();
   expect(screen.queryByText('Zulrah week')).not.toBeInTheDocument();
   expect(screen.getByRole('status')).toHaveTextContent('Showing 1 of 2');
@@ -55,7 +55,7 @@ test('filters goals by character, type and status', async () => {
   renderPage();
   await openGoals();
 
-  await userEvent.type(screen.getByRole('searchbox', { name: /Search characters/ }), 'roinrin');
+  await userEvent.type(screen.getByRole('searchbox', { name: /Search characters/ }), 'moonfern');
   expect(goalTitles()).toEqual(['Sailing', 'Runecrafting']);
 
   await userEvent.click(within(screen.getByRole('group', { name: 'Goal status' })).getByRole('button', { name: 'Completed' }));

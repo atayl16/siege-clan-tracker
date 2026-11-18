@@ -23,7 +23,7 @@ const session = (user) => ({
 test('recognises only the built-in admin account', () => {
   expect(isBuiltInAdmin({ username: 'admin' })).toBe(true);
   expect(isBuiltInAdmin({ username: 'Admin' })).toBe(true);
-  expect(isBuiltInAdmin({ username: 'roinrin', is_admin: true })).toBe(false);
+  expect(isBuiltInAdmin({ username: 'moonfern', is_admin: true })).toBe(false);
   expect(isBuiltInAdmin(null)).toBe(false);
 });
 
@@ -35,7 +35,7 @@ test('the built-in admin has no Profile link, but keeps Admin', () => {
 });
 
 test('members, admins included, still have a Profile link', () => {
-  auth = session({ id: 'u1', username: 'roinrin', is_admin: true });
+  auth = session({ id: 'u1', username: 'moonfern', is_admin: true });
   render(<MemoryRouter><Navbar /></MemoryRouter>);
   expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument();
 });

@@ -54,7 +54,7 @@ describe('currentValueOf', () => {
 test("shows the selected skill's real XP, not 0", async () => {
   // Regression: the box read stats.experience, which does not exist, so it
   // showed 0 for every skill.
-  render(<CreateGoal player={{ wom_id: 1, name: 'roinrin' }} userId="u1" onGoalCreated={vi.fn()} onCancel={vi.fn()} />);
+  render(<CreateGoal player={{ wom_id: 1, name: 'moonfern' }} userId="u1" onGoalCreated={vi.fn()} onCancel={vi.fn()} />);
 
   await userEvent.selectOptions(screen.getByLabelText('metric'), 'runecrafting');
 

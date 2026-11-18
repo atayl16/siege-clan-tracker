@@ -34,7 +34,7 @@ vi.mock('../hooks/useUserGoals', () => ({
   useUserGoals: () => ({ userGoals: goals, publicGoals: goals, loading: false, error: null }),
 }));
 vi.mock('../hooks/useMembers', () => ({
-  useMembers: () => ({ members: [{ wom_id: 7, name: 'Roinrin' }] }),
+  useMembers: () => ({ members: [{ wom_id: 7, name: 'Moonfern' }] }),
 }));
 vi.mock('../components/CreateRace', () => ({ default: () => null }));
 
@@ -58,7 +58,7 @@ test('renders for a logged-out visitor and lists only public races', () => {
 test('shows public goals with the player name looked up from members', async () => {
   renderPage();
   await userEvent.click(screen.getByRole('button', { name: /Member Goals/ }));
-  expect(screen.getByText('Roinrin')).toBeInTheDocument();
+  expect(screen.getByText('Moonfern')).toBeInTheDocument();
   expect(screen.getByText('Runecrafting')).toBeInTheDocument();
 });
 

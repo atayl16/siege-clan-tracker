@@ -47,8 +47,8 @@ describe("TitleRaces", () => {
     hooks.races = {
       ...hooks.races,
       races: races({
-        clue_hunter: { top: rankTitle(clue, [row(1, "K aura", 32)]) },
-        warrior: { top: rankTitle(warrior, [row(2, "noon air", 6.1)]) },
+        clue_hunter: { top: rankTitle(clue, [row(1, "R ember", 32)]) },
+        warrior: { top: rankTitle(warrior, [row(2, "dusk owl", 6.1)]) },
       }),
     };
     render(<TitleRaces />);
@@ -64,7 +64,7 @@ describe("TitleRaces", () => {
 
   it("lists the top 3 with their badge, value and points, and the minimum", () => {
     const raider = titleById("raider");
-    const top = rankTitle(raider, [row(1, "1819 B", 17), row(2, "Hezz", 13), row(3, "elegant hobo", 9), row(4, "Sloth Bone", 9)]);
+    const top = rankTitle(raider, [row(1, "4402 K", 17), row(2, "Quill", 13), row(3, "gentle yak", 9), row(4, "Moss Crab", 9)]);
     hooks.races = { ...hooks.races, races: races({ raider: { top } }) };
     render(<TitleRaces />);
 
@@ -84,14 +84,14 @@ describe("TitleRaces", () => {
 
   it("lists only the players over the minimum when fewer than 3 are, with no filler", () => {
     const resurrected = titleById("resurrected");
-    const top = rankTitle(resurrected, [row(1, "IlZion", 310064), row(2, "resnesv2", 206444), row(3, "fgiml", 51000)]);
+    const top = rankTitle(resurrected, [row(1, "MoBeacon", 310064), row(2, "lunebrv2", 206444), row(3, "pwrnt", 51000)]);
     hooks.races = { ...hooks.races, races: races({ resurrected: { top } }) };
     render(<TitleRaces />);
 
     const card = screen.getByRole("region", { name: "The Resurrected race" });
     expect(within(card).getAllByRole("listitem").map((li) => li.querySelector(".title-race-name").textContent)).toEqual([
-      "IlZion",
-      "resnesv2",
+      "MoBeacon",
+      "lunebrv2",
     ]);
     expect(within(card).queryByText(/Nobody/)).not.toBeInTheDocument();
 
@@ -113,8 +113,8 @@ describe("TitleHolders", () => {
       error: undefined,
       byMember: new Map(),
       holders: [
-        { title: GAINER, players: [{ womId: 1, name: "FinPunisher", value: 16314915 }], week },
-        { title: titleById("warrior"), players: [{ womId: 2, name: "noon air", value: 8.47 }], week },
+        { title: GAINER, players: [{ womId: 1, name: "OakSmasher", value: 16314915 }], week },
+        { title: titleById("warrior"), players: [{ womId: 2, name: "dusk owl", value: 8.47 }], week },
         { title: titleById("raider"), players: [{ womId: 3, name: "A", value: 9 }, { womId: 4, name: "B", value: 9 }], week },
       ],
     };

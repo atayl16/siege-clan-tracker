@@ -20,9 +20,9 @@ This document tracks technical debt, code quality issues, and refactoring opport
   - Current version is `src/context/DataContext.js`
   - Verify no imports reference this file before deletion
 
-- **`scripts/import-legacy-player-data.js`** (if exists)
-  - One-time migration script no longer needed
-  - Already mentioned in TASKS.md
+- ~~**`scripts/import-legacy-player-data.js`**~~ Deleted 2026-11-18, with
+  `players-2025-04-22.csv`. A one-time migration script and an old member
+  export, both holding real members' names; nothing used either.
 
 - ~~**`scripts/update-siege-scores.js`**~~ Deleted 2026-11-17. It reset
   every member's Siege Score and wrote a hard-coded list of old-scale scores,
@@ -32,11 +32,9 @@ This document tracks technical debt, code quality issues, and refactoring opport
 ```bash
 # 1. Search for any imports
 grep -r "DataContext-OLD" src/
-grep -r "import-legacy-player-data" .
 
 # 2. If no results, safe to delete
 git rm src/context/DataContext-OLD.js
-git rm scripts/import-legacy-player-data.js
 ```
 
 ---

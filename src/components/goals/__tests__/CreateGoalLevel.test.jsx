@@ -43,7 +43,7 @@ beforeEach(() => {
 
 const renderForm = () =>
   render(
-    <CreateGoal player={{ wom_id: 7, name: 'roinrin' }} userId="u1" onGoalCreated={vi.fn()} onCancel={vi.fn()} />
+    <CreateGoal player={{ wom_id: 7, name: 'moonfern' }} userId="u1" onGoalCreated={vi.fn()} onCancel={vi.fn()} />
   );
 
 test('sets a skill goal by level: 81 Thieving to 85', async () => {

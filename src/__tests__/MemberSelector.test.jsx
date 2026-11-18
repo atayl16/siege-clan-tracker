@@ -4,11 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const members = [
-  { wom_id: 1, name: "Roinrin", wom_name: "roinrin", current_lvl: 2100, ehb: 120.7 },
-  { wom_id: 2, name: "Dan xo", wom_name: "dan xo", current_lvl: 1900, ehb: 40 },
-  { wom_id: 3, name: "ArtyTheBoog", wom_name: "artytheboog", current_lvl: 2376, ehb: 110 },
-  { wom_id: 4, name: "ArtyTheIron", wom_name: "artytheiron", current_lvl: 1614, ehb: 15 },
-  { wom_id: 5, name: "Smartypants", wom_name: "smartypants", current_lvl: 1500, ehb: 0 },
+  { wom_id: 1, name: "Moonfern", wom_name: "moonfern", current_lvl: 2100, ehb: 120.7 },
+  { wom_id: 2, name: "Ash ko", wom_name: "ash ko", current_lvl: 1900, ehb: 40 },
+  { wom_id: 3, name: "TobyTheBold", wom_name: "tobythebold", current_lvl: 2376, ehb: 110 },
+  { wom_id: 4, name: "TobyTheIron", wom_name: "tobytheiron", current_lvl: 1614, ehb: 15 },
+  { wom_id: 5, name: "Mrtobypants", wom_name: "mrtobypants", current_lvl: 1500, ehb: 0 },
 ];
 vi.mock("../hooks/useMembers", () => ({
   useMembers: () => ({ members, loading: false, error: null }),
@@ -22,15 +22,15 @@ describe("searchMembers", () => {
   });
 
   it("ranks names starting with the query before names containing it", () => {
-    expect(searchMembers(members, "arty").map((m) => m.name)).toEqual([
-      "ArtyTheBoog",
-      "ArtyTheIron",
-      "Smartypants",
+    expect(searchMembers(members, "toby").map((m) => m.name)).toEqual([
+      "TobyTheBold",
+      "TobyTheIron",
+      "Mrtobypants",
     ]);
   });
 
   it("caps the number of results", () => {
-    expect(searchMembers(members, "a", 2)).toHaveLength(2);
+    expect(searchMembers(members, "toby", 2)).toHaveLength(2);
   });
 });
 
@@ -44,18 +44,18 @@ describe("MemberSelector", () => {
     render(<MemberSelector onMemberSelect={onMemberSelect} />);
     fireEvent.focus(screen.getByRole("combobox"));
     expect(screen.queryByRole("listbox")).toBeNull();
-    expect(screen.queryByText("Roinrin")).toBeNull();
+    expect(screen.queryByText("Moonfern")).toBeNull();
   });
 
   it("shows matches as you type and picks one on click", async () => {
     render(<MemberSelector onMemberSelect={onMemberSelect} />);
-    await userEvent.type(screen.getByRole("combobox"), "arty");
+    await userEvent.type(screen.getByRole("combobox"), "toby");
 
     const options = screen.getAllByRole("option");
     expect(options.map((o) => o.textContent)).toEqual([
-      expect.stringContaining("ArtyTheBoog"),
-      expect.stringContaining("ArtyTheIron"),
-      expect.stringContaining("Smartypants"),
+      expect.stringContaining("TobyTheBold"),
+      expect.stringContaining("TobyTheIron"),
+      expect.stringContaining("Mrtobypants"),
     ]);
     fireEvent.mouseDown(options[1]);
     expect(onMemberSelect).toHaveBeenCalledWith(members[3]);
@@ -69,7 +69,7 @@ describe("MemberSelector", () => {
       </form>
     );
     const input = screen.getByRole("combobox");
-    await userEvent.type(input, "arty");
+    await userEvent.type(input, "toby");
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });
 
@@ -85,7 +85,7 @@ describe("MemberSelector", () => {
 
   it("shows the chosen member on one line, and Change reopens the search", async () => {
     render(<MemberSelector onMemberSelect={onMemberSelect} selectedMemberId={1} />);
-    expect(screen.getByText("Roinrin")).toBeInTheDocument();
+    expect(screen.getByText("Moonfern")).toBeInTheDocument();
     expect(screen.getByText("Lvl 2100")).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).toBeNull();
 

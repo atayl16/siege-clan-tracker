@@ -4,7 +4,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { renameUser, validateUsername, RenameError, RenameStepError } = require('../utils/renameUser.cjs');
 
-const AUTH_USER = { id: 'auth-1', email: 'roin@example.com' };
+const AUTH_USER = { id: 'auth-1', email: 'moon@example.com' };
 
 /**
  * A stand-in for the service-role client. `users` is the table; every query
@@ -52,15 +52,15 @@ function fakeSupabase({ users, authUpdateError = null, rowUpdateError = null }) 
 }
 
 const users = () => [
-  { id: 'auth-1', supabase_auth_id: 'auth-1', username: 'roin' },
+  { id: 'auth-1', supabase_auth_id: 'auth-1', username: 'moon' },
   { id: 'u-2', supabase_auth_id: 'auth-2', username: 'dan' },
 ];
 
 describe('validateUsername', () => {
-  it.each(['abc', 'roin_rin', 'r.o-n9', 'a'.repeat(24)])('accepts %s', (name) => {
+  it.each(['abc', 'moon_fern', 'r.o-n9', 'a'.repeat(24)])('accepts %s', (name) => {
     expect(validateUsername(name)).toBeNull();
   });
-  it.each(['ab', 'a'.repeat(25), 'has space', '_lead', 'trail-', 'ümlaut', 'semi;colon'])(
+  it.each(['ab', 'a'.repeat(25), 'has space', '_lead', 'trail-', 'ümlaut', 'semi;colon', 'two..dots'])(
     'rejects %s',
     (name) => {
       expect(validateUsername(name)).not.toBeNull();
@@ -86,14 +86,23 @@ describe('renameUser', () => {
     ]);
   });
 
+  it('stores a name typed with a space with an underscore instead', async () => {
+    const result = await renameUser({ supabase, authUser: AUTH_USER, newUsername: 'Test user' });
+
+    expect(result).toEqual({ username: 'test_user' });
+    expect(supabase.calls.authUpdates).toEqual([
+      { id: 'auth-1', email: 'test_user@example.com', email_confirm: true },
+    ]);
+  });
+
   it('finds an account linked through supabase_auth_id', async () => {
     await renameUser({ supabase, authUser: { id: 'auth-2', email: 'dan@example.com' }, newUsername: 'danny' });
     expect(supabase.calls.rowUpdates[0].filters).toEqual([['id', 'u-2']]);
   });
 
   it.each([
-    ['an invalid name', 'no spaces', 400],
-    ['the current name', 'roin', 400],
+    ['an invalid name', 'semi;colon', 400],
+    ['the current name', 'moon', 400],
     ['a name another user has', 'dan', 409],
     ['the reserved name admin', 'Admin', 400],
   ])('refuses %s without changing anything', async (_label, newUsername, status) => {
@@ -142,7 +151,7 @@ describe('renameUser', () => {
       users: users(),
       authUpdateError: { status: 422, code: 'email_exists', message: 'Unprocessable' },
     });
-    const err = await renameUser({ supabase, authUser: AUTH_USER, newUsername: 'roinrin' }).catch((e) => e);
+    const err = await renameUser({ supabase, authUser: AUTH_USER, newUsername: 'moonfern' }).catch((e) => e);
     expect(err).toBeInstanceOf(RenameError);
     expect(err.statusCode).toBe(409);
   });
@@ -154,7 +163,7 @@ describe('renameUser', () => {
     expect(err.statusCode).toBe(409);
     expect(supabase.calls.authUpdates).toEqual([
       { id: 'auth-1', email: 'racer@example.com', email_confirm: true },
-      { id: 'auth-1', email: 'roin@example.com', email_confirm: true },
+      { id: 'auth-1', email: 'moon@example.com', email_confirm: true },
     ]);
   });
 

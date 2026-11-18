@@ -2,22 +2,22 @@ import { describe, it, expect } from 'vitest';
 import { filterGoals, filterRaces, goalProgress, sortGoals } from '../boardFilters';
 
 const g = (id, overrides = {}) => ({
-  id, goal_type: 'skill', metric: 'sailing', player_name: 'Roinrin',
+  id, goal_type: 'skill', metric: 'sailing', player_name: 'Moonfern',
   start_value: 0, current_value: 0, target_value: 100, completed: false, ...overrides,
 });
 
 describe('filterGoals', () => {
   const goals = [
-    g('a', { player_name: 'Dan_xo', metric: 'sailing' }),
+    g('a', { player_name: 'Ash_ko', metric: 'sailing' }),
     g('b', { goal_type: 'boss', metric: 'chambers_of_xeric' }),
     g('c', { completed: true, metric: 'runecrafting' }),
   ];
   const ids = (list) => list.map((goal) => goal.id);
 
   it('searches the character and the skill or boss, underscores as spaces', () => {
-    expect(ids(filterGoals(goals, { query: 'dan xo' }))).toEqual(['a']);
+    expect(ids(filterGoals(goals, { query: 'ash ko' }))).toEqual(['a']);
     expect(ids(filterGoals(goals, { query: 'Chambers of' }))).toEqual(['b']);
-    expect(ids(filterGoals(goals, { query: 'roinrin' }))).toEqual(['b', 'c']);
+    expect(ids(filterGoals(goals, { query: 'moonfern' }))).toEqual(['b', 'c']);
     expect(ids(filterGoals(goals, { query: '  ' }))).toEqual(['a', 'b', 'c']);
   });
 
@@ -68,8 +68,8 @@ describe('goalProgress', () => {
 
 describe('filterRaces', () => {
   const races = [
-    { id: 'r1', title: 'Sailing sprint', status: 'active', participants: [{ player_name: 'Dan_xo', metric: 'sailing' }] },
-    { id: 'r2', title: 'Zulrah week', status: 'completed', description: 'Most kills', participants: [{ player_name: 'Roinrin', metric: 'zulrah' }] },
+    { id: 'r1', title: 'Sailing sprint', status: 'active', participants: [{ player_name: 'Ash_ko', metric: 'sailing' }] },
+    { id: 'r2', title: 'Zulrah week', status: 'completed', description: 'Most kills', participants: [{ player_name: 'Moonfern', metric: 'zulrah' }] },
     { id: 'r3', title: 'Old race', participants: [] },
   ];
   const ids = (list) => list.map((race) => race.id);
@@ -77,7 +77,7 @@ describe('filterRaces', () => {
   it('searches the title, description, racers and skills', () => {
     expect(ids(filterRaces(races, { query: 'sprint' }))).toEqual(['r1']);
     expect(ids(filterRaces(races, { query: 'most kills' }))).toEqual(['r2']);
-    expect(ids(filterRaces(races, { query: 'dan xo' }))).toEqual(['r1']);
+    expect(ids(filterRaces(races, { query: 'ash ko' }))).toEqual(['r1']);
     expect(ids(filterRaces(races, { query: 'zulrah' }))).toEqual(['r2']);
   });
 

@@ -23,11 +23,11 @@ describe("Login", () => {
   it("signs in and goes to the profile", async () => {
     login.mockResolvedValue({ success: true, isAdmin: false });
     inRouter(<Login />);
-    await userEvent.type(screen.getByLabelText(/username/i), "roinrin");
+    await userEvent.type(screen.getByLabelText(/username/i), "moonfern");
     await userEvent.type(screen.getByLabelText(/password/i), "secret-pass");
     await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
-    expect(login).toHaveBeenCalledWith("roinrin", "secret-pass");
+    expect(login).toHaveBeenCalledWith("moonfern", "secret-pass");
     expect(navigate).toHaveBeenCalledWith("/profile");
   });
 

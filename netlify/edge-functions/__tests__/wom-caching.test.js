@@ -29,7 +29,7 @@ const call = (name) =>
 // wom-player-events needs a username from its first call; everything else
 // just needs a JSON body.
 const ok = () =>
-  new Response(JSON.stringify({ username: 'roinrin', id: 1234 }), { status: 200 });
+  new Response(JSON.stringify({ username: 'moonfern', id: 1234 }), { status: 200 });
 
 const names = Object.keys(modules);
 

@@ -3,7 +3,7 @@
  * board is already loaded, so these run in the browser on each change.
  */
 
-// "dan_xo" and "chambers_of_xeric" match "dan xo" and "chambers of".
+// "ash_ko" and "chambers_of_xeric" match "ash ko" and "chambers of".
 const normalise = (value) => String(value ?? "").toLowerCase().replace(/_/g, " ");
 
 const matches = (query, ...fields) => {

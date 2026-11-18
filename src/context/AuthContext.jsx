@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
+import { normaliseUsername, signupUsernameProblem } from "../utils/username";
 
 const AuthContext = createContext();
 
@@ -131,11 +132,13 @@ export function AuthProvider({ children }) {
         return { success: true, isAdmin: true };
       }
   
-      // If not hardcoded admin, try regular user login
+      // If not hardcoded admin, try regular user login. "Test user" signs in
+      // to the account stored as "test_user" (see utils/username.js).
+      const name = normaliseUsername(username);
       const { data, error } = await supabase
         .from("users")
         .select("*")
-        .eq("username", username.trim().toLowerCase())
+        .eq("username", name)
         .single();
   
       if (error) {
@@ -147,7 +150,7 @@ export function AuthProvider({ children }) {
       if (data.password_hash === inputPasswordHash) {
         // CRITICAL: Create a proper Supabase session
         const { error: authError } = await supabase.auth.signInWithPassword({
-          email: `${username.trim().toLowerCase()}@example.com`,
+          email: `${name}@example.com`,
           password: password
         });
         
@@ -329,12 +332,18 @@ export function AuthProvider({ children }) {
 
   // Register a new user
   const register = async (username, password) => {
+    // Spaces become underscores: the name is also the auth email's local
+    // part, which cannot hold a space (see utils/username.js).
+    const name = normaliseUsername(username);
+    const problem = signupUsernameProblem(name);
+    if (problem) return { error: problem };
+
     try {
       // Check if username already exists
       const { data: existingUser } = await supabase
         .from("users")
         .select("id")
-        .eq("username", username.trim().toLowerCase())
+        .eq("username", name)
         .single();
   
       if (existingUser) {
@@ -343,7 +352,7 @@ export function AuthProvider({ children }) {
   
       // First create the user in auth system
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username.trim().toLowerCase()}@example.com`,
+        email: `${name}@example.com`,
         password: password,
       });
   
@@ -361,7 +370,7 @@ export function AuthProvider({ children }) {
         .insert([
           {
             id: authData.user.id,
-            username: username.trim().toLowerCase(),
+            username: name,
             password_hash: passwordHash,
             // Links the row to the auth account. validateAuth() in
             // netlify/functions/utils/adminHelpers.cjs looks admins up by this
@@ -384,7 +393,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("userId", authData.user.id);
       localStorage.setItem("user", JSON.stringify({
         id: authData.user.id,
-        username: username.trim().toLowerCase(),
+        username: name,
         is_admin: false,
         created_at: created_at,
         join_date: created_at,
@@ -392,7 +401,7 @@ export function AuthProvider({ children }) {
       
       setUser({
         id: authData.user.id,
-        username: username.trim().toLowerCase(),
+        username: name,
         is_admin: false,
         created_at: created_at,
         join_date: created_at,

@@ -108,7 +108,7 @@ describe("rankXpGains", () => {
   });
 
   it("uses the display name", () => {
-    expect(rankXpGains([row(1, 10, "Dan xo")])[0].name).toBe("Dan xo");
+    expect(rankXpGains([row(1, 10, "Ash ko")])[0].name).toBe("Ash ko");
   });
 
   it("copes with no data", () => {

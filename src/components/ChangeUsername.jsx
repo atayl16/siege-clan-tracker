@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
+import { normaliseUsername, usernameProblem } from "../utils/username";
 import "./ChangeUsername.css";
 
-// Same rule as netlify/functions/utils/renameUser.cjs, which is what enforces
-// it; checked here only to give a quick answer before the request.
-const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,22})[a-z0-9]$/;
-
-export function usernameProblem(name) {
-  if (name.length < 3 || name.length > 24) return "Usernames must be 3 to 24 characters.";
-  if (!USERNAME_PATTERN.test(name)) {
-    return "Use only letters, numbers, dots, dashes and underscores, starting and ending with a letter or number.";
-  }
-  return null;
-}
+// netlify/functions/utils/renameUser.cjs enforces the same rule; it is
+// checked here only to give a quick answer before the request.
+export { usernameProblem };
 
 /**
  * Lets a member change their username, e.g. if they used their real name.
@@ -32,7 +25,7 @@ export default function ChangeUsername({ currentUsername, onRenamed }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    const name = value.trim().toLowerCase();
+    const name = normaliseUsername(value);
     const problem = name === currentUsername ? "That is already your username." : usernameProblem(name);
     if (problem) {
       setError(problem);
@@ -82,7 +75,7 @@ export default function ChangeUsername({ currentUsername, onRenamed }) {
         onChange={(e) => setValue(e.target.value)}
         autoComplete="username"
         autoFocus
-        maxLength={24}
+        maxLength={64}
       />
       <p className="change-username-hint">
         You'll log in with this name from now on. Your password stays the same.
