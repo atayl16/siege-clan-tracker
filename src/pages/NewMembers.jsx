@@ -9,6 +9,7 @@ import {
   FaHandshake,
 } from "react-icons/fa";
 import Button from "../components/ui/Button";
+import UsingTheSite from "../components/UsingTheSite";
 import clanVideo from "../assets/videos/VT-986_OSRS_Video.mp4";
 import "./NewMembers.css";
 
@@ -98,6 +99,8 @@ export default function NewMembers() {
           </div>
         </div>
       </div>
+
+      <UsingTheSite />
 
       {/* Level Requirements Section */}
       <div className="nm-section-container">
