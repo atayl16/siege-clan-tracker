@@ -5,23 +5,111 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
+
+    <!--
+      What search engines and link previews (Discord, Reddit, etc.) show.
+      These are for the home page; src/components/PageMeta.jsx changes the
+      title, description and canonical link for each page once the app runs.
+    -->
+    <title>Siege | Old School RuneScape Clan, Recruiting | W517</title>
     <meta
       name="description"
-      content="Siege Clan Tracker - Track RuneScape clan activities and player stats"
+      content="Siege is a friendly, active Old School RuneScape (OSRS) clan. Clan chat Siege, home world 517. Skillers, ironmen and PvMers welcome, with weekly competitions, events and PvM bingo."
     />
+    <link rel="canonical" href="https://www.siege-clan.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Siege OSRS Clan" />
+    <meta property="og:title" content="Siege | Old School RuneScape Clan, Recruiting" />
+    <meta
+      property="og:description"
+      content="A friendly, active OSRS clan. Clan chat Siege, home world 517. Skillers, ironmen and PvMers welcome."
+    />
+    <meta property="og:url" content="https://www.siege-clan.com/" />
+    <meta property="og:image" content="https://www.siege-clan.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Siege clan logo" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.siege-clan.com/#clan",
+            "name": "Siege",
+            "alternateName": "Siege OSRS Clan",
+            "url": "https://www.siege-clan.com/",
+            "logo": "https://www.siege-clan.com/logo512.png",
+            "description": "A friendly, active Old School RuneScape clan, founded on 23 April 2023.",
+            "foundingDate": "2023-04-23",
+            "sameAs": ["https://discord.gg/TqFpRD4vNv"]
+          },
+          {
+            "@type": "WebSite",
+            "name": "Siege OSRS Clan",
+            "url": "https://www.siege-clan.com/",
+            "publisher": { "@id": "https://www.siege-clan.com/#clan" }
+          }
+        ]
+      }
+    </script>
+
     <link rel="apple-touch-icon" href="/logo192.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
     <link rel="manifest" href="/manifest.json" />
-    <title>Siege Clan Tracker</title>
+
+    <!-- Styles for the loading screen below, shown until the app replaces it. -->
+    <style>
+      body { margin: 0; background: #121212; }
+      .boot { max-width: 720px; margin: 0 auto; padding: 15vh 24px 48px; color: #ccc;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.6; }
+      .boot h1 { color: #ff9800; font-size: 2rem; margin: 0 0 0.5rem; }
+      .boot h2 { color: #e0e0e0; font-size: 1.1rem; margin: 1.5rem 0 0.25rem; }
+      .boot p, .boot li { margin: 0.25rem 0; }
+      .boot a { color: #2196f3; }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <!--
+      The app replaces everything inside #root when it starts, so this shows
+      only for a moment while it loads. It is also what search engines and
+      link previews that do not run JavaScript read: keep it true to the home
+      page (src/pages/NewMembers.jsx).
+    -->
+    <div id="root">
+      <main class="boot">
+        <h1>Siege: an Old School RuneScape clan</h1>
+        <p>
+          A friendly and active OSRS clan, founded on 23 April 2023. Our clan chat stays busy all day,
+          with members right across the continent, and there is always something going on: events,
+          competitions and PvM bingo.
+        </p>
+        <h2>Join us</h2>
+        <ul>
+          <li>Clan chat: <strong>Siege</strong>. Join as a guest, everyone is welcome.</li>
+          <li>Home world: <strong>517</strong></li>
+          <li>Discord: <a href="https://discord.gg/TqFpRD4vNv">join our community</a></li>
+        </ul>
+        <h2>Minimum levels</h2>
+        <ul>
+          <li>Skillers: total level 400+</li>
+          <li>Ironman accounts: total level 600+</li>
+          <li>Regular accounts: total level 1750+</li>
+        </ul>
+        <p>
+          On this site: the member list, events, the leaderboard and Siege Score, weekly titles, boss
+          kills, races and goals.
+        </p>
+      </main>
+    </div>
     <!-- Vite entry point script -->
     <script type="module" src="/src/index.jsx"></script>
   </body>
 </html>
-

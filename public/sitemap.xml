@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The public pages, for search engines. Keep in step with the routes in
+  src/App.jsx and the page list in src/components/PageMeta.jsx.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.siege-clan.com/</loc></url>
+  <url><loc>https://www.siege-clan.com/members</loc></url>
+  <url><loc>https://www.siege-clan.com/events</loc></url>
+  <url><loc>https://www.siege-clan.com/leaderboard</loc></url>
+  <url><loc>https://www.siege-clan.com/bosses</loc></url>
+  <url><loc>https://www.siege-clan.com/stats</loc></url>
+  <url><loc>https://www.siege-clan.com/achievements</loc></url>
+  <url><loc>https://www.siege-clan.com/progress</loc></url>
+  <url><loc>https://www.siege-clan.com/register</loc></url>
+</urlset>
