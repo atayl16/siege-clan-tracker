@@ -3,17 +3,20 @@ import { supabase } from "../supabaseClient";
 import { formatDate } from "../utils/dates";
 import { ordinal } from "../utils/xpWeek";
 import { titleById } from "../utils/weeklyTitles";
+import { fetchLastReset } from "../hooks/useSiegeScoreReset";
 import "./SiegeScoreBreakdown.css";
 
 const RECENT_SHOWN = 8;
 
 /**
- * Where a character's Siege Score came from: competitions, weekly XP and
- * weekly titles, from the award tables (all public read). Points staff add
- * by hand are not recorded anywhere, so whatever the awards do not account
- * for shows as "Added by staff".
+ * Where a character's Siege Score came from since scores were last reset:
+ * competitions, weekly XP and weekly titles, from the award tables (all
+ * public read). Whatever the awards do not account for (points staff add or
+ * remove, edits) shows as "Other changes", plus or minus, so the lines always
+ * add up to the score.
  *
- * Loads nothing until opened: three small queries for this one character.
+ * Loads nothing until opened: the last reset, then three small queries for
+ * this one character.
  *
  * @param {object} props
  * @param {number} props.womId
@@ -21,17 +24,18 @@ const RECENT_SHOWN = 8;
  */
 export default function SiegeScoreBreakdown({ womId, total }) {
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState({ loading: false, error: null, awards: null });
+  const [state, setState] = useState({ loading: false, error: null, awards: null, since: null });
 
   const load = async () => {
     setOpen(true);
     if (state.awards || state.loading) return;
-    setState({ loading: true, error: null, awards: null });
+    setState({ loading: true, error: null, awards: null, since: null });
     try {
-      setState({ loading: false, error: null, awards: await fetchAwards(womId) });
+      const since = await fetchLastReset();
+      setState({ loading: false, error: null, awards: await fetchAwards(womId, since), since });
     } catch (err) {
       console.error("Could not load the Siege Score breakdown:", err);
-      setState({ loading: false, error: err, awards: null });
+      setState({ loading: false, error: err, awards: null, since: null });
     }
   };
 
@@ -57,17 +61,20 @@ export default function SiegeScoreBreakdown({ womId, total }) {
           Could not load the breakdown. Try again later.
         </p>
       )}
-      {state.awards && <Breakdown awards={state.awards} total={total} />}
+      {state.awards && <Breakdown awards={state.awards} total={total} since={state.since} />}
     </section>
   );
 }
 
+const signed = (n) => `${n > 0 ? "+" : "\u2212"}${Math.abs(n).toLocaleString()}`;
+
 /** Totals by source, then the most recent awards. */
-export function Breakdown({ awards, total }) {
+export function Breakdown({ awards, total, since = null }) {
   const sum = (kind) => awards.filter((a) => a.kind === kind).reduce((n, a) => n + a.points, 0);
   const count = (kind) => awards.filter((a) => a.kind === kind).length;
   const recorded = awards.reduce((n, a) => n + a.points, 0);
-  const byStaff = Math.max(0, (Number(total) || 0) - recorded);
+  // Can be negative: points removed, or an award overwritten by an edit.
+  const other = (Number(total) || 0) - recorded;
   const sources = [
     ["Competitions", sum("event"), count("event")],
     ["Weekly XP (The Gainer)", sum("xp"), count("xp")],
@@ -75,12 +82,20 @@ export function Breakdown({ awards, total }) {
   ].filter(([, points]) => points > 0);
   const recent = [...awards].sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, RECENT_SHOWN);
 
-  if (!sources.length && !byStaff) {
-    return <p className="ssb-note">No Siege Score yet. Take part in a competition or a weekly race to earn some.</p>;
+  const sinceNote = since && <p className="ssb-note">Since scores were last reset on {formatDate(since)}.</p>;
+
+  if (!sources.length && !other) {
+    return (
+      <>
+        {sinceNote}
+        <p className="ssb-note">No Siege Score yet. Take part in a competition or a weekly race to earn some.</p>
+      </>
+    );
   }
 
   return (
     <>
+      {sinceNote}
       <ul className="ssb-sources">
         {sources.map(([label, points, n]) => (
           <li key={label}>
@@ -90,10 +105,10 @@ export function Breakdown({ awards, total }) {
             <b>{points.toLocaleString()}</b>
           </li>
         ))}
-        {byStaff > 0 && (
+        {other !== 0 && (
           <li>
-            <span>Added by staff</span>
-            <b>{byStaff.toLocaleString()}</b>
+            <span title="Points added or removed by staff, or edited, with no award behind them">Other changes</span>
+            <b>{signed(other)}</b>
           </li>
         )}
       </ul>
@@ -116,23 +131,30 @@ export function Breakdown({ awards, total }) {
 }
 
 /**
- * The character's awards as { kind, id, date, label, points }, points > 0.
+ * The character's awards as { kind, id, date, label, points }, points > 0,
+ * since `since` (the last reset) when given. A competition counts by when it
+ * ended, a weekly award by its week's end: the points arrive then.
  * @param {number} womId
+ * @param {string|null} [since] - ISO timestamp
  */
-export async function fetchAwards(womId) {
-  const [events, xp, titles] = await Promise.all([
-    supabase
-      .from("event_results")
-      .select("id, placement, points_awarded, created_at, events(name, end_date)")
-      .eq("wom_id", womId)
-      .gt("points_awarded", 0),
-    supabase.from("xp_awards").select("id, placement, points_awarded, week_end").eq("wom_id", womId).gt("points_awarded", 0),
-    supabase
-      .from("weekly_title_awards")
-      .select("id, title, placement, points_awarded, week_end")
-      .eq("wom_id", womId)
-      .gt("points_awarded", 0),
-  ]);
+export async function fetchAwards(womId, since = null) {
+  let events = supabase
+    .from("event_results")
+    .select(`id, placement, points_awarded, created_at, events${since ? "!inner" : ""}(name, end_date)`)
+    .eq("wom_id", womId)
+    .gt("points_awarded", 0);
+  let xp = supabase.from("xp_awards").select("id, placement, points_awarded, week_end").eq("wom_id", womId).gt("points_awarded", 0);
+  let titles = supabase
+    .from("weekly_title_awards")
+    .select("id, title, placement, points_awarded, week_end")
+    .eq("wom_id", womId)
+    .gt("points_awarded", 0);
+  if (since) {
+    events = events.gt("events.end_date", since);
+    xp = xp.gt("week_end", since);
+    titles = titles.gt("week_end", since);
+  }
+  [events, xp, titles] = await Promise.all([events, xp, titles]);
   for (const r of [events, xp, titles]) if (r.error) throw r.error;
 
   return [

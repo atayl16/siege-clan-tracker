@@ -27,7 +27,7 @@ export default function AdminMemberTable({
   const {
     group,
     loading: womLoading,
-    updateMember,
+    addSiegePoints,
     toggleMemberVisibility,
     refreshWomData,
   } = useData();
@@ -141,22 +141,9 @@ export default function AdminMemberTable({
   
       setRefreshing(`score-${member.wom_id}`);
       
-      // Parse the current score with better error handling
-      const currentScore = parseInt(member.siege_score) || 0;
-      const newScore = currentScore + pointValue;
-      
-      console.log("Updating score:", {
-        memberId: member.wom_id,
-        name: member.name,
-        currentScore,
-        pointValue,
-        newScore
-      });
-  
-      await updateMember({
-        wom_id: member.wom_id,
-        siege_score: newScore,
-      });
+      // Added at the database, not as "this page's score + points": a page
+      // loaded before an award would otherwise write the old score back.
+      await addSiegePoints(member.wom_id, pointValue);
   
       // Show success message
       const successToast = document.createElement("div");

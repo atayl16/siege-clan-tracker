@@ -298,6 +298,40 @@ export function useMembers() {
     }
   };
 
+  // POST to an admin function with the admin's session, returning its JSON.
+  const callAdmin = async (name, body) => {
+    const authHeaders = await getAuthHeaders();
+    const response = await fetch(`/.netlify/functions/${name}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(body ?? {}),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || `${name} failed (${response.status})`);
+    return result;
+  };
+
+  /**
+   * Reset every member's Siege Score to 0 (former and hidden members too)
+   * and record the reset, in one call. Returns how many scores were reset.
+   */
+  const resetSiegeScores = async () => {
+    const { resetCount } = await callAdmin('admin-reset-siege-scores');
+    await fetchMembers();
+    return resetCount;
+  };
+
+  /**
+   * Add points to one member's Siege Score, at the database, so this page's
+   * copy of the score cannot overwrite an award made since it loaded.
+   * Returns the new score.
+   */
+  const addSiegePoints = async (womId, points) => {
+    const { siegeScore } = await callAdmin('admin-add-siege-points', { memberId: womId, points });
+    await fetchMembers();
+    return siegeScore;
+  };
+
   // Initial fetch of members
   useEffect(() => {
     fetchMembers();
@@ -313,6 +347,8 @@ export function useMembers() {
     deleteMember,
     whitelistRunewatchMember,
     toggleMemberVisibility,
-    changeMemberRank
+    changeMemberRank,
+    resetSiegeScores,
+    addSiegePoints,
   };
 }
