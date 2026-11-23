@@ -11,7 +11,6 @@ import {
 
 // Import UI components
 import Button from "../ui/Button";
-import StatGroup from "../ui/StatGroup";
 
 import LoadError from "../ui/LoadError";
 
@@ -47,6 +46,30 @@ export default function Competitions() {
     );
   }, [events, searchTerm]);
 
+  // "3 active · 233 completed": one line beside the search box. Three big
+  // counters here took about 170px above the list of events.
+  const summary = useMemo(() => {
+    if (!events || eventsLoading || eventsError) return "";
+    const now = new Date();
+    let active = 0;
+    let upcoming = 0;
+    let completed = 0;
+    for (const e of events) {
+      const start = new Date(e.start_date);
+      const end = new Date(e.end_date);
+      if (start > now) upcoming += 1;
+      else if (end < now) completed += 1;
+      else if (start <= now && end >= now) active += 1;
+    }
+    return [
+      `${active} active`,
+      upcoming > 0 && `${upcoming} upcoming`,
+      `${completed} completed`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }, [events, eventsLoading, eventsError]);
+
   return (
     <>
       {eventsLoading && (
@@ -61,6 +84,7 @@ export default function Competitions() {
       )}
 
       <div className="events-tab-toolbar">
+        {summary && <p className="events-summary">{summary}</p>}
         <div className="event-filters-container">
           <div className="event-search-input-wrapper">
             <FaSearch className="event-search-icon" />
@@ -84,7 +108,28 @@ export default function Competitions() {
         </div>
       </div>
 
-      {/* Event Types Info Section */}
+      <div className="ui-section-container">
+        <EventsTable
+          events={filteredEvents}
+          activeLimit={showAllEvents ? null : 10}
+          upcomingLimit={showAllEvents ? null : 6}
+          completedLimit={showAllEvents ? null : 5}
+          loading={eventsLoading}
+          searchTerm={searchTerm}
+        />
+      </div>
+
+      <div className="ui-button-center">
+        <Button
+          variant="secondary"
+          onClick={() => setShowAllEvents(!showAllEvents)}
+        >
+          {showAllEvents ? "Show Less" : "Show All Events"}
+        </Button>
+      </div>
+
+      {/* What each kind of event is. Below the list: people come here for
+          this week's events, and this is reading for newer members. */}
       <div className="ui-section-container event-info-container">
         <div
           className="event-info-header"
@@ -145,57 +190,6 @@ export default function Competitions() {
             </div>
           </div>
         )}
-      </div>
-
-      <StatGroup className="event-summary">
-        <StatGroup.Stat
-          label="Active"
-          value={
-            !events
-              ? 0
-              : events.filter(
-                  (e) =>
-                    new Date(e.start_date) <= new Date() &&
-                    new Date(e.end_date) >= new Date()
-                ).length
-          }
-        />
-        <StatGroup.Stat
-          label="Upcoming"
-          value={
-            !events
-              ? 0
-              : events.filter((e) => new Date(e.start_date) > new Date()).length
-          }
-        />
-        <StatGroup.Stat
-          label="Completed"
-          value={
-            !events
-              ? 0
-              : events.filter((e) => new Date(e.end_date) < new Date()).length
-          }
-        />
-      </StatGroup>
-
-      <div className="ui-section-container">
-        <EventsTable
-          events={filteredEvents}
-          activeLimit={showAllEvents ? null : 10}
-          upcomingLimit={showAllEvents ? null : 6}
-          completedLimit={showAllEvents ? null : 5}
-          loading={eventsLoading}
-          searchTerm={searchTerm}
-        />
-      </div>
-
-      <div className="ui-button-center">
-        <Button
-          variant="secondary"
-          onClick={() => setShowAllEvents(!showAllEvents)}
-        >
-          {showAllEvents ? "Show Less" : "Show All Events"}
-        </Button>
       </div>
     </>
   );

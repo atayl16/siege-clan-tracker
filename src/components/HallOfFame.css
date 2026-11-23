@@ -172,6 +172,19 @@
   color: #aaa;
 }
 
+/* The table's own background variables aren't defined, so it relied on the
+   tab's grey panel. That panel is gone; give the table a card like the
+   Leaderboard's other lists. */
 .hof-tables .boss-stats-wrapper {
   margin-top: 0;
+  background-color: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 0.5rem 1.25rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .hof-tables .boss-stats-wrapper {
+    padding: 0.25rem 0.5rem;
+  }
 }

@@ -26,11 +26,12 @@ export default function MembersPage() {
 
   return (
     <div className="ui-page-container">
-      <div className="ui-content-header">
-        <h2>Clan Members</h2>
-      </div>
-
-      <Tabs activeTab={tab} onChange={setTab} className="members-tabs">
+      <Tabs
+        heading="Clan Members"
+        activeTab={tab}
+        onChange={setTab}
+        className="members-tabs"
+      >
         <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
           <MembersList />
         </Tabs.Tab>

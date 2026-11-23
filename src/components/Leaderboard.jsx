@@ -134,9 +134,6 @@ export default function SiegeLeaderboard({
     <div className={`ui-leaderboard ${className}`}>
       {showTitle && <h2 className="ui-leaderboard-title">{displayTitle}</h2>}
 
-      {/* Scores are reset every few months; say since when. */}
-      {type === "score" && <SiegeScoreSince className="ui-leaderboard-since" />}
-
       <div className="ui-leaderboard-table-container">
         <table className="ui-leaderboard-table">
           <thead>
@@ -180,6 +177,9 @@ export default function SiegeLeaderboard({
           </tbody>
         </table>
       </div>
+
+      {/* Scores are reset every few months; say since when, under the list. */}
+      {type === "score" && <SiegeScoreSince className="ui-leaderboard-since" />}
     </div>
   );
 }

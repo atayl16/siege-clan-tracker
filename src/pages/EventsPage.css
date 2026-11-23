@@ -96,11 +96,6 @@
   color: var(--color-text, #e0e0e0);
 }
 
-/* EVENTS SUMMARY STATS - Component specific */
-.event-summary {
-  margin-bottom: 1.5625rem;
-}
-
 /* SECTION CONTAINER - Shared UI class */
 .ui-section-container {
   background-color: #222;
@@ -302,11 +297,33 @@
   }
 }
 
-/* Competitions tab: the search sits on its own row above the event list. */
+/* Competitions tab: the event counts on the left, the search on the right,
+   above the event list. */
 .events-tab-toolbar {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
   margin-bottom: 1rem;
+}
+
+/* "3 active · 233 completed", left of the search box. */
+.events-summary {
+  margin: 0;
+  color: var(--color-text-secondary, #aaa);
+  font-size: 0.95rem;
+}
+
+/* The search box stays on the right while there is no summary to show. */
+.events-tab-toolbar .event-filters-container {
+  margin-left: auto;
+}
+
+/* About Our Events sits below the list and its Show All button. */
+.events-tabs .event-info-container {
+  margin-top: 1.5rem;
+  margin-bottom: 0;
 }
 
 /* The race and goal grids start right under their filters. */

@@ -8,7 +8,7 @@
   display: flex;
   gap: 0.625rem; /* 10px */
   border-bottom: 1px solid #444;
-  margin-bottom: 1.875rem; /* 30px */
+  margin-bottom: 1rem;
   overflow-x: auto;
 }
 
@@ -63,11 +63,10 @@
   width: 100%;
 }
 
+/* No panel of its own: tab content is cards and tables that have their own
+   background. A grey panel here, the same grey as those cards, made a box
+   inside a box and added 25px on every side. */
 .ui-tab-pane {
-  background-color: #222;
-  border-radius: 0.5rem; /* 8px */
-  padding: 1.5625rem; /* 25px */
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2); /* 0 4px 12px */
   display: none;
 }
 
@@ -127,6 +126,11 @@
   align-items: center;
   gap: 0.5rem;
   position: relative;
+}
+
+/* Shorter tabs: 44px rather than 58px. */
+.ui-tab {
+  padding: 0.75rem 1rem;
 }
 
 .ui-tab:hover {
@@ -194,5 +198,38 @@
   
   .ui-tab-content {
     padding: 1rem;
+  }
+}
+
+/* A page title on the tab row (the heading prop): title, then the tabs, with
+   one line under both. When the row is too narrow the tabs wrap below the
+   title. */
+.ui-tabs-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 1.5rem;
+  border-bottom: 1px solid #444;
+  margin-bottom: 1rem;
+}
+
+.ui-tabs-header .ui-tabs-nav {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.ui-tabs-heading {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-orange, #ff9800);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ui-tabs-heading {
+    font-size: 1.3rem;
+    padding: 0.25rem 0;
   }
 }
