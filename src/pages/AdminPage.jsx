@@ -335,12 +335,6 @@ export default function AdminPage() {
 
   return (
     <div className="admin-dashboard">
-      <div className="dashboard-header">
-        <h1>Clan Administration</h1>
-        <div className="admin-actions">
-        </div>
-      </div>
-
       {notification && (
         <div
           className={`ui-notification ${
@@ -435,7 +429,10 @@ export default function AdminPage() {
       </Modal>
 
       {/* Admin Tabs - Simplified to only include Alerts, Members, and Events */}
+      {/* The title shares the tab row, and no tab repeats its own name as a
+          heading, so the tables start near the top of the screen. */}
       <Tabs
+        heading="Clan Administration"
         activeTab={activeTab}
         onChange={handleTabChange}
         className="admin-tabs"
@@ -443,8 +440,6 @@ export default function AdminPage() {
         <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
           <div className="tab-content members-content">
             <div className="content-header">
-              <h2>Member Management</h2>
-
               <div className="admin-toolbar">
                 <SearchInput
                   value={searchTerm}
@@ -523,7 +518,6 @@ export default function AdminPage() {
         >
           <div className="tab-content alerts-content">
             <div className="content-header">
-              <h2>Action Items Dashboard</h2>
               <p>All items requiring admin attention are shown here</p>
             </div>
 
@@ -565,7 +559,6 @@ export default function AdminPage() {
         <Tabs.Tab tabId="claim-requests" label="Claim Requests" icon={<FaClipboardList />}>
           <div className="tab-content claim-requests-content">
             <div className="content-header">
-              <h2>Claim Requests</h2>
               <p>Manage user account claim requests</p>
             </div>
 
@@ -576,7 +569,6 @@ export default function AdminPage() {
         <Tabs.Tab tabId="user-management" label="User Management" icon={<FaUserShield />}>
           <div className="tab-content user-management-content">
             <div className="content-header">
-              <h2>User Management</h2>
               <p>Manage admins and reset forgotten passwords</p>
             </div>
 

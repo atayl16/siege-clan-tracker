@@ -10,30 +10,6 @@
   min-height: 80vh;
 }
 
-/* Dashboard header */
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.25rem; /* 20px */
-  padding-bottom: 0.9375rem; /* 15px */
-  border-bottom: 0.0625rem solid #444; /* 1px */
-}
-
-.dashboard-header h1 {
-  margin: 0;
-  /* Orange like every other page title (it was the only white one). */
-  color: var(--color-orange, #ff9800);
-  font-size: 1.75rem; /* 28px */
-}
-
-/* Admin actions in header */
-.admin-actions {
-  display: flex;
-  gap: 0.625rem; /* 10px */
-  align-items: center;
-}
-
 /* Content header styling */
 .content-header {
   display: flex;
@@ -41,13 +17,10 @@
   margin-bottom: 1.25rem; /* 20px */
 }
 
-.content-header h2 {
-  margin: 0 0 0.9375rem 0; /* 0 0 15px 0 */
-  font-size: 1.5rem; /* 24px */
-  color: var(--color-orange, #ff9800);
-  flex-shrink: 0;
-  white-space: normal;
-  width: 100%;
+/* A tab's one-line description, now that tabs have no heading of their own. */
+.content-header p {
+  margin: 0;
+  color: #aaa;
 }
 
 .content-header h3 {
@@ -59,7 +32,6 @@
 /* Admin toolbar */
 .admin-toolbar {
   width: 100%;
-  margin-top: 0.3125rem; /* 5px */
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -360,19 +332,6 @@
     padding: 0.9375rem; /* 15px */
   }
   
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.9375rem; /* 15px */
-  }
-  
-  .admin-actions {
-    margin-top: 0.9375rem; /* 15px */
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  
   .admin-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -402,13 +361,6 @@
     padding: 0.75rem;
   }
   
-  .dashboard-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .content-header h2 {
-    font-size: 1.3rem;
-  }
 }
 
 .alerts-container {

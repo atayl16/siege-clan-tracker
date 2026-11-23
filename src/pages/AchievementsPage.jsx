@@ -59,10 +59,7 @@ function Milestones() {
         </Card>
       )}
 
-      <div className="ui-content-header">
-        <h2>
-         Recent Achievements
-        </h2>
+      <div className="ui-content-header achievements-tab-toolbar">
         <div className="ui-actions-container">
           <SearchInput
             value={searchTerm}
@@ -160,8 +157,7 @@ function ClanActivity() {
 
   return (
     <>
-      <div className="ui-content-header">
-        <h2>Clan Activity</h2>
+      <div className="ui-content-header achievements-tab-toolbar">
         <div className="ui-actions-container">
           <SearchInput
             value={searchTerm}
@@ -204,7 +200,12 @@ export default function AchievementsPage() {
   const [tab, setTab] = useState("milestones");
   return (
     <div className="ui-page-container">
-      <Tabs activeTab={tab} onChange={setTab} className="achievements-tabs">
+      <Tabs
+        heading="Clan Achievements"
+        activeTab={tab}
+        onChange={setTab}
+        className="achievements-tabs"
+      >
         <Tabs.Tab tabId="milestones" label="Milestones">
           <Milestones />
         </Tabs.Tab>

@@ -22,7 +22,8 @@ describe("Achievements page tabs", () => {
   it("opens on Milestones and loads clan activity only when its tab is opened", async () => {
     useClanActivity.mockClear();
     render(<AchievementsPage />);
-    expect(screen.getByRole("heading", { name: "Recent Achievements" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Clan Achievements" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search achievements or players...")).toBeInTheDocument();
     expect(useClanActivity).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole("button", { name: "Clan Activity" }));

@@ -167,11 +167,6 @@
   100% { opacity: 0.7; }
 }
 
-.hof-intro {
-  margin: 0 0 1rem;
-  color: #aaa;
-}
-
 /* The table's own background variables aren't defined, so it relied on the
    tab's grey panel. That panel is gone; give the table a card like the
    Leaderboard's other lists. */

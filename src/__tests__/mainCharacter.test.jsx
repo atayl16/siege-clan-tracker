@@ -158,7 +158,7 @@ describe("ProfilePage main character", () => {
     expect(screen.getByText("Claim Your Characters")).toBeInTheDocument();
     expect(screen.getByText(/Have alts\? Claim each one/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Claim a Character" }));
-    expect(screen.getByRole("heading", { name: "Character Claims" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Claims" })).toHaveClass("ui-tab-active");
   });
 
   it("loads achievements only when that tab is opened, main first", () => {
@@ -243,6 +243,6 @@ describe("ProfilePage main character", () => {
         <ProfilePage />
       </MemoryRouter>
     );
-    expect(screen.getByRole("heading", { name: "Character Claims" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Claims" })).toHaveClass("ui-tab-active");
   });
 });
