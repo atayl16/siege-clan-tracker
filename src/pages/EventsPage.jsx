@@ -20,11 +20,12 @@ export default function EventsPage() {
 
   return (
     <div className="ui-page-container">
-      <div className="ui-content-header">
-        <h2>Clan Events</h2>
-      </div>
-
-      <Tabs activeTab={tab} onChange={setTab} className="events-tabs">
+      <Tabs
+        heading="Clan Events"
+        activeTab={tab}
+        onChange={setTab}
+        className="events-tabs"
+      >
         <Tabs.Tab tabId="competitions" label="Competitions" icon={<FaFlagCheckered />}>
           <Competitions />
         </Tabs.Tab>

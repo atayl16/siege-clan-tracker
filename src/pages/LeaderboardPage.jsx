@@ -3,8 +3,7 @@ import { useTabParam } from "../hooks/useTabParam";
 import HallOfFame from "../components/HallOfFame";
 import Leaderboard from "../components/Leaderboard";
 import { useMembers } from "../hooks/useMembers";
-import { useEvents } from "../hooks/useEvents";
-import { FaTrophy, FaMedal, FaInfoCircle, FaRegCalendarAlt, FaCrown } from "react-icons/fa";
+import { FaTrophy, FaInfoCircle, FaRegCalendarAlt, FaCrown } from "react-icons/fa";
 import WeeklyXpLeaderboard from "../components/WeeklyXpLeaderboard";
 import { TitleHolders, TitleRaces } from "../components/WeeklyTitles";
 import { XP_AWARD_POINTS } from "../utils/xpWeek";
@@ -21,7 +20,7 @@ import LoadError from "../components/ui/LoadError";
 const ORDINALS = ["1st", "2nd", "3rd", "4th", "5th"];
 
 // Tab ids a link can open with ?tab=, e.g. /leaderboard?tab=hall-of-fame.
-export const LEADERBOARD_TABS = ["week", "all", "hall-of-fame", "how"];
+export const LEADERBOARD_TABS = ["week", "score", "hall-of-fame", "how"];
 
 /** Every way to earn Siege Score, from the same settings the awards use. */
 function HowPointsWork() {
@@ -91,28 +90,21 @@ function HowPointsWork() {
 
 export default function LeaderboardPage() {
   const { members, loading: membersLoading, error: membersError, refreshMembers } = useMembers();
-  const { events, loading: eventsLoading } = useEvents();
   const [activeTab, setActiveTab] = useTabParam(LEADERBOARD_TABS);
   const [showFullScoreLeaderboard, setShowFullScoreLeaderboard] = useState(false);
-  const [showFullWinsLeaderboard, setShowFullWinsLeaderboard] = useState(false);
 
   // Determine if there are enough players for "show more" buttons
   const hasEnoughScorePlayers = members &&
     members.filter(m => (parseInt(m.siege_score) || 0) > 0).length > 10;
 
-  // Calculate number of event winners
-  const eventWinnerCount = events ?
-    new Set(events.filter(e => e.winner_username).map(e => e.winner_username.toLowerCase())).size : 0;
-
-  const hasEnoughWinners = eventWinnerCount > 10;
-
   return (
     <div className="ui-page-container">
-      <div className="ui-content-header">
-        <h2>Clan Leaderboards</h2>
-      </div>
-
-      <Tabs activeTab={activeTab} onChange={setActiveTab} className="leaderboard-tabs">
+      <Tabs
+        heading="Clan Leaderboards"
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        className="leaderboard-tabs"
+      >
         <Tabs.Tab tabId="week" label="This Week" icon={<FaRegCalendarAlt />}>
           <div className="leaderboard-week">
             <TitleHolders />
@@ -121,8 +113,9 @@ export default function LeaderboardPage() {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab tabId="all" label="All-time" icon={<FaTrophy />}>
-          {(membersLoading || eventsLoading) && (
+        {/* Siege Score is reset every few months, so not "All-time". */}
+        <Tabs.Tab tabId="score" label="Siege Score" icon={<FaTrophy />}>
+          {membersLoading && (
             <div className="ui-loading-container">
               <div className="ui-loading-spinner"></div>
               <div className="ui-loading-text">Loading leaderboard data...</div>
@@ -133,59 +126,31 @@ export default function LeaderboardPage() {
             <LoadError what="the leaderboard" error={membersError} onRetry={refreshMembers} />
           )}
 
-          {/* Side-by-side container for the leaderboards */}
-          <div className="ui-leaderboards-container">
-            {/* Points Leaderboard Section */}
-            <div className="ui-section-container">
-              <h3 className="ui-section-title">
-                <FaTrophy className="ui-section-icon" /> Siege Score Leaderboard
-              </h3>
+          {/* Event Wins used to sit beside this: an all-time count of competition
+              wins, which newer members could never catch up with. Each
+              competition still shows its winner on the Events page. */}
+          <div className="ui-section-container">
+            <h3 className="ui-section-title">
+              <FaTrophy className="ui-section-icon" /> Siege Score Leaderboard
+            </h3>
 
-              <Leaderboard
-                members={members || []}
-                showTitle={false}
-                limit={showFullScoreLeaderboard ? null : 10}
-                loading={membersLoading}
-              />
+            <Leaderboard
+              members={members || []}
+              showTitle={false}
+              limit={showFullScoreLeaderboard ? null : 10}
+              loading={membersLoading}
+            />
 
-              {hasEnoughScorePlayers && (
-                <div className="ui-button-center">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowFullScoreLeaderboard(!showFullScoreLeaderboard)}
-                  >
-                    {showFullScoreLeaderboard ? "Show Less" : "Show Full Leaderboard"}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Event Wins Leaderboard Section */}
-            <div className="ui-section-container">
-              <h3 className="ui-section-title">
-                <FaMedal className="ui-section-icon" /> Event Wins Leaderboard
-              </h3>
-
-              <Leaderboard
-                members={members || []}
-                events={events || []}
-                showTitle={false}
-                limit={showFullWinsLeaderboard ? null : 10}
-                loading={membersLoading || eventsLoading}
-                type="wins"
-              />
-
-              {hasEnoughWinners && (
-                <div className="ui-button-center">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowFullWinsLeaderboard(!showFullWinsLeaderboard)}
-                  >
-                    {showFullWinsLeaderboard ? "Show Less" : "Show Full Leaderboard"}
-                  </Button>
-                </div>
-              )}
-            </div>
+            {hasEnoughScorePlayers && (
+              <div className="ui-button-center">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowFullScoreLeaderboard(!showFullScoreLeaderboard)}
+                >
+                  {showFullScoreLeaderboard ? "Show Less" : "Show Full Leaderboard"}
+                </Button>
+              </div>
+            )}
           </div>
         </Tabs.Tab>
 

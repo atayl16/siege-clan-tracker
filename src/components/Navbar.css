@@ -289,3 +289,23 @@
     font-size: 1.1rem;
   }
 }
+
+/* A slimmer bar: 95px tall at the start of 2026-11, of which the logo was
+   only 50px. Bootstrap's .navbar and .navbar-brand padding added 8px and 5px
+   on each side on top of this file's own, so those are cleared with a more
+   specific selector. Vertical padding only, after the media queries above,
+   so their side padding still applies. */
+nav.navbar {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.navbar .navbar-container {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.navbar .navbar-brand {
+  padding-top: 0;
+  padding-bottom: 0;
+}

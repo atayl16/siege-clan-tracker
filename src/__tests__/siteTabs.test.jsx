@@ -16,7 +16,7 @@ vi.mock("../components/HallOfFame", () => stub("HallOfFame"));
 vi.mock("../hooks/useMembers", () => ({
   useMembers: () => (mounted.push("MembersList"), { members: [{ id: 1, name: "Test Member" }], loading: false }),
 }));
-vi.mock("../hooks/useEvents", () => ({ useEvents: () => ({ events: [], loading: false }) }));
+vi.mock("../hooks/useEvents", () => ({ useEvents: () => (mounted.push("useEvents"), { events: [], loading: false }) }));
 vi.mock("../components/Leaderboard", () => ({ default: () => null }));
 vi.mock("../components/WeeklyXpLeaderboard", () => ({ default: () => null }));
 vi.mock("../components/WeeklyTitles", () => ({ TitleHolders: () => null, TitleRaces: () => null }));
@@ -96,6 +96,17 @@ describe("Leaderboard tabs", () => {
     await userEvent.click(screen.getByRole("button", { name: /Hall of Fame/ }));
     expect(screen.getByText("HallOfFame content")).toBeInTheDocument();
     expect(screen.getByTestId("url")).toHaveTextContent("/leaderboard?tab=hall-of-fame");
+  });
+});
+
+describe("Siege Score tab", () => {
+  it("is named for what it shows (scores reset every few months), with no Event Wins list", async () => {
+    renderAt("/leaderboard?tab=score", <LeaderboardPage />);
+    expect(screen.getByRole("button", { name: /Siege Score/ })).toHaveClass("ui-tab-active");
+    expect(screen.queryByRole("button", { name: /All-time/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Event Wins/)).not.toBeInTheDocument();
+    // The events table was loaded only for Event Wins.
+    expect(mounted).not.toContain("useEvents");
   });
 });
 
