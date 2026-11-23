@@ -32,6 +32,7 @@ import { useTitleHolders } from "../hooks/useWeeklyTitles";
 import XpProgressChart from "../components/XpProgressChart";
 import SiegeScoreBreakdown from "../components/SiegeScoreBreakdown";
 import YourTitleRaces from "../components/YourTitleRaces";
+import EventStampCard from "../components/EventStampCard";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 
 import "./ProfilePage.css";
@@ -603,6 +604,7 @@ function ProfileContent() {
             characters={orderedClaims.map((c) => ({ womId: c.members?.wom_id ?? c.wom_id, name: c.members?.name }))}
             held={heldTitles}
           />
+          <EventStampCard womIds={orderedClaims.map((c) => c.members?.wom_id ?? c.wom_id)} />
         </aside>
       )}
       </div>

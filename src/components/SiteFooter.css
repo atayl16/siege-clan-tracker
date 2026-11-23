@@ -1,0 +1,34 @@
+.site-footer {
+  margin-top: 3rem;
+  padding: 1.5rem 1rem 2rem;
+  border-top: 1px solid #2a2a2a;
+  text-align: center;
+  color: #888;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.site-footer-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.site-footer a {
+  color: #bbb;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--color-orange, #ff9800);
+  text-decoration: underline;
+}
+
+.site-footer-data,
+.site-footer-legal {
+  max-width: 46rem;
+  margin: 0.25rem auto;
+}

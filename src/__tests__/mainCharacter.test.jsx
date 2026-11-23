@@ -53,6 +53,7 @@ let mockGoals = [];
 const useUserGoals = vi.fn(() => ({ userGoals: mockGoals }));
 vi.mock("../hooks/useUserGoals", () => ({ useUserGoals: (...args) => useUserGoals(...args) }));
 vi.mock("../components/YourTitleRaces", () => ({ default: () => <section data-testid="title-races" /> }));
+vi.mock("../components/EventStampCard", () => ({ default: () => <section data-testid="stamps" /> }));
 vi.mock("../components/WeeklyXpLeaderboard", () => ({
   default: (props) => <div data-testid="xp-week" className={props.className} />,
   YourWeeklyXp: () => null,
@@ -222,6 +223,7 @@ describe("ProfilePage main character", () => {
     const { container } = renderPage();
     expect(container.querySelector(".profile-sidebar [data-testid=xp-week]")).not.toBeNull();
     expect(container.querySelector(".profile-sidebar [data-testid=title-races]")).not.toBeNull();
+    expect(container.querySelector(".profile-sidebar [data-testid=stamps]")).not.toBeNull();
     expect(container.querySelector(".profile-header [data-testid=xp-week]")).toBeNull();
     delete window.matchMedia;
   });
