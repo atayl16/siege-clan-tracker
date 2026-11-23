@@ -57,8 +57,9 @@ vi.mock("../supabaseClient", () => {
           calls.signIns.push(args);
           return { error: null };
         },
-        signOut: async () => {
+        signOut: async (opts) => {
           calls.signOuts = (calls.signOuts || 0) + 1;
+          calls.signOutOptions = opts;
           return { error: null };
         },
       },
@@ -169,6 +170,8 @@ describe("signing out", () => {
     calls.signOuts = 0;
     act(() => result.current.logout());
     expect(calls.signOuts).toBe(1);
+    // Local scope: this browser's session goes even when offline.
+    expect(calls.signOutOptions).toEqual({ scope: "local" });
     expect(result.current.user).toBeNull();
   });
 });

@@ -7,7 +7,7 @@ import { useWeeklyXp } from "../hooks/useWeeklyXp";
 import {
   competitionLabel,
   runningCompetitions,
-  upcomingCompetitions,
+  nextCompetitions,
   recentCompetitionCount,
   dayOf,
   localWhen,
@@ -31,11 +31,11 @@ export default function RightNow() {
     revalidateOnFocus: false,
     dedupingInterval: 10 * 60 * 1000,
   });
-  const { week, ranking } = useWeeklyXp();
+  const { week, ranking } = useWeeklyXp({ poll: false });
   const now = Date.now();
 
   const running = runningCompetitions(competitions, now);
-  const upcoming = upcomingCompetitions(competitions, now);
+  const upcoming = nextCompetitions(competitions, now);
   const recent = recentCompetitionCount(competitions, now);
   const leader = ranking?.[0];
 

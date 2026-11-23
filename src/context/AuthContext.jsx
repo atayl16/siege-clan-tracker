@@ -454,9 +454,15 @@ export function AuthProvider({ children }) {
   const logout = () => {
     // End the Supabase session too. Without this its token stayed in the
     // browser after signing out, so on a shared computer the next person was
-    // still signed in to the database as the previous member. Not awaited:
-    // the site signs out straight away even if Supabase is slow or offline.
-    supabase.auth.signOut().catch((err) => console.warn("Supabase sign-out failed:", err));
+    // still signed in to the database as the previous member. Local scope
+    // removes this browser's session before any network request, so it goes
+    // even offline (the default global scope keeps it if the request fails),
+    // and other devices stay signed in. Not awaited: the removal is
+    // synchronous storage work, and the request only revokes the token.
+    supabase.auth
+      .signOut({ scope: "local" })
+      .then(({ error } = {}) => error && console.warn("Supabase sign-out failed:", error))
+      .catch((err) => console.warn("Supabase sign-out failed:", err));
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");

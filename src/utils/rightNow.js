@@ -31,6 +31,17 @@ export function upcomingCompetitions(competitions, now = Date.now()) {
     .sort((a, b) => time(a.startsAt) - time(b.startsAt));
 }
 
+/**
+ * The competitions that start next (within a week), all sharing that start
+ * time, so one "Next up" time is right for every name shown.
+ */
+export function nextCompetitions(competitions, now = Date.now()) {
+  const upcoming = upcomingCompetitions(competitions, now);
+  if (!upcoming.length) return [];
+  const first = time(upcoming[0].startsAt);
+  return upcoming.filter((c) => time(c.startsAt) === first);
+}
+
 /** How many competitions finished in the last 30 days. */
 export function recentCompetitionCount(competitions, now = Date.now()) {
   return (competitions || []).filter((c) => time(c.endsAt) <= now && now - time(c.endsAt) <= 30 * DAY).length;

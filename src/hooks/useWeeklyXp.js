@@ -80,9 +80,10 @@ export function useCurrentXpWeek() {
 /**
  * The weekly Overall XP award: this week's live ranking (from WOM, cached at
  * the edge for ten minutes), its top five, and, with { withLastWeek: true },
- * the most recently paid week's winners.
+ * the most recently paid week's winners. { poll: false } loads the ranking
+ * once instead of refreshing it every ten minutes.
  */
-export function useWeeklyXp({ withLastWeek = false } = {}) {
+export function useWeeklyXp({ withLastWeek = false, poll = true } = {}) {
   // The URL is the same all week, so every visitor shares one edge-cached copy.
   const week = useCurrentXpWeek();
 
@@ -91,7 +92,7 @@ export function useWeeklyXp({ withLastWeek = false } = {}) {
     `&endDate=${encodeURIComponent(week.end.toISOString())}`;
 
   const current = useSWR(url, fetchJson, {
-    refreshInterval: 10 * 60 * 1000,
+    refreshInterval: poll ? 10 * 60 * 1000 : 0,
     revalidateOnFocus: false,
     dedupingInterval: 60 * 1000,
   });

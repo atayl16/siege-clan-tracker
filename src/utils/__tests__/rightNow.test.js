@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { competitionLabel, runningCompetitions, upcomingCompetitions, recentCompetitionCount, dayOf, localWhen } from "../rightNow";
+import { competitionLabel, runningCompetitions, upcomingCompetitions, recentCompetitionCount, nextCompetitions, dayOf, localWhen } from "../rightNow";
 
 const now = Date.parse("2026-11-20T12:00:00Z");
 const comp = (id, title, startsAt, endsAt) => ({ id, title, startsAt, endsAt });
@@ -29,7 +29,19 @@ describe("rightNow", () => {
     expect(dayOf(comps[0], now)).toBe("day 4 of 7");
   });
 
-  it("says today or tomorrow for near times", () => {
-    expect(localWhen(now + 60 * 60 * 1000, now)).toMatch(/^today, /);
+  it("lists only the competitions that share the next start time", () => {
+    const later = [...comps, comp(7, "Siege BotW - Zulrah", "2026-11-25T19:00:00Z", "2026-12-02T19:00:00Z")];
+    expect(nextCompetitions(later, now).map((c) => c.id)).toEqual([3]);
+    const together = [...comps, comp(8, "Siege BotW - Zulrah", "2026-11-23T19:00:00Z", "2026-11-30T19:00:00Z")];
+    expect(nextCompetitions(together, now).map((c) => c.id)).toEqual([3, 8]);
+    expect(nextCompetitions([], now)).toEqual([]);
+  });
+
+  it("says today or tomorrow for near times, in any time zone", () => {
+    // Local midday, so an hour either way stays on the same local date.
+    const noon = new Date(2026, 10, 20, 12).getTime();
+    const hour = 60 * 60 * 1000;
+    expect(localWhen(noon + hour, noon)).toMatch(/^today, /);
+    expect(localWhen(noon + 24 * hour, noon)).toMatch(/^tomorrow, /);
   });
 });
