@@ -21,9 +21,9 @@ describe("UsingTheSite", () => {
     renderSection();
     const steps = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(steps.map((s) => s.querySelector("h4").textContent)).toEqual([
-      "Create an account",
-      "Claim your characters",
-      "Track and compete",
+      "Create an Account",
+      "Claim Your Characters",
+      "Track and Compete",
     ]);
     expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/register");
     expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");

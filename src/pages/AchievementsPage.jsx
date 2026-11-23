@@ -208,7 +208,7 @@ export default function AchievementsPage() {
         <Tabs.Tab tabId="milestones" label="Milestones">
           <Milestones />
         </Tabs.Tab>
-        <Tabs.Tab tabId="activity" label="Clan activity">
+        <Tabs.Tab tabId="activity" label="Clan Activity">
           <ClanActivity />
         </Tabs.Tab>
       </Tabs>
