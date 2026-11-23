@@ -47,12 +47,14 @@ export function describeActivity(activity) {
 
 /**
  * When it happened. RuneProfile sends "2026-11-23 14:53:40.772003", which
- * is UTC but has no zone marker, so parse it as UTC explicitly.
+ * is UTC but has no zone marker, so parse it as UTC explicitly. null for
+ * anything that does not parse, so one bad timestamp cannot break a list.
  */
 export function activityDate(createdAt) {
   if (!createdAt) return null;
   const iso = String(createdAt).replace(" ", "T");
-  return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`);
+  const date = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 export const RUNEPROFILE_URL = "https://www.runeprofile.com";

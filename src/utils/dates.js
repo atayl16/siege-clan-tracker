@@ -16,7 +16,9 @@ export function formatDate(value) {
 
 /** "17 minutes ago", "3 hours ago", "2 days ago". */
 export function timeAgo(value, now = Date.now()) {
-  const minutes = Math.max(0, Math.round((now - new Date(value).getTime()) / 60000));
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return "";
+  const minutes = Math.max(0, Math.round((now - time) / 60000));
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
   const hours = Math.round(minutes / 60);

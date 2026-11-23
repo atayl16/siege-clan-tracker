@@ -22,8 +22,13 @@ export default async (request) => {
   // the data is public RuneProfile data (see _shared/wom.js on caching).
   const { authorized, reason } = checkAuth(request);
   if (!authorized) return unauthorizedResponse(reason);
-  const username = (new URL(request.url).searchParams.get('username') || '').trim();
-  if (!USERNAME.test(username)) return jsonError(400, 'Missing or invalid username');
+  // Not trimmed: the edge cache keys on the raw query value, so "Test Main "
+  // would be a second cache entry (and a second RuneProfile call) for the
+  // same account. The site always sends the stored name as it is.
+  const username = new URL(request.url).searchParams.get('username') || '';
+  if (!USERNAME.test(username) || username !== username.trim()) {
+    return jsonError(400, 'Missing or invalid username');
+  }
 
   try {
     const res = await rpFetch(`/accounts/${encodeURIComponent(username)}/activities?limit=${LIMIT}`);

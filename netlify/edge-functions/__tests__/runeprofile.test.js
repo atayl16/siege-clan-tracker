@@ -71,6 +71,12 @@ describe('runeprofile edge functions', () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  it('refuses a padded name, so one account cannot take two cache entries', async () => {
+    const res = await accountHandler(req('/api/runeprofile-activity?username=Test%20Main%20'));
+    expect(res.status).toBe(400);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
   it('does not cache an upstream failure', async () => {
     globalThis.fetch.mockResolvedValue(new Response('oops', { status: 503 }));
     const res = await clanHandler(req('/api/runeprofile-clan-activity'));

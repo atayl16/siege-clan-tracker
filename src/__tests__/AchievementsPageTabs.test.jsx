@@ -37,4 +37,12 @@ describe("Achievements page tabs", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByText(/Completed Test Quest/)).toBeInTheDocument();
   });
+
+  it("clears the search with its clear button", async () => {
+    render(<AchievementsPage />);
+    await userEvent.click(screen.getByRole("button", { name: "Clan activity" }));
+    await userEvent.type(screen.getByPlaceholderText(/Search drops, quests or players/), "quest");
+    await userEvent.click(screen.getByRole("button", { name: /clear/i }));
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
 });

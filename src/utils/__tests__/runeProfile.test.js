@@ -32,10 +32,18 @@ describe("activityDate", () => {
   });
 });
 
+describe("bad timestamps", () => {
+  it("come back as no date rather than an invalid one", () => {
+    expect(activityDate("not a date")).toBeNull();
+    expect(activityDate(null)).toBeNull();
+  });
+});
+
 describe("timeAgo", () => {
   it("reads as minutes, hours or days", () => {
     const now = Date.parse("2026-11-23T12:00:00Z");
     expect(timeAgo("2026-11-23T11:43:00Z", now)).toBe("17 minutes ago");
     expect(timeAgo("2026-11-20T12:00:00Z", now)).toBe("3 days ago");
+    expect(timeAgo("not a date", now)).toBe("");
   });
 });

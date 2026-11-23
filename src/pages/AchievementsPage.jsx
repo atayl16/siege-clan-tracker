@@ -166,6 +166,7 @@ function ClanActivity() {
           <SearchInput
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
             placeholder="Search drops, quests or players..."
             className="ui-achievements-search"
           />
