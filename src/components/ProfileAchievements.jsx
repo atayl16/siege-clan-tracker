@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { usePlayer } from "../hooks/usePlayer";
-import { buildAchievements, closestFirst, skillName } from "../utils/achievements";
+import { buildAchievements, orderRows, skillName } from "../utils/achievements";
 import { SkillIcon, BossIcon, ActivityIcon } from "./OsrsIcons";
 import "./ProfileAchievements.css";
 
@@ -13,13 +13,27 @@ import "./ProfileAchievements.css";
  * from the edge-cached /api/wom-player, once: no background refresh. A
  * character viewed earlier in the visit comes back from SWR's cache.
  *
+ * Overall is always shown first; below it, one section at a time (Skills,
+ * Bosses or Activities), each in the chosen order. Long boss lists show the
+ * first BOSSES_SHOWN until asked for the rest.
+ *
  * @param {object} props
  * @param {Array<{ womId: number, name: string, isMain: boolean }>} props.characters
  *   the member's claimed characters, main first
  */
+const BOSSES_SHOWN = 10;
+
+const ORDERS = [
+  ["closest", "Closest first"],
+  ["game", "Game order"],
+  ["alpha", "A to Z"],
+];
+
 export default function ProfileAchievements({ characters }) {
   const [selected, setSelected] = useState(characters[0]?.womId ?? null);
   const [order, setOrder] = useState("closest");
+  const [sectionKey, setSectionKey] = useState("skills");
+  const [allBosses, setAllBosses] = useState(false);
   // The character shown, worked out first: if the one picked is no longer
   // claimed (the claims list refreshed while the tab was open), fall back to
   // the main, and load and highlight that one.
@@ -39,7 +53,10 @@ export default function ProfileAchievements({ characters }) {
                 type="button"
                 className={`ach-chip ${c.womId === activeId ? "is-on" : ""}`}
                 aria-pressed={c.womId === activeId}
-                onClick={() => setSelected(c.womId)}
+                onClick={() => {
+                  setSelected(c.womId);
+                  setAllBosses(false);
+                }}
               >
                 {c.name}
                 {c.isMain && <span className="ach-main">Main</span>}
@@ -58,16 +75,6 @@ export default function ProfileAchievements({ characters }) {
             )}
           </p>
         )}
-        <div className="ach-order" role="group" aria-label="Order">
-          {[
-            ["closest", "Closest first"],
-            ["game", "Skill order"],
-          ].map(([id, label]) => (
-            <button key={id} type="button" className={order === id ? "is-on" : ""} aria-pressed={order === id} onClick={() => setOrder(id)}>
-              {label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {loading && (
@@ -85,19 +92,16 @@ export default function ProfileAchievements({ characters }) {
       {achievements && !loading && (
         <div className="ach-cols">
           <div className="ach-main-col">
-            {achievements.sections.map((section) =>
-              section.rows.length ? (
-                <section key={section.key} className="ach-card" aria-labelledby={`ach-${section.key}`}>
-                  <h3 id={`ach-${section.key}`}>
-                    {section.title}
-                    {section.key === "bosses" && <small>bosses this character has killed</small>}
-                  </h3>
-                  {(order === "closest" ? closestFirst(section.rows) : section.rows).map((row) => (
-                    <Row key={row.key} row={row} />
-                  ))}
-                </section>
-              ) : null
-            )}
+            <Section section={achievements.sections.find((x) => x.key === "overall")} rows={null} />
+            <SectionPicker
+              sections={achievements.sections.filter((x) => x.key !== "overall" && x.rows.length)}
+              active={sectionKey}
+              onPick={setSectionKey}
+              order={order}
+              onOrder={setOrder}
+              allBosses={allBosses}
+              onAllBosses={() => setAllBosses(true)}
+            />
           </div>
 
           <aside className="ach-side">
@@ -149,29 +153,105 @@ export default function ProfileAchievements({ characters }) {
   );
 }
 
+/** A titled card of rows. rows defaults to the section's own order. */
+function Section({ section, rows, extra = null }) {
+  const id = `ach-${section.key}`;
+  return (
+    <section className="ach-card" aria-labelledby={id}>
+      <h3 id={id}>
+        {section.title}
+        {section.key === "bosses" && <small>bosses this character has killed</small>}
+        {section.key === "activities" && <small>only what this character has done</small>}
+      </h3>
+      {(rows ?? section.rows).map((row) => (
+        <Row key={row.key} row={row} />
+      ))}
+      {extra}
+    </section>
+  );
+}
+
+/**
+ * Buttons for Skills, Bosses and Activities, each with its milestone count,
+ * and the order buttons; then the chosen section. Sections with nothing in
+ * them (no boss kills yet) get no button.
+ */
+function SectionPicker({ sections, active, onPick, order, onOrder, allBosses, onAllBosses }) {
+  if (!sections.length) return null;
+  const section = sections.find((x) => x.key === active) ?? sections[0];
+  const ordered = orderRows(section.rows, order);
+  const cut = section.key === "bosses" && !allBosses && ordered.length > BOSSES_SHOWN;
+  const rows = cut ? ordered.slice(0, BOSSES_SHOWN) : ordered;
+  const count = (x) => {
+    const total = x.rows.reduce((n, r) => n + r.points.length, 0);
+    const reached = x.rows.reduce((n, r) => n + r.reached, 0);
+    return `${reached}/${total}`;
+  };
+
+  return (
+    <>
+      <div className="ach-pick">
+        <div className="ach-sections" role="group" aria-label="Section">
+          {sections.map((x) => (
+            <button
+              key={x.key}
+              type="button"
+              className={x.key === section.key ? "is-on" : ""}
+              aria-pressed={x.key === section.key}
+              onClick={() => onPick(x.key)}
+            >
+              {x.title} <span className="ach-count">{count(x)}</span>
+            </button>
+          ))}
+        </div>
+        <div className="ach-order" role="group" aria-label="Order">
+          {ORDERS.map(([id, label]) => (
+            <button key={id} type="button" className={order === id ? "is-on" : ""} aria-pressed={order === id} onClick={() => onOrder(id)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <Section
+        section={section}
+        rows={rows}
+        extra={
+          cut && (
+            <button type="button" className="ach-more" onClick={onAllBosses}>
+              Show all {ordered.length} bosses
+            </button>
+          )
+        }
+      />
+    </>
+  );
+}
+
 function RowIcon({ row }) {
   if (row.kind === "skill") return <SkillIcon skill={row.name} />;
   if (row.kind === "boss") return <BossIcon boss={row.metric} />;
-  if (row.kind === "clue") return <ActivityIcon type={row.metric} />;
+  if (row.kind === "clue" || row.kind === "activity" || row.kind === "rating") return <ActivityIcon type={row.metric} />;
   return <SkillIcon skill={row.metric === "combat" ? "Attack" : "Overall"} />;
 }
 
 function Row({ row }) {
+  if (row.kind === "rating") {
+    return (
+      <div className="ach-row">
+        <RowName row={row} />
+        <div className="ach-rating">
+          <b>{Number(row.value).toLocaleString("en-GB")}</b> rating
+        </div>
+      </div>
+    );
+  }
   const done = row.next === -1;
   const summary = done
     ? `${row.name}: every milestone reached`
     : `${row.name}: ${row.reached} of ${row.points.length} milestones reached, next ${row.points[row.next].label}`;
   return (
     <div className="ach-row">
-      <div className="ach-who">
-        <span className="ach-icon" aria-hidden="true">
-          <RowIcon row={row} />
-        </span>
-        <div>
-          <div className="ach-name">{row.name}</div>
-          <div className="ach-sub">{row.sub}</div>
-        </div>
-      </div>
+      <RowName row={row} />
       <div className="ach-track" role="img" aria-label={summary}>
         <div className="ach-rail" />
         <div className="ach-fill" style={{ width: `${row.fill}%` }} />
@@ -187,6 +267,20 @@ function Row({ row }) {
             </React.Fragment>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function RowName({ row }) {
+  return (
+    <div className="ach-who">
+      <span className="ach-icon" aria-hidden="true">
+        <RowIcon row={row} />
+      </span>
+      <div>
+        <div className="ach-name">{row.name}</div>
+        <div className="ach-sub">{row.sub}</div>
       </div>
     </div>
   );

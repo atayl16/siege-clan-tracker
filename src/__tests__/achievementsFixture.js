@@ -2,7 +2,7 @@
 // Achievements tab reads.
 const SKILLS = ["attack", "defence", "strength", "hitpoints", "ranged", "prayer", "magic", "cooking", "woodcutting", "fletching", "fishing", "firemaking", "crafting", "smithing", "mining", "herblore", "agility", "thieving", "slayer", "farming", "runecrafting", "hunter", "construction", "sailing"];
 
-export function makePlayer({ levels = {}, xp = {}, bosses = {}, clues = {}, updatedAt = "2026-11-23T10:00:00.000Z" } = {}) {
+export function makePlayer({ levels = {}, xp = {}, bosses = {}, clues = {}, activities = {}, updatedAt = "2026-11-23T10:00:00.000Z" } = {}) {
   const skills = { overall: { metric: "overall", experience: 0, level: 0 } };
   for (const m of SKILLS) {
     skills[m] = { metric: m, level: levels[m] ?? 50, experience: xp[m] ?? 101333 };
@@ -14,7 +14,10 @@ export function makePlayer({ levels = {}, xp = {}, bosses = {}, clues = {}, upda
       data: {
         skills,
         bosses: Object.fromEntries(Object.entries(bosses).map(([m, kills]) => [m, { metric: m, kills }])),
-        activities: Object.fromEntries(Object.entries(clues).map(([t, score]) => [`clue_scrolls_${t}`, { score }])),
+        activities: {
+          ...Object.fromEntries(Object.entries(clues).map(([t, score]) => [`clue_scrolls_${t}`, { score }])),
+          ...Object.fromEntries(Object.entries(activities).map(([m, score]) => [m, { score }])),
+        },
         computed: { ehb: { value: 612.4 }, ehp: { value: 1048.2 } },
       },
     },

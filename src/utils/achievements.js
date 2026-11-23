@@ -23,7 +23,7 @@ const LEVEL_99_XP = xpForLevel(99);
 const fmt = (n) => {
   if (n >= 1e9) return `${+(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `${+(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`;
-  if (n >= 1e3) return `${+(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}k`;
+  if (n >= 1e3) return `${+(n / 1e3).toFixed(n >= 1e4 ? 0 : 2)}k`;
   return String(n);
 };
 
@@ -41,6 +41,32 @@ const BOSS_KILLS = [50, 100, 250, 500, 1000, 2500, 5000];
 const CLUES_ALL = [50, 100, 250, 500, 1000, 2500];
 const CLUES_TIER = [10, 50, 100, 250, 500, 1000];
 const CLUE_TIERS = ["beginner", "easy", "medium", "hard", "elite", "master"];
+const HOURS = [100, 250, 500, 1000, 2000];
+
+/**
+ * Other activities Wise Old Man tracks, in the order shown, with milestones
+ * sized from the clan's own scores (Nov 2026: median collection log 305
+ * slots, top Colosseum glory about 47k). Leagues points are left out: they
+ * belong to one league and reset each season.
+ */
+const ACTIVITIES = [
+  { metric: "collections_logged", name: "Collection log", unit: "slots", marks: [100, 250, 500, 750, 1000, 1250, 1500] },
+  { metric: "guardians_of_the_rift", name: "Guardians of the Rift", unit: "rifts closed", marks: [50, 100, 250, 500, 1000, 2500] },
+  { metric: "soul_wars_zeal", name: "Soul Wars", unit: "zeal", marks: [500, 1000, 2500, 5000, 10000, 25000] },
+  { metric: "colosseum_glory", name: "Colosseum", unit: "glory", marks: [5000, 10000, 20000, 30000, 40000, 50000] },
+  { metric: "bounty_hunter_hunter", name: "Bounty Hunter (hunter)", unit: "kills", marks: [10, 50, 100, 250, 500, 1000] },
+  { metric: "bounty_hunter_rogue", name: "Bounty Hunter (rogue)", unit: "kills", marks: [10, 50, 100, 250, 500, 1000] },
+];
+
+/**
+ * Ratings go down as well as up, so they get no milestones: the row shows
+ * the current rating. Everyone starts at the base rating, so a rating still
+ * at it means the character has not really played, and is left out.
+ */
+const RATINGS = [
+  { metric: "last_man_standing", name: "Last Man Standing", base: 500 },
+  { metric: "pvp_arena", name: "PvP Arena", base: 2500 },
+];
 
 const SKILL_NAME = { runecrafting: "Runecraft" };
 const skillName = (metric) => SKILL_NAME[metric] ?? metric.charAt(0).toUpperCase() + metric.slice(1);
@@ -175,6 +201,14 @@ export function buildAchievements(player) {
       value: baseLevel, marks: [40, 50, 60, 70, 80, 90, 99],
       nextName: (l) => `Base ${l} stats`,
     }),
+    ...["ehb", "ehp"].map((m) => {
+      const hours = Math.floor(data.computed?.[m]?.value ?? 0);
+      return track({
+        key: m, kind: "overall", metric: m, name: m.toUpperCase(), sub: `${hours.toLocaleString("en-GB")} hours`,
+        value: hours, marks: HOURS, labels: ["100", "250", "500", "1k", "2k"],
+        nextName: (l) => `${l} ${m.toUpperCase()}`,
+      });
+    }),
   ];
 
   const skills = skillMetrics.map((m) =>
@@ -199,15 +233,16 @@ export function buildAchievements(player) {
       })
     );
 
-  const clueScore = (tier) => ranked(data.activities?.[`clue_scrolls_${tier}`]?.score);
+  const score = (metric) => ranked(data.activities?.[metric]?.score);
+  const clueScore = (tier) => score(`clue_scrolls_${tier}`);
   const clues = [
     track({
-      key: "clues-all", kind: "clue", metric: "clue_scrolls_all", name: "All tiers", sub: `${clueScore("all").toLocaleString("en-GB")} completed`,
+      key: "clues-all", kind: "clue", metric: "clue_scrolls_all", name: "Clue scrolls (all)", sub: `${clueScore("all").toLocaleString("en-GB")} completed`,
       value: clueScore("all"), marks: CLUES_ALL, labels: ["50", "100", "250", "500", "1k", "2.5k"],
       nextName: (l) => `${l} clue scrolls`,
     }),
     ...CLUE_TIERS.map((tier) => {
-      const name = tier.charAt(0).toUpperCase() + tier.slice(1);
+      const name = `Clue scrolls (${tier})`;
       return track({
         key: `clues-${tier}`, kind: "clue", metric: `clue_scrolls_${tier}`, name, sub: `${clueScore(tier).toLocaleString("en-GB")} completed`,
         value: clueScore(tier), marks: CLUES_TIER, labels: ["10", "50", "100", "250", "500", "1k"],
@@ -216,11 +251,35 @@ export function buildAchievements(player) {
     }),
   ];
 
+  const others = ACTIVITIES.filter((a) => score(a.metric) > 0).map((a) =>
+    track({
+      key: `activity-${a.metric}`, kind: "activity", metric: a.metric, name: a.name,
+      sub: `${score(a.metric).toLocaleString("en-GB")} ${a.unit}`,
+      value: score(a.metric), marks: a.marks,
+      nextName: (l) => `${l} ${a.unit} (${a.name})`,
+    })
+  );
+  const ratings = RATINGS.filter((r) => score(r.metric) > 0 && score(r.metric) !== r.base).map((r) => ({
+    key: `rating-${r.metric}`,
+    kind: "rating",
+    metric: r.metric,
+    name: r.name,
+    sub: "Rating",
+    value: score(r.metric),
+    points: [],
+    next: -1,
+    reached: 0,
+    fill: 0,
+    closeness: null,
+    nextLabel: null,
+  }));
+
   const sections = [
     { key: "overall", title: "Overall", rows: overall },
     { key: "skills", title: "Skills", rows: skills },
     { key: "bosses", title: "Bosses", rows: bosses },
-    { key: "clues", title: "Clue scrolls", rows: clues },
+    // Like bosses, only what the character has done.
+    { key: "activities", title: "Activities", rows: [...clues.filter((r) => r.value > 0), ...others, ...ratings] },
   ];
 
   const all = sections.flatMap((s) => s.rows);
@@ -249,6 +308,18 @@ export function buildAchievements(player) {
     capes: { earned, closest },
     updatedAt: player.updatedAt ?? player.latestSnapshot?.createdAt ?? null,
   };
+}
+
+/** Rows sorted by name. */
+export function alphabetical(rows) {
+  return [...rows].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** A section's rows in the chosen order: "closest", "game" or "alpha". */
+export function orderRows(rows, order) {
+  if (order === "closest") return closestFirst(rows);
+  if (order === "alpha") return alphabetical(rows);
+  return rows;
 }
 
 /** Rows nearest their next milestone first; finished rows last, in order. */
