@@ -3,7 +3,7 @@
   width: 92%;
   max-width: 87.5rem; /* 1400px */
   min-width: 20rem; /* 320px */
-  margin: 1.875rem auto; /* 30px auto */
+  margin: 0 auto; /* the same gap under the menu bar as other pages */
   padding: 1.25rem; /* 20px */
   color: var(--color-text, #e0e0e0);
 }
@@ -14,8 +14,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  margin-bottom: 1.875rem; /* 30px */
-  padding-bottom: 1.25rem; /* 20px */
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid #444;
 }
 
@@ -31,7 +31,7 @@
 }
 
 .username {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   text-align: left;
 }
@@ -53,8 +53,15 @@
 /* Six tabs beside the side panel: tighter spacing so they fit on one line
    instead of scrolling. */
 .profile-tabs .ui-tab {
-  padding: 0.75rem 0.85rem;
+  padding: 0.75rem 0.7rem;
   gap: 0.45rem;
+}
+
+/* Beside the side cards (1100-1200px) the six tabs needed ~730px of 660 and
+   put Account on a second row. */
+.profile-tabs .ui-tabs-nav {
+  padding: 0;
+  gap: 0.25rem;
 }
 
 .profile-sidebar {
@@ -75,18 +82,14 @@
   }
 }
 
-/* Tab Header */
+/* A tab's buttons (Claim New Character, Create New Race), on the right.
+   No heading: the tab's own name is just above. */
 .tab-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 1.5625rem; /* 25px */
-}
-
-.tab-header h2 {
-  margin: 0;
-  color: var(--color-orange, #ff9800);
-  font-size: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 /* Character Card Styling - UNIFIED */
@@ -308,7 +311,7 @@
 }
 
 @media (max-width: 600px) {
-  /* Title above its button instead of wrapping beside it. */
+  /* Hint above its button instead of wrapping beside it. */
   .tab-header {
     flex-direction: column;
     align-items: stretch;
@@ -349,7 +352,8 @@
 
 /* Shown with exactly one claimed character: many members have alts. */
 .profile-claim-hint {
-  margin: 0 0 1rem;
+  flex: 1 1 auto;
+  margin: 0;
   color: #aaa;
   font-size: 0.9rem;
 }

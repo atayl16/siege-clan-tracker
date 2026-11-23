@@ -38,8 +38,6 @@ export default function HallOfFame() {
 
   return (
     <>
-      <p className="hof-intro">The clan member with the most kills at each boss, and the top score in each activity.</p>
-
       {isLoading && (
         <div className="ui-loading-container">
           <div className="ui-loading-spinner"></div>

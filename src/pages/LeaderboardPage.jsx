@@ -130,10 +130,6 @@ export default function LeaderboardPage() {
               wins, which newer members could never catch up with. Each
               competition still shows its winner on the Events page. */}
           <div className="ui-section-container">
-            <h3 className="ui-section-title">
-              <FaTrophy className="ui-section-icon" /> Siege Score Leaderboard
-            </h3>
-
             <Leaderboard
               members={members || []}
               showTitle={false}

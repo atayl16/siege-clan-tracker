@@ -284,7 +284,6 @@ function ProfileContent() {
     return (
       <>
         <div className="tab-header">
-          <h2>Your Race Progress</h2>
           <Button variant="primary" onClick={() => setShowCreateRace(true)}>
             Create New Race
           </Button>
@@ -335,8 +334,15 @@ function ProfileContent() {
         className="profile-tabs"
       >
         <Tabs.Tab tabId="characters" label="Characters" icon={<FaUser />}>
+          {/* No heading repeating the tab's name: the hint (one character
+              claimed) shares a row with the button instead. */}
           <div className="tab-header">
-            <h2>Your Characters</h2>
+            {userClaims?.length === 1 && (
+              <p className="profile-claim-hint">
+                Have more than one account? Claim each of them with Claim New Character, then choose which one is
+                your Main.
+              </p>
+            )}
             <Button
               variant="secondary"
               onClick={() => setActiveTab("requests")}
@@ -349,13 +355,6 @@ function ProfileContent() {
             <div className="profile-main-error" role="alert">
               {mainError}
             </div>
-          )}
-
-          {userClaims?.length === 1 && (
-            <p className="profile-claim-hint">
-              Have more than one account? Claim each of them with Claim New Character, then choose which one is
-              your Main.
-            </p>
           )}
 
           {!userClaims?.length ? (
@@ -481,10 +480,6 @@ function ProfileContent() {
         </Tabs.Tab>
 
         <Tabs.Tab tabId="goals" label="Goals" icon={<FaFlag />}>
-          <div className="tab-header">
-            <h2>Character Goals</h2>
-          </div>
-
           {!user ? (
             <div className="ui-loading-container">
               <div className="ui-loading-spinner"></div>
@@ -517,9 +512,6 @@ function ProfileContent() {
         {/* Mounted only while open (Tabs renders the active tab alone), so
             its Wise Old Man fetch happens only when someone opens it. */}
         <Tabs.Tab tabId="achievements" label="Achievements" icon={<FaMedal />}>
-          <div className="tab-header">
-            <h2>Achievements</h2>
-          </div>
           {!userClaims?.length ? (
             <EmptyState
               title="No Characters to Show"
@@ -538,20 +530,12 @@ function ProfileContent() {
 
         {/* tabId stays "requests" so existing ?tab=requests links still work. */}
         <Tabs.Tab tabId="requests" label="Claims" icon={<FaClock />}>
-          <div className="tab-header">
-            <h2>Character Claims</h2>
-          </div>
-
           <div className="claim-player-section">
             <ClaimPlayer onRequestSubmitted={() => user?.id && fetchUserClaims(user.id)} />
           </div>
         </Tabs.Tab>
 
         <Tabs.Tab tabId="account" label="Account" icon={<FaCog />}>
-          <div className="tab-header">
-            <h2>Account Management</h2>
-          </div>
-
           <Card>
             <Card.Body>
               <div className="account-field">

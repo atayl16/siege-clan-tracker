@@ -1,7 +1,10 @@
 /* "Right Now" on the home page (RightNow.jsx). */
+/* This week's competitions take the whole first row; the small tiles share
+   the row below evenly, however many there are. A grid of 12rem columns
+   left the last small tile alone on a second row on laptop screens. */
 .rn-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.9rem;
 }
 
@@ -11,10 +14,11 @@
   border-radius: var(--border-radius-sm, 0.25rem);
   padding: 0.85rem 1rem;
   min-width: 0;
+  flex: 1 1 11rem;
 }
 
 .rn-wide {
-  grid-column: span 2;
+  flex-basis: 100%;
 }
 
 .rn-label {
@@ -54,26 +58,26 @@
   color: var(--accent-color, #2196f3);
 }
 
+/* Side by side across the full-width tile, one per line on phones. */
 .rn-comps {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem 1rem;
 }
 
 .rn-comps li {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15rem 0.5rem;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
 .rn-kind {
   font-size: 0.8rem;
   color: var(--color-orange, #ff9800);
-  min-width: 8.5rem;
 }
 
 .rn-name {
@@ -81,8 +85,26 @@
   color: #fff;
 }
 
+/* Phones: one tile per row, and one competition per line with its kind
+   beside it. Two columns split 2 + 1 and looked as uneven as before. */
 @media (max-width: 576px) {
-  .rn-wide {
-    grid-column: auto;
+  .rn-tile {
+    flex-basis: 100%;
+  }
+
+  .rn-comps {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .rn-comps li {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.5rem;
+  }
+
+  .rn-kind {
+    min-width: 8.5rem;
   }
 }

@@ -280,3 +280,11 @@
 .achievement-activity-note a {
   color: var(--accent-color, #2196f3);
 }
+
+/* Each tab's search box, on the right. The tabs have no heading of their
+   own: the tab name and the page title on the tab row say it. Two classes,
+   to beat .ui-content-header's space-between from the other page files. */
+.ui-content-header.achievements-tab-toolbar {
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
