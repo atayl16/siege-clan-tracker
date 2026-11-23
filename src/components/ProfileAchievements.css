@@ -92,19 +92,33 @@
   color: #f5a5ad;
 }
 
-.ach-cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 18rem;
-  gap: 1.25rem;
-  align-items: start;
-}
-
-.ach-main-col,
-.ach-side {
+.ach-main-col {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+}
+
+/* Section title, with a short note on the right (e.g. when WOM updated). */
+.ach-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ach-card-head .ach-note {
+  margin: 0;
+}
+
+/* Under Overall: skillcapes earned, and the three closest to 99. */
+.ach-capes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding: 0.6rem 0 0.2rem;
+  border-top: 1px solid #2c2c2c;
 }
 
 .ach-card {
@@ -240,22 +254,8 @@
   font-weight: 700;
 }
 
-.ach-stats {
-  padding-bottom: 0.8rem;
-}
 
-.ach-stat {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.3rem 0;
-  border-bottom: 1px dotted #333;
-  color: #aaa;
-  font-size: 0.9rem;
-}
 
-.ach-stat b {
-  color: #fff;
-}
 
 .ach-note {
   margin: 0.6rem 0 0;
@@ -394,34 +394,8 @@
   font-size: 1.1rem;
 }
 
-/* Narrow screens: one column; the character's stats in a short 2x2 block
-   first, then the tracks, then the skillcapes; each row's name sits above
-   its track. */
+/* Narrow screens: each row's name sits above its track. */
 @media (max-width: 900px) {
-  .ach-cols {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .ach-side {
-    display: contents;
-  }
-
-  .ach-stats {
-    order: -1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 1rem;
-  }
-
-  .ach-stats h3,
-  .ach-stats .ach-note {
-    grid-column: 1 / -1;
-  }
-
-  .ach-side > .ach-card:not(.ach-stats) {
-    order: 1;
-  }
-
   .ach-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.4rem;

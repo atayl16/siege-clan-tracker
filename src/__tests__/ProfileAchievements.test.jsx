@@ -43,7 +43,14 @@ describe("ProfileAchievements", () => {
     await userEvent.click(screen.getByRole("button", { name: "Test Alt" }));
     rerender(<ProfileAchievements characters={[characters[0]]} />);
     expect(usePlayer).toHaveBeenLastCalledWith(1, expect.anything());
-    expect(screen.getByRole("heading", { name: "Test Main" })).toBeInTheDocument();
+  });
+
+  it("shows the skillcapes inside Overall, with no separate stats card", () => {
+    render(<ProfileAchievements characters={characters} />);
+    const overall = within(screen.getByRole("region", { name: "Overall" }));
+    expect(overall.getByText("Closest to 99")).toBeInTheDocument();
+    expect(overall.getByText(/^Updated /)).toBeInTheDocument();
+    expect(screen.queryByText("Total level", { selector: ".ach-stat span" })).toBeNull();
   });
 
   it("hides the character picker for a single character", () => {
