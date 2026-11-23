@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { sha256 } from "crypto-hash";
 import { supabase } from "../supabaseClient";
+import { reloadPage } from "../utils/reloadPage";
 import { normaliseUsername, signupUsernameProblem } from "../utils/username";
 
 const AuthContext = createContext();
@@ -14,15 +15,17 @@ const ADMIN_PASSWORD_HASH =
 // How long signing out waits for Supabase before clearing its session itself.
 const SIGN_OUT_WAIT_MS = 5000;
 
-// The last Supabase sign-out, which can still be running after logout stopped
-// waiting for it (a slow token refresh). Signing in or up waits for it first:
-// finishing late, it would remove the new member's session.
+// The last Supabase sign-out. Signing in or up waits for it first: finishing
+// late, it would remove the new member's session. One still running when
+// logout stops waiting is dropped by reloading the page (see logout).
 let pendingSignOut = Promise.resolve();
+
+class SignOutTimeout extends Error {}
 
 const withTimeout = (promise, ms) => {
   let timer;
   const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`no answer in ${ms} ms`)), ms);
+    timer = setTimeout(() => reject(new SignOutTimeout(`no answer in ${ms} ms`)), ms);
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 };
@@ -487,12 +490,14 @@ export function AuthProvider({ children }) {
     // request that revokes it, so it goes even offline, and other devices stay
     // signed in. An error can come from that revocation after the removal
     // succeeded, so it is logged, not treated as a failed sign-out.
+    let stuck = false;
     try {
       const signOut = supabase.auth.signOut({ scope: "local" });
       pendingSignOut = Promise.resolve(signOut).catch(() => {});
       const { error } = (await withTimeout(signOut, SIGN_OUT_WAIT_MS)) || {};
       if (error) console.warn("Supabase sign-out:", error);
     } catch (err) {
+      stuck = err instanceof SignOutTimeout;
       console.warn("Supabase sign-out failed:", err);
     }
     // Whatever happened above, no Supabase session is left in this browser.
@@ -504,6 +509,10 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);
+    // A sign-out that never answered would hold up the next sign-in for good,
+    // or remove its session if it finished after it. Reloading drops it; the
+    // stored session is already gone, so the new page starts signed out.
+    if (stuck) reloadPage();
   };
 
   const isAdmin = () => {
