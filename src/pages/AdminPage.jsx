@@ -63,6 +63,7 @@ export default function AdminPage() {
     error: membersError,
     refreshMembers,
     updateMember,
+    resetSiegeScores,
     deleteMember,
   } = useData();
 
@@ -293,20 +294,17 @@ export default function AdminPage() {
     try {
       exportToCSV();
 
-      const updatePromises = members.map((member) =>
-        updateMember({ ...member, siege_score: 0 })
-      );
-
-      await Promise.all(updatePromises);
+      // One call that resets every member, including former and hidden
+      // members this page does not list, and records when. Sending one
+      // update per listed member skipped those, and left their points.
+      const resetCount = await resetSiegeScores();
 
       setShowResetConfirm(false);
       setResetConfirmText("");
 
-      refreshMembers();
-
       setNotification({
         type: "success",
-        message: `Reset all siege scores to 0. A backup CSV was downloaded.`,
+        message: `Reset ${resetCount} Siege Scores to 0. A backup CSV was downloaded.`,
       });
     } catch (err) {
       setNotification({

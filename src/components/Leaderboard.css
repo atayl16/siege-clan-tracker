@@ -273,3 +273,9 @@
     font-size: 0.875rem; /* 14px */
   }
 }
+
+.ui-leaderboard-since {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}

@@ -118,6 +118,14 @@ export default function MemberEditor({ member, onSave, onCancel }) {
         updated_at: new Date().toISOString(),
       };
   
+      // Editing: send Siege Score only if it was changed in this form. The
+      // form holds the score as it was when the Admin page loaded, so saving
+      // any other edit used to write that back over awards made since.
+      // Without it, admin_update_member keeps the current score.
+      if (member && memberData.siege_score === (Math.floor(Number(member.siege_score)) || 0)) {
+        delete memberData.siege_score;
+      }
+
       // Double check that wom_id is present after processing
       if (!memberData.wom_id) {
         throw new Error("WOM ID is empty or invalid after processing");

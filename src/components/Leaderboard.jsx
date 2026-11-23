@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import PlaceBadge from "./PlaceBadge";
+import SiegeScoreSince from "./SiegeScoreSince";
 import { titleize } from "../utils/stringUtils";
 import "./Leaderboard.css";
 
@@ -132,6 +133,9 @@ export default function SiegeLeaderboard({
   return (
     <div className={`ui-leaderboard ${className}`}>
       {showTitle && <h2 className="ui-leaderboard-title">{displayTitle}</h2>}
+
+      {/* Scores are reset every few months; say since when. */}
+      {type === "score" && <SiegeScoreSince className="ui-leaderboard-since" />}
 
       <div className="ui-leaderboard-table-container">
         <table className="ui-leaderboard-table">
