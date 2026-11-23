@@ -160,8 +160,6 @@ function Section({ section, rows, extra = null }) {
     <section className="ach-card" aria-labelledby={id}>
       <h3 id={id}>
         {section.title}
-        {section.key === "bosses" && <small>bosses this character has killed</small>}
-        {section.key === "activities" && <small>only what this character has done</small>}
       </h3>
       {(rows ?? section.rows).map((row) => (
         <Row key={row.key} row={row} />
