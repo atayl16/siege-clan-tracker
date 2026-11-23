@@ -211,6 +211,33 @@ describe("signing out", () => {
     warn.mockRestore();
   });
 
+  it("waits for a sign-out still in progress before signing someone in", async () => {
+    const { result } = await signedIn();
+    let finish;
+    signOutResult = () => new Promise((resolve) => (finish = resolve));
+    act(() => {
+      result.current.logout();
+    });
+    calls.signIns = [];
+
+    let signingIn;
+    act(() => {
+      signingIn = result.current.login("Test user", PW);
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    // The old sign-out has not finished, so the new sign-in has not started.
+    expect(calls.signIns).toEqual([]);
+
+    await act(async () => {
+      finish({ error: null });
+      await signingIn;
+    });
+    expect(calls.signIns).toHaveLength(1);
+    expect(result.current.user?.username).toBe("test_user");
+  });
+
   it("removes only Supabase's session keys", () => {
     localStorage.setItem("sb-testproject-auth-token", "{}");
     localStorage.setItem("sb-testproject-auth-token-code-verifier", "x");

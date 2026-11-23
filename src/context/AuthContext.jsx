@@ -14,6 +14,11 @@ const ADMIN_PASSWORD_HASH =
 // How long signing out waits for Supabase before clearing its session itself.
 const SIGN_OUT_WAIT_MS = 5000;
 
+// The last Supabase sign-out, which can still be running after logout stopped
+// waiting for it (a slow token refresh). Signing in or up waits for it first:
+// finishing late, it would remove the new member's session.
+let pendingSignOut = Promise.resolve();
+
 const withTimeout = (promise, ms) => {
   let timer;
   const timeout = new Promise((_, reject) => {
@@ -83,6 +88,7 @@ export function AuthProvider({ children }) {
 
   // Admin login
   const login = async (username, password) => {
+    await pendingSignOut;
     try {
       // Hash the provided credentials
       const usernameHash = await sha256(username.trim().toLowerCase());
@@ -358,6 +364,7 @@ export function AuthProvider({ children }) {
     const name = normaliseUsername(username);
     const problem = signupUsernameProblem(name);
     if (problem) return { error: problem };
+    await pendingSignOut;
 
     try {
       // Check if username already exists
@@ -481,7 +488,9 @@ export function AuthProvider({ children }) {
     // signed in. An error can come from that revocation after the removal
     // succeeded, so it is logged, not treated as a failed sign-out.
     try {
-      const { error } = (await withTimeout(supabase.auth.signOut({ scope: "local" }), SIGN_OUT_WAIT_MS)) || {};
+      const signOut = supabase.auth.signOut({ scope: "local" });
+      pendingSignOut = Promise.resolve(signOut).catch(() => {});
+      const { error } = (await withTimeout(signOut, SIGN_OUT_WAIT_MS)) || {};
       if (error) console.warn("Supabase sign-out:", error);
     } catch (err) {
       console.warn("Supabase sign-out failed:", err);
