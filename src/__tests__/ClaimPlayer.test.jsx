@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 const createClaimRequest = vi.fn();
+let mockRequests = [];
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }));
 vi.mock('../hooks/useClaimRequests', () => ({
   useClaimRequests: () => ({
-    requests: [],
+    requests: mockRequests,
     loading: false,
     error: null,
     refresh: vi.fn(),
@@ -28,6 +29,7 @@ import ClaimPlayer from '../components/ClaimPlayer';
 // Braces matter: a function returned from beforeEach is run as a cleanup hook.
 beforeEach(() => {
   createClaimRequest.mockReset();
+  mockRequests = [];
 });
 
 const submitFor = async (name) => {
@@ -36,11 +38,22 @@ const submitFor = async (name) => {
   await userEvent.click(screen.getByRole('button', { name: /submit request/i }));
 };
 
-test('has no claim code tab and opens on the request form', () => {
+test('has no claim code option and no tabs, just the claim form', () => {
   // Nothing can create claim codes, so offering to redeem one was a dead end.
   render(<ClaimPlayer />);
   expect(screen.queryByText(/claim code/i)).toBeNull();
-  expect(screen.getByRole('heading', { name: /search for your osrs account/i })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /view my requests/i })).toBeNull();
+  expect(screen.getByRole('heading', { name: 'Claim a character' })).toBeInTheDocument();
+  // No requests yet: nothing about them, rather than an empty panel.
+  expect(screen.queryByRole('heading', { name: 'Your requests' })).toBeNull();
+});
+
+test('lists your requests above the form when there are any', () => {
+  mockRequests = [{ id: 1, rsn: 'Moonfern', status: 'pending', created_at: '2026-11-20T10:00:00Z' }];
+  render(<ClaimPlayer />);
+  const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+  expect(headings).toEqual(['Your requests', 'Claim another character']);
+  expect(screen.getByText('Waiting for a staff member to approve it.')).toBeInTheDocument();
 });
 
 test('shows a confirmation after submitting a request', async () => {

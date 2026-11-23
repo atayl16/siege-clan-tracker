@@ -83,15 +83,12 @@ test.describe('a registered member', () => {
   });
 
   /**
-   * Both ClaimPlayer tabs, now that useClaimRequests returns what its
-   * callers ask for. They were hidden behind ?preview while the hook still
-   * returned claimRequests from a 401.
-   *
-   * Each is clicked rather than merely asserted present: JSX children are
-   * evaluated even for inactive tabs, so a broken one takes the whole Requests
-   * view down before it paints, and only visiting each catches that.
+   * The Claims tab (ClaimPlayer), signed in. It was once hidden behind
+   * ?preview while useClaimRequests returned the wrong shape; opening it
+   * signed in is what catches a crash there. Since Nov 2026 it is one page
+   * (your requests, then the form) with no tabs inside it.
    */
-  test('every Requests sub-tab renders', async ({ page }) => {
+  test('the Claims tab renders the claim form', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
 
@@ -104,15 +101,11 @@ test.describe('a registered member', () => {
     await page.locator('button[type="submit"]').first().click();
     await expect(page).toHaveURL(/\/profile$/, { timeout: 15_000 });
 
-    await page.getByText('Requests', { exact: true }).first().click();
+    await page.getByText('Claims', { exact: true }).first().click();
 
-    for (const tab of ['Search Members', 'View My Requests']) {
-      await page.getByText(tab, { exact: true }).first().click();
-      await expect(page.locator('#root')).not.toBeEmpty();
-    }
-
-    // A member with no requests should be told so, not shown a blank panel.
-    await expect(page.getByText('No Requests Yet')).toBeVisible();
+    // One page, no inner tabs: with no requests yet, just the form.
+    await expect(page.getByRole('heading', { name: 'Claim a character', exact: true })).toBeVisible();
+    await expect(page.getByRole('combobox')).toBeVisible();
     expect(errors).toEqual([]);
   });
 });

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useRaces } from "../hooks/useRaces"; // Updated hook
+import { useUserGoals } from "../hooks/useUserGoals";
 import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
@@ -29,11 +30,15 @@ import WeeklyXpLeaderboard, { YourWeeklyXp } from "../components/WeeklyXpLeaderb
 import { TitleMarks } from "../components/WeeklyTitles";
 import { useTitleHolders } from "../hooks/useWeeklyTitles";
 import XpProgressChart from "../components/XpProgressChart";
+import SiegeScoreBreakdown from "../components/SiegeScoreBreakdown";
+import YourTitleRaces from "../components/YourTitleRaces";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 import "./ProfilePage.css";
 import { racesForUser, canEditRace } from "../utils/races";
 import ChangeUsername from "../components/ChangeUsername";
 import ChangePassword from "../components/ChangePassword";
+import { formatDate } from "../utils/dates";
 
 // Character Goal Card component
 function CharacterGoalCard({ claim, user }) {
@@ -70,6 +75,27 @@ function CharacterGoalCard({ claim, user }) {
   );
 }
 
+const GOAL_UPDATE_EVERY_MS = 10 * 60 * 1000;
+const goalUpdateKey = (userId) => `siege:goal-progress:${userId}`;
+
+/** True when this member's goal progress was not updated in the last 10 minutes. */
+export function goalUpdateDue(userId, now = Date.now()) {
+  try {
+    const last = Number(localStorage.getItem(goalUpdateKey(userId)));
+    return !last || now - last >= GOAL_UPDATE_EVERY_MS;
+  } catch {
+    return true; // storage blocked: update, as before
+  }
+}
+
+function markGoalUpdate(userId) {
+  try {
+    localStorage.setItem(goalUpdateKey(userId), String(Date.now()));
+  } catch {
+    // storage blocked: the next visit updates again, as before
+  }
+}
+
 // Profile tabs a link can open with ?tab=, e.g. /profile?tab=requests.
 const PROFILE_TABS = ["characters", "goals", "races", "achievements", "requests", "account"];
 
@@ -93,6 +119,10 @@ function ProfileContent() {
   // and never had a userClaims or refreshUserClaims key, so both were
   // undefined and `userClaims.length` threw before the page could paint.
   const { user, userClaims, fetchUserClaims } = useAuth();
+  // The member's goals, loaded once for every character card. Each card used
+  // to load them itself, one identical query per character.
+  const { userGoals, loading: goalsLoading, refresh: refreshGoals } = useUserGoals(user?.id);
+  const goalsFor = (womId) => (userGoals || []).filter((g) => g.user_id === user?.id && g.wom_id === womId);
   // ?tab=requests opens the claim form directly (the home page links there).
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() =>
@@ -116,6 +146,10 @@ function ProfileContent() {
   // hides by default). The main is listed first and is the default character
   // elsewhere, e.g. the first participant in a new race.
   const orderedClaims = mainFirst(userClaims);
+  // The character shown on the Characters tab: the one picked, or the main.
+  const [shownCharacter, setShownCharacter] = useState(null);
+  const shownClaim =
+    orderedClaims.find((c) => Number(c.members?.wom_id ?? c.wom_id) === shownCharacter) ?? orderedClaims[0];
   const mainId = mainCharacterId(userClaims);
   // Titles any of the viewer's characters hold this week, for the header.
   const { byMember: titleHolders } = useTitleHolders();
@@ -127,6 +161,7 @@ function ProfileContent() {
     ).values(),
   ];
   const hasSeveralCharacters = (userClaims?.length ?? 0) > 1;
+  const wideScreen = useMediaQuery("(min-width: 1101px)");
   const [settingMainId, setSettingMainId] = useState(null);
   const [mainError, setMainError] = useState(null);
 
@@ -166,23 +201,35 @@ function ProfileContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Update goals effect
+  // Bring goal progress up to date from Wise Old Man, once the goals have
+  // loaded: only for characters with goals in progress, using the goals
+  // already loaded, and at most every GOAL_UPDATE_EVERY_MS per member (WOM's
+  // stats change slowly; revisiting the profile need not redo it).
+  const goalsUpdated = useRef(false);
   useEffect(() => {
-    if (user && userClaims?.length > 0) {
-      const updateGoals = async () => {
-        // One character's failure should not stop the others updating.
-        for (const claim of userClaims) {
-          try {
-            await updatePlayerGoals(claim.members.wom_id, user.id);
-          } catch (err) {
-            console.error(`Error updating goals for ${claim.members.wom_id}:`, err);
-          }
-        }
-      };
+    if (!user?.id || goalsLoading || goalsUpdated.current) return;
+    goalsUpdated.current = true;
+    if (!goalUpdateDue(user.id)) return;
 
-      updateGoals();
-    }
-  }, [user, userClaims]);
+    const womIds = [...new Set(userGoals.filter((g) => g.user_id === user.id && !g.completed).map((g) => g.wom_id))];
+    if (!womIds.length) return;
+    markGoalUpdate(user.id);
+
+    (async () => {
+      let changed = 0;
+      // One character's failure should not stop the others updating.
+      for (const womId of womIds) {
+        try {
+          changed += (await updatePlayerGoals(womId, user.id, { goals: userGoals }))?.updated ?? 0;
+        } catch (err) {
+          console.error(`Error updating goals for ${womId}:`, err);
+        }
+      }
+      if (changed) refreshGoals();
+    })();
+    // refreshGoals is stable (useCallback); the goals finishing loading starts it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, goalsLoading]);
 
   if (!user) {
     return (
@@ -277,13 +324,10 @@ function ProfileContent() {
             }
           />
         </div>
-        <WeeklyXpLeaderboard
-          variant="compact"
-          className="profile-xp-week"
-          highlightIds={(userClaims || []).map((c) => c.members?.wom_id ?? c.wom_id)}
-        />
       </div>
 
+      <div className="profile-layout">
+      <div className="profile-main">
       <Tabs
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -325,9 +369,31 @@ function ProfileContent() {
               }
             />
           ) : (
-            <CardGrid>
-              {/* get_user_claims rows have no id column, so key on wom_id. */}
-              {orderedClaims.map((claim) => (
+            <>
+              {/* One character at a time, picked here (main first), so the
+                  chart and competition standings load only for the one being
+                  looked at. get_user_claims rows have no id column, so key
+                  on wom_id. */}
+              {hasSeveralCharacters && (
+                <div className="profile-character-picker" role="group" aria-label="Character">
+                  {orderedClaims.map((c) => {
+                    const id = Number(c.members?.wom_id ?? c.wom_id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`profile-character-chip ${id === Number(shownClaim.members?.wom_id ?? shownClaim.wom_id) ? "is-on" : ""}`}
+                        aria-pressed={id === Number(shownClaim.members?.wom_id ?? shownClaim.wom_id)}
+                        onClick={() => setShownCharacter(id)}
+                      >
+                        {c.members?.name}
+                        {id === mainId && <span className="profile-character-main">Main</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {[shownClaim].map((claim) => (
                 <Card
                   key={`claim-${claim.wom_id}`}
                   hover
@@ -369,29 +435,23 @@ function ProfileContent() {
                       />
                     </StatGroup>
 
+                    <SiegeScoreBreakdown
+                      key={claim.members.wom_id}
+                      womId={claim.members.wom_id}
+                      total={claim.members.siege_score || 0}
+                    />
+
                     <XpProgressChart womId={claim.members.wom_id ?? claim.wom_id} />
 
                     <CharacterEventStandings womId={claim.members.wom_id} />
 
-                    {user &&
-                    user.id &&
-                    claim.members &&
-                    claim.members.wom_id ? (
-                      <PlayerGoalSummary
-                        playerId={claim.members.wom_id}
-                        userId={user.id}
-                      />
-                    ) : (
-                      <div className="inline-goals-loading">
-                        Loading user data...
-                      </div>
-                    )}
+                    <PlayerGoalSummary goals={goalsFor(claim.members.wom_id)} />
                   </Card.Body>
 
                   <Card.Footer className="ui-character-card-footer">
                     <div className="ui-character-card-actions">
                     <Button variant="primary" onClick={() => setActiveTab("goals")}>
-                      Manage Goals
+                      {goalsFor(claim.members.wom_id).length ? "Manage Goals" : "Set a Goal"}
                     </Button>
                     {hasSeveralCharacters &&
                       Number(claim.members.wom_id ?? claim.wom_id) !== mainId && (
@@ -410,12 +470,12 @@ function ProfileContent() {
                     </div>
                     <div className="ui-claim-date">
                       Claimed on{" "}
-                      {new Date(claim.claimed_at).toLocaleDateString()}
+                      {formatDate(claim.claimed_at)}
                     </div>
                   </Card.Footer>
                 </Card>
               ))}
-            </CardGrid>
+            </>
           )}
         </Tabs.Tab>
 
@@ -475,7 +535,8 @@ function ProfileContent() {
           )}
         </Tabs.Tab>
 
-        <Tabs.Tab tabId="requests" label="Requests" icon={<FaClock />}>
+        {/* tabId stays "requests" so existing ?tab=requests links still work. */}
+        <Tabs.Tab tabId="requests" label="Claims" icon={<FaClock />}>
           <div className="tab-header">
             <h2>Character Claims</h2>
           </div>
@@ -520,13 +581,31 @@ function ProfileContent() {
               <div className="account-field">
                 <label>Member Since</label>
                 <div className="field-value">
-                  {new Date(user.created_at).toLocaleDateString()}
+                  {formatDate(user.created_at)}
                 </div>
               </div>
             </Card.Body>
           </Card>
         </Tabs.Tab>
       </Tabs>
+      </div>
+
+      {/* Side cards, on wide screens only: not rendered at all below
+          1100px, so phones fetch nothing for them. */}
+      {wideScreen && (
+        <aside className="profile-sidebar" aria-label="This week">
+          <WeeklyXpLeaderboard
+            variant="compact"
+            className="profile-xp-week"
+            highlightIds={(userClaims || []).map((c) => c.members?.wom_id ?? c.wom_id)}
+          />
+          <YourTitleRaces
+            characters={orderedClaims.map((c) => ({ womId: c.members?.wom_id ?? c.wom_id, name: c.members?.name }))}
+            held={heldTitles}
+          />
+        </aside>
+      )}
+      </div>
     </div>
   );
 }

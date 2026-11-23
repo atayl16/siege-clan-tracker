@@ -1,35 +1,20 @@
-import React from 'react';
-import { useUserGoals } from '../../hooks/useUserGoals'; // Updated to use new hook
-import GoalProgress from './GoalProgress';
-import './PlayerGoalSummary.css';
+import React from "react";
+import GoalProgress from "./GoalProgress";
+import "./PlayerGoalSummary.css";
+import { goalName } from "../../utils/goalName";
 
-export default function PlayerGoalSummary({ playerId, userId }) {
-  // Use the new hook
-  const { userGoals: goals, loading } = useUserGoals(userId);
-
-  if (!playerId || !userId) {
-    return (
-      <div className="inline-goals-empty">
-        {!userId ? "User ID missing" : "No player selected"}
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <div className="inline-goals-loading">Loading goals...</div>;
-  }
-
-  // Filter goals for the specific player and user
-  const filteredGoals = goals?.filter(
-    (goal) => goal.user_id === userId && goal.wom_id === playerId
-  );
-
-  if (!filteredGoals || filteredGoals.length === 0) {
-    return <div className="inline-goals-empty">No active goals</div>;
-  }
-
-  // Get up to 3 uncompleted goals
-  const activeGoals = filteredGoals.filter((goal) => !goal.completed).slice(0, 3);
+/**
+ * Up to three of a character's goals still in progress, on its profile card.
+ * Shows nothing when there are none: the card's button then reads
+ * "Set a Goal", so an empty "Current Goals" heading is not left floating
+ * above it.
+ *
+ * @param {object} props
+ * @param {Array<object>} props.goals - this character's goals (user_goals rows)
+ */
+export default function PlayerGoalSummary({ goals }) {
+  const activeGoals = (goals || []).filter((goal) => !goal.completed).slice(0, 3);
+  if (!activeGoals.length) return null;
 
   return (
     <div className="inline-goals-container">
@@ -37,9 +22,7 @@ export default function PlayerGoalSummary({ playerId, userId }) {
       <div className="inline-goals-list">
         {activeGoals.map((goal) => (
           <div key={goal.id} className="inline-goal-item">
-            <div className="inline-goal-title">
-              {goal.metric} ({goal.goal_type})
-            </div>
+            <div className="inline-goal-title">{goalName(goal)}</div>
             <GoalProgress goal={goal} />
           </div>
         ))}
