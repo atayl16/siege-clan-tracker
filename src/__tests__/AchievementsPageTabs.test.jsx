@@ -25,14 +25,14 @@ describe("Achievements page tabs", () => {
     expect(screen.getByRole("heading", { name: "Recent Achievements" })).toBeInTheDocument();
     expect(useClanActivity).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole("button", { name: "Clan activity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clan Activity" }));
     expect(useClanActivity).toHaveBeenCalledWith("page");
     expect(screen.getByText(/Valuable drop: Test Item/)).toBeInTheDocument();
   });
 
   it("searches clan activity by player or by what happened", async () => {
     render(<AchievementsPage />);
-    await userEvent.click(screen.getByRole("button", { name: "Clan activity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clan Activity" }));
     await userEvent.type(screen.getByPlaceholderText(/Search drops, quests or players/), "quest");
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByText(/Completed Test Quest/)).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe("Achievements page tabs", () => {
 
   it("clears the search with its clear button", async () => {
     render(<AchievementsPage />);
-    await userEvent.click(screen.getByRole("button", { name: "Clan activity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clan Activity" }));
     await userEvent.type(screen.getByPlaceholderText(/Search drops, quests or players/), "quest");
     await userEvent.click(screen.getByRole("button", { name: /clear/i }));
     expect(screen.getAllByRole("listitem")).toHaveLength(2);

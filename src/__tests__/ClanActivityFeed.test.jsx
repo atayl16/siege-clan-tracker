@@ -19,7 +19,7 @@ describe("ClanActivityFeed", () => {
   it("shows the newest six, with who did what, and more on request", async () => {
     mockFeed = { activities: Array.from({ length: 20 }, (_, i) => act(i)), loading: false, error: null };
     render(<ClanActivityFeed />);
-    expect(screen.getByRole("heading", { name: /Latest from the clan/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Latest From the Clan/ })).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(6);
     expect(screen.getAllByRole("listitem")[0]).toHaveTextContent("Test Player 0 Completed Test Quest 0");
     await userEvent.click(screen.getByRole("button", { name: "Show more" }));

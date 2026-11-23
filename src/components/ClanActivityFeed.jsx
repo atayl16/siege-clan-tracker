@@ -7,7 +7,7 @@ import ActivityList from "./ActivityList";
 const SHOWN = 6;
 
 /**
- * "Latest from the clan" on the home page: members' recent collection log
+ * "Latest From the Clan" on the home page: members' recent collection log
  * items, drops, quests, diaries, combat achievements and level-ups, from
  * RuneProfile. One edge-cached request for every visitor.
  *
@@ -23,7 +23,7 @@ export default function ClanActivityFeed() {
   return (
     <section className="nm-section-container nm-activity" aria-labelledby="clan-activity-h">
       <h3 className="nm-section-title" id="clan-activity-h">
-        <FaBolt className="nm-section-icon" /> Latest from the clan
+        <FaBolt className="nm-section-icon" /> Latest From the Clan
       </h3>
       <ActivityList activities={shown} showName />
       <div className="nm-activity-foot">
