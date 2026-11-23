@@ -22,7 +22,7 @@ describe("ClanActivityFeed", () => {
     expect(screen.getByRole("heading", { name: /Latest From the Clan/ })).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(6);
     expect(screen.getAllByRole("listitem")[0]).toHaveTextContent("Test Player 0 Completed Test Quest 0");
-    await userEvent.click(screen.getByRole("button", { name: "Show more" }));
+    await userEvent.click(screen.getByRole("button", { name: "Show More" }));
     expect(screen.getAllByRole("listitem")).toHaveLength(20);
   });
 
@@ -31,6 +31,6 @@ describe("ClanActivityFeed", () => {
     render(<ClanActivityFeed />);
     expect(screen.getByRole("link", { name: "RuneProfile" })).toHaveAttribute("href", "https://www.runeprofile.com/clan/Siege");
     expect(screen.getByRole("link", { name: "Add yours" })).toHaveAttribute("href", "https://www.runeprofile.com/info/guide");
-    expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show More" })).toBeNull();
   });
 });

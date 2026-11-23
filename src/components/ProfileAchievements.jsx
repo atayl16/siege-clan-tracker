@@ -28,8 +28,8 @@ import "./ProfileAchievements.css";
 const BOSSES_SHOWN = 10;
 
 const ORDERS = [
-  ["closest", "Closest first"],
-  ["game", "Game order"],
+  ["closest", "Closest First"],
+  ["game", "Game Order"],
   ["alpha", "A to Z"],
 ];
 
@@ -193,7 +193,7 @@ function SectionPicker({ sections, active, onPick, order, onOrder, allBosses, on
           extra={
             cut && (
               <button type="button" className="ach-more" onClick={onAllBosses}>
-                Show all {ordered.length} bosses
+                Show All {ordered.length} Bosses
               </button>
             )
           }

@@ -42,7 +42,7 @@ export default function YourTitleRaces({ characters, held = [] }) {
 
   return (
     <section className="ytr" aria-labelledby="ytr-h">
-      <h3 id="ytr-h">Your title races</h3>
+      <h3 id="ytr-h">Your Title Races</h3>
 
       {held.length > 0 && (
         <>

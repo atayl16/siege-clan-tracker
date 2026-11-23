@@ -66,7 +66,7 @@ test('filters goals by character, type and status', async () => {
   expect(screen.getByText('No goals match')).toBeInTheDocument();
 
   // The empty state's button clears the search and every filter.
-  await userEvent.click(screen.getAllByRole('button', { name: /Clear filters/ }).at(-1));
+  await userEvent.click(screen.getAllByRole('button', { name: /Clear Filters/ }).at(-1));
   expect(goalTitles()).toEqual(['Zulrah', 'Sailing', 'Runecrafting']);
   expect(screen.getByRole('searchbox', { name: /Search characters/ })).toHaveValue('');
 });

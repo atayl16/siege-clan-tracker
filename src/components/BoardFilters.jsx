@@ -80,7 +80,7 @@ export default function BoardFilters({
           {/* With nothing shown, the empty state has its own Clear button. */}
           {shown > 0 && (
             <button type="button" className="ui-board-clear" onClick={onClear}>
-              <FaTimes aria-hidden="true" /> Clear filters
+              <FaTimes aria-hidden="true" /> Clear Filters
             </button>
           )}
         </div>

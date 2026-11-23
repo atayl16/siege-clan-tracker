@@ -46,7 +46,7 @@ export default function SiegeScoreBreakdown({ womId, total }) {
   return (
     <section className="ssb" aria-labelledby={`ssb-${womId}`}>
       <div className="ssb-head">
-        <h4 id={`ssb-${womId}`}>Siege Score breakdown</h4>
+        <h4 id={`ssb-${womId}`}>Siege Score Breakdown</h4>
         <button type="button" className="ssb-close" onClick={() => setOpen(false)}>
           Hide
         </button>

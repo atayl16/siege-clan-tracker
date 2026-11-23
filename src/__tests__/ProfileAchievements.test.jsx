@@ -95,7 +95,7 @@ describe("ProfileAchievements", () => {
   it("orders skills nearest-first, in game order, or A to Z", async () => {
     render(<ProfileAchievements characters={characters} />);
     expect(names("Skills")[0]).toBe("Magic");
-    await userEvent.click(screen.getByRole("button", { name: "Game order" }));
+    await userEvent.click(screen.getByRole("button", { name: "Game Order" }));
     expect(names("Skills")[0]).toBe("Attack");
     await userEvent.click(screen.getByRole("button", { name: "A to Z" }));
     expect(names("Skills").slice(0, 2)).toEqual(["Agility", "Attack"]);
@@ -124,7 +124,7 @@ describe("ProfileAchievements", () => {
     render(<ProfileAchievements characters={characters} />);
     await userEvent.click(screen.getByRole("button", { name: /^Bosses/ }));
     expect(names(/Bosses/)).toHaveLength(10);
-    await userEvent.click(screen.getByRole("button", { name: "Show all 14 bosses" }));
+    await userEvent.click(screen.getByRole("button", { name: "Show All 14 Bosses" }));
     expect(names(/Bosses/)).toHaveLength(14);
   });
 
