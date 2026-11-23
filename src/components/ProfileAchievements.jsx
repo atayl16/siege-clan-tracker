@@ -90,63 +90,23 @@ export default function ProfileAchievements({ characters }) {
       )}
 
       {achievements && !loading && (
-        <div className="ach-cols">
-          <div className="ach-main-col">
-            <Section section={achievements.sections.find((x) => x.key === "overall")} rows={null} />
-            <SectionPicker
-              sections={achievements.sections.filter((x) => x.key !== "overall" && x.rows.length)}
-              active={sectionKey}
-              onPick={setSectionKey}
-              order={order}
-              onOrder={setOrder}
-              allBosses={allBosses}
-              onAllBosses={() => setAllBosses(true)}
-            />
-          </div>
-
-          <aside className="ach-side">
-            <section className="ach-card ach-stats" aria-labelledby="ach-stats-h">
-              <h3 id="ach-stats-h">{current?.name}</h3>
-              <Stat label="Total level" value={achievements.stats.totalLevel} />
-              <Stat label="Combat" value={achievements.stats.combat} />
-              <Stat label="EHB" value={achievements.stats.ehb} />
-              <Stat label="EHP" value={achievements.stats.ehp} />
-              {achievements.updatedAt && <p className="ach-note">Stats from Wise Old Man, updated {ago(achievements.updatedAt)}.</p>}
-            </section>
-
-            <section className="ach-card" aria-labelledby="ach-capes-h">
-              <h3 id="ach-capes-h">
-                Skillcapes <small>{achievements.capes.earned.length} at 99</small>
-              </h3>
-              {achievements.capes.earned.length > 0 && (
-                <>
-                  <div className="ach-sec">Earned</div>
-                  <ul className="ach-capes">
-                    {achievements.capes.earned.map((m) => (
-                      <li key={m} className="ach-cape is-earned" title={`99 ${skillName(m)}`}>
-                        <SkillIcon skill={skillName(m)} />
-                        <span>99</span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              {achievements.capes.closest.length > 0 && (
-                <>
-                  <div className="ach-sec">Closest to 99</div>
-                  <ul className="ach-capes">
-                    {achievements.capes.closest.map(({ metric, progress }) => (
-                      <li key={metric} className="ach-cape" title={`${skillName(metric)}: ${Math.floor(progress * 100)}% of the XP for 99`}>
-                        <SkillIcon skill={skillName(metric)} />
-                        <span>99</span>
-                        <em>{Math.floor(progress * 100)}%</em>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </section>
-          </aside>
+        <div className="ach-main-col">
+          {/* Overall carries the skillcapes and when WOM last updated; one
+              column, so the tracks get the full width. */}
+          <Section
+            section={achievements.sections.find((x) => x.key === "overall")}
+            note={achievements.updatedAt ? `Updated ${ago(achievements.updatedAt)}` : null}
+            extra={<Skillcapes capes={achievements.capes} />}
+          />
+          <SectionPicker
+            sections={achievements.sections.filter((x) => x.key !== "overall" && x.rows.length)}
+            active={sectionKey}
+            onPick={setSectionKey}
+            order={order}
+            onOrder={setOrder}
+            allBosses={allBosses}
+            onAllBosses={() => setAllBosses(true)}
+          />
         </div>
       )}
     </div>
@@ -154,13 +114,14 @@ export default function ProfileAchievements({ characters }) {
 }
 
 /** A titled card of rows. rows defaults to the section's own order. */
-function Section({ section, rows, extra = null }) {
+function Section({ section, rows, extra = null, note = null }) {
   const id = `ach-${section.key}`;
   return (
     <section className="ach-card" aria-labelledby={id}>
-      <h3 id={id}>
-        {section.title}
-      </h3>
+      <div className="ach-card-head">
+        <h3 id={id}>{section.title}</h3>
+        {note && <span className="ach-note">{note}</span>}
+      </div>
       {(rows ?? section.rows).map((row) => (
         <Row key={row.key} row={row} />
       ))}
@@ -284,11 +245,38 @@ function RowName({ row }) {
   );
 }
 
-function Stat({ label, value }) {
+/** Skillcapes earned, and the three skills closest to 99, under Overall. */
+function Skillcapes({ capes }) {
+  if (!capes.earned.length && !capes.closest.length) return null;
   return (
-    <div className="ach-stat">
-      <span>{label}</span>
-      <b>{Number(value).toLocaleString("en-GB")}</b>
+    <div className="ach-capes-row">
+      {capes.earned.length > 0 && (
+        <div className="ach-capes-group">
+          <div className="ach-sec">Skillcapes ({capes.earned.length})</div>
+          <ul className="ach-capes">
+            {capes.earned.map((m) => (
+              <li key={m} className="ach-cape is-earned" title={`99 ${skillName(m)}`}>
+                <SkillIcon skill={skillName(m)} />
+                <span>99</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {capes.closest.length > 0 && (
+        <div className="ach-capes-group">
+          <div className="ach-sec">Closest to 99</div>
+          <ul className="ach-capes">
+            {capes.closest.map(({ metric, progress }) => (
+              <li key={metric} className="ach-cape" title={`${skillName(metric)}: ${Math.floor(progress * 100)}% of the XP for 99`}>
+                <SkillIcon skill={skillName(metric)} />
+                <span>99</span>
+                <em>{Math.floor(progress * 100)}%</em>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
