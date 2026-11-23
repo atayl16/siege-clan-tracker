@@ -1,0 +1,65 @@
+/* Profile side card (EventStampCard.jsx), styled like the other side cards. */
+.esc {
+  background: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 0.75rem 0.9rem 0.8rem;
+}
+
+.esc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.esc h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-orange, #ff9800);
+}
+
+.esc-count {
+  font-size: 0.8rem;
+  color: #bbb;
+}
+
+.esc-stamps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.4rem;
+}
+
+.esc-stamp {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px dashed #444;
+}
+
+.esc-stamp.is-on {
+  border: 2px solid var(--color-orange, #ff9800);
+  background: radial-gradient(circle, rgba(255, 152, 0, 0.55) 0 38%, rgba(255, 152, 0, 0.15) 40% 100%);
+}
+
+.esc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.esc-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  color: #999;
+}
+
+.esc-note a {
+  color: var(--accent-color, #2196f3);
+}

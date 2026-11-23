@@ -1,0 +1,88 @@
+/* "Right Now" on the home page (RightNow.jsx). */
+.rn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.9rem;
+}
+
+.rn-tile {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  padding: 0.85rem 1rem;
+  min-width: 0;
+}
+
+.rn-wide {
+  grid-column: span 2;
+}
+
+.rn-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 0.35rem;
+}
+
+.rn-live {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+}
+
+.rn-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.rn-sub {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: #aaa;
+}
+
+.rn-sub a {
+  color: var(--accent-color, #2196f3);
+}
+
+.rn-comps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rn-comps li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+}
+
+.rn-kind {
+  font-size: 0.8rem;
+  color: var(--color-orange, #ff9800);
+  min-width: 8.5rem;
+}
+
+.rn-name {
+  font-weight: 700;
+  color: #fff;
+}
+
+@media (max-width: 576px) {
+  .rn-wide {
+    grid-column: auto;
+  }
+}

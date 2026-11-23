@@ -57,7 +57,10 @@ vi.mock("../supabaseClient", () => {
           calls.signIns.push(args);
           return { error: null };
         },
-        signOut: async () => ({ error: null }),
+        signOut: async () => {
+          calls.signOuts = (calls.signOuts || 0) + 1;
+          return { error: null };
+        },
       },
     },
   };
@@ -153,5 +156,19 @@ describe("signing up and in with a space in the name", () => {
 
     expect(outcome).toEqual({ success: true, isAdmin: false });
     expect(calls.signIns).toEqual([{ email: "test_user@example.com", password: PW }]);
+  });
+});
+
+describe("signing out", () => {
+  it("ends the Supabase session as well as the site's own sign-in", async () => {
+    usersTable = [{ id: "u-1", username: "test_user", password_hash: `hash:${PW}`, is_admin: false }];
+    const { result } = await renderAuth();
+    await act(async () => {
+      await result.current.login("Test user", PW);
+    });
+    calls.signOuts = 0;
+    act(() => result.current.logout());
+    expect(calls.signOuts).toBe(1);
+    expect(result.current.user).toBeNull();
   });
 });

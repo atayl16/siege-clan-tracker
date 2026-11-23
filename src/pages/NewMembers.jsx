@@ -11,6 +11,7 @@ import {
 import Button from "../components/ui/Button";
 import UsingTheSite from "../components/UsingTheSite";
 import ClanActivityFeed from "../components/ClanActivityFeed";
+import RightNow from "../components/RightNow";
 import clanVideo from "../assets/videos/VT-986_OSRS_Video.mp4";
 import "./NewMembers.css";
 
@@ -57,6 +58,10 @@ export default function NewMembers() {
           </p>
         </div>
       </div>
+
+      {/* What's happening this week, from data the site already caches.
+          After the Clan Introduction, which stays the first thing on the page. */}
+      <RightNow />
 
       {/* Members' recent drops, quests and level-ups (RuneProfile); shows
           nothing if there is nothing to show. */}

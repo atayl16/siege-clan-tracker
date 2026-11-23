@@ -29,6 +29,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
 import PageMeta from "./components/PageMeta";
+import SiteFooter from "./components/SiteFooter";
+import PrivacyPage from "./pages/PrivacyPage";
 import SeasonalFavicon from "./utils/seasonalIcons";
 
 import "./styles/App.css";
@@ -58,6 +60,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/new-members" element={<NewMembers />} />
           <Route path="/bosses" element={<BossStatsPage />} />
 
@@ -66,7 +69,9 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <AdminPage />
+                <DataProvider>
+                  <AdminPage />
+                </DataProvider>
               </ProtectedRoute>
             }
           />
@@ -74,7 +79,9 @@ function App() {
             path="/admin/members"
             element={
               <ProtectedRoute>
-                <AdminPage />
+                <DataProvider>
+                  <AdminPage />
+                </DataProvider>
               </ProtectedRoute>
             }
           />
@@ -82,7 +89,9 @@ function App() {
             path="/admin/members/new"
             element={
               <ProtectedRoute>
-                <AdminPage />
+                <DataProvider>
+                  <AdminPage />
+                </DataProvider>
               </ProtectedRoute>
             }
           />
@@ -90,7 +99,9 @@ function App() {
             path="/admin/members/deleted"
             element={
               <ProtectedRoute>
-                <AdminPage />
+                <DataProvider>
+                  <AdminPage />
+                </DataProvider>
               </ProtectedRoute>
             }
           />
@@ -98,7 +109,9 @@ function App() {
             path="/admin/events/new"
             element={
               <ProtectedRoute>
-                <AdminPage />
+                <DataProvider>
+                  <AdminPage />
+                </DataProvider>
               </ProtectedRoute>
             }
           />
@@ -109,19 +122,20 @@ function App() {
             element={<NotFoundPage />}
           />
         </Routes>
+        <SiteFooter />
       </div>
     );
   };
 
   return (
-    <DataProvider>
+    <>
       <BackgroundLoader />
       <AuthProvider>
         <Router>
           <AppContent />
         </Router>
       </AuthProvider>
-    </DataProvider>
+    </>
   );
 }
 

@@ -452,6 +452,11 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    // End the Supabase session too. Without this its token stayed in the
+    // browser after signing out, so on a shared computer the next person was
+    // still signed in to the database as the previous member. Not awaited:
+    // the site signs out straight away even if Supabase is slow or offline.
+    supabase.auth.signOut().catch((err) => console.warn("Supabase sign-out failed:", err));
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
