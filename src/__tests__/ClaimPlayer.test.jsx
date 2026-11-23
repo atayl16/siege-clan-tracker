@@ -43,16 +43,16 @@ test('has no claim code option and no tabs, just the claim form', () => {
   render(<ClaimPlayer />);
   expect(screen.queryByText(/claim code/i)).toBeNull();
   expect(screen.queryByRole('button', { name: /view my requests/i })).toBeNull();
-  expect(screen.getByRole('heading', { name: 'Claim a character' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Claim a Character' })).toBeInTheDocument();
   // No requests yet: nothing about them, rather than an empty panel.
-  expect(screen.queryByRole('heading', { name: 'Your requests' })).toBeNull();
+  expect(screen.queryByRole('heading', { name: 'Your Requests' })).toBeNull();
 });
 
 test('lists your requests above the form when there are any', () => {
   mockRequests = [{ id: 1, rsn: 'Moonfern', status: 'pending', created_at: '2026-11-20T10:00:00Z' }];
   render(<ClaimPlayer />);
   const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-  expect(headings).toEqual(['Your requests', 'Claim another character']);
+  expect(headings).toEqual(['Your Requests', 'Claim Another Character']);
   expect(screen.getByText('Waiting for a staff member to approve it.')).toBeInTheDocument();
 });
 

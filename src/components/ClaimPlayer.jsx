@@ -119,7 +119,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
         {hasRequests && (
           <section className="ui-claim-section" aria-labelledby="claim-requests-h">
             <h2 className="ui-claim-heading" id="claim-requests-h">
-              Your requests
+              Your Requests
             </h2>
                 <div className="ui-requests-list">
                   {userRequests.map((request) => (
@@ -159,7 +159,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
 
         <section className="ui-claim-section" aria-labelledby="claim-form-h">
           <h2 className="ui-claim-heading" id="claim-form-h">
-            {hasRequests ? "Claim another character" : "Claim a character"}
+            {hasRequests ? "Claim Another Character" : "Claim a Character"}
           </h2>
           <p className="ui-claim-description">
             Choose one of your characters. You can claim more than one, such as your main and your alts:
@@ -230,7 +230,7 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                 </div>
 
                 <div className="ui-form-group">
-                  <label className="ui-form-label">Message (optional):</label>
+                  <label className="ui-form-label">Message (Optional):</label>
                   <textarea
                     className="ui-form-textarea"
                     value={message}

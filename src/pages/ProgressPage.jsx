@@ -79,7 +79,7 @@ export default function ProgressPage() {
       description="Try a different search or filter."
       action={
         <Button variant="secondary" onClick={onClear}>
-          Clear filters
+          Clear Filters
         </Button>
       }
     />

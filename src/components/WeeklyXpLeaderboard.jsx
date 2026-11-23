@@ -197,7 +197,7 @@ export default function WeeklyXpLeaderboard({
     <section className={`xp-week xp-week-${variant} ${className}`.trim()}>
       <h3 className="xp-week-title">
         <FaChartLine className="xp-week-icon" aria-hidden="true" />
-        Top XP this week
+        Top XP This Week
       </h3>
       {body}
       <p className="xp-week-note">

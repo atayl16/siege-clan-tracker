@@ -154,9 +154,9 @@ describe("ProfilePage main character", () => {
   it("explains claiming, and opens the claim form, when nothing is claimed", () => {
     mockClaims = [];
     renderPage();
-    expect(screen.getByText("Claim your characters")).toBeInTheDocument();
+    expect(screen.getByText("Claim Your Characters")).toBeInTheDocument();
     expect(screen.getByText(/Have alts\? Claim each one/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Claim a character" }));
+    fireEvent.click(screen.getByRole("button", { name: "Claim a Character" }));
     expect(screen.getByRole("heading", { name: "Character Claims" })).toBeInTheDocument();
   });
 

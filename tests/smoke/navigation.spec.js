@@ -104,7 +104,7 @@ test.describe('a registered member', () => {
     await page.getByText('Claims', { exact: true }).first().click();
 
     // One page, no inner tabs: with no requests yet, just the form.
-    await expect(page.getByRole('heading', { name: 'Claim a character', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Claim a Character', exact: true })).toBeVisible();
     await expect(page.getByRole('combobox')).toBeVisible();
     expect(errors).toEqual([]);
   });

@@ -29,7 +29,7 @@ export default function ClanActivityFeed() {
       <div className="nm-activity-foot">
         {activities.length > SHOWN && (
           <button type="button" className="nm-activity-more" onClick={() => setMore(!more)}>
-            {more ? "Show less" : "Show more"}
+            {more ? "Show Less" : "Show More"}
           </button>
         )}
         <span className="nm-activity-credit">

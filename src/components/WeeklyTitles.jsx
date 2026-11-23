@@ -110,7 +110,7 @@ export function TitleHolders() {
   return (
     <section className="titles-section" aria-labelledby="title-holders-h">
       <div className="titles-section-head">
-        <h2 id="title-holders-h">Title holders</h2>
+        <h2 id="title-holders-h">Title Holders</h2>
         <p>Last week's winners</p>
       </div>
       {body}
@@ -181,7 +181,7 @@ export function TitleRaces() {
   return (
     <section className="titles-section" aria-labelledby="title-races-h">
       <div className="titles-section-head">
-        <h2 id="title-races-h">This week's title races</h2>
+        <h2 id="title-races-h">This Week's Title Races</h2>
         <p>
           Top 3 over the minimum earn 150 / 100 / 50 Siege Score, and 1st takes the title.
           {updatedAt && ` Last updated ${formatUkTime(updatedAt)} UK.`}

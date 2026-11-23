@@ -359,12 +359,12 @@ function ProfileContent() {
 
           {!userClaims?.length ? (
             <EmptyState
-              title="Claim your characters"
+              title="Claim Your Characters"
               description="Claiming links your in-game characters to this account, so you can set goals, join races and follow your progress. Have alts? Claim each one. A staff member approves every claim."
               icon={<FaUser />}
               action={
                 <Button variant="primary" onClick={() => setActiveTab("requests")}>
-                  Claim a character
+                  Claim a Character
                 </Button>
               }
             />

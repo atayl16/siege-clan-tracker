@@ -52,7 +52,7 @@ function HowPointsWork() {
 
       <Card className="leaderboard-how-card leaderboard-how-wide" variant="dark">
         <Card.Body>
-          <h3>Weekly titles</h3>
+          <h3>Weekly Titles</h3>
           <p className="leaderboard-how-sub">
             Top {TITLE_POINTS.length} over the minimum earn <strong>{TITLE_POINTS.join(" / ")}</strong>. 1st holds
             the title until the next week is awarded. No points for taking part, and a title nobody qualifies for
@@ -108,7 +108,7 @@ export default function LeaderboardPage() {
       </div>
 
       <Tabs activeTab={activeTab} onChange={setActiveTab} className="leaderboard-tabs">
-        <Tabs.Tab tabId="week" label="This week" icon={<FaRegCalendarAlt />}>
+        <Tabs.Tab tabId="week" label="This Week" icon={<FaRegCalendarAlt />}>
           <div className="leaderboard-week">
             <TitleHolders />
             <WeeklyXpLeaderboard variant="full" />
@@ -184,7 +184,7 @@ export default function LeaderboardPage() {
           </div>
         </Tabs.Tab>
 
-        <Tabs.Tab tabId="how" label="How points work" icon={<FaInfoCircle />}>
+        <Tabs.Tab tabId="how" label="How Points Work" icon={<FaInfoCircle />}>
           <HowPointsWork />
         </Tabs.Tab>
       </Tabs>
