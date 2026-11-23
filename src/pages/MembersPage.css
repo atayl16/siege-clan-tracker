@@ -258,3 +258,10 @@
     width: 100%;
   }
 }
+
+/* The list's search and filters sit at the top of its tab, on the right.
+   Two classes, because EventsPage.css also styles .ui-content-header and
+   loads after this file. */
+.ui-content-header.members-tab-toolbar {
+  justify-content: flex-end;
+}

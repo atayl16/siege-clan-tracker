@@ -17,31 +17,19 @@ export const PAGES = {
   },
   "/members": {
     title: `Members | ${SUFFIX}`,
-    description: "Every member of the Siege OSRS clan, with their clan rank, total level, EHB and Siege Score.",
+    description: "Every member of the Siege OSRS clan, with their clan rank, total level, EHB and Siege Score, plus clan stats and rank requirements.",
   },
   "/events": {
     title: `Events | ${SUFFIX}`,
-    description: "Skill of the Week, Boss of the Week and Raid of the Week competitions and other events in the Siege OSRS clan.",
+    description: "Skill of the Week, Boss of the Week and Raid of the Week competitions, races between members, and members' public goals in the Siege OSRS clan.",
   },
   "/leaderboard": {
     title: `Leaderboard | ${SUFFIX}`,
-    description: "Siege Score standings, weekly XP leaders and this week's title races in the Siege OSRS clan.",
-  },
-  "/bosses": {
-    title: `Hall of Fame | ${SUFFIX}`,
-    description: "The Siege OSRS clan's Hall of Fame: the top players for every boss and activity, by kill count.",
-  },
-  "/stats": {
-    title: `Clan Stats | ${SUFFIX}`,
-    description: "Stats for the Siege OSRS clan: members, average level and XP, maxed accounts and 200M skills.",
+    description: "Siege Score standings, weekly XP leaders, this week's title races and the Hall of Fame of top boss kills in the Siege OSRS clan.",
   },
   "/achievements": {
     title: `Achievements | ${SUFFIX}`,
     description: "Recent milestones, drops, quests and combat achievements from members of the Siege OSRS clan.",
-  },
-  "/progress": {
-    title: `Races & Goals | ${SUFFIX}`,
-    description: "Races between Siege clan members and their personal OSRS goals.",
   },
   "/register": {
     title: `Create an Account | ${SUFFIX}`,

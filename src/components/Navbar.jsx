@@ -93,31 +93,10 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/bosses"
-            className={location.pathname === "/bosses" ? "active" : ""}
-          >
-            Hall of Fame
-          </Link>
-
-          <Link
-            to="/stats"
-            className={location.pathname === "/stats" ? "active" : ""}
-          >
-            Stats
-          </Link>
-
-          <Link
             to="/achievements"
             className={location.pathname === "/achievements" ? "active" : ""}
           >
             Achievements
-          </Link>
-
-          <Link
-            to="/progress"
-            className={location.pathname === "/progress" ? "active" : ""}
-          >
-            Races &amp; Goals
           </Link>
 
 

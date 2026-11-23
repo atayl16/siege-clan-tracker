@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useTabParam } from "../hooks/useTabParam";
+import HallOfFame from "../components/HallOfFame";
 import Leaderboard from "../components/Leaderboard";
 import { useMembers } from "../hooks/useMembers";
 import { useEvents } from "../hooks/useEvents";
-import { FaTrophy, FaMedal, FaInfoCircle, FaRegCalendarAlt } from "react-icons/fa";
+import { FaTrophy, FaMedal, FaInfoCircle, FaRegCalendarAlt, FaCrown } from "react-icons/fa";
 import WeeklyXpLeaderboard from "../components/WeeklyXpLeaderboard";
 import { TitleHolders, TitleRaces } from "../components/WeeklyTitles";
 import { XP_AWARD_POINTS } from "../utils/xpWeek";
@@ -17,6 +19,9 @@ import "./LeaderboardPage.css";
 import LoadError from "../components/ui/LoadError";
 
 const ORDINALS = ["1st", "2nd", "3rd", "4th", "5th"];
+
+// Tab ids a link can open with ?tab=, e.g. /leaderboard?tab=hall-of-fame.
+export const LEADERBOARD_TABS = ["week", "all", "hall-of-fame", "how"];
 
 /** Every way to earn Siege Score, from the same settings the awards use. */
 function HowPointsWork() {
@@ -87,7 +92,7 @@ function HowPointsWork() {
 export default function LeaderboardPage() {
   const { members, loading: membersLoading, error: membersError, refreshMembers } = useMembers();
   const { events, loading: eventsLoading } = useEvents();
-  const [activeTab, setActiveTab] = useState("week");
+  const [activeTab, setActiveTab] = useTabParam(LEADERBOARD_TABS);
   const [showFullScoreLeaderboard, setShowFullScoreLeaderboard] = useState(false);
   const [showFullWinsLeaderboard, setShowFullWinsLeaderboard] = useState(false);
 
@@ -182,6 +187,10 @@ export default function LeaderboardPage() {
               )}
             </div>
           </div>
+        </Tabs.Tab>
+
+        <Tabs.Tab tabId="hall-of-fame" label="Hall of Fame" icon={<FaCrown />}>
+          <HallOfFame />
         </Tabs.Tab>
 
         <Tabs.Tab tabId="how" label="How Points Work" icon={<FaInfoCircle />}>

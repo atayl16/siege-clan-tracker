@@ -1,5 +1,5 @@
 import React from "react";
-import ClanRanks from "../components/ClanRanks";
+import ClanRanks from "./ClanRanks";
 import { useClanStats } from "../hooks/useGroupStats";
 import { useGroup } from "../hooks/useGroup";
 import { 
@@ -14,15 +14,19 @@ import {
   FaUsers,
   FaComments
 } from "react-icons/fa";
-import WiseOldManIcon from "../assets/images/other/Wise_Old_Man_chathead.png"; // Import the custom icon
+import WiseOldManIcon from "../assets/images/other/Wise_Old_Man_chathead.png";
 
 
 // Import UI components
-import StatGroup from "../components/ui/StatGroup";
-import "./QuickStatsPage.css";
-import LoadError from "../components/ui/LoadError";
+import StatGroup from "./ui/StatGroup";
+import "./ClanStats.css";
+import LoadError from "./ui/LoadError";
 
-export default function QuickStatsPage() {
+/**
+ * The Members page's Clan Stats tab: clan-wide numbers, the clan's links and
+ * the rank requirements. Loads only when the tab is opened.
+ */
+export default function ClanStats() {
   const {
     data: clanStats,
     isLoading: statsLoading,
@@ -44,7 +48,7 @@ export default function QuickStatsPage() {
   // loaded, SWR keeps the last good numbers on screen.
   if ((statsError && !clanStats) || (groupError && memberCount == null)) {
     return (
-      <div className="quick-stats-page-container">
+      <div className="quick-stats-tab">
         <LoadError
           what="the clan stats"
           error={statsError || groupError}
@@ -58,10 +62,7 @@ export default function QuickStatsPage() {
   }
 
   return (
-    <div className="quick-stats-page-container">
-      <div className="quick-stats-content-header">
-        <h2>Clan Stats</h2>
-      </div>
+    <div className="quick-stats-tab">
 
       <div className="quick-stats-section-container">
         <h3 className="quick-stats-section-title">

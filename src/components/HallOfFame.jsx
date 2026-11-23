@@ -1,50 +1,49 @@
 import React, { useState, useMemo } from "react";
 import { useGroupBossStats } from "../hooks/useGroupStats";
 import { FaExclamationTriangle } from "react-icons/fa";
-import MetricIcon from "../components/MetricIcon";
-import Button from "../components/ui/Button";
-import SearchInput from "../components/ui/SearchInput";
-import Card from "../components/ui/Card";
-import "./BossStatsPage.css";
+import MetricIcon from "./MetricIcon";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import BoardFilters from "./BoardFilters";
+import "./HallOfFame.css";
 
-export default function BossStatsPage() {
+const VIEWS = [
+  { value: "bosses", label: "Boss Kills" },
+  { value: "activities", label: "Activities" },
+];
+
+const matches = (row, term) =>
+  (row.displayName && row.displayName.toLowerCase().includes(term)) ||
+  (row.player?.displayName && row.player.displayName.toLowerCase().includes(term));
+
+/**
+ * The Leaderboard's Hall of Fame tab: for each boss and activity, the clan
+ * member with the highest kill count or score. Loads only when the tab is
+ * opened (Tabs mounts the open tab alone).
+ */
+export default function HallOfFame() {
   const [viewMode, setViewMode] = useState("bosses");
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, error } = useGroupBossStats();
 
-  // Filter based on search term
   const filteredData = useMemo(() => {
     if (!data) return { bosses: [], activities: [] };
-    if (!searchTerm.trim()) return data;
-
     const term = searchTerm.toLowerCase().trim();
-    
-    const filteredBosses = data.bosses.filter(
-      (boss) =>
-        (boss.displayName && boss.displayName.toLowerCase().includes(term)) ||
-        (boss.player && boss.player.displayName && 
-         boss.player.displayName.toLowerCase().includes(term))
-    );
-    
-    const filteredActivities = data.activities.filter(
-      (activity) =>
-        (activity.displayName && activity.displayName.toLowerCase().includes(term)) ||
-        (activity.player && activity.player.displayName && 
-         activity.player.displayName.toLowerCase().includes(term))
-    );
-
+    if (!term) return data;
     return {
-      bosses: filteredBosses,
-      activities: filteredActivities
+      bosses: data.bosses.filter((boss) => matches(boss, term)),
+      activities: data.activities.filter((activity) => matches(activity, term)),
     };
   }, [data, searchTerm]);
 
   return (
-    <div className="ui-page-container">
+    <>
+      <p className="hof-intro">The clan member with the most kills at each boss, and the top score in each activity.</p>
+
       {isLoading && (
         <div className="ui-loading-container">
           <div className="ui-loading-spinner"></div>
-          <div className="ui-loading-text">Loading clan stats...</div>
+          <div className="ui-loading-text">Loading the Hall of Fame...</div>
         </div>
       )}
 
@@ -54,7 +53,7 @@ export default function BossStatsPage() {
             <div className="ui-message-icon-large">
               <FaExclamationTriangle className="ui-warning-icon" />
             </div>
-            <h3>Unable to Load Clan Stats</h3>
+            <h3>Unable to Load the Hall of Fame</h3>
             <p>We're having trouble connecting to the stats service right now. Please try again later.</p>
             <Button 
               variant="primary" 
@@ -67,28 +66,20 @@ export default function BossStatsPage() {
         </Card>
       )}
 
-      <div className="ui-content-header">
-        <h2>
-          Clan {viewMode === "bosses" ? "Boss Kills" : "Activities"}
-        </h2>
-        <div className="ui-actions-container">
-          <SearchInput
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onClear={() => setSearchTerm("")}
-            placeholder="Search bosses or players..."
-          />
-          <Button 
-            variant="secondary" 
-            onClick={() => setViewMode(viewMode === "bosses" ? "activities" : "bosses")}
-          >
-            Show {viewMode === "bosses" ? "Activities" : "Boss Kills"}
-          </Button>
-        </div>
-      </div>
+      {data && (
+        <BoardFilters
+          query={searchTerm}
+          onQueryChange={setSearchTerm}
+          placeholder="Search bosses or players"
+          groups={[{ label: "Show", value: viewMode, onChange: setViewMode, options: VIEWS }]}
+          shown={filteredData[viewMode]?.length ?? 0}
+          total={data[viewMode]?.length ?? 0}
+          onClear={() => setSearchTerm("")}
+        />
+      )}
 
       {!isLoading && filteredData && (
-        <div className="ui-section-container">
+        <div className="hof-tables">
           {viewMode === "bosses" ? (
             // Bosses Table
             filteredData.bosses && filteredData.bosses.length > 0 ? (
@@ -178,6 +169,6 @@ export default function BossStatsPage() {
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }

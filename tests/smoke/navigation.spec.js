@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * /progress and /profile were reachable only by typing the URL - the routes
+ * Races and /profile were once reachable only by typing the URL - the routes
  * existed but nothing linked to them, so the features were invisible even when
  * they worked. These assert the links are actually present, and that the pages
  * behind them render rather than throwing.
@@ -34,15 +34,25 @@ test.describe('navigation for a logged-out visitor', () => {
     await expect(nav.getByRole('button', { name: 'Logout' })).toHaveCount(0);
   });
 
-  // The page used to crash (it read hook fields that did not exist), so the
-  // link was hidden. It is back: a logged-out visitor can reach it from the
-  // navbar and sees the public tabs rather than a blank screen.
-  test('links to Races & Goals and the page renders', async ({ page }) => {
+  // Races and goals are tabs on Events now. A logged-out visitor reaches them
+  // from the navbar, and the old /progress link still lands on the Races tab.
+  test('links to Events, whose Races and Goals tabs render', async ({ page }) => {
     await page.goto('/');
-    await page.locator('nav').getByRole('link', { name: 'Races & Goals' }).click();
-    await expect(page).toHaveURL(/\/progress$/);
-    await expect(page.getByRole('button', { name: /Public Races/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Member Goals/ })).toBeVisible();
+    await page.locator('nav').getByRole('link', { name: 'Events' }).click();
+    await expect(page).toHaveURL(/\/events$/);
+    await page.getByRole('button', { name: /^Races$/ }).click();
+    await expect(page).toHaveURL(/\/events\?tab=races$/);
+    await page.getByRole('button', { name: /^Goals$/ }).click();
+    await expect(page).toHaveURL(/\/events\?tab=goals$/);
+  });
+
+  test('old links to pages that became tabs open the tab', async ({ page }) => {
+    await page.goto('/progress');
+    await expect(page).toHaveURL(/\/events\?tab=races$/);
+    await page.goto('/bosses');
+    await expect(page).toHaveURL(/\/leaderboard\?tab=hall-of-fame$/);
+    await page.goto('/stats');
+    await expect(page).toHaveURL(/\/members\?tab=stats$/);
   });
 });
 

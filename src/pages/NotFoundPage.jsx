@@ -23,8 +23,8 @@ export default function NotFoundPage() {
             <Link to="/members" className="not-found-link">
               Members
             </Link>
-            <Link to="/progress" className="not-found-link">
-              Races &amp; Goals
+            <Link to="/events" className="not-found-link">
+              Events
             </Link>
           </div>
         }

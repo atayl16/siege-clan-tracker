@@ -94,3 +94,105 @@
     white-space: nowrap;
   }
 }
+
+/* The site-wide tab look: grey tabs, white with a blue underline when open.
+   These rules used to sit in pages/ProgressPage.css, which loaded after this
+   file and so overrode it on every page. Moved here unchanged when that page
+   became tabs on the Events page, so no tab changes appearance. */
+/* No border here: .ui-tabs-nav (components/ui/Tabs.css) already draws the
+   line under the tabs, and both together showed as two dividers. */
+.ui-tabs-container {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.ui-tabs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem;
+}
+
+.ui-tab {
+  background: transparent;
+  color: #a0a0a0;
+  border: none;
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.ui-tab:hover {
+  color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.ui-tab-active {
+  color: #ffffff;
+  border-bottom: 2px solid var(--primary-color, #4a90e2);
+}
+
+.ui-tab-icon {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  opacity: 0.9;
+}
+
+.ui-tab-label {
+  white-space: nowrap;
+}
+
+.ui-tab-badge {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.ui-tab-active .ui-tab-badge {
+  background-color: var(--primary-color, #4a90e2);
+  color: white;
+}
+
+/* Style for locked tab */
+.ui-tab:last-child:not(.ui-tab-active) .ui-tab-icon {
+  opacity: 0.6;
+}
+
+.ui-tab-content {
+  padding: 1.5rem;
+  min-height: 300px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .ui-tabs-nav {
+    padding: 0 0.5rem;
+  }
+  
+  .ui-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .ui-tab-content {
+    padding: 1rem;
+  }
+}

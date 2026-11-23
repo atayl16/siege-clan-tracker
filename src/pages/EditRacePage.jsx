@@ -8,6 +8,7 @@ import { canEditRace } from "../utils/races";
 import CreateRace from "../components/CreateRace";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
+import "./EditRacePage.css";
 
 /**
  * /races/:id/edit - the race form in edit mode.

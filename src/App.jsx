@@ -16,10 +16,7 @@ import AdminPage from "./pages/AdminPage";
 import MembersPage from "./pages/MembersPage";
 import EventsPage from "./pages/EventsPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
-import QuickStatsPage from "./pages/QuickStatsPage";
-import BossStatsPage from "./pages/BossStatsPage";
 import ProfilePage from "./pages/ProfilePage";
-import ProgressPage from "./pages/ProgressPage";
 import EditRacePage from "./pages/EditRacePage";
 import AchievementsPage from "./pages/AchievementsPage";
 import NewMembers from "./pages/NewMembers";
@@ -31,6 +28,7 @@ import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
 import PageMeta from "./components/PageMeta";
 import SiteFooter from "./components/SiteFooter";
+import ScrollToTop from "./components/ScrollToTop";
 import AboutPage from "./pages/AboutPage";
 import SeasonalFavicon from "./utils/seasonalIcons";
 
@@ -46,6 +44,7 @@ function App() {
       <div className="App has-navbar">
         <SeasonalFavicon />
         <PageMeta />
+        <ScrollToTop />
         <Navbar />
         {/* <AnniversaryBanner /> */}
         <Routes>
@@ -53,8 +52,10 @@ function App() {
           <Route path="/members" element={<MembersPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/stats" element={<QuickStatsPage />} />
-          <Route path="/progress" element={<ProgressPage />} />
+          {/* Pages that became tabs: old links and bookmarks open the tab. */}
+          <Route path="/stats" element={<Navigate to="/members?tab=stats" replace />} />
+          <Route path="/progress" element={<Navigate to="/events?tab=races" replace />} />
+          <Route path="/bosses" element={<Navigate to="/leaderboard?tab=hall-of-fame" replace />} />
           <Route path="/races/:id/edit" element={<EditRacePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegistrationForm />} />
@@ -64,7 +65,6 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy" element={<Navigate to="/about#privacy" replace />} />
           <Route path="/new-members" element={<NewMembers />} />
-          <Route path="/bosses" element={<BossStatsPage />} />
 
           {/* Admin Routes - All protected */}
           <Route
