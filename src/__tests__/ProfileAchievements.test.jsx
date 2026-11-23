@@ -51,22 +51,52 @@ describe("ProfileAchievements", () => {
     expect(screen.queryByRole("group", { name: "Character" })).toBeNull();
   });
 
-  it("orders skills nearest-first, or in skill order", async () => {
+  const names = (region) =>
+    within(screen.getByRole("region", { name: region }))
+      .getAllByRole("img", { name: /milestones reached/ })
+      .map((el) => el.getAttribute("aria-label").split(":")[0]);
+
+  it("orders skills nearest-first, in game order, or A to Z", async () => {
     render(<ProfileAchievements characters={characters} />);
-    const skills = () =>
-      within(screen.getByRole("region", { name: "Skills" }))
-        .getAllByRole("img", { name: /milestones reached/ })
-        .map((el) => el.getAttribute("aria-label").split(":")[0]);
-    expect(skills()[0]).toBe("Magic");
-    await userEvent.click(screen.getByRole("button", { name: "Skill order" }));
-    expect(skills()[0]).toBe("Attack");
+    expect(names("Skills")[0]).toBe("Magic");
+    await userEvent.click(screen.getByRole("button", { name: "Game order" }));
+    expect(names("Skills")[0]).toBe("Attack");
+    await userEvent.click(screen.getByRole("button", { name: "A to Z" }));
+    expect(names("Skills").slice(0, 2)).toEqual(["Agility", "Attack"]);
   });
 
-  it("shows only bosses with kills", () => {
+  it("keeps Overall first and shows one other section at a time", async () => {
     render(<ProfileAchievements characters={characters} />);
-    const bosses = within(screen.getByRole("region", { name: /Bosses/ }));
-    expect(bosses.getByText("Vorkath")).toBeInTheDocument();
-    expect(bosses.getAllByRole("img", { name: /milestones reached/ })).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "Overall" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Skills" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /Bosses/ })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: /^Bosses/ }));
+    expect(screen.queryByRole("region", { name: "Skills" })).toBeNull();
+    expect(names(/Bosses/)).toEqual(["Vorkath"]);
+    expect(screen.getByRole("region", { name: "Overall" })).toBeInTheDocument();
+  });
+
+  it("shows each section's milestone count on its button", () => {
+    render(<ProfileAchievements characters={characters} />);
+    expect(screen.getByRole("button", { name: /^Bosses/ })).toHaveTextContent(/Bosses\s*2\/7/);
+  });
+
+  it("shows the first 10 bosses until asked for all of them", async () => {
+    const bosses = Object.fromEntries(Array.from({ length: 14 }, (_, i) => [`boss_${String.fromCharCode(97 + i)}`, 60 + i]));
+    usePlayer.mockReturnValue({ player: makePlayer({ bosses }), loading: false, error: null });
+    render(<ProfileAchievements characters={characters} />);
+    await userEvent.click(screen.getByRole("button", { name: /^Bosses/ }));
+    expect(names(/Bosses/)).toHaveLength(10);
+    await userEvent.click(screen.getByRole("button", { name: "Show all 14 bosses" }));
+    expect(names(/Bosses/)).toHaveLength(14);
+  });
+
+  it("gives a section with nothing in it no button", () => {
+    usePlayer.mockReturnValue({ player: makePlayer(), loading: false, error: null });
+    render(<ProfileAchievements characters={characters} />);
+    expect(screen.queryByRole("button", { name: /^Bosses/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Activities/ })).toBeNull();
   });
 
   it("says so when Wise Old Man cannot be reached", () => {

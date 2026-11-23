@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildAchievements, closestFirst, xpForLevel, combatLevel, bossName } from "../achievements";
+import { buildAchievements, closestFirst, orderRows, xpForLevel, combatLevel, bossName } from "../achievements";
 import { makePlayer } from "../../__tests__/achievementsFixture";
 
 const row = (a, key) => a.sections.flatMap((s) => s.rows).find((r) => r.key === key);
@@ -63,11 +63,34 @@ describe("buildAchievements", () => {
     expect(fillAt(100)).toBeCloseTo((1 / 6) * 100);
   });
 
-  it("tracks clues in total and by tier, unranked as zero", () => {
+  it("tracks clues in total and by tier, leaving out tiers never done", () => {
     const a = buildAchievements(makePlayer({ clues: { all: 318, hard: 101, master: -1 } }));
     expect(row(a, "clues-all").nextLabel).toBe("500 clue scrolls");
     expect(row(a, "clues-hard").reached).toBe(3);
-    expect(row(a, "clues-master").value).toBe(0);
+    expect(row(a, "clues-master")).toBeUndefined();
+    expect(row(a, "clues-easy")).toBeUndefined();
+  });
+
+  it("adds the other activities the character has done, and never Leagues", () => {
+    const a = buildAchievements(
+      makePlayer({ activities: { collections_logged: 305, guardians_of_the_rift: 0, soul_wars_zeal: -1, league_points: 9000 } })
+    );
+    const activities = a.sections.find((s) => s.key === "activities").rows.map((r) => r.key);
+    expect(activities).toEqual(["activity-collections_logged"]);
+    expect(row(a, "activity-collections_logged").nextLabel).toBe("500 slots (Collection log)");
+    expect(row(a, "activity-collections_logged").points.map((p) => p.label)).toEqual(["100", "250", "500", "750", "1k", "1.25k", "1.5k"]);
+  });
+
+  it("shows a rating only once it has moved off the starting rating, with no milestones", () => {
+    const a = buildAchievements(makePlayer({ activities: { last_man_standing: 1647, pvp_arena: 2500 } }));
+    expect(row(a, "rating-last_man_standing")).toMatchObject({ kind: "rating", value: 1647, points: [] });
+    expect(row(a, "rating-pvp_arena")).toBeUndefined();
+  });
+
+  it("tracks EHB and EHP in hours under Overall", () => {
+    const a = buildAchievements(makePlayer());
+    expect(row(a, "ehb")).toMatchObject({ value: 612, reached: 3, nextLabel: "1k EHB" });
+    expect(row(a, "ehp").sub).toBe("1,048 hours");
   });
 
   it("counts milestones, names the nearest, and finds skillcapes", () => {
@@ -81,6 +104,15 @@ describe("buildAchievements", () => {
     expect(a.capes.earned).toEqual(["attack"]);
     expect(a.capes.closest[0].metric).toBe("magic");
     expect(a.capes.closest).toHaveLength(3);
+  });
+});
+
+describe("orderRows", () => {
+  const rows = [{ key: "b", name: "Zulrah", closeness: 0.2 }, { key: "a", name: "Abyssal Sire", closeness: 0.9 }];
+  it("sorts by name, by closeness, or leaves game order", () => {
+    expect(orderRows(rows, "alpha").map((r) => r.key)).toEqual(["a", "b"]);
+    expect(orderRows(rows, "closest").map((r) => r.key)).toEqual(["a", "b"]);
+    expect(orderRows(rows, "game")).toBe(rows);
   });
 });
 
