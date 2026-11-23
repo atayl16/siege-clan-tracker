@@ -389,3 +389,46 @@
   font-size: 0.875rem;
   color: #999;
 }
+
+/* "Latest from the clan" (components/ClanActivityFeed.jsx): two columns on
+   wide screens. */
+.nm-activity .act-list {
+  columns: 2;
+  column-gap: 2rem;
+}
+
+.nm-activity .act-row {
+  break-inside: avoid;
+}
+
+@media (max-width: 768px) {
+  .nm-activity .act-list {
+    columns: 1;
+  }
+}
+
+.nm-activity-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.nm-activity-more {
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: var(--accent-color, #2196f3);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
+
+.nm-activity-credit a {
+  color: var(--accent-color, #2196f3);
+}

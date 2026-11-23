@@ -6,6 +6,8 @@ import { makePlayer } from "./achievementsFixture";
 
 const usePlayer = vi.fn();
 vi.mock("../hooks/usePlayer", () => ({ usePlayer: (...args) => usePlayer(...args) }));
+const useCharacterActivity = vi.fn(() => ({ activities: [], found: false, loading: false, error: null }));
+vi.mock("../hooks/useRuneProfile", () => ({ useCharacterActivity: (...args) => useCharacterActivity(...args) }));
 
 import ProfileAchievements, { ago } from "../components/ProfileAchievements";
 
@@ -51,6 +53,33 @@ describe("ProfileAchievements", () => {
     expect(overall.getByText("Closest to 99")).toBeInTheDocument();
     expect(overall.getByText(/^Updated /)).toBeInTheDocument();
     expect(screen.queryByText("Total level", { selector: ".ach-stat span" })).toBeNull();
+  });
+
+  it("loads RuneProfile activity only when Recent is opened, for the character shown", async () => {
+    useCharacterActivity.mockClear();
+    render(<ProfileAchievements characters={characters} />);
+    expect(useCharacterActivity).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Recent" }));
+    expect(useCharacterActivity).toHaveBeenLastCalledWith("Test Main");
+    expect(screen.queryByRole("group", { name: "Order" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Test Alt" }));
+    expect(useCharacterActivity).toHaveBeenLastCalledWith("Test Alt");
+  });
+
+  it("explains how to add a character that is not on RuneProfile", async () => {
+    render(<ProfileAchievements characters={characters} />);
+    await userEvent.click(screen.getByRole("button", { name: "Recent" }));
+    expect(screen.getByText(/Test Main is not on RuneProfile yet/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "How to set it up" })).toBeInTheDocument();
+  });
+
+  it("lists recent activity for a character on RuneProfile", async () => {
+    useCharacterActivity.mockReturnValueOnce({ activities: [{ type: "level_up", data: { name: "Defence", level: 95 }, createdAt: "2026-11-23 10:00:00" }], found: true, loading: false, error: null });
+    render(<ProfileAchievements characters={characters} />);
+    useCharacterActivity.mockReturnValue({ activities: [{ type: "level_up", data: { name: "Defence", level: 95 }, createdAt: "2026-11-23 10:00:00" }], found: true, loading: false, error: null });
+    await userEvent.click(screen.getByRole("button", { name: "Recent" }));
+    expect(screen.getByText("Reached 95 Defence")).toBeInTheDocument();
+    useCharacterActivity.mockReturnValue({ activities: [], found: false, loading: false, error: null });
   });
 
   it("hides the character picker for a single character", () => {

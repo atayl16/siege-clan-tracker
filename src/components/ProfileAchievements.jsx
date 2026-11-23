@@ -2,6 +2,10 @@ import React, { useMemo, useState } from "react";
 import { usePlayer } from "../hooks/usePlayer";
 import { buildAchievements, orderRows, skillName } from "../utils/achievements";
 import { SkillIcon, BossIcon, ActivityIcon } from "./OsrsIcons";
+import { timeAgo } from "../utils/dates";
+import { useCharacterActivity } from "../hooks/useRuneProfile";
+import { RUNEPROFILE_URL, RUNEPROFILE_GUIDE_URL } from "../utils/runeProfile";
+import ActivityList from "./ActivityList";
 import "./ProfileAchievements.css";
 
 /**
@@ -106,6 +110,7 @@ export default function ProfileAchievements({ characters }) {
             onOrder={setOrder}
             allBosses={allBosses}
             onAllBosses={() => setAllBosses(true)}
+            characterName={current?.name}
           />
         </div>
       )}
@@ -135,11 +140,14 @@ function Section({ section, rows, extra = null, note = null }) {
  * and the order buttons; then the chosen section. Sections with nothing in
  * them (no boss kills yet) get no button.
  */
-function SectionPicker({ sections, active, onPick, order, onOrder, allBosses, onAllBosses }) {
-  if (!sections.length) return null;
-  const section = sections.find((x) => x.key === active) ?? sections[0];
-  const ordered = orderRows(section.rows, order);
-  const cut = section.key === "bosses" && !allBosses && ordered.length > BOSSES_SHOWN;
+function SectionPicker({ sections, active, onPick, order, onOrder, allBosses, onAllBosses, characterName }) {
+  // "Recent" (RuneProfile activity) sits with the milestone sections but has
+  // no milestones and no order; it loads only while it is the one open.
+  const recentOpen = active === "recent";
+  const section = recentOpen ? null : sections.find((x) => x.key === active) ?? sections[0];
+  if (!section && !recentOpen) return null;
+  const ordered = section ? orderRows(section.rows, order) : [];
+  const cut = section?.key === "bosses" && !allBosses && ordered.length > BOSSES_SHOWN;
   const rows = cut ? ordered.slice(0, BOSSES_SHOWN) : ordered;
   const count = (x) => {
     const total = x.rows.reduce((n, r) => n + r.points.length, 0);
@@ -155,34 +163,82 @@ function SectionPicker({ sections, active, onPick, order, onOrder, allBosses, on
             <button
               key={x.key}
               type="button"
-              className={x.key === section.key ? "is-on" : ""}
-              aria-pressed={x.key === section.key}
+              className={x.key === section?.key ? "is-on" : ""}
+              aria-pressed={x.key === section?.key}
               onClick={() => onPick(x.key)}
             >
               {x.title} <span className="ach-count">{count(x)}</span>
             </button>
           ))}
+          <button type="button" className={recentOpen ? "is-on" : ""} aria-pressed={recentOpen} onClick={() => onPick("recent")}>
+            Recent
+          </button>
         </div>
-        <div className="ach-order" role="group" aria-label="Order">
-          {ORDERS.map(([id, label]) => (
-            <button key={id} type="button" className={order === id ? "is-on" : ""} aria-pressed={order === id} onClick={() => onOrder(id)}>
-              {label}
-            </button>
-          ))}
-        </div>
+        {!recentOpen && (
+          <div className="ach-order" role="group" aria-label="Order">
+            {ORDERS.map(([id, label]) => (
+              <button key={id} type="button" className={order === id ? "is-on" : ""} aria-pressed={order === id} onClick={() => onOrder(id)}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <Section
-        section={section}
-        rows={rows}
-        extra={
-          cut && (
-            <button type="button" className="ach-more" onClick={onAllBosses}>
-              Show all {ordered.length} bosses
-            </button>
-          )
-        }
-      />
+      {recentOpen ? (
+        <RecentActivity name={characterName} />
+      ) : (
+        <Section
+          section={section}
+          rows={rows}
+          extra={
+            cut && (
+              <button type="button" className="ach-more" onClick={onAllBosses}>
+                Show all {ordered.length} bosses
+              </button>
+            )
+          }
+        />
+      )}
     </>
+  );
+}
+
+/**
+ * The character's latest RuneProfile activity: new collection log items,
+ * drops, quests, diaries, combat achievements and level-ups. Mounted only
+ * while "Recent" is open, so it is fetched only then (edge-cached).
+ */
+function RecentActivity({ name }) {
+  const { activities, found, loading, error } = useCharacterActivity(name);
+  return (
+    <section className="ach-card" aria-labelledby="ach-recent">
+      <div className="ach-card-head">
+        <h3 id="ach-recent">Recent</h3>
+        <span className="ach-note">
+          From{" "}
+          <a href={`${RUNEPROFILE_URL}/${encodeURIComponent(name)}`} target="_blank" rel="noopener noreferrer">
+            RuneProfile
+          </a>
+        </span>
+      </div>
+      {loading && <p className="ach-recent-note">Loading...</p>}
+      {!loading && error && (
+        <p className="ach-recent-note" role="alert">
+          Could not load recent activity from RuneProfile. Try again later.
+        </p>
+      )}
+      {!loading && !error && found === false && (
+        <p className="ach-recent-note">
+          {name} is not on RuneProfile yet. Install the RuneProfile plugin in RuneLite to show recent drops,
+          quests and level-ups here.{" "}
+          <a href={RUNEPROFILE_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+            How to set it up
+          </a>
+        </p>
+      )}
+      {!loading && !error && found && !activities.length && <p className="ach-recent-note">No recent activity.</p>}
+      {!loading && !error && found && activities.length > 0 && <ActivityList activities={activities} />}
+    </section>
   );
 }
 
@@ -281,13 +337,5 @@ function Skillcapes({ capes }) {
   );
 }
 
-/** "17 minutes ago", "3 hours ago", "2 days ago". */
-export function ago(iso, now = Date.now()) {
-  const minutes = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-  const days = Math.round(hours / 24);
-  return `${days} days ago`;
-}
+/** Kept under its old name for existing callers. */
+export const ago = timeAgo;
