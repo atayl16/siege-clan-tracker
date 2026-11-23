@@ -10,6 +10,8 @@ let usersTable = [];
 let signOutResult = async () => ({ error: null });
 
 vi.mock("crypto-hash", () => ({ sha256: async (s) => `hash:${s}` }));
+const reloads = { count: 0 };
+vi.mock("../utils/reloadPage", () => ({ reloadPage: () => (reloads.count += 1) }));
 
 vi.mock("../supabaseClient", () => {
   const from = (table) => {
@@ -238,6 +240,15 @@ describe("signing out", () => {
     expect(result.current.user?.username).toBe("test_user");
   });
 
+  it("does not reload when Supabase answers", async () => {
+    const { result } = await signedIn();
+    reloads.count = 0;
+    await act(async () => {
+      await result.current.logout();
+    });
+    expect(reloads.count).toBe(0);
+  });
+
   it("removes only Supabase's session keys", () => {
     localStorage.setItem("sb-testproject-auth-token", "{}");
     localStorage.setItem("sb-testproject-auth-token-code-verifier", "x");
@@ -246,5 +257,32 @@ describe("signing out", () => {
     expect(localStorage.getItem("sb-testproject-auth-token")).toBeNull();
     expect(localStorage.getItem("sb-testproject-auth-token-code-verifier")).toBeNull();
     expect(localStorage.getItem("goalsLastUpdated")).toBe("1");
+  });
+
+  // Keep this last: the stuck sign-out it starts stays pending for the rest of
+  // the file (a real page reloads), so any later sign-in here would wait on it.
+  it("reloads the page when Supabase never answers, so the stuck sign-out cannot touch a later session", async () => {
+    const { result } = await signedIn();
+    localStorage.setItem("sb-testproject-auth-token", "{}");
+    signOutResult = () => new Promise(() => {}); // never settles
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    reloads.count = 0;
+    vi.useFakeTimers();
+    try {
+      let done;
+      act(() => {
+        done = result.current.logout();
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+        await done;
+      });
+    } finally {
+      vi.useRealTimers();
+      warn.mockRestore();
+    }
+    expect(result.current.user).toBeNull();
+    expect(localStorage.getItem("sb-testproject-auth-token")).toBeNull();
+    expect(reloads.count).toBe(1);
   });
 });
