@@ -33,8 +33,9 @@ async function notifyStaff(requestId) {
  * "Error loading requests". The endpoint answered 401 anyway: the edge function
  * behind /api/* wants an API key the browser never sends.
  *
- * Members read their own requests directly through supabase-js, scoped by
- * claim_requests_read_own. Admins cannot use that path - RLS would hide
+ * Members read their own requests directly through supabase-js, filtered by
+ * their user id (claim_requests_read_own also scopes it, but production's
+ * admin_full_access policy lets admins read everyone's). Admins cannot use that path - RLS would hide
  * everyone else's - so the admin queue goes through a Netlify function running
  * with the service role, the same as every other admin operation here.
  *
@@ -74,9 +75,22 @@ export function useClaimRequests({ admin = false } = {}) {
         return;
       }
 
+      // Ask for your own requests by name rather than trusting RLS to
+      // narrow it: production also has an admin_full_access policy, so an
+      // admin's "Your Requests" listed every member's requests.
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) {
+        setRequests([]);
+        return;
+      }
+
       const { data, error: fetchError } = await supabase
         .from("claim_requests")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
