@@ -80,16 +80,23 @@ function currentValueFor(playerData, goal) {
  *   hiscores first (the Sync button). Without it this reads WOM's saved
  *   snapshot, which is cheap but can be hours behind. Falls back to the saved
  *   snapshot if the fresh fetch fails.
+ * @param {Array<object>} [options.goals] - this member's goals, already
+ *   loaded (the profile has them), so they are not queried again
  */
-export async function updatePlayerGoals(womId, userId, { fresh = false } = {}) {
-  const { data: goals, error } = await supabase
-    .from("user_goals")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("wom_id", womId)
-    .eq("completed", false);
-
-  if (error) throw error;
+export async function updatePlayerGoals(womId, userId, { fresh = false, goals: loaded } = {}) {
+  let goals;
+  if (loaded) {
+    goals = loaded.filter((g) => g.user_id === userId && g.wom_id === womId && !g.completed);
+  } else {
+    const { data, error } = await supabase
+      .from("user_goals")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("wom_id", womId)
+      .eq("completed", false);
+    if (error) throw error;
+    goals = data;
+  }
   if (!goals || goals.length === 0) return { updated: 0, completed: 0 };
 
   // One request for every goal on this character, not one per goal.
@@ -114,6 +121,8 @@ export async function updatePlayerGoals(womId, userId, { fresh = false } = {}) {
     if (typeof currentValue !== "number") continue;
 
     const isCompleted = currentValue >= goal.target_value;
+    // Nothing moved since the last update: no write.
+    if (currentValue === goal.current_value && isCompleted === Boolean(goal.completed)) continue;
     const { error: updateError } = await supabase
       .from("user_goals")
       .update({

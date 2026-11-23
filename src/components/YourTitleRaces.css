@@ -1,0 +1,83 @@
+/* Profile side card, styled to sit under the Top XP card. */
+.ytr {
+  background: #222;
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: 0.75rem 0.9rem 0.85rem;
+}
+
+.ytr h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-orange, #ff9800);
+}
+
+.ytr-sub {
+  margin: 0.5rem 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.ytr-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ytr-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #ddd;
+}
+
+.ytr-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ytr-name small {
+  margin-left: 0.35rem;
+  color: #888;
+}
+
+.ytr-detail {
+  display: block;
+  font-size: 0.75rem;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ytr-place {
+  color: #bbb;
+  font-size: 0.8rem;
+}
+
+.ytr-list b {
+  color: var(--color-orange, #ff9800);
+  font-size: 0.8rem;
+}
+
+.ytr-note {
+  margin: 0.2rem 0 0.4rem;
+  font-size: 0.82rem;
+  color: #999;
+}
+
+.ytr-link {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--accent-color, #2196f3);
+}

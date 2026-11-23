@@ -1,12 +1,12 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { titleize } from '../utils/stringUtils';
 import { hasLevels, levelForXp } from '../utils/skillLevels';
 import './GoalCard.css';
 
 import Badge from './ui/Badge';
 import Card from './ui/Card';
 import ProgressBar from './ui/ProgressBar';
+import { goalName } from "../utils/goalName";
 
 const shortDate = (value) => format(new Date(value), 'MMM d');
 
@@ -67,7 +67,7 @@ export default function GoalCard({ goal }) {
       </Card.Header>
 
       <Card.Body>
-        <h3 className="ui-board-goal-metric">{titleize(goal.metric)}</h3>
+        <h3 className="ui-board-goal-metric">{goalName(goal)}</h3>
         {levels && <div className="ui-board-goal-levels">{levels}</div>}
 
         <div className="ui-board-goal-bar">

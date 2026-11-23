@@ -82,6 +82,30 @@ describe('updatePlayerGoals', () => {
     expect(result).toEqual({ updated: 2, completed: 1 });
   });
 
+  it('uses goals already loaded instead of querying them again', async () => {
+    const { supabase } = await import('../../supabaseClient');
+    supabase.from.mockClear();
+    global.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(player) });
+    const loaded = [goal(), goal({ id: 'other', wom_id: 99 }), goal({ id: 'done', completed: true })];
+
+    const result = await updatePlayerGoals(42, 'u1', { goals: loaded });
+
+    // Only the update touches the table; no select first.
+    expect(supabase.from).toHaveBeenCalledTimes(1);
+    expect(state.updates.map((u) => u.id)).toEqual(['g1']);
+    expect(result).toEqual({ updated: 1, completed: 0 });
+  });
+
+  it('writes nothing for a goal whose progress has not moved', async () => {
+    state.goals = [goal({ current_value: 5_000_000 })];
+    global.fetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(player) });
+
+    const result = await updatePlayerGoals(42, 'u1');
+
+    expect(state.updates).toEqual([]);
+    expect(result).toEqual({ updated: 0, completed: 0 });
+  });
+
   it('writes nothing when the stats cannot be loaded', async () => {
     // The regression: a failed lookup became zero and was saved over real
     // progress on every profile load.

@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 
 import "./ClaimRequestsPreview.css";
+import { formatDate } from "../utils/dates";
 
 export default function ClaimRequestsPreview({
   count,
@@ -204,7 +205,7 @@ export default function ClaimRequestsPreview({
                   </div>
                   <div className="ui-request-date">
                     <FaCalendarAlt className="ui-icon-left" />
-                    {new Date(request.created_at).toLocaleDateString()}
+                    {formatDate(request.created_at)}
                   </div>
 
                   {request.message && (

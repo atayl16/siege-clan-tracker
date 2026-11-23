@@ -10,6 +10,7 @@ import Modal from "./ui/Modal";
 import EmptyState from "./ui/EmptyState";
 
 import "./ClaimRequestManager.css";
+import { formatDate } from "../utils/dates";
 
 export default function ClaimRequestManager() {
   const [filter, setFilter] = useState("pending");
@@ -208,7 +209,7 @@ export default function ClaimRequestManager() {
                     </td>
                     <td className="ui-request-player">{request.rsn}</td>
                     <td className="ui-request-date">
-                      {new Date(request.created_at).toLocaleDateString()}
+                      {formatDate(request.created_at)}
                     </td>
                     <td className="ui-request-status">
                       {getStatusBadge(request.status)}
@@ -282,7 +283,7 @@ export default function ClaimRequestManager() {
                   </p>
                   <p>
                     <strong>Date Requested:</strong>{" "}
-                    {new Date(currentRequest.created_at).toLocaleDateString()}
+                    {formatDate(currentRequest.created_at)}
                   </p>
                   <p>
                     <strong>Status:</strong>{" "}

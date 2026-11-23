@@ -6,6 +6,7 @@ import { supabase } from "../../supabaseClient";
 import Card from "../ui/Card";
 import { isBuiltInAdmin } from "../../utils/builtInAdmin";
 import "./AdminUserManager.css";
+import { formatDate } from "../../utils/dates";
 
 // The built-in admin login's account. Its admin status and password are
 // never changed from here (the server refuses too).
@@ -171,7 +172,7 @@ export default function AdminUserManager() {
                           {u.is_admin && <span className="user-tag user-tag-admin">Admin</span>}
                           {isMe && <span className="user-tag">You</span>}
                         </td>
-                        <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}</td>
+                        <td>{u.created_at ? formatDate(u.created_at) : ""}</td>
                         <td className="user-actions-col">
                           {builtIn ? (
                             <span className="user-locked">Built-in admin</span>

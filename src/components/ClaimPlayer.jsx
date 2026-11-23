@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useClaimRequests } from "../hooks/useClaimRequests"; // New hook for claim requests
 import { useMembers } from "../hooks/useMembers"; // New hook for members
@@ -7,11 +7,10 @@ import { FaCheck, FaTimes, FaClock, FaInfoCircle } from "react-icons/fa";
 // Import UI components
 import Card from "./ui/Card";
 import Button from "./ui/Button";
-import Tabs from "./ui/Tabs";
 import Badge from "./ui/Badge";
-import EmptyState from "./ui/EmptyState";
 
 import "./ClaimPlayer.css";
+import { formatDate } from "../utils/dates";
 
 export default function ClaimPlayer({ onRequestSubmitted }) {
   // Claiming is request-then-approve: the member picks their character and an
@@ -25,7 +24,6 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("request");
 
   const { user } = useAuth();
 
@@ -38,25 +36,13 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     createClaimRequest,
   } = useClaimRequests();
 
-  // useMembers exposes refreshMembers, not refresh - asking for the wrong name
-  // left refreshAvailableMembers undefined, and the effect below calls it on
-  // every tab switch.
+  // Both hooks load on mount, so opening the tab is enough; nothing needs
+  // reloading as the page is used.
   const {
     members: availableMembers,
     loading: membersLoading,
     error: membersError,
-    refreshMembers: refreshAvailableMembers,
   } = useMembers();
-
-  // Get fresh data when switching tabs
-  useEffect(() => {
-    if (activeTab === "request" && user) {
-      refreshAvailableMembers();
-    }
-    if (activeTab === "my-requests" && user) {
-      refreshRequests();
-    }
-  }, [activeTab, user, refreshAvailableMembers, refreshRequests]);
 
   const handleRequestClaim = async (e) => {
     e.preventDefault();
@@ -117,21 +103,71 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
     }
   };
 
+  const hasRequests = userRequests?.length > 0;
+
   return (
     <Card className="ui-claim-player-container">
-      <Tabs
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        className="ui-claim-tabs"
-      >
-        <Tabs.Tab tabId="request" label="Search Members">
-            <div className="ui-claim-tab-content">
-              <h2 className="ui-claim-heading">Search for your OSRS Account</h2>
-              <p className="ui-claim-description">
-                Choose one of your characters. You can claim more than one, such as your main and your alts:
-                send a request for each.
-              </p>
+      <div className="ui-claim-tab-content">
+        {/* Your requests first, when there are any; then the form. One page,
+            no tabs inside the Claims tab. */}
+        {requestsError && (
+          <div className="ui-error-message">
+            <FaTimes className="ui-error-icon" />
+            Error loading requests: {requestsError.message || requestsError}
+          </div>
+        )}
+        {hasRequests && (
+          <section className="ui-claim-section" aria-labelledby="claim-requests-h">
+            <h2 className="ui-claim-heading" id="claim-requests-h">
+              Your requests
+            </h2>
+                <div className="ui-requests-list">
+                  {userRequests.map((request) => (
+                    <Card key={request.id} className="ui-request-card">
+                      <Card.Header className="ui-request-header">
+                        <div className="ui-request-title">{request.rsn}</div>
+                        {getStatusBadge(request.status)}
+                      </Card.Header>
+                      <Card.Body>
+                        <div className="ui-request-details">
+                          {request.status === "pending" && (
+                            <p className="ui-request-waiting">Waiting for a staff member to approve it.</p>
+                          )}
+                          <p>
+                            <strong>Requested:</strong>{" "}
+                            {formatDate(request.created_at)}
+                          </p>
+                          {request.message && (
+                            <p>
+                              <strong>Your message:</strong> {request.message}
+                            </p>
+                          )}
+                          {request.admin_notes &&
+                            request.status !== "pending" && (
+                              <p>
+                                <strong>Admin notes:</strong>{" "}
+                                {request.admin_notes}
+                              </p>
+                            )}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  ))}
+                </div>
+          </section>
+        )}
 
+        <section className="ui-claim-section" aria-labelledby="claim-form-h">
+          <h2 className="ui-claim-heading" id="claim-form-h">
+            {hasRequests ? "Claim another character" : "Claim a character"}
+          </h2>
+          <p className="ui-claim-description">
+            Choose one of your characters. You can claim more than one, such as your main and your alts:
+            send a request for each.
+          </p>
+          {requestsLoading && !userRequests && (
+            <div className="ui-loading-text">Loading your requests...</div>
+          )}
               {notification && (
                 <div
                   className={`ui-notification-message ui-notification-${notification.type}`}
@@ -215,75 +251,8 @@ export default function ClaimPlayer({ onRequestSubmitted }) {
                   {loading ? "Submitting..." : "Submit Request"}
                 </Button>
               </form>
-            </div>
-          </Tabs.Tab>
-
-        <Tabs.Tab tabId="my-requests" label="View My Requests">
-            <div className="ui-claim-tab-content">
-              <h2 className="ui-claim-heading">My Claim Requests</h2>
-              {requestsError && (
-                <div className="ui-error-message">
-                  <FaTimes className="ui-error-icon" />
-                  Error loading requests: {requestsError.message || requestsError}
-                </div>
-              )}
-
-              {requestsLoading ? (
-                <div className="ui-loading-indicator">
-                  <div className="ui-loading-spinner"></div>
-                  <div className="ui-loading-text">Loading your requests...</div>
-                </div>
-              ) : userRequests?.length === 0 ? (
-                <EmptyState
-                  title="No Requests Yet"
-                  description="You haven't submitted any player claim requests yet"
-                  action={
-                    <Button
-                      variant="secondary"
-                      onClick={() => setActiveTab("request")}
-                    >
-                      Request a Player
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className="ui-requests-list">
-                  {userRequests.map((request) => (
-                    <Card key={request.id} className="ui-request-card">
-                      <Card.Header className="ui-request-header">
-                        <div className="ui-request-title">{request.rsn}</div>
-                        {getStatusBadge(request.status)}
-                      </Card.Header>
-                      <Card.Body>
-                        <div className="ui-request-details">
-                          {request.status === "pending" && (
-                            <p className="ui-request-waiting">Waiting for a staff member to approve it.</p>
-                          )}
-                          <p>
-                            <strong>Requested:</strong>{" "}
-                            {new Date(request.created_at).toLocaleDateString()}
-                          </p>
-                          {request.message && (
-                            <p>
-                              <strong>Your message:</strong> {request.message}
-                            </p>
-                          )}
-                          {request.admin_notes &&
-                            request.status !== "pending" && (
-                              <p>
-                                <strong>Admin notes:</strong>{" "}
-                                {request.admin_notes}
-                              </p>
-                            )}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Tabs.Tab>
-      </Tabs>
+        </section>
+      </div>
     </Card>
   );
 }

@@ -12,6 +12,8 @@ import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import EmptyState from "../ui/EmptyState";
 import "./Goals.css";
+import { formatDate } from "../../utils/dates";
+import { goalName } from "../../utils/goalName";
 
 export default function GoalsList({ player, userId, onClose }) {
   if (!userId) {
@@ -190,7 +192,7 @@ export default function GoalsList({ player, userId, onClose }) {
               variant={goal.completed ? "dark" : "default"}
             >
               <Card.Header className="ui-goal-header">
-                <h3 className="ui-goal-metric">{titleize(goal.metric)}</h3>
+                <h3 className="ui-goal-metric">{goalName(goal)}</h3>
                 <div className="ui-goal-badges">
                   <Badge
                     variant={getGoalTypeVariant(goal.goal_type)}
@@ -228,7 +230,7 @@ export default function GoalsList({ player, userId, onClose }) {
                     <div className="ui-goal-deadline">
                       <span className="ui-detail-label">Deadline:</span>
                       <span className="ui-detail-value">
-                        {new Date(goal.target_date).toLocaleDateString()}
+                        {formatDate(goal.target_date)}
                       </span>
                     </div>
                   )}
@@ -237,7 +239,7 @@ export default function GoalsList({ player, userId, onClose }) {
                     <div className="ui-goal-completion">
                       <span className="ui-detail-label">Completed on:</span>
                       <span className="ui-detail-value">
-                        {new Date(goal.completed_date).toLocaleDateString()}
+                        {formatDate(goal.completed_date)}
                       </span>
                     </div>
                   )}
