@@ -6,6 +6,8 @@ import { displayUsername } from "../utils/stringUtils";
 // Every users query and auth call the provider makes, for the tests to read.
 const calls = { usernameLookups: [], inserts: [], signUps: [], signIns: [] };
 let usersTable = [];
+// What the fake supabase.auth.signOut returns; tests swap it.
+let signOutResult = async () => ({ error: null });
 
 vi.mock("crypto-hash", () => ({ sha256: async (s) => `hash:${s}` }));
 
@@ -57,10 +59,10 @@ vi.mock("../supabaseClient", () => {
           calls.signIns.push(args);
           return { error: null };
         },
-        signOut: async (opts) => {
+        signOut: (opts) => {
           calls.signOuts = (calls.signOuts || 0) + 1;
           calls.signOutOptions = opts;
-          return { error: null };
+          return signOutResult();
         },
       },
     },
@@ -71,7 +73,7 @@ vi.mock("../supabaseClient", () => {
 const PW = "pw";
 
 // Imported after the mocks.
-const { AuthProvider, useAuth } = await import("../context/AuthContext");
+const { AuthProvider, useAuth, removeStoredSupabaseSessions } = await import("../context/AuthContext");
 
 const renderAuth = async () => {
   const hook = renderHook(() => useAuth(), { wrapper: AuthProvider });
@@ -82,6 +84,7 @@ const renderAuth = async () => {
 beforeEach(() => {
   localStorage.clear();
   usersTable = [];
+  signOutResult = async () => ({ error: null });
   for (const key of Object.keys(calls)) calls[key] = [];
 });
 
@@ -161,17 +164,60 @@ describe("signing up and in with a space in the name", () => {
 });
 
 describe("signing out", () => {
-  it("ends the Supabase session as well as the site's own sign-in", async () => {
+  const signedIn = async () => {
     usersTable = [{ id: "u-1", username: "test_user", password_hash: `hash:${PW}`, is_admin: false }];
-    const { result } = await renderAuth();
+    const hook = await renderAuth();
     await act(async () => {
-      await result.current.login("Test user", PW);
+      await hook.result.current.login("Test user", PW);
     });
     calls.signOuts = 0;
-    act(() => result.current.logout());
+    return hook;
+  };
+
+  it("ends this browser's Supabase session before showing the visitor as signed out", async () => {
+    const { result } = await signedIn();
+    let finish;
+    signOutResult = () => new Promise((resolve) => (finish = resolve));
+
+    let done;
+    act(() => {
+      done = result.current.logout();
+    });
     expect(calls.signOuts).toBe(1);
     // Local scope: this browser's session goes even when offline.
     expect(calls.signOutOptions).toEqual({ scope: "local" });
+    expect(result.current.user).not.toBeNull();
+
+    await act(async () => {
+      finish({ error: null });
+      await done;
+    });
     expect(result.current.user).toBeNull();
+  });
+
+  it("still signs out, and clears Supabase's stored session, when Supabase fails", async () => {
+    const { result } = await signedIn();
+    localStorage.setItem("sb-testproject-auth-token", "{}");
+    signOutResult = async () => {
+      throw new Error("offline");
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await act(async () => {
+      await result.current.logout();
+    });
+    expect(result.current.user).toBeNull();
+    expect(localStorage.getItem("sb-testproject-auth-token")).toBeNull();
+    warn.mockRestore();
+  });
+
+  it("removes only Supabase's session keys", () => {
+    localStorage.setItem("sb-testproject-auth-token", "{}");
+    localStorage.setItem("sb-testproject-auth-token-code-verifier", "x");
+    localStorage.setItem("goalsLastUpdated", "1");
+    removeStoredSupabaseSessions();
+    expect(localStorage.getItem("sb-testproject-auth-token")).toBeNull();
+    expect(localStorage.getItem("sb-testproject-auth-token-code-verifier")).toBeNull();
+    expect(localStorage.getItem("goalsLastUpdated")).toBe("1");
   });
 });

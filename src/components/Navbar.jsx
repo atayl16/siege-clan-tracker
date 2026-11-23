@@ -11,8 +11,8 @@ export default function Navbar() {
   const { user, isAdmin, logout, isLoggedIn } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
   

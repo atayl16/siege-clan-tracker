@@ -11,6 +11,27 @@ const ADMIN_EMAIL_HASH =
 const ADMIN_PASSWORD_HASH =
   "86c671c7a776b62f925b5d2387fae4c73392931be4d37b19e37e5534abab587d";
 
+// How long signing out waits for Supabase before clearing its session itself.
+const SIGN_OUT_WAIT_MS = 5000;
+
+const withTimeout = (promise, ms) => {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`no answer in ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
+/** Remove Supabase's stored sessions (sb-<project>-auth-token and its parts). */
+export function removeStoredSupabaseSessions(storage = localStorage) {
+  const keys = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (/^sb-.+-auth-token/.test(key)) keys.push(key);
+  }
+  keys.forEach((key) => storage.removeItem(key));
+}
+
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(
     localStorage.getItem("adminAuth") === "true"
@@ -451,18 +472,22 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    // End the Supabase session too. Without this its token stayed in the
-    // browser after signing out, so on a shared computer the next person was
-    // still signed in to the database as the previous member. Local scope
-    // removes this browser's session before any network request, so it goes
-    // even offline (the default global scope keeps it if the request fails),
-    // and other devices stay signed in. Not awaited: the removal is
-    // synchronous storage work, and the request only revokes the token.
-    supabase.auth
-      .signOut({ scope: "local" })
-      .then(({ error } = {}) => error && console.warn("Supabase sign-out failed:", error))
-      .catch((err) => console.warn("Supabase sign-out failed:", err));
+  const logout = async () => {
+    // End the Supabase session before showing the visitor as signed out.
+    // Without this its token stayed in the browser, so on a shared computer
+    // the next person was still signed in to the database as the previous
+    // member. Local scope removes this browser's session before the network
+    // request that revokes it, so it goes even offline, and other devices stay
+    // signed in. An error can come from that revocation after the removal
+    // succeeded, so it is logged, not treated as a failed sign-out.
+    try {
+      const { error } = (await withTimeout(supabase.auth.signOut({ scope: "local" }), SIGN_OUT_WAIT_MS)) || {};
+      if (error) console.warn("Supabase sign-out:", error);
+    } catch (err) {
+      console.warn("Supabase sign-out failed:", err);
+    }
+    // Whatever happened above, no Supabase session is left in this browser.
+    removeStoredSupabaseSessions();
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
