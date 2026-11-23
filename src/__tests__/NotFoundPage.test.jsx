@@ -14,5 +14,5 @@ test("an unknown URL shows a clear not-found page with ways back", () => {
   expect(screen.getByRole("heading", { name: "Page Not Found" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Go Home" })).toHaveAttribute("href", "/");
   expect(screen.getByRole("link", { name: "Members" })).toHaveAttribute("href", "/members");
-  expect(screen.getByRole("link", { name: /Races & Goals/ })).toHaveAttribute("href", "/progress");
+  expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("href", "/events");
 });

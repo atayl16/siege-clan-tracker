@@ -1,199 +1,40 @@
-import React, { useState, useMemo } from "react";
-import EventsTable from "../components/EventsTable";
-import { useEvents } from "../hooks/useEvents";
-import {
-  FaSearch,
-  FaTimes,
-  FaInfoCircle,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
-
-// Import UI components
-import Button from "../components/ui/Button";
-import StatGroup from "../components/ui/StatGroup";
-
+import React from "react";
+import { FaFlagCheckered, FaTrophy, FaBullseye } from "react-icons/fa";
+import Tabs from "../components/ui/Tabs";
+import Competitions from "../components/events/Competitions";
+import RacesBoard from "../components/events/RacesBoard";
+import GoalsBoard from "../components/events/GoalsBoard";
+import { useTabParam } from "../hooks/useTabParam";
 import "./EventsPage.css";
-import LoadError from "../components/ui/LoadError";
 
+// Tab ids a link can open with ?tab=, e.g. /events?tab=races.
+export const EVENTS_TABS = ["competitions", "races", "goals"];
+
+/**
+ * Everything to take part in: the clan's competitions, members' public races,
+ * and members' public goals for clan mates to cheer on. Only the open tab is
+ * mounted, so each tab loads its own data when it is opened.
+ */
 export default function EventsPage() {
-  // Get events data
-  const {
-    events,
-    loading: eventsLoading,
-    error: eventsError,
-    refreshEvents,
-  } = useEvents();
-
-  // State for filters and expanded views
-  const [showAllEvents, setShowAllEvents] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showInfo, setShowInfo] = useState(false);
-
-  // Filter events based on search term and filter type
-  const filteredEvents = useMemo(() => {
-    if (!events) return [];
-    if (!searchTerm.trim()) return events;
-
-    const term = searchTerm.toLowerCase().trim();
-    return events.filter(
-      (event) =>
-        (event.name && event.name.toLowerCase().includes(term)) ||
-        (event.type && event.type.toLowerCase().includes(term)) ||
-        (event.metric && event.metric.toLowerCase().includes(term))
-    );
-  }, [events, searchTerm]);
+  const [tab, setTab] = useTabParam(EVENTS_TABS);
 
   return (
     <div className="ui-page-container">
-      {eventsLoading && (
-        <div className="ui-loading-container">
-          <div className="ui-loading-spinner"></div>
-          <div className="ui-loading-text">Loading event data...</div>
-        </div>
-      )}
-
-      {eventsError && (
-        <LoadError what="events" error={eventsError} onRetry={refreshEvents} />
-      )}
-
       <div className="ui-content-header">
         <h2>Clan Events</h2>
-        <div className="event-filters-container">
-          <div className="event-search-input-wrapper">
-            <FaSearch className="event-search-icon" />
-            <input
-              type="text"
-              className="event-search-input"
-              placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                className="event-clear-search"
-                onClick={() => setSearchTerm("")}
-              >
-                <FaTimes />
-              </button>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Event Types Info Section */}
-      <div className="ui-section-container event-info-container">
-        <div
-          className="event-info-header"
-          onClick={() => setShowInfo(!showInfo)}
-        >
-          <FaInfoCircle className="event-info-icon" />
-          <h3>About Our Events</h3>
-          {showInfo ? <FaChevronUp /> : <FaChevronDown />}
-        </div>
-        {showInfo && (
-          <div className="event-info-content">
-            <p>
-              We encourage our clan members to enjoy different play styles, hang
-              out with each other and most of all have fun! To help this, we
-              host regular events, including:
-            </p>
-
-            <div className="event-types-grid">
-              <div className="event-type-card">
-                <h4>SotW</h4>
-                <p>
-                  Skill of the Week - A competition to gain the most XP in a
-                  specific skill over 7 days.
-                </p>
-              </div>
-
-              <div className="event-type-card">
-                <h4>BotW</h4>
-                <p>
-                  Boss of the Week - A competition to get the most kills at a
-                  specific boss over 7 days.
-                </p>
-              </div>
-
-              <div className="event-type-card">
-                <h4>Raids</h4>
-                <p>
-                  We host regular raid events including group raids, learner
-                  raids with experienced teachers, and Raid Week.
-                </p>
-              </div>
-
-              <div className="event-type-card">
-                <h4>Bingo/Tile Races</h4>
-                <p>
-                  Teams compete to complete tasks on a bingo board within a time
-                  limit. Winners receive prizes!
-                </p>
-              </div>
-
-              <div className="event-type-card">
-                <h4>Member-run Events</h4>
-                <p>
-                  Short events (1-2 hours) organized by clan members, such as
-                  group bossing, skilling, minigames, hide and seek, and more.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <StatGroup className="event-summary">
-        <StatGroup.Stat
-          label="Active"
-          value={
-            !events
-              ? 0
-              : events.filter(
-                  (e) =>
-                    new Date(e.start_date) <= new Date() &&
-                    new Date(e.end_date) >= new Date()
-                ).length
-          }
-        />
-        <StatGroup.Stat
-          label="Upcoming"
-          value={
-            !events
-              ? 0
-              : events.filter((e) => new Date(e.start_date) > new Date()).length
-          }
-        />
-        <StatGroup.Stat
-          label="Completed"
-          value={
-            !events
-              ? 0
-              : events.filter((e) => new Date(e.end_date) < new Date()).length
-          }
-        />
-      </StatGroup>
-
-      <div className="ui-section-container">
-        <EventsTable
-          events={filteredEvents}
-          activeLimit={showAllEvents ? null : 10}
-          upcomingLimit={showAllEvents ? null : 6}
-          completedLimit={showAllEvents ? null : 5}
-          loading={eventsLoading}
-          searchTerm={searchTerm}
-        />
-      </div>
-
-      <div className="ui-button-center">
-        <Button
-          variant="secondary"
-          onClick={() => setShowAllEvents(!showAllEvents)}
-        >
-          {showAllEvents ? "Show Less" : "Show All Events"}
-        </Button>
-      </div>
+      <Tabs activeTab={tab} onChange={setTab} className="events-tabs">
+        <Tabs.Tab tabId="competitions" label="Competitions" icon={<FaFlagCheckered />}>
+          <Competitions />
+        </Tabs.Tab>
+        <Tabs.Tab tabId="races" label="Races" icon={<FaTrophy />}>
+          <RacesBoard />
+        </Tabs.Tab>
+        <Tabs.Tab tabId="goals" label="Goals" icon={<FaBullseye />}>
+          <GoalsBoard />
+        </Tabs.Tab>
+      </Tabs>
     </div>
   );
 }

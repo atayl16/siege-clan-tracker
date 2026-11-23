@@ -1,0 +1,10 @@
+/* The page card (moved from pages/ProgressPage.css). */
+.ui-container-content-card {
+  width: 85%;
+  max-width: 87.5rem; /* 1400px */
+  min-width: 20rem; /* 320px */
+  margin: 1.875rem auto; /* 30px auto */
+  padding: 1.25rem; /* 20px */
+  color: var(--color-text, #e0e0e0);
+}
+

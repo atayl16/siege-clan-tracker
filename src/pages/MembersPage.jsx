@@ -2,7 +2,10 @@ import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMembers } from "../hooks/useMembers";
 import MemberTable from "../components/MemberTable";
-import { FaTimes, FaFilter, FaCheck } from "react-icons/fa";
+import { FaTimes, FaFilter, FaCheck, FaUsers, FaChartBar } from "react-icons/fa";
+import Tabs from "../components/ui/Tabs";
+import ClanStats from "../components/ClanStats";
+import { useTabParam } from "../hooks/useTabParam";
 
 // Import UI components
 import Button from "../components/ui/Button";
@@ -11,7 +14,36 @@ import SearchInput from "../components/ui/SearchInput";
 import "./MembersPage.css";
 import LoadError from "../components/ui/LoadError";
 
+// Tab ids a link can open with ?tab=, e.g. /members?tab=stats.
+export const MEMBERS_TABS = ["members", "stats"];
+
+/**
+ * The member list, and the clan's stats one tab over. Only the open tab is
+ * mounted, so the stats load only when someone opens them.
+ */
 export default function MembersPage() {
+  const [tab, setTab] = useTabParam(MEMBERS_TABS);
+
+  return (
+    <div className="ui-page-container">
+      <div className="ui-content-header">
+        <h2>Clan Members</h2>
+      </div>
+
+      <Tabs activeTab={tab} onChange={setTab} className="members-tabs">
+        <Tabs.Tab tabId="members" label="Members" icon={<FaUsers />}>
+          <MembersList />
+        </Tabs.Tab>
+        <Tabs.Tab tabId="stats" label="Clan Stats" icon={<FaChartBar />}>
+          <ClanStats />
+        </Tabs.Tab>
+      </Tabs>
+    </div>
+  );
+}
+
+/** The member list with its search and filters, as it was before the tabs. */
+function MembersList() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Get data from hooks
@@ -143,7 +175,7 @@ export default function MembersPage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="ui-page-container">
+    <>
       {membersLoading && (
         <div className="ui-loading-container">
           <div className="ui-loading-spinner"></div>
@@ -155,8 +187,7 @@ export default function MembersPage() {
         <LoadError what="the member list" error={membersError} onRetry={refreshMembers} />
       )}
 
-      <div className="ui-content-header">
-        <h2>Clan Members</h2>
+      <div className="ui-content-header members-tab-toolbar">
         <div className="ui-actions-container">
           <div className="ui-filter-button-wrapper">
             <Button
@@ -296,6 +327,6 @@ export default function MembersPage() {
       {/* MemberTable draws its own panel; wrapping it in a second
           .ui-member-table-container doubled the padding and the frame. */}
       <MemberTable filteredMembers={filteredMembers} />
-    </div>
+    </>
   );
 }

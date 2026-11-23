@@ -301,3 +301,16 @@
     padding: 0.75rem;
   }
 }
+
+/* Competitions tab: the search sits on its own row above the event list. */
+.events-tab-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+/* The race and goal grids start right under their filters. */
+.events-tabs .ui-races-grid,
+.events-tabs .ui-goals-grid {
+  margin-top: 0;
+}

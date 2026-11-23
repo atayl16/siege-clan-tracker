@@ -3,7 +3,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
-import ProgressPage from '../pages/ProgressPage';
+import RacesBoard from '../components/events/RacesBoard';
+import GoalsBoard from '../components/events/GoalsBoard';
 
 const races = [
   { id: 'r1', title: 'Sailing sprint', public: true, status: 'active', created_at: new Date().toISOString(),
@@ -23,13 +24,12 @@ vi.mock('../hooks/useMembers', () => ({
   useMembers: () => ({ members: [{ wom_id: 1, name: 'Moonfern' }, { wom_id: 2, name: 'Ash ko' }] }),
 }));
 
-const renderPage = () => render(<MemoryRouter><ProgressPage /></MemoryRouter>);
+const renderRaces = () => render(<MemoryRouter><RacesBoard /></MemoryRouter>);
+const renderGoals = () => render(<MemoryRouter><GoalsBoard /></MemoryRouter>);
 const goalTitles = () => [...document.querySelectorAll('.ui-goals-grid h3')].map((h) => h.textContent);
 
-const openGoals = () => userEvent.click(screen.getByRole('button', { name: /Member Goals/ }));
-
 test('searches races by racer and filters them by status', async () => {
-  renderPage();
+  renderRaces();
   const search = screen.getByRole('searchbox', { name: 'Search races or racers' });
 
   await userEvent.type(search, 'ash');
@@ -44,16 +44,14 @@ test('searches races by racer and filters them by status', async () => {
 });
 
 test('lists active goals closest to done first, completed ones last', async () => {
-  renderPage();
-  await openGoals();
+  renderGoals();
   expect(goalTitles()).toEqual(['Zulrah', 'Sailing', 'Runecrafting']);
   // Nothing filtered yet, so no summary line.
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
 });
 
 test('filters goals by character, type and status', async () => {
-  renderPage();
-  await openGoals();
+  renderGoals();
 
   await userEvent.type(screen.getByRole('searchbox', { name: /Search characters/ }), 'moonfern');
   expect(goalTitles()).toEqual(['Sailing', 'Runecrafting']);
@@ -72,8 +70,7 @@ test('filters goals by character, type and status', async () => {
 });
 
 test('sorts goals by newest or deadline when asked', async () => {
-  renderPage();
-  await openGoals();
+  renderGoals();
   const sort = screen.getByRole('combobox');
   expect(sort).toHaveValue('progress');
   await userEvent.selectOptions(sort, 'deadline');
