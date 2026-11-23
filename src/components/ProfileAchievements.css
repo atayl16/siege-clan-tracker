@@ -405,3 +405,19 @@
     font-size: 0.62rem;
   }
 }
+
+/* Recent (RuneProfile activity). */
+.ach-recent-note {
+  margin: 0.4rem 0 0.8rem;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.ach-recent-note a,
+.ach-card-head .ach-note a {
+  color: var(--accent-color, #2196f3);
+}
+
+.ach-card .act-list {
+  margin-bottom: 0.6rem;
+}

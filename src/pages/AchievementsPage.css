@@ -265,3 +265,18 @@
     color: #999;
   }
 }
+
+/* Clan activity tab (RuneProfile). */
+.achievement-activity {
+  padding: 1rem 1.25rem;
+}
+
+.achievement-activity-note {
+  margin: 0.75rem 0 0;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.achievement-activity-note a {
+  color: var(--accent-color, #2196f3);
+}

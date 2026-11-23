@@ -37,7 +37,7 @@ export const PAGES = {
   },
   "/achievements": {
     title: `Achievements | ${SUFFIX}`,
-    description: "Recent achievements by members of the Siege OSRS clan.",
+    description: "Recent milestones, drops, quests and combat achievements from members of the Siege OSRS clan.",
   },
   "/progress": {
     title: `Races & Goals | ${SUFFIX}`,
