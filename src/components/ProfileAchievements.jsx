@@ -20,9 +20,13 @@ import "./ProfileAchievements.css";
 export default function ProfileAchievements({ characters }) {
   const [selected, setSelected] = useState(characters[0]?.womId ?? null);
   const [order, setOrder] = useState("closest");
-  const { player, loading, error } = usePlayer(selected, { refreshInterval: 0, dedupingInterval: 600000 });
-  const achievements = useMemo(() => buildAchievements(player), [player]);
+  // The character shown, worked out first: if the one picked is no longer
+  // claimed (the claims list refreshed while the tab was open), fall back to
+  // the main, and load and highlight that one.
   const current = characters.find((c) => c.womId === selected) ?? characters[0];
+  const activeId = current?.womId ?? null;
+  const { player, loading, error } = usePlayer(activeId, { refreshInterval: 0, dedupingInterval: 600000 });
+  const achievements = useMemo(() => buildAchievements(player), [player]);
 
   return (
     <div className="ach">
@@ -33,8 +37,8 @@ export default function ProfileAchievements({ characters }) {
               <button
                 key={c.womId}
                 type="button"
-                className={`ach-chip ${c.womId === selected ? "is-on" : ""}`}
-                aria-pressed={c.womId === selected}
+                className={`ach-chip ${c.womId === activeId ? "is-on" : ""}`}
+                aria-pressed={c.womId === activeId}
                 onClick={() => setSelected(c.womId)}
               >
                 {c.name}

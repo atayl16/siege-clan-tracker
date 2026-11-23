@@ -73,8 +73,10 @@ export function bossName(metric) {
 }
 
 /**
- * One track. Milestones are spaced evenly; the bar runs through every
- * reached one and part-way to the next, in proportion to the value.
+ * One track. Milestones are spaced evenly, the first at the start; the bar
+ * runs through every reached one and part-way to the next, in proportion to
+ * the value. Before the first milestone it stays empty: there is no segment
+ * before the first dot to fill.
  */
 function track({ key, kind, metric, name, sub, value, marks, labels, nextName }) {
   const points = marks.map((at, i) => ({ at, label: labels?.[i] ?? fmt(at), reached: value >= at }));
@@ -85,9 +87,13 @@ function track({ key, kind, metric, name, sub, value, marks, labels, nextName })
   let fill = 100;
   let closeness = null; // value / next milestone, for "closest first"
   if (next !== -1) {
-    const from = next === 0 ? 0 : points[next - 1].at;
-    const part = points[next].at > from ? Math.min(1, Math.max(0, (value - from) / (points[next].at - from))) : 0;
-    fill = next === 0 ? part * step : (next - 1 + part) * step;
+    if (next === 0) {
+      fill = 0;
+    } else {
+      const from = points[next - 1].at;
+      const part = points[next].at > from ? Math.min(1, Math.max(0, (value - from) / (points[next].at - from))) : 0;
+      fill = (next - 1 + part) * step;
+    }
     closeness = points[next].at > 0 ? Math.min(0.999, value / points[next].at) : 0;
   }
 

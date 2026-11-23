@@ -38,6 +38,14 @@ describe("ProfileAchievements", () => {
     expect(screen.getByRole("button", { name: "Test Alt" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("falls back to the main, and loads it, if the picked character is no longer claimed", async () => {
+    const { rerender } = render(<ProfileAchievements characters={characters} />);
+    await userEvent.click(screen.getByRole("button", { name: "Test Alt" }));
+    rerender(<ProfileAchievements characters={[characters[0]]} />);
+    expect(usePlayer).toHaveBeenLastCalledWith(1, expect.anything());
+    expect(screen.getByRole("heading", { name: "Test Main" })).toBeInTheDocument();
+  });
+
   it("hides the character picker for a single character", () => {
     render(<ProfileAchievements characters={[characters[0]]} />);
     expect(screen.queryByRole("group", { name: "Character" })).toBeNull();

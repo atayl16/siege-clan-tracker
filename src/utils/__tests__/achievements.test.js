@@ -55,6 +55,14 @@ describe("buildAchievements", () => {
     expect(row(a, "boss-vorkath").nextLabel).toBe("2.5k Vorkath kills");
   });
 
+  it("keeps the bar empty before the first milestone, and never moves it back", () => {
+    const fillAt = (kills) => row(buildAchievements(makePlayer({ bosses: { vorkath: kills } })), "boss-vorkath").fill;
+    expect(fillAt(49)).toBe(0);
+    expect(fillAt(50)).toBe(0);
+    expect(fillAt(75)).toBeCloseTo((0.5 / 6) * 100);
+    expect(fillAt(100)).toBeCloseTo((1 / 6) * 100);
+  });
+
   it("tracks clues in total and by tier, unranked as zero", () => {
     const a = buildAchievements(makePlayer({ clues: { all: 318, hard: 101, master: -1 } }));
     expect(row(a, "clues-all").nextLabel).toBe("500 clue scrolls");
