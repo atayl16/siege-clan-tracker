@@ -49,6 +49,13 @@ vi.mock("../services/goalProgressService", () => ({
 vi.mock("../components/goals/PlayerGoalSummary", () => ({ default: () => null }));
 vi.mock("../components/goals/GoalsList", () => ({ default: () => null }));
 vi.mock("../components/ClaimPlayer", () => ({ default: () => null }));
+const achievementsMounts = vi.fn();
+vi.mock("../components/ProfileAchievements", () => ({
+  default: (props) => {
+    achievementsMounts(props);
+    return null;
+  },
+}));
 
 import { supabase } from "../supabaseClient";
 import ProfilePage from "../pages/ProfilePage";
@@ -132,6 +139,19 @@ describe("ProfilePage main character", () => {
     expect(screen.getByText(/Have alts\? Claim each one/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Claim a character" }));
     expect(screen.getByRole("heading", { name: "Character Claims" })).toBeInTheDocument();
+  });
+
+  it("loads achievements only when that tab is opened, main first", () => {
+    achievementsMounts.mockClear();
+    mockClaims = [claim(1, "Oldalt", true), claim(2, "Wrenfield", false)];
+    renderPage();
+    expect(achievementsMounts).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /Achievements/ }));
+    expect(achievementsMounts).toHaveBeenCalled();
+    expect(achievementsMounts.mock.calls.at(-1)[0].characters).toEqual([
+      { womId: 2, name: "Wrenfield", isMain: true },
+      { womId: 1, name: "Oldalt", isMain: false },
+    ]);
   });
 
   it("opens the tab a link names", () => {

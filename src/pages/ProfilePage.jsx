@@ -6,7 +6,8 @@ import ClaimPlayer from "../components/ClaimPlayer";
 import GoalsList from "../components/goals/GoalsList";
 import PlayerGoalSummary from "../components/goals/PlayerGoalSummary";
 import { updatePlayerGoals } from "../services/goalProgressService";
-import { FaUser, FaFlag, FaClock, FaCog, FaTrophy } from "react-icons/fa";
+import { FaUser, FaFlag, FaClock, FaCog, FaTrophy, FaMedal } from "react-icons/fa";
+import ProfileAchievements from "../components/ProfileAchievements";
 import { displayUsername } from "../utils/stringUtils";
 import { isBuiltInAdmin } from "../utils/builtInAdmin";
 import { mainFirst, mainCharacterId } from "../utils/characters";
@@ -70,7 +71,7 @@ function CharacterGoalCard({ claim, user }) {
 }
 
 // Profile tabs a link can open with ?tab=, e.g. /profile?tab=requests.
-const PROFILE_TABS = ["characters", "goals", "races", "requests", "account"];
+const PROFILE_TABS = ["characters", "goals", "races", "achievements", "requests", "account"];
 
 /**
  * The built-in admin has no profile: no characters, goals or races of its
@@ -450,6 +451,28 @@ function ProfileContent() {
 
         <Tabs.Tab tabId="races" label="Races" icon={<FaTrophy />}>
           <div className="player-races-section">{renderRacesTabContent()}</div>
+        </Tabs.Tab>
+
+        {/* Mounted only while open (Tabs renders the active tab alone), so
+            its Wise Old Man fetch happens only when someone opens it. */}
+        <Tabs.Tab tabId="achievements" label="Achievements" icon={<FaMedal />}>
+          <div className="tab-header">
+            <h2>Achievements</h2>
+          </div>
+          {!userClaims?.length ? (
+            <EmptyState
+              title="No Characters to Show"
+              description="Claim a character to see its milestones here."
+              icon={<FaMedal />}
+            />
+          ) : (
+            <ProfileAchievements
+              characters={orderedClaims.map((claim) => {
+                const womId = Number(claim.members?.wom_id ?? claim.wom_id);
+                return { womId, name: claim.members?.name ?? "Unknown", isMain: womId === mainId };
+              })}
+            />
+          )}
         </Tabs.Tab>
 
         <Tabs.Tab tabId="requests" label="Requests" icon={<FaClock />}>
