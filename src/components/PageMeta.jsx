@@ -47,9 +47,10 @@ export const PAGES = {
     title: `Create an Account | ${SUFFIX}`,
     description: "Sign up to the Siege OSRS clan site to claim your characters, set goals and join races.",
   },
-  "/privacy": {
-    title: `Privacy | ${SUFFIX}`,
-    description: "What the Siege OSRS clan site keeps about you, why, and what you can do about it.",
+  "/about": {
+    title: `About | ${SUFFIX}`,
+    description:
+      "How the Siege OSRS clan site works, where its stats come from, how often they update, privacy, and where to send suggestions.",
   },
   "/login": { title: `Log In | ${SUFFIX}`, description: null },
   "/forgot-password": { title: `Forgot Password | ${SUFFIX}`, description: null, noindex: true },

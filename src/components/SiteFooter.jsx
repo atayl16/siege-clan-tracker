@@ -5,8 +5,8 @@ import "./SiteFooter.css";
 const DISCORD_URL = "https://discord.gg/TqFpRD4vNv";
 
 /**
- * Bottom of every page: links, where the data comes from, and the
- * disclaimer Jagex's Fan Content Policy asks fan sites to show.
+ * Bottom of every page: links, where the data comes from, and the notice
+ * Jagex's Fan Content Policy (section 8.1) requires, in its exact words.
  */
 export default function SiteFooter() {
   return (
@@ -16,7 +16,8 @@ export default function SiteFooter() {
         <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer">
           Discord
         </a>
-        <Link to="/privacy">Privacy</Link>
+        <Link to="/about">About</Link>
+        <Link to="/about#privacy">Privacy</Link>
       </nav>
       <p className="site-footer-data">
         Player stats from{" "}
@@ -31,8 +32,8 @@ export default function SiteFooter() {
       </p>
       <p className="site-footer-legal">
         Created using intellectual property belonging to Jagex Limited under the terms of Jagex&apos;s Fan Content
-        Policy. This content is not endorsed by or affiliated with Jagex. Jagex&reg;, RuneScape&reg; and Old School
-        RuneScape&reg; are registered and/or unregistered trademarks of Jagex.
+        Policy. This content is not endorsed by or affiliated with Jagex. Old School RuneScape is a trademark of
+        Jagex Limited.
       </p>
     </footer>
   );

@@ -1,0 +1,94 @@
+.about-page {
+  max-width: 46rem;
+  line-height: 1.65;
+  color: var(--color-text, #e0e0e0);
+}
+
+.about-page h2 {
+  color: var(--color-orange, #ff9800);
+}
+
+.about-page h3 {
+  margin-top: 2rem;
+  font-size: 1.2rem;
+  color: #fff;
+  scroll-margin-top: 5rem;
+}
+
+.about-page h4 {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 1rem;
+  color: #ddd;
+}
+
+.about-page a {
+  color: var(--accent-color, #2196f3);
+}
+
+.about-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.about-contents a {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid #444;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.about-contents a:hover {
+  border-color: var(--accent-color, #2196f3);
+}
+
+.about-faq dt {
+  margin-top: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.about-faq dd {
+  margin: 0.15rem 0 0;
+}
+
+.about-callout {
+  margin-top: 2rem;
+  padding: 0.25rem 1.25rem 1rem;
+  border-left: 3px solid var(--color-orange, #ff9800);
+  background: rgba(255, 152, 0, 0.06);
+  border-radius: var(--border-radius-sm, 0.25rem);
+}
+
+.about-callout h3 {
+  margin-top: 1rem;
+}
+
+.about-page .about-button {
+  display: inline-block;
+  margin-right: 0.75rem;
+  padding: 0.45rem 0.9rem;
+  background: var(--color-orange, #ff9800);
+  color: #111;
+  font-weight: 700;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  text-decoration: none;
+}
+
+.about-page .about-button:hover {
+  filter: brightness(1.1);
+}
+
+.about-aside {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.about-updated {
+  color: #888;
+  font-size: 0.9rem;
+}

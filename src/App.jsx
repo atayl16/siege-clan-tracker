@@ -2,6 +2,7 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 
 import BackgroundLoader from "./utils/BackgroundLoader";
@@ -30,7 +31,7 @@ import Navbar from "./components/Navbar";
 import AnniversaryBanner from "./components/AnniversaryBanner";
 import PageMeta from "./components/PageMeta";
 import SiteFooter from "./components/SiteFooter";
-import PrivacyPage from "./pages/PrivacyPage";
+import AboutPage from "./pages/AboutPage";
 import SeasonalFavicon from "./utils/seasonalIcons";
 
 import "./styles/App.css";
@@ -60,7 +61,8 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy" element={<Navigate to="/about#privacy" replace />} />
           <Route path="/new-members" element={<NewMembers />} />
           <Route path="/bosses" element={<BossStatsPage />} />
 
