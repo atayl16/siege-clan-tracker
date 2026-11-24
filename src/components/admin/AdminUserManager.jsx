@@ -4,12 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { supabase } from "../../supabaseClient";
 import Card from "../ui/Card";
-import { isBuiltInAdmin } from "../../utils/builtInAdmin";
 import "./AdminUserManager.css";
 import { formatDate } from "../../utils/dates";
-
-// The built-in admin login's account. Its admin status and password are
-// never changed from here (the server refuses too).
 
 /**
  * Every account in one table, with that account's actions on its row:
@@ -162,7 +158,6 @@ export default function AdminUserManager() {
                 </thead>
                 <tbody>
                   {rows.map((u) => {
-                    const builtIn = isBuiltInAdmin(u);
                     const isMe = me?.id === u.id;
                     const busy = busyId === u.id;
                     return (
@@ -174,43 +169,37 @@ export default function AdminUserManager() {
                         </td>
                         <td>{u.created_at ? formatDate(u.created_at) : ""}</td>
                         <td className="user-actions-col">
-                          {builtIn ? (
-                            <span className="user-locked">Built-in admin</span>
-                          ) : (
-                            <>
-                              {u.is_admin ? (
-                                // You can't remove your own admin access here:
-                                // it would lock you out of this page.
-                                !isMe && (
-                                  <button
-                                    type="button"
-                                    className="user-action user-action-danger"
-                                    onClick={() => setAdmin(u, false)}
-                                    disabled={busyId !== null}
-                                  >
-                                    Remove Admin
-                                  </button>
-                                )
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="user-action"
-                                  onClick={() => setAdmin(u, true)}
-                                  disabled={busyId !== null}
-                                >
-                                  Make Admin
-                                </button>
-                              )}
+                          {u.is_admin ? (
+                            // You can't remove your own admin access here:
+                            // it would lock you out of this page.
+                            !isMe && (
                               <button
                                 type="button"
-                                className="user-action"
-                                onClick={() => resetPassword(u)}
+                                className="user-action user-action-danger"
+                                onClick={() => setAdmin(u, false)}
                                 disabled={busyId !== null}
                               >
-                                {busy ? "Working..." : "Reset Password"}
+                                Remove Admin
                               </button>
-                            </>
+                            )
+                          ) : (
+                            <button
+                              type="button"
+                              className="user-action"
+                              onClick={() => setAdmin(u, true)}
+                              disabled={busyId !== null}
+                            >
+                              Make Admin
+                            </button>
                           )}
+                          <button
+                            type="button"
+                            className="user-action"
+                            onClick={() => resetPassword(u)}
+                            disabled={busyId !== null}
+                          >
+                            {busy ? "Working..." : "Reset Password"}
+                          </button>
                         </td>
                       </tr>
                     );

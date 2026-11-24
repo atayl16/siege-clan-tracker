@@ -66,16 +66,10 @@ class RenameStepError extends Error {
  * @throws {RenameError}
  */
 async function renameUser({ supabase, authUser, newUsername }) {
-  // The built-in admin login signs in to Supabase Auth with this fixed email
-  // (AuthContext), so changing it would lock that login out.
-  if (authUser.email === 'admin@siegeclan.org') {
-    throw new RenameError('The built-in admin account cannot be renamed.', 403);
-  }
-
   const username = normaliseUsername(newUsername);
   const invalid = validateUsername(username);
   if (invalid) throw new RenameError(invalid, 400);
-  // The built-in admin's users row is named "admin"; nobody else may take it.
+  // Reserved: a member called "admin" would look like staff.
   if (username === 'admin') throw new RenameError('That username is reserved.', 400);
 
   // Accounts are created with users.id = auth user id; supabase_auth_id
@@ -88,12 +82,6 @@ async function renameUser({ supabase, authUser, newUsername }) {
   if (findError) throw new RenameStepError('finding your account', findError);
   const account = rows?.[0];
   if (!account) throw new RenameError('No account is linked to this login.', 404);
-  // Also by the row itself, in case the admin row is ever linked to another
-  // auth email: the built-in admin login looks up the users row "admin".
-  if (String(account.username).toLowerCase() === 'admin') {
-    throw new RenameError('The built-in admin account cannot be renamed.', 403);
-  }
-
   if (account.username === username) {
     throw new RenameError('That is already your username.', 400);
   }

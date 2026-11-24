@@ -66,11 +66,12 @@ describe("AdminUserManager", () => {
     expect(toggleAdminStatus).not.toHaveBeenCalled();
   });
 
-  it("offers no admin or password actions on the built-in admin account", () => {
+  it("gives an account named admin the same actions as any other", () => {
     render(<AdminUserManager />);
     const admin = within(row("admin"));
-    expect(admin.queryByRole("button")).toBeNull();
-    expect(admin.getByText("Built-in admin")).toBeInTheDocument();
+    expect(admin.getByRole("button", { name: "Remove Admin" })).toBeInTheDocument();
+    expect(admin.getByRole("button", { name: "Reset Password" })).toBeInTheDocument();
+    expect(admin.queryByText("Built-in admin")).toBeNull();
   });
 
   it("does not let you remove your own admin access", () => {

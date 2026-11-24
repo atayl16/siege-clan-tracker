@@ -278,12 +278,6 @@
   cursor: not-allowed;
 }
 
-.user-locked {
-  font-size: 0.8rem;
-  color: #888;
-  font-style: italic;
-}
-
 .user-empty {
   color: #888;
   font-style: italic;
