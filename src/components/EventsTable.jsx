@@ -1,6 +1,10 @@
-import React, { useMemo } from "react";
+import React, { Fragment, useMemo } from "react";
 import { useCompetitions } from "../hooks/useCompetitions";
+import { useCompetitionLeaders } from "../hooks/useCompetitionLeaders";
 import MetricIcon from "./MetricIcon"; // Use MetricIcon
+import PlaceBadge from "./PlaceBadge";
+import { SKILL_METRICS } from "../utils/skillLevels";
+import { formatXp } from "../utils/xpWeek";
 import "./EventsTable.css";
 
 export default function EventsTable({
@@ -30,59 +34,15 @@ export default function EventsTable({
     // Convert WOM competitions to match our event format
     const uniqueWomEvents = competitions
       .filter((comp) => !existingWomIds.has(comp.id.toString()))
-      .map((comp) => {
-        // Find current leader if competition has participants
-        let currentLeader = null;
-        let leaderGain = 0;
-
-        if (comp.participants && comp.participants.length > 0) {
-          const sortedParticipants = [...comp.participants].sort(
-            (a, b) => b.progress.gained - a.progress.gained
-          );
-          if (sortedParticipants.length > 0) {
-            currentLeader = sortedParticipants[0].player.displayName;
-            leaderGain = sortedParticipants[0].progress.gained;
-          }
-        }
-
-        return {
-          id: `wom-${comp.id}`,
-          name: comp.title,
-          type: comp.metric,
-          start_date: comp.startsAt,
-          end_date: comp.endsAt,
-          is_wom: true,
-          wom_id: comp.id,
-          currentLeader: currentLeader,
-          leaderGain: leaderGain,
-        };
-      });
-
-    // Add leader data to existing events that have wom_id
-    const enhancedEvents = (events || []).map((event) => {
-      if (event.wom_id) {
-        const matchingComp = competitions.find(
-          (comp) => comp.id.toString() === event.wom_id.toString()
-        );
-        if (
-          matchingComp &&
-          matchingComp.participants &&
-          matchingComp.participants.length > 0
-        ) {
-          const sortedParticipants = [...matchingComp.participants].sort(
-            (a, b) => b.progress.gained - a.progress.gained
-          );
-          if (sortedParticipants.length > 0) {
-            return {
-              ...event,
-              currentLeader: sortedParticipants[0].player.displayName,
-              leaderGain: sortedParticipants[0].progress.gained,
-            };
-          }
-        }
-      }
-      return event;
-    });
+      .map((comp) => ({
+        id: `wom-${comp.id}`,
+        name: comp.title,
+        type: comp.metric,
+        start_date: comp.startsAt,
+        end_date: comp.endsAt,
+        is_wom: true,
+        wom_id: comp.id,
+      }));
 
     let filteredWomEvents = uniqueWomEvents;
     if (searchTerm.trim()) {
@@ -95,7 +55,7 @@ export default function EventsTable({
       );
     }
 
-    return [...enhancedEvents, ...filteredWomEvents];
+    return [...(events || []), ...filteredWomEvents];
   }, [events, competitions, includeWomCompetitions, searchTerm]);
 
   // Process and categorize events
@@ -143,6 +103,10 @@ export default function EventsTable({
       recentCompletedEvents: limitedCompleted,
     };
   }, [combinedEvents, activeLimit, upcomingLimit, completedLimit]);
+
+  // The top three of each running WOM competition. Only asked for when one
+  // is on the page, and served from the edge cache.
+  const leaders = useCompetitionLeaders(activeEvents.some((event) => event.wom_id));
 
   // Format the date consistently (handles UTC correctly)
   const formatDate = (dateString) => {
@@ -212,35 +176,47 @@ export default function EventsTable({
                 </tr>
               </thead>
               <tbody>
-                {activeEvents.map((event) => (
-                  <tr key={event.id} className="ui-event-row ui-event-active">
-                    <td>
-                      <strong className="ui-event-name">
-                        <span className="ui-event-skill-icon">
-                          <MetricIcon metric={event.metric || event.type} />
-                        </span>
-                        {event.is_wom || event.wom_id ? (
-                          <a
-                            href={getWomCompetitionUrl(event.wom_id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ui-event-wom-link"
-                          >
-                            {event.name}
-                          </a>
-                        ) : (
-                          event.name
-                        )}
-                      </strong>
-                    </td>
-                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
-                    <td>
-                      <span className="ui-badge ui-badge-warning">
-                        {formatRelativeTime(event.timeRemaining)} left
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {activeEvents.map((event) => {
+                  const top = event.wom_id ? leaders[String(event.wom_id)] : null;
+                  return (
+                    <Fragment key={event.id}>
+                      <tr className={`ui-event-row ui-event-active${top ? " has-leaders" : ""}`}>
+                        <td>
+                          <strong className="ui-event-name">
+                            <span className="ui-event-skill-icon">
+                              <MetricIcon metric={event.metric || event.type} />
+                            </span>
+                            {event.is_wom || event.wom_id ? (
+                              <a
+                                href={getWomCompetitionUrl(event.wom_id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ui-event-wom-link"
+                              >
+                                {event.name}
+                              </a>
+                            ) : (
+                              event.name
+                            )}
+                          </strong>
+                        </td>
+                        <td className="ui-event-date">{formatDate(event.end_date)}</td>
+                        <td>
+                          <span className="ui-badge ui-badge-warning">
+                            {formatRelativeTime(event.timeRemaining)} left
+                          </span>
+                        </td>
+                      </tr>
+                      {top && (
+                        <tr className="ui-event-leaders-row">
+                          <td colSpan={3}>
+                            <EventLeaders top={top} metric={event.metric || event.type} />
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -353,5 +329,28 @@ export default function EventsTable({
         </div>
       )}
     </div>
+  );
+}
+
+/** "930K XP" for a skill, "4.2 hrs" for EHP or EHB, "12 KC" for anything else. */
+export function formatGain(metric, gained) {
+  const n = Number(gained) || 0;
+  if (SKILL_METRICS.has(metric)) return `${formatXp(n)} XP`;
+  if (metric === "ehp" || metric === "ehb") return `${Number(n.toFixed(1))} hrs`;
+  return `${n.toLocaleString()} KC`;
+}
+
+/** A running competition's top three, under its row in Active Events. */
+function EventLeaders({ top, metric }) {
+  return (
+    <ol className="ui-event-leaders" aria-label="Top 3 so far">
+      {top.map((p) => (
+        <li key={p.name} className="ui-event-leader">
+          <PlaceBadge place={p.place} size={22} />
+          <span className="ui-event-leader-name">{p.name}</span>
+          <span className="ui-event-leader-gain">{formatGain(metric, p.gained)}</span>
+        </li>
+      ))}
+    </ol>
   );
 }

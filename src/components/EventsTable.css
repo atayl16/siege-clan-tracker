@@ -235,3 +235,65 @@
     display: none;
   }
 }
+
+/* The top three under a running competition. The event row and this one read
+   as one block: same background, no rule between them. The list lines up
+   with the event name, past its 24px icon and 8px gap. */
+.ui-event-row.has-leaders td {
+  border-bottom: none;
+  padding-bottom: 0.25rem;
+}
+
+.ui-event-leaders-row {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.ui-event-row.has-leaders:hover + .ui-event-leaders-row {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.ui-table .ui-event-leaders-row td {
+  padding-top: 0.25rem;
+  padding-left: calc(0.75rem + 32px);
+}
+
+.ui-event-leaders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ui-event-leader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ui-event-leader-name {
+  color: var(--color-text, #e0e0e0);
+  font-weight: 500;
+}
+
+.ui-event-leader-gain {
+  color: #aaa;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .ui-table .ui-event-leaders-row td {
+    padding-left: calc(0.375rem + 32px);
+  }
+}
+
+@media (max-width: 576px) {
+  .ui-table .ui-event-leaders-row td {
+    padding-left: calc(0.3125rem + 32px);
+  }
+
+  .ui-event-leaders {
+    flex-direction: column;
+  }
+}

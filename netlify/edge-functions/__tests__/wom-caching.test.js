@@ -12,6 +12,7 @@ const modules = {
   'wom-group-stats': await import('../wom-group-stats.js'),
   'wom-group-achievements': await import('../wom-group-achievements.js'),
   'wom-competitions': await import('../wom-competitions.js'),
+  'wom-competition-leaders': await import('../wom-competition-leaders.js'),
   'wom-player': await import('../wom-player.js'),
   'wom-player-events': await import('../wom-player-events.js'),
 };
