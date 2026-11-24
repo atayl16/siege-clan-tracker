@@ -57,7 +57,7 @@
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   padding: 0.5rem 0.25rem;
   position: relative;
   transition: color 0.2s;
@@ -157,10 +157,9 @@
   height: 100%; /* Ensure full height */
 }
 
-/* Narrow desktops and laptops (992-1349px): the full row of links needs
-   about 1290px, so between here and the phone menu it overflowed and pushed
-   the last links off the edge. Tighten the spacing, and below 1200px drop
-   the brand text (the logo stays), so everything fits. */
+/* Narrow desktops and laptops (992-1349px): tighter spacing, and below
+   1200px no brand text (the logo stays). The links used to shrink here too,
+   when there were eight of them; with five there is room at full size. */
 @media (min-width: 992px) and (max-width: 1349px) {
   .navbar-container {
     padding: 0.5rem 1rem;
@@ -169,10 +168,6 @@
   .navbar-links,
   .navbar-auth-links {
     gap: 0.85rem;
-  }
-
-  .navbar-links a {
-    font-size: 0.92rem;
   }
 }
 
@@ -186,10 +181,6 @@
   .navbar-links,
   .navbar-auth-links {
     gap: 0.6rem;
-  }
-
-  .navbar-links a {
-    font-size: 0.85rem;
   }
 }
 
