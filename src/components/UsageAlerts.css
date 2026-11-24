@@ -1,0 +1,118 @@
+.ui-usage-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.ui-usage-row {
+  padding: 0.9375rem;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-left: 0.25rem solid #444;
+}
+
+.ui-usage-ok {
+  border-left-color: #28a745;
+}
+
+.ui-usage-watch {
+  border-left-color: #ffc107;
+}
+
+.ui-usage-problem {
+  border-left-color: #dc3545;
+}
+
+.ui-usage-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.ui-usage-label {
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+}
+
+/* Used so far as the fill; the projection as a tick. */
+.ui-usage-meter {
+  position: relative;
+  height: 0.625rem;
+  border-radius: 5px;
+  background-color: #333;
+  overflow: visible;
+}
+
+.ui-usage-fill {
+  height: 100%;
+  border-radius: 5px;
+  background-color: #28a745;
+}
+
+.ui-usage-watch .ui-usage-fill {
+  background-color: #ffc107;
+}
+
+.ui-usage-problem .ui-usage-fill {
+  background-color: #dc3545;
+}
+
+.ui-usage-projection {
+  position: absolute;
+  top: -0.1875rem;
+  width: 2px;
+  height: 1rem;
+  margin-left: -1px;
+  background-color: var(--color-text, #e0e0e0);
+}
+
+.ui-usage-figures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.625rem;
+  font-size: 0.875rem;
+  color: #bbb;
+}
+
+.ui-usage-figures strong {
+  color: var(--color-text, #e0e0e0);
+}
+
+.ui-usage-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.ui-usage-stale {
+  color: #ffc107;
+}
+
+.ui-usage-unreadable {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.ui-usage-unreadable p {
+  margin: 0 0 0.375rem;
+}
+
+.ui-usage-unreadable ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.ui-usage-unreadable a {
+  color: var(--color-orange, #ff9800);
+}
+
+.ui-usage .ui-no-alerts {
+  margin-bottom: 1rem;
+}
