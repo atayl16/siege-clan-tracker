@@ -60,7 +60,8 @@ function pickAccount(accounts, slug) {
   }
   if (slug) {
     const match = accounts.find((a) => a.slug === slug);
-    if (!match) throw new Error(`Netlify: no team with slug ${slug}`);
+    // The slug stays out of the message: Actions logs on this repo are public.
+    if (!match) throw new Error('Netlify: no team matches NETLIFY_ACCOUNT_SLUG');
     return match;
   }
   if (accounts.length > 1) {
@@ -97,11 +98,11 @@ function bandwidthReading(body) {
 }
 
 /**
- * @returns {Promise<{team: string|null, readings: object[], failures: string[], warnings: string[]}>}
+ * @returns {Promise<{readings: object[], failures: string[], warnings: string[]}>}
  *   failures fail the run (GitHub emails the owner); warnings do not.
  */
 async function readNetlify({ fetchImpl, token, accountSlug }) {
-  const result = { team: accountSlug || null, readings: [], failures: [], warnings: [] };
+  const result = { readings: [], failures: [], warnings: [] };
   if (!token) {
     result.warnings.push('NETLIFY_USAGE_TOKEN is not set, so Netlify was skipped');
     return result;
@@ -111,7 +112,6 @@ async function readNetlify({ fetchImpl, token, accountSlug }) {
   let account;
   try {
     account = pickAccount(await getJson(fetchImpl, `${NETLIFY_API}/accounts`, init, 'Netlify accounts'), accountSlug);
-    result.team = account.slug;
   } catch (error) {
     result.failures.push(error.message);
     return result;
@@ -283,7 +283,7 @@ async function runUsageCheck({ env, fetchImpl = fetch, now = new Date(), log = c
           log(`Issue already opened this period: ${title}`);
           continue;
         }
-        await gh.open(title, issueBody(row, { team: netlify.team }));
+        await gh.open(title, issueBody(row));
         opened.push(title);
         log(`Opened issue: ${title}`);
       }

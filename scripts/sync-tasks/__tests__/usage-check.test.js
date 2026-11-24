@@ -91,6 +91,8 @@ describe('runUsageCheck', () => {
     const create = calls.find(([m, url]) => m === 'POST' && url.endsWith('/issues'));
     expect(create[2].assignees).toEqual(['example-owner']);
     expect(create[2].body).toContain('260 minutes of 300 minutes');
+    // Issues are public; the team slug is the owner's email name.
+    expect(create[2].body).not.toContain('test-team');
   });
 
   it('does not open the issue again in the same period, even if it was closed', async () => {

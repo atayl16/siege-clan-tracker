@@ -49,7 +49,9 @@ function usageMetrics(rows) {
     label: def.label,
     kind: def.kind,
     provider: def.provider,
-    dashboard: dashboardUrl(def, null),
+    // A Netlify env var, not code: the slug is the owner's email name and
+    // the repo is public. Without it the link opens the Netlify home page.
+    dashboard: dashboardUrl(def, process.env.NETLIFY_TEAM_SLUG),
     dashboardPage: def.dashboardPage,
     snapshot: latest[metric] ? withText(latest[metric]) : null,
   }));

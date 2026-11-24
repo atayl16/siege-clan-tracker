@@ -41,6 +41,19 @@ describe('usageMetrics', () => {
     });
   });
 
+  it('links Netlify billing for the team in NETLIFY_TEAM_SLUG, else the Netlify home page', () => {
+    const saved = process.env.NETLIFY_TEAM_SLUG;
+    try {
+      delete process.env.NETLIFY_TEAM_SLUG;
+      expect(usageMetrics([])[0].dashboard).toBe('https://app.netlify.com');
+      process.env.NETLIFY_TEAM_SLUG = 'test-team';
+      expect(usageMetrics([])[0].dashboard).toBe('https://app.netlify.com/teams/test-team/billing/usage');
+    } finally {
+      if (saved === undefined) delete process.env.NETLIFY_TEAM_SLUG;
+      else process.env.NETLIFY_TEAM_SLUG = saved;
+    }
+  });
+
   it('keeps a missing projection as null', () => {
     const [row] = usageMetrics([
       { metric: 'netlify_build_minutes', taken_on: '2026-11-20', used: '4', usage_limit: '300', unit: 'minutes', projected: null, level: 'ok' },
