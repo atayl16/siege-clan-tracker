@@ -1,0 +1,50 @@
+name: Usage Check
+
+# Reads Netlify and Supabase usage against the free-tier limits, stores a
+# snapshot for the admin Alerts tab, and opens a GitHub issue (once per limit
+# per billing period) when one is close. See scripts/sync-tasks/usage-check.cjs.
+#
+# Twice a day at odd minutes: GitHub runs scheduled jobs late or skips them,
+# and nothing here has a deadline. Every run is safe to repeat.
+#
+# Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (shared with the syncs),
+# NETLIFY_USAGE_TOKEN (a Netlify personal access token; Netlify is skipped
+# until it is set). Optional variable: NETLIFY_ACCOUNT_SLUG.
+on:
+  schedule:
+    - cron: '23 6 * * *'
+    - cron: '23 18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: usage-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # The script uses only built-in fetch, so no npm install.
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Check usage
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NETLIFY_USAGE_TOKEN: ${{ secrets.NETLIFY_USAGE_TOKEN }}
+          NETLIFY_ACCOUNT_SLUG: ${{ vars.NETLIFY_ACCOUNT_SLUG }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ASSIGNEE: ${{ github.repository_owner }}
+        run: node scripts/sync-tasks/usage-check.cjs

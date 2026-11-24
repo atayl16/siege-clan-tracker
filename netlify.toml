@@ -6,12 +6,13 @@
   # Skip the build (exit 0) when nothing the deployed site uses changed since
   # the last build, e.g. a change only to the GitHub sync scripts, workflows,
   # migrations or docs. Saves Netlify build minutes on the free plan.
-  # scripts/comp-polls is listed because Netlify functions require it.
+  # scripts/comp-polls and scripts/sync-tasks/usage-limits.cjs are listed
+  # because Netlify functions require them.
   # Anything else that a function or the front end starts to import from
   # outside these paths must be added here, or its changes will not deploy.
   # On a first build CACHED_COMMIT_REF is unset, git diff fails, and the
   # build runs.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src public index.html vite.config.js package.json package-lock.json netlify.toml .nvmrc deno.lock netlify scripts/comp-polls"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src public index.html vite.config.js package.json package-lock.json netlify.toml .nvmrc deno.lock netlify scripts/comp-polls scripts/sync-tasks/usage-limits.cjs"
   
 # Deploy previews (a build for every push to a pull request) cost build
 # minutes, so they only run when asked for: put [preview] in the latest

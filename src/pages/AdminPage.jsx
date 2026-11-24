@@ -11,6 +11,7 @@ import ClaimRequestManager from "../components/ClaimRequestManager";
 import RankAlerts from "../components/RankAlerts";
 import MemberEditor from "../components/MemberEditor";
 import RunewatchAlerts from "../components/RunewatchAlerts";
+import UsageAlerts from "../components/UsageAlerts";
 
 // UI Components
 import Button from "../components/ui/Button";
@@ -29,7 +30,8 @@ import {
   FaUsers,
   FaExclamationTriangle,
   FaClipboardList,
-  FaUserShield
+  FaUserShield,
+  FaTachometerAlt
 } from "react-icons/fa";
 
 import "./AdminPage.css";
@@ -550,6 +552,19 @@ export default function AdminPage() {
                 </Card.Header>
                 <Card.Body className="alert-section-content">
                   <RunewatchAlerts />
+                </Card.Body>
+              </Card>
+
+              {/* Free-tier usage, from the Usage Check workflow */}
+              <Card className="alert-section full-width" variant="dark">
+                <Card.Header>
+                  <h3 className="ui-card-title">
+                    <FaTachometerAlt className="alert-icon" />
+                    Free-Tier Usage
+                  </h3>
+                </Card.Header>
+                <Card.Body className="alert-section-content">
+                  <UsageAlerts />
                 </Card.Body>
               </Card>
             </div>
