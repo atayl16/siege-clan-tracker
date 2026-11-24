@@ -49,7 +49,7 @@ const METRICS = {
     kind: 'cumulative',
     unit: 'minutes',
     fallbackLimit: 300,
-    dashboard: 'https://app.netlify.com/teams/{team}',
+    dashboard: 'https://app.netlify.com/teams/{team}/billing/usage',
     dashboardPage: 'Usage & Billing',
   },
   netlify_bandwidth: {
@@ -58,7 +58,7 @@ const METRICS = {
     kind: 'cumulative',
     unit: 'bytes',
     fallbackLimit: 100 * GB,
-    dashboard: 'https://app.netlify.com/teams/{team}',
+    dashboard: 'https://app.netlify.com/teams/{team}/billing/usage',
     dashboardPage: 'Usage & Billing',
   },
   supabase_database_size: {
@@ -170,9 +170,13 @@ function formatAmount(value, unit) {
   return `${Math.round(value).toLocaleString('en-GB')} ${unit}`;
 }
 
+/**
+ * Where to look. Without a Netlify team slug, the Netlify home page, which
+ * opens on the team. Supabase's `_` stands for "your organisation".
+ */
 function dashboardUrl(def, team) {
-  // Without the team's slug, the Netlify home page lists the team.
-  return def.dashboard.replace('/teams/{team}', team ? `/teams/${team}` : '');
+  if (!def.dashboard.includes('{team}')) return def.dashboard;
+  return team ? def.dashboard.replace('{team}', encodeURIComponent(team)) : 'https://app.netlify.com';
 }
 
 function percent(value, limit) {
@@ -189,7 +193,9 @@ function issueTitle(row, now) {
   return `Free-tier usage: ${METRICS[row.metric].label} near the limit (period from ${period})`;
 }
 
-function issueBody(row, { team } = {}) {
+// Issues are public, and the Netlify team slug is the owner's email name, so
+// the issue links the Netlify home page rather than the team's billing page.
+function issueBody(row) {
   const def = METRICS[row.metric];
   const lines = [
     `**${def.label}** is at ${formatAmount(row.used, row.unit)} of ${formatAmount(row.usage_limit, row.unit)} (${percent(row.used, row.usage_limit)}).`,
@@ -203,7 +209,7 @@ function issueBody(row, { team } = {}) {
   }
   lines.push(
     '',
-    `Check it: ${dashboardUrl(def, team)} (${def.dashboardPage})`,
+    `Check it: ${dashboardUrl(def, null)} (${def.dashboardPage})`,
     '',
     'Not checked automatically, because neither provider reports them by API:',
     ...UNREADABLE.map((item) => `- ${item}`),

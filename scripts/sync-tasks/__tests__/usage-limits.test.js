@@ -153,14 +153,16 @@ describe('issues', () => {
   });
 
   it('gives the figures, the projection, the usage page and what is not checked', () => {
-    const body = issueBody(row, { team: 'test-team' });
+    const body = issueBody(row);
     expect(body).toContain('250 minutes of 300 minutes (83%)');
     expect(body).toContain('375 minutes (125%) by 2026-12-01');
-    expect(body).toContain('https://app.netlify.com/teams/test-team (Usage & Billing)');
+    expect(body).toContain('https://app.netlify.com (Usage & Billing)');
     expect(body).toContain('Supabase egress');
   });
 
-  it('links the Netlify home page when the team is unknown', () => {
+  it('links the team billing page when the slug is known, the Netlify home page when not', () => {
+    expect(dashboardUrl(METRICS.netlify_bandwidth, 'test-team')).toBe('https://app.netlify.com/teams/test-team/billing/usage');
     expect(dashboardUrl(METRICS.netlify_bandwidth, null)).toBe('https://app.netlify.com');
+    expect(dashboardUrl(METRICS.supabase_database_size, 'test-team')).toBe('https://supabase.com/dashboard/org/_/usage');
   });
 });
