@@ -1,6 +1,7 @@
 import React from "react";
 import useSWR from "swr";
 import { Link } from "react-router-dom";
+import { FaStar } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import { xpWeekContaining } from "../utils/xpWeek";
 import { formatDate } from "../utils/dates";
@@ -90,6 +91,7 @@ export default function EventStampCard({ womIds }) {
             const label = `Week of ${formatDate(w.start)}: ${on ? w.events.join(", ") : "no competitions"}`;
             return (
               <li key={w.start.toISOString()} className={`esc-stamp ${on ? "is-on" : ""}`} title={label}>
+                {on && <FaStar className="esc-star" aria-hidden="true" />}
                 <span className="esc-sr">{label}</span>
               </li>
             );
