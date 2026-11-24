@@ -150,7 +150,7 @@ siege-clan-tracker/
 
 ### Authentication
 
-- **Hardcoded Admin** - Master admin with emergency access
+- **Admins** - Ordinary accounts with admin rights, granted from the Admin page
 - **User Registration** - Self-service user accounts
 - **Character Claims** - Link OSRS characters to accounts
 - **Admin Tokens** - Server-side admin operation authentication

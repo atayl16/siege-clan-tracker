@@ -6,18 +6,13 @@ import { normaliseUsername, signupUsernameProblem } from "../utils/username";
 
 const AuthContext = createContext();
 
-// Keep hardcoded admin for emergency access
-const ADMIN_EMAIL_HASH =
-  "8c91a3d71da50b56d355e4b61ff793842befb82bd5972e3b0d84fb771e450428";
-const ADMIN_PASSWORD_HASH =
-  "86c671c7a776b62f925b5d2387fae4c73392931be4d37b19e37e5534abab587d";
-
 // How long signing out waits for Supabase before clearing its session itself.
 const SIGN_OUT_WAIT_MS = 5000;
 
-// The last Supabase sign-out. Signing in or up waits for it first: finishing
-// late, it would remove the new member's session. One still running when
-// logout stops waiting is dropped by reloading the page (see logout).
+// The last sign-out, including clearing this browser's copy of the member.
+// Signing in or up waits for it first: finishing late, it would remove the
+// new member's session and details. One whose Supabase call never answers is
+// dropped by reloading the page (see logout).
 let pendingSignOut = Promise.resolve();
 
 class SignOutTimeout extends Error {}
@@ -56,7 +51,21 @@ export function AuthProvider({ children }) {
       // Try to restore session from storage
       await supabase.auth.getSession();
 
-      // Then proceed with your existing code...
+      // The built-in admin (removed 2026-11-24) stored a made-up user with id
+      // "admin" and no userId. A browser still holding one would otherwise
+      // stay on the admin screens with nothing behind them, so sign it out.
+      let stored = null;
+      try {
+        stored = JSON.parse(localStorage.getItem("user"));
+      } catch {
+        // Unreadable: the checks below treat it as nothing stored.
+      }
+      if (stored?.id === "admin" && !localStorage.getItem("userId")) {
+        await logout();
+        setLoading(false);
+        return;
+      }
+
       if (localStorage.getItem("userId")) {
         try {
           const userId = localStorage.getItem("userId");
@@ -89,81 +98,13 @@ export function AuthProvider({ children }) {
     checkSession();
   }, []);
 
-  // Admin login
+  // Sign in
   const login = async (username, password) => {
     await pendingSignOut;
     try {
-      // Hash the provided credentials
-      const usernameHash = await sha256(username.trim().toLowerCase());
-      const passwordHash = await sha256(password);
-      
-      // Try admin login first
-      if (usernameHash === ADMIN_EMAIL_HASH && passwordHash === ADMIN_PASSWORD_HASH) {
-        localStorage.setItem("adminAuth", "true");
-        // Add the flag for service role access
-        localStorage.setItem("useServiceRole", "true");
-        setIsAuthenticated(true);
-      
-        // Create a mock admin user for UI purposes
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: "admin",
-            username: "admin",
-            is_admin: true,
-            created_at: new Date().toISOString(),
-          })
-        );
-      
-        setUser({
-          id: "admin",
-          username: "admin",
-          is_admin: true,
-        });
-      
-        // NEW CODE: Try to create a Supabase auth session for the admin
-        try {
-          // First check if we have a pre-configured admin account
-          const adminEmail = "admin@siegeclan.org"; // Use consistent email
-          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: adminEmail,
-            password: passwordHash // Use the same password hash
-          });
-      
-          if (signInError) {
-            console.log("Admin auth not found, creating...");
-            // If sign-in fails, try to create the account
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: adminEmail,
-              password: passwordHash
-            });
-      
-            if (!signUpError) {
-              console.log("Admin auth created successfully");
-            } else {
-              console.error("Failed to create admin auth:", signUpError);
-            }
-          } else {
-            console.log("Admin authenticated with Supabase");
-          }
-          
-          // Now call the function to register this user as admin
-          const { error: rpcError } = await supabase.rpc('register_admin_user');
-          if (rpcError) {
-            console.error("Error registering admin in database:", rpcError);
-          } else {
-            console.log("Admin registered in database successfully");
-          }
-        } catch (authError) {
-          console.error("Error setting up admin authentication:", authError);
-          // Continue anyway - the hard-coded admin should still work
-        }
-      
-        return { success: true, isAdmin: true };
-      }
-  
-      // If not hardcoded admin, try regular user login. "Test user" signs in
-      // to the account stored as "test_user" (see utils/username.js).
+      // "Test user" signs in to the account stored as "test_user" (see
+      // utils/username.js). There is no built-in admin any more: admins are
+      // ordinary accounts with is_admin set.
       const name = normaliseUsername(username);
       const { data, error } = await supabase
         .from("users")
@@ -482,7 +423,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
+  // Signing in or up waits for the whole of this, cleanup included (see
+  // pendingSignOut). Waiting only for Supabase's answer let the cleanup run
+  // after a quick new sign-in and sign that member out again.
+  const logout = () => {
+    const run = signOutAndClear();
+    pendingSignOut = run.catch(() => {});
+    return run;
+  };
+
+  const signOutAndClear = async () => {
     // End the Supabase session before showing the visitor as signed out.
     // Without this its token stayed in the browser, so on a shared computer
     // the next person was still signed in to the database as the previous
@@ -493,7 +443,6 @@ export function AuthProvider({ children }) {
     let stuck = false;
     try {
       const signOut = supabase.auth.signOut({ scope: "local" });
-      pendingSignOut = Promise.resolve(signOut).catch(() => {});
       const { error } = (await withTimeout(signOut, SIGN_OUT_WAIT_MS)) || {};
       if (error) console.warn("Supabase sign-out:", error);
     } catch (err) {
@@ -505,7 +454,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
-    localStorage.removeItem("useServiceRole");
+    localStorage.removeItem("useServiceRole"); // left by the removed built-in admin
     setIsAuthenticated(false);
     setUser(null);
     setUserClaims([]);

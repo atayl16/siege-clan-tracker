@@ -45,7 +45,7 @@ describe("race creator names", () => {
     usersResult = {
       data: [
         { id: A, supabase_auth_id: A, username: "moonfern" },
-        // e.g. the built-in admin, whose row id is not its auth id
+        // e.g. an account whose row id is not its auth id
         { id: "admin-row", supabase_auth_id: B, username: "admin" },
       ],
       error: null,

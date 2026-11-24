@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaCompass } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
-import { isBuiltInAdmin } from "../utils/builtInAdmin";
 
 /**
  * "Using the Site": the three steps from visitor to tracked member, on the
@@ -12,7 +11,7 @@ import { isBuiltInAdmin } from "../utils/builtInAdmin";
  */
 export default function UsingTheSite() {
   const { user } = useAuth();
-  const signedIn = Boolean(user) && !isBuiltInAdmin(user);
+  const signedIn = Boolean(user);
 
   const steps = [
     {

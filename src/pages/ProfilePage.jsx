@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useRaces } from "../hooks/useRaces"; // Updated hook
 import { useUserGoals } from "../hooks/useUserGoals";
@@ -10,7 +10,6 @@ import { updatePlayerGoals } from "../services/goalProgressService";
 import { FaUser, FaFlag, FaClock, FaCog, FaTrophy, FaMedal } from "react-icons/fa";
 import ProfileAchievements from "../components/ProfileAchievements";
 import { displayUsername } from "../utils/stringUtils";
-import { isBuiltInAdmin } from "../utils/builtInAdmin";
 import { mainFirst, mainCharacterId } from "../utils/characters";
 import { supabase } from "../supabaseClient";
 
@@ -100,15 +99,7 @@ function markGoalUpdate(userId) {
 // Profile tabs a link can open with ?tab=, e.g. /profile?tab=requests.
 const PROFILE_TABS = ["characters", "goals", "races", "achievements", "requests", "account"];
 
-/**
- * The built-in admin has no profile: no characters, goals or races of its
- * own, and its username and password must never change (the server refuses
- * both too). Its sessions go to the admin page instead. Checked here rather
- * than inside ProfileContent so that component's hooks always run in order.
- */
 export default function ProfilePage() {
-  const { user } = useAuth();
-  if (isBuiltInAdmin(user)) return <Navigate to="/admin" replace />;
   return <ProfileContent />;
 }
 
