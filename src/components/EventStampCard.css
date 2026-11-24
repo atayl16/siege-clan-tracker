@@ -35,14 +35,35 @@
 }
 
 .esc-stamp {
+  position: relative;
+  display: grid;
+  place-items: center;
   aspect-ratio: 1;
   border-radius: 50%;
   border: 2px dashed #444;
 }
 
+/* A stamped week: a star pressed into the ring, each at a slightly
+   different angle, like stamps done by hand. */
 .esc-stamp.is-on {
   border: 2px solid var(--color-orange, #ff9800);
-  background: radial-gradient(circle, rgba(255, 152, 0, 0.55) 0 38%, rgba(255, 152, 0, 0.15) 40% 100%);
+  background: radial-gradient(circle, rgba(255, 152, 0, 0.22) 0 55%, rgba(255, 152, 0, 0.08) 60% 100%);
+}
+
+.esc-star {
+  width: 62%;
+  height: 62%;
+  color: #ffb300;
+  filter: drop-shadow(0 0 3px rgba(255, 152, 0, 0.6));
+  transform: rotate(-8deg);
+}
+
+.esc-stamp:nth-child(3n + 1) .esc-star {
+  transform: rotate(10deg);
+}
+
+.esc-stamp:nth-child(3n + 2) .esc-star {
+  transform: rotate(-2deg);
 }
 
 .esc-sr {
