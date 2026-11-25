@@ -29,6 +29,13 @@
 --
 -- Safe to run more than once.
 
+-- Race entries are history, kept when their member goes. Production has no
+-- foreign key from race_participants.wom_id to members (checked 2026-11-25),
+-- but the local schema file adds one, which would block the delete for
+-- anyone who ever raced. Dropping it makes local match production; there it
+-- does nothing.
+ALTER TABLE race_participants DROP CONSTRAINT IF EXISTS race_participants_wom_id_fkey;
+
 CREATE OR REPLACE FUNCTION remove_departed_member(p_wom_id BIGINT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -50,8 +57,9 @@ BEGIN
     RETURN FALSE;
   END IF;
 
-  -- player_claims and claim_codes have foreign keys to members, so they go
-  -- first. The other two have none and would be left pointing at nobody.
+  -- These go before the member: player_claims and claim_codes have foreign
+  -- keys to members (claim_requests and user_goals too, in the local schema),
+  -- and without one they would be left pointing at nobody.
   DELETE FROM player_claims WHERE wom_id = p_wom_id;
   DELETE FROM claim_codes WHERE wom_id = p_wom_id;
   DELETE FROM claim_requests WHERE wom_id = p_wom_id;

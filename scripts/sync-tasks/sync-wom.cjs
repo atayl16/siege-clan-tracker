@@ -598,11 +598,20 @@ async function syncWomMembers() {
         await Promise.all(batch.map(async (member) => {
           const womMember = womIdsMap.get(member.wom_id);
           try {
-            const playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
-            const snap = playerData.latestSnapshot?.data;
+            // The stats refresh is best-effort: the reactivation below must be
+            // written even if it fails. A row left marked as left keeps its
+            // old left_date, so a member who rejoined and then left again
+            // could be deleted with no fresh grace period.
+            let playerData = null;
+            try {
+              playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
+            } catch (fetchErr) {
+              console.error(`Could not refresh stats for rejoined member ${member.name}; reactivating with stored stats:`, fetchErr);
+            }
+            const snap = playerData?.latestSnapshot?.data;
 
-            const newName = playerData.displayName || womMember.display_name;
-            const newWomName = (playerData.username || womMember.wom_name).toLowerCase();
+            const newName = playerData?.displayName || womMember.display_name;
+            const newWomName = (playerData?.username || womMember.wom_name).toLowerCase();
 
             const nameHistory = Array.isArray(member.name_history) ? [...member.name_history] : [];
             if (member.name && member.name !== newName && !nameHistory.includes(member.name)) {
@@ -624,7 +633,7 @@ async function syncWomMembers() {
               ehb: Math.round(snap?.computed?.ehb?.value ?? member.ehb ?? 0),
               womrole: womMember?.womrole ?? member.womrole ?? null,
               build: womMember?.build ?? member.build ?? 'main',
-              player_type: playerData.type ?? member.player_type ?? 'regular',
+              player_type: playerData?.type ?? member.player_type ?? 'regular',
               notes,
               updated_at: new Date().toISOString(),
             };

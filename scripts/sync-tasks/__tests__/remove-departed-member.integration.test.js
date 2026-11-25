@@ -9,7 +9,8 @@ import { createClient } from '@supabase/supabase-js';
  * The delete cannot be undone, so the function re-checks the rule itself:
  * anyone not marked as left, or marked less than 7 days ago, must survive
  * whatever the caller asks. A deleted member's claims, claim codes, claim
- * requests and goals go with them; history rows that name them stay.
+ * requests and goals go with them; history rows that name them stay, race
+ * entries included.
  */
 
 function localStack() {
@@ -46,6 +47,7 @@ describe.skipIf(!stack)('remove_departed_member', () => {
   let admin;
   let anon;
   let userId;
+  let raceId;
 
   const remove = (client, womId) => client.rpc('remove_departed_member', { p_wom_id: womId });
   const count = async (table, womId) => {
@@ -87,10 +89,24 @@ describe.skipIf(!stack)('remove_departed_member', () => {
         if (error) throw new Error(`${table}: ${error.message}`);
       }
     }
+
+    // A finished race they took part in: history, which must not block the delete.
+    const { data: race, error: raceError } = await admin
+      .from('races')
+      .insert({ title: `Departed test race ${offset}`, status: 'finished', public: false })
+      .select('id')
+      .single();
+    if (raceError) throw raceError;
+    raceId = race.id;
+    const { error: entryError } = await admin
+      .from('race_participants')
+      .insert({ race_id: raceId, wom_id: DEPARTED, player_name: 'Departed Tester', metric: 'attack' });
+    if (entryError) throw entryError;
   });
 
   afterAll(async () => {
     if (!admin) return;
+    if (raceId) await admin.from('races').delete().eq('id', raceId);
     for (const table of ['player_claims', 'claim_codes', 'claim_requests', 'user_goals']) {
       await admin.from(table).delete().in('wom_id', ALL);
     }
@@ -130,6 +146,7 @@ describe.skipIf(!stack)('remove_departed_member', () => {
   it('keeps their history', async () => {
     // Inserting the member with 50 points logged a Siege Score change.
     expect(await count('siege_score_changes', DEPARTED)).toBeGreaterThan(0);
+    expect(await count('race_participants', DEPARTED)).toBe(1);
   });
 
   it('returns false the second time, with nothing left to delete', async () => {
