@@ -178,7 +178,8 @@ async function runWeeklyTitles({
   const failures = [];
   const awarded = [];
 
-  const { data: members, error: membersError } = await supabase.from('members').select('wom_id');
+  // Members marked as left are out, though their row stays for a few days.
+  const { data: members, error: membersError } = await supabase.from('members').select('wom_id').is('left_date', null);
   if (membersError) throw new Error(`Could not read members: ${membersError.message}`);
   const memberIds = new Set(members.map((m) => Number(m.wom_id)));
 

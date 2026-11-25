@@ -38,13 +38,14 @@ export async function fetchLastAwards() {
 }
 
 /**
- * Every members row's wom_id: the payout's eligibility rule
- * (scripts/sync-tasks/weekly-xp-awards.cjs pays only members), so the live
- * places and points match what is paid. Production's read policy returns
- * every row to the browser, hidden members included, as the service role sees.
+ * Every current member's wom_id: the payout's eligibility rule
+ * (scripts/sync-tasks/weekly-xp-awards.cjs pays only members not marked as
+ * left), so the live places and points match what is paid. Production's read
+ * policy returns every row to the browser, hidden members included, as the
+ * service role sees.
  */
 async function fetchMemberIds() {
-  const { data, error } = await supabase.from("members").select("wom_id");
+  const { data, error } = await supabase.from("members").select("wom_id").is("left_date", null);
   if (error) throw error;
   return new Set(data.map((m) => Number(m.wom_id)));
 }

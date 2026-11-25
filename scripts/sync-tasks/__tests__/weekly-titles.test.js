@@ -29,7 +29,17 @@ function fakeSupabase({ doneWeeks = [], memberIds = [1, 2, 3, 4, 5, 6] } = {}) {
   return {
     rpc,
     from(table) {
-      if (table === 'members') return { select: async () => ({ data: memberIds.map((wom_id) => ({ wom_id })), error: null }) };
+      // Only answers the current-members query: rows marked as left are not eligible.
+      if (table === 'members') {
+        return {
+          select: () => ({
+            is: async (column, value) => {
+              if (column !== 'left_date' || value !== null) throw new Error(`unexpected filter ${column}=${value}`);
+              return { data: memberIds.map((wom_id) => ({ wom_id })), error: null };
+            },
+          }),
+        };
+      }
       if (table === 'weekly_title_weeks') {
         return { select: () => ({ gte: async () => ({ data: doneWeeks.map((week_start) => ({ week_start })), error: null }) }) };
       }

@@ -17,7 +17,7 @@ vi.mock("../supabaseClient", () => ({
             .then(resolve, reject);
         },
       };
-      for (const method of ["select", "order", "limit", "eq"]) {
+      for (const method of ["select", "order", "limit", "eq", "is"]) {
         chain[method] = (...args) => {
           calls.push([method, ...args]);
           return chain;
@@ -59,6 +59,9 @@ describe("useWeeklyXp", () => {
       [3, 2, 100],
       [4, 3, 50],
     ]);
+    // Members marked as left are not ranked, as the payout skips them.
+    const members = db.queries.find((q) => q.table === "members");
+    expect(members.calls).toContainEqual(["is", "left_date", null]);
   });
 
   it("fetches last week's winners only when asked", async () => {
