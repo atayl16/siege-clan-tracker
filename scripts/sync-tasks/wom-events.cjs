@@ -579,12 +579,14 @@ async function processCompetitionResults(competitionId) {
       .map(p => p.player.displayName.toLowerCase());
 
     // Get all members matching these usernames in one query
-    // Use .in() for safe parameterized query (prevents SQL injection)
+    // Use .in() for safe parameterized query (prevents SQL injection).
+    // Members marked as left earn nothing, though their row stays for a few days.
     const allNames = [...new Set([...allUsernames, ...allDisplayNames])];
     const { data: memberMatches } = await supabase
       .from("members")
       .select("wom_id, wom_name, siege_score")
-      .in('wom_name', allNames);
+      .in('wom_name', allNames)
+      .is('left_date', null);
     
     // Create a map for quick lookups
     const memberMap = new Map();

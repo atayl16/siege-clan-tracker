@@ -26,7 +26,8 @@ async function checkRunewatch() {
     // Get active clan members from database
     const { data: members, error: membersError } = await supabase
       .from('members')
-      .select('wom_id, name, wom_name');
+      .select('wom_id, name, wom_name')
+      .is('left_date', null);
       
     if (membersError) throw membersError;
     console.log(`Found ${members.length} clan members to check`);

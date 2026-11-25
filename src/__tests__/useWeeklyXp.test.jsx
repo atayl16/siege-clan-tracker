@@ -17,7 +17,7 @@ vi.mock("../supabaseClient", () => ({
             .then(resolve, reject);
         },
       };
-      for (const method of ["select", "order", "limit", "eq"]) {
+      for (const method of ["select", "order", "limit", "eq", "is"]) {
         chain[method] = (...args) => {
           calls.push([method, ...args]);
           return chain;
@@ -59,6 +59,25 @@ describe("useWeeklyXp", () => {
       [3, 2, 100],
       [4, 3, 50],
     ]);
+    // Members marked as left are not ranked, as the payout skips them.
+    const members = db.queries.find((q) => q.table === "members");
+    expect(members.calls).toContainEqual(["is", "left_date", null]);
+  });
+
+  it("drops a member the sync marks as left at the next poll, while the page stays open", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"], shouldAdvanceTime: true });
+    try {
+      const { result } = renderHook(() => useWeeklyXp(), { wrapper });
+      await waitFor(() => expect(result.current.ranking.map((r) => r.womId)).toEqual([2, 3, 4]));
+
+      db.tables.members = () => ({ data: [{ wom_id: 3 }, { wom_id: 4 }], error: null });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10 * 60 * 1000 + 1000);
+      });
+      await waitFor(() => expect(result.current.ranking.map((r) => r.womId)).toEqual([3, 4]));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("fetches last week's winners only when asked", async () => {

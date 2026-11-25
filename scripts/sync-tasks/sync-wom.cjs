@@ -38,6 +38,46 @@ function rankChanges(existingMembers, womIdsMap) {
   return changes;
 }
 
+// A member missing from the WOM group is marked as left (left_date) straight
+// away, which hides them and stops the award jobs counting them. Their row is
+// deleted once they have been gone this long, so a mistaken kick or a bad
+// group sync can still be undone by putting them back in the group.
+// remove_departed_member() (migration 20261125000001) enforces the same 7 days.
+const DEPARTED_GRACE_DAYS = 7;
+
+/**
+ * Former members whose rows can be deleted: marked as left at least
+ * DEPARTED_GRACE_DAYS ago and still not in the WOM group. Anyone in the group
+ * is kept whatever their left_date says: they rejoined, and the rejoin step
+ * reactivates them.
+ *
+ * @param {Array<{ wom_id: number, active: boolean|null, left_date: string|null }>} existingMembers
+ * @param {Map<number, object>} womIdsMap
+ * @param {Date} [now]
+ */
+function departedToRemove(existingMembers, womIdsMap, now = new Date()) {
+  const cutoff = now.getTime() - DEPARTED_GRACE_DAYS * 24 * 60 * 60 * 1000;
+  return existingMembers.filter(m =>
+    m.left_date &&
+    m.active !== true &&
+    !womIdsMap.has(m.wom_id) &&
+    Date.parse(m.left_date) <= cutoff
+  );
+}
+
+/**
+ * Whether the group WOM returned looks whole. A short or empty list from an
+ * API fault would otherwise mark most of the clan as left, and could get a
+ * member who has just rejoined deleted.
+ *
+ * @param {Array<object>} womMembers
+ * @param {Array<{ active: boolean|null }>} existingMembers
+ */
+function groupLooksComplete(womMembers, existingMembers) {
+  const activeCount = existingMembers.filter(m => m.active).length;
+  return womMembers.length >= activeCount / 2;
+}
+
 async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -225,19 +265,32 @@ async function syncWomMembers() {
     const newMembers = womMembers.filter(m => !existingMembersMap.has(m.wom_id));
     console.log(`Found ${newMembers.length} new members to add`);
     
+    // Nobody is marked as left or deleted on the strength of a group list that
+    // looks cut short (see groupLooksComplete).
+    const groupComplete = groupLooksComplete(womMembers, existingMembers);
+    if (!groupComplete) {
+      console.warn(`WOM group has only ${womMembers.length} members, under half of the active members here. Skipping leavers this run.`);
+    }
+
     // Process missing members (those in our DB but no longer in WOM) - limit to 10 per run
-    const missingMembers = existingMembers
-      .filter(m => m.active && !womIdsMap.has(m.wom_id))
-      .slice(0, 10);
+    const missingMembers = groupComplete
+      ? existingMembers.filter(m => m.active && !womIdsMap.has(m.wom_id)).slice(0, 10)
+      : [];
     console.log(`Processing ${missingMembers.length} missing members (limited to 10 per run)`);
 
-    // Process rejoined members: in DB with left_date set, but currently in WOM group.
-    // These were never picked up by the add-new path (wom_id already exists) or the
-    // missing-member path (active=false), so they stayed hidden from the website.
+    // Process rejoined members: marked as left, but back in the WOM group within
+    // DEPARTED_GRACE_DAYS. The add-new path skips them (their wom_id exists) and
+    // the missing-member path skips them (active=false), so without this they
+    // would stay hidden. After the grace period their row is gone, and a rejoin
+    // comes in through the add-new path as a new member.
     const rejoinedMembers = existingMembers.filter(
       m => m.left_date && womIdsMap.has(m.wom_id)
     );
     console.log(`Processing ${rejoinedMembers.length} rejoined members`);
+
+    // Former members to delete (see departedToRemove).
+    const departedMembers = groupComplete ? departedToRemove(existingMembers, womIdsMap) : [];
+    console.log(`Found ${departedMembers.length} former members gone ${DEPARTED_GRACE_DAYS}+ days to remove`);
     
     // Determine which existing members to update in this run
     // If we have new or missing members, prioritize processing those
@@ -263,6 +316,7 @@ async function syncWomMembers() {
     let deactivatedCount = 0;
     let nameUpdatesCount = 0;
     let rejoinedCount = 0;
+    let removedCount = 0;
     let errorCount = 0;
     
     // Process new members - limit to 10 per run
@@ -510,7 +564,8 @@ async function syncWomMembers() {
           }
         }
       } else {
-        // Mark member as inactive (left clan case) - unchanged from your original code
+        // Left the clan: mark them as left. They are hidden from now on, and
+        // their row is deleted after DEPARTED_GRACE_DAYS unless they rejoin.
         console.log(`Member "${memberName}" not found in WOM group - marking as inactive`);
         
         const { error: deactivateError } = await supabase
@@ -543,11 +598,20 @@ async function syncWomMembers() {
         await Promise.all(batch.map(async (member) => {
           const womMember = womIdsMap.get(member.wom_id);
           try {
-            const playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
-            const snap = playerData.latestSnapshot?.data;
+            // The stats refresh is best-effort: the reactivation below must be
+            // written even if it fails. A row left marked as left keeps its
+            // old left_date, so a member who rejoined and then left again
+            // could be deleted with no fresh grace period.
+            let playerData = null;
+            try {
+              playerData = await fetchWithRetry(`${WOM_API_BASE}/players/id/${member.wom_id}`);
+            } catch (fetchErr) {
+              console.error(`Could not refresh stats for rejoined member ${member.name}; reactivating with stored stats:`, fetchErr);
+            }
+            const snap = playerData?.latestSnapshot?.data;
 
-            const newName = playerData.displayName || womMember.display_name;
-            const newWomName = (playerData.username || womMember.wom_name).toLowerCase();
+            const newName = playerData?.displayName || womMember.display_name;
+            const newWomName = (playerData?.username || womMember.wom_name).toLowerCase();
 
             const nameHistory = Array.isArray(member.name_history) ? [...member.name_history] : [];
             if (member.name && member.name !== newName && !nameHistory.includes(member.name)) {
@@ -569,7 +633,7 @@ async function syncWomMembers() {
               ehb: Math.round(snap?.computed?.ehb?.value ?? member.ehb ?? 0),
               womrole: womMember?.womrole ?? member.womrole ?? null,
               build: womMember?.build ?? member.build ?? 'main',
-              player_type: playerData.type ?? member.player_type ?? 'regular',
+              player_type: playerData?.type ?? member.player_type ?? 'regular',
               notes,
               updated_at: new Date().toISOString(),
             };
@@ -593,6 +657,28 @@ async function syncWomMembers() {
         }));
 
         await delay(1000);
+      }
+    }
+
+    // Delete former members. The database re-checks the left_date rule, so a
+    // mistake here cannot delete a current member. Stop at the first error:
+    // if the function is missing (migration not applied yet) every call would
+    // fail the same way, and the next run tries again.
+    for (const member of departedMembers) {
+      const memberName = member.name || member.wom_name || `ID ${member.wom_id}`;
+      const { data: removed, error: removeError } = await supabase
+        .rpc('remove_departed_member', { p_wom_id: member.wom_id });
+
+      if (removeError) {
+        console.error(`Error removing former member "${memberName}"; the rest wait for the next run:`, removeError);
+        errorCount++;
+        break;
+      }
+      if (removed) {
+        console.log(`Removed former member "${memberName}" (left ${String(member.left_date).split('T')[0]})`);
+        removedCount++;
+      } else {
+        console.log(`Kept "${memberName}": the database does not have them as left ${DEPARTED_GRACE_DAYS}+ days ago`);
       }
     }
 
@@ -714,6 +800,7 @@ async function syncWomMembers() {
           deactivated: deactivatedCount,
           nameUpdates: nameUpdatesCount,
           rejoined: rejoinedCount,
+          removed: removedCount,
           errors: errorCount
         })
       });
@@ -725,6 +812,7 @@ Sync completed!
 - Name updates: ${nameUpdatesCount}
 - Marked inactive: ${deactivatedCount}
 - Rejoined: ${rejoinedCount}
+- Removed (left ${DEPARTED_GRACE_DAYS}+ days ago): ${removedCount}
 - Errors: ${errorCount}
     `);
 
@@ -734,6 +822,7 @@ Sync completed!
       deactivated: deactivatedCount,
       nameUpdates: nameUpdatesCount,
       rejoined: rejoinedCount,
+      removed: removedCount,
       errors: errorCount
     };
   } catch (err) {
@@ -757,4 +846,4 @@ if (require.main === module) {
 }
 
 // Export the function for potential reuse in other scripts
-module.exports = { syncWomMembers, rankChanges };
+module.exports = { syncWomMembers, rankChanges, departedToRemove, groupLooksComplete, DEPARTED_GRACE_DAYS };

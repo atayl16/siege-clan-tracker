@@ -38,15 +38,19 @@ export async function fetchLastAwards() {
 }
 
 /**
- * Every members row's wom_id: the payout's eligibility rule
- * (scripts/sync-tasks/weekly-xp-awards.cjs pays only members), so the live
- * places and points match what is paid. Production's read policy returns
- * every row to the browser, hidden members included, as the service role sees.
+ * Every current member's wom_id: the payout's eligibility rule
+ * (scripts/sync-tasks/weekly-xp-awards.cjs pays only members not marked as
+ * left), so the live places and points match what is paid. Production's read
+ * policy returns every row to the browser, hidden members included, as the
+ * service role sees.
+ *
+ * An array, not a Set: SWR compares refreshed data with dequal/lite, which
+ * sees any two Sets as equal, so a refreshed Set would never reach the page.
  */
 async function fetchMemberIds() {
-  const { data, error } = await supabase.from("members").select("wom_id");
+  const { data, error } = await supabase.from("members").select("wom_id").is("left_date", null);
   if (error) throw error;
-  return new Set(data.map((m) => Number(m.wom_id)));
+  return data.map((m) => Number(m.wom_id));
 }
 
 /**
@@ -97,9 +101,12 @@ export function useWeeklyXp({ withLastWeek = false, poll = true } = {}) {
     dedupingInterval: 60 * 1000,
   });
 
+  // Re-read with the XP data, so a member the sync marks as left drops out of
+  // the live places while the page stays open. Only wom_ids: a few KB.
   const members = useSWR("members:wom_ids", fetchMemberIds, {
+    refreshInterval: poll ? 10 * 60 * 1000 : 0,
     revalidateOnFocus: false,
-    dedupingInterval: 10 * 60 * 1000,
+    dedupingInterval: 60 * 1000,
   });
 
   // Keyed on the week, so the new winners are fetched once a week closes.
@@ -114,7 +121,7 @@ export function useWeeklyXp({ withLastWeek = false, poll = true } = {}) {
   // Everyone eligible with a gain, ranked; the top five are the ones who would
   // be paid. Without the member list the places cannot be checked against the
   // payout, so that is reported as an error rather than shown unchecked.
-  const memberIds = members.data;
+  const memberIds = useMemo(() => (members.data ? new Set(members.data) : null), [members.data]);
   const ranking = useMemo(
     () =>
       memberIds

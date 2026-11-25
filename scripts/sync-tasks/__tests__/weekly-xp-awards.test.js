@@ -22,7 +22,15 @@ function fakeSupabase({ paidWeeks = [], memberIds = [1, 2, 3, 4, 5, 6], rpcResul
     from(table) {
       if (table === 'xp_awards') return { select: () => ({ gte }) };
       if (table === 'members') {
-        return { select: async () => ({ data: memberIds.map((wom_id) => ({ wom_id })), error: null }) };
+        // Only answers the current-members query: rows marked as left are not eligible.
+        return {
+          select: () => ({
+            is: async (column, value) => {
+              if (column !== 'left_date' || value !== null) throw new Error(`unexpected filter ${column}=${value}`);
+              return { data: memberIds.map((wom_id) => ({ wom_id })), error: null };
+            },
+          }),
+        };
       }
       throw new Error(`unexpected table ${table}`);
     },
