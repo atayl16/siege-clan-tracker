@@ -1,4 +1,4 @@
-import { formatNumber } from "./numbers";
+import { formatNumber } from "./numbers.js";
 
 // Rank name definitions
 export const SKILLER_RANK_NAMES = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte", "Maxed"];
