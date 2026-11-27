@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { FaTrophy } from "react-icons/fa";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";

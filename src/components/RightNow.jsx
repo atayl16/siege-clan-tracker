@@ -1,6 +1,6 @@
 import React from "react";
 import useSWR from "swr";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FaRegClock } from "react-icons/fa";
 import { fetchJson } from "../utils/fetchJson";
 import { useWeeklyXp } from "../hooks/useWeeklyXp";

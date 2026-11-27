@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ["react", "react-dom", "react-router-dom"],
+            vendor: ["react", "react-dom", "react-router"],
           },
           entryFileNames: "static/js/[name].[hash].js",
           chunkFileNames: "static/js/[name].[hash].js",
@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => {
     },
 
     optimizeDeps: {
-      include: ["react", "react-dom", "react-router-dom"],
+      include: ["react", "react-dom", "react-router"],
       esbuildOptions: {
         loader: {
           ".js": "jsx",

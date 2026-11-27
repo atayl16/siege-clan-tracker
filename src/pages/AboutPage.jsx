@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { xpWeekContaining } from "../utils/xpWeek";
 import { formatWeekdayTime } from "../utils/dates";
 import "./AboutPage.css";

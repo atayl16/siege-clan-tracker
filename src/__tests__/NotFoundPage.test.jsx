@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router";
 import NotFoundPage from "../pages/NotFoundPage";
 
 test("an unknown URL shows a clear not-found page with ways back", () => {

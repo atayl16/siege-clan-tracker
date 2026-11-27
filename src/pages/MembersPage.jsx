@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { useMembers } from "../hooks/useMembers";
 import MemberTable from "../components/MemberTable";
 import { FaTimes, FaFilter, FaCheck, FaUsers, FaChartBar } from "react-icons/fa";

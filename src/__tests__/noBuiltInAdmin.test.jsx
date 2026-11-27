@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, renderHook, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // The built-in admin (a hard-coded login that signed in to a shared Supabase

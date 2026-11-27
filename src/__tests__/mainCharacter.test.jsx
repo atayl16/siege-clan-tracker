@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, within, cleanup } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { mainCharacterId, mainFirst } from "../utils/characters";
