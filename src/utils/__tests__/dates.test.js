@@ -7,6 +7,7 @@ import {
   formatWeekdayTime,
   localWhen,
   calendarDay,
+  endOfCalendarDay,
   localIsoDate,
 } from "../dates";
 
@@ -127,6 +128,18 @@ describe("calendarDay", () => {
   it("is null for a missing or broken date", () => {
     expect(calendarDay(null)).toBeNull();
     expect(calendarDay("not a date")).toBeNull();
+  });
+});
+
+describe("endOfCalendarDay", () => {
+  it("is local midnight after the saved day", () => {
+    expect(endOfCalendarDay("2026-12-01T00:00:00+00:00")).toEqual(new Date(2026, 11, 2));
+    expect(endOfCalendarDay("2026-12-31")).toEqual(new Date(2027, 0, 1));
+  });
+
+  it("is null for a missing or broken date", () => {
+    expect(endOfCalendarDay(null)).toBeNull();
+    expect(endOfCalendarDay("not a date")).toBeNull();
   });
 });
 

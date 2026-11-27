@@ -110,4 +110,12 @@ describe('planRaceUpdates', () => {
     expect(planRaceUpdates(race, new Map(), NOW).completeRace).toBe(true);
     expect(planRaceUpdates({ ...race, end_date: null }, new Map(), NOW).completeRace).toBe(false);
   });
+
+  it('runs a race to the end of its end date', () => {
+    // NOW is midday on 9 Nov; a race ending 9 Nov is stored as its midnight.
+    const race = { id: 'r1', end_date: '2026-11-09T00:00:00+00:00', participants: [] };
+    expect(planRaceUpdates(race, new Map(), NOW).completeRace).toBe(false);
+    expect(planRaceUpdates(race, new Map(), new Date('2026-11-09T23:59:59Z')).completeRace).toBe(false);
+    expect(planRaceUpdates(race, new Map(), new Date('2026-11-10T00:00:00Z')).completeRace).toBe(true);
+  });
 });

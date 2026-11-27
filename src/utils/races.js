@@ -30,3 +30,26 @@ export function racesForUser(races, user, userClaims) {
 export function canEditRace(race, user) {
   return Boolean(race && user?.id && race.creator_id === user.id);
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * When a race ends. The race form saves a date ("2026-12-01"), which the
+ * database stores as midnight UTC at the start of that day; the race runs to
+ * the end of it, so it ends at the next midnight UTC (midnight UK time in
+ * winter, 1am in summer). A stored time other than midnight UTC is kept as it
+ * is.
+ *
+ * The same rule as raceEndsAt in netlify/functions/utils/raceProgress.cjs,
+ * which decides when the sync marks a race completed. Keep the two in step.
+ *
+ * @param {string|null} endDate - races.end_date
+ * @returns {Date|null} null for no end date
+ */
+export function raceEndsAt(endDate) {
+  if (!endDate) return null;
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return null;
+  const bareDate = end.getTime() % DAY_MS === 0;
+  return bareDate ? new Date(end.getTime() + DAY_MS) : end;
+}

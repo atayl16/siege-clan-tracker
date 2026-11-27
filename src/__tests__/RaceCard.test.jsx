@@ -171,3 +171,15 @@ test('shows a skill racer\'s levels once their start is recorded', () => {
   // Bosses have no levels, and a racer with no start yet has none to show.
   expect(screen.getAllByText(/Level \d+ →/)).toHaveLength(1);
 });
+
+test('a race on its end date has until the end of the day', () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  try {
+    vi.setSystemTime(new Date('2026-11-09T12:00:00Z'));
+    // The race form's "2026-11-09", as the database stores it.
+    renderCard({ race: { ...race, created_at: '2026-11-01T12:00:00Z', end_date: '2026-11-09T00:00:00+00:00' } });
+    expect(screen.getByText(/Ends in about 12 hours/)).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
+});

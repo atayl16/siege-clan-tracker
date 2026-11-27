@@ -157,6 +157,18 @@ export function calendarDay(value) {
 }
 
 /**
+ * The local midnight that ends a calendar day saved as midnight UTC (see
+ * calendarDay): the moment a goal due that day becomes overdue.
+ *
+ * @returns {Date|null} null for a missing or invalid date
+ */
+export function endOfCalendarDay(value) {
+  const day = calendarDay(value);
+  if (!day) return null;
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+}
+
+/**
  * "2026-11-27" on the visitor's clock, the shape a date field uses. Today by
  * default. toISOString() gives the UK date instead, which in a US evening is
  * already tomorrow.
