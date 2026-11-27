@@ -10,8 +10,8 @@ import {
   nextCompetitions,
   recentCompetitionCount,
   dayOf,
-  localWhen,
 } from "../utils/rightNow";
+import { localWhen } from "../utils/dates";
 import "./RightNow.css";
 
 const fmtXp = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));

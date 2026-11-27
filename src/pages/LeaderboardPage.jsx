@@ -6,7 +6,8 @@ import { useMembers } from "../hooks/useMembers";
 import { FaTrophy, FaInfoCircle, FaRegCalendarAlt, FaCrown } from "react-icons/fa";
 import WeeklyXpLeaderboard from "../components/WeeklyXpLeaderboard";
 import { TitleHolders, TitleRaces } from "../components/WeeklyTitles";
-import { XP_AWARD_POINTS } from "../utils/xpWeek";
+import { XP_AWARD_POINTS, xpWeekContaining } from "../utils/xpWeek";
+import { formatWeekdayTime } from "../utils/dates";
 import { WEEKLY_TITLES, GAINER, TITLE_POINTS, formatMinimum } from "../utils/weeklyTitles";
 
 // Import UI components
@@ -24,6 +25,10 @@ export const LEADERBOARD_TABS = ["week", "score", "hall-of-fame", "how"];
 
 /** Every way to earn Siege Score, from the same settings the awards use. */
 function HowPointsWork() {
+  // This week's window on the visitor's clock. Start and end can differ by an
+  // hour in the weeks the UK and the visitor change their clocks on different
+  // dates.
+  const week = xpWeekContaining();
   return (
     <div className="leaderboard-how">
       <Card className="leaderboard-how-card" variant="dark">
@@ -43,7 +48,9 @@ function HowPointsWork() {
       <Card className="leaderboard-how-card" variant="dark">
         <Card.Body>
           <h3>{GAINER.name} (weekly XP)</h3>
-          <p className="leaderboard-how-sub">Most Overall XP, Monday 19:00 to Monday 19:00 UK</p>
+          <p className="leaderboard-how-sub">
+            Most Overall XP, {formatWeekdayTime(week.start)} to {formatWeekdayTime(week.end)}
+          </p>
           <ul>
             {XP_AWARD_POINTS.map((points, i) => (
               <li key={i}>

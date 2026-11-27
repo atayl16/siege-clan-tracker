@@ -70,7 +70,7 @@ describe("UsageAlerts", () => {
     render(<UsageAlerts />);
     expect(await screen.findByText(/well inside the free tiers/)).toBeInTheDocument();
     expect(screen.getByText("40 minutes")).toBeInTheDocument();
-    expect(screen.getByText(/On course for 120 minutes \(40%\) by 2026-12-01/)).toBeInTheDocument();
+    expect(screen.getByText(/On course for 120 minutes \(40%\) by Dec 1, 2026/)).toBeInTheDocument();
     expect(screen.getByRole("meter", { name: "Netlify Build Minutes used" })).toHaveAttribute("aria-valuenow", "40");
     expect(screen.getByText("Supabase egress")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Netlify Usage & Billing" })).toHaveAttribute("href", "https://app.netlify.com");

@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { xpWeekContaining } from "../utils/xpWeek";
+import { formatWeekdayTime } from "../utils/dates";
 import "./AboutPage.css";
 
 const DISCORD_URL = "https://discord.gg/TqFpRD4vNv";
@@ -26,6 +28,12 @@ const external = { target: "_blank", rel: "noopener noreferrer" };
  */
 export default function AboutPage() {
   const { hash } = useLocation();
+
+  // The next week turnover on the visitor's clock, left out when that clock
+  // reads the same as the UK's.
+  const turnover = xpWeekContaining().end;
+  const localTurnover = formatWeekdayTime(turnover);
+  const sameAsUk = localTurnover === formatWeekdayTime(turnover, { timeZone: "Europe/London" });
 
   // The router does not scroll to #privacy etc. on its own.
   useEffect(() => {
@@ -142,7 +150,8 @@ export default function AboutPage() {
             <strong>Competitions, goals and races</strong> are checked every hour.
           </li>
           <li>
-            <strong>The clan week</strong> runs from Monday 7pm UK time. Weekly titles and XP points are handed out
+            <strong>The clan week</strong> runs from Monday 7pm UK time
+            {!sameAsUk && ` (${localTurnover} where you are)`}. Weekly titles and XP points are handed out
             shortly after it ends.
           </li>
           <li>

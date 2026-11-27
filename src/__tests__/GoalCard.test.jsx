@@ -75,3 +75,14 @@ test('says when a goal is due, and when it is overdue', () => {
   rerender(<GoalCard goal={goal({ target_date: '2026-11-10T12:00:00' })} />);
   expect(screen.getByText('Due Nov 10')).toBeInTheDocument();
 });
+
+test("keeps the due day the member picked, whatever the visitor's time zone", () => {
+  // A date field's "2026-12-01", as Supabase stores it. Read on a US clock
+  // that instant is still 30 Nov, which used to show as due (and overdue) a
+  // day early. CI runs in UTC; run with TZ=America/Los_Angeles to see it.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 11, 1, 12)); // local midday, 1 Dec
+
+  render(<GoalCard goal={goal({ target_date: '2026-12-01T00:00:00+00:00' })} />);
+  expect(screen.getByText('Due Dec 1')).not.toHaveClass('ui-board-goal-overdue');
+});

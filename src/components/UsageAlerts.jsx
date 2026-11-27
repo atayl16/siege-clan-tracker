@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { FaCheck, FaExclamationTriangle } from "react-icons/fa";
 import { supabase } from "../supabaseClient";
 import Badge from "./ui/Badge";
+import { calendarDay, formatDate } from "../utils/dates";
 import "./UsageAlerts.css";
 
 const LEVELS = {
@@ -27,7 +28,7 @@ function projectionText(item) {
   if (s.projected == null) return "Too early in the period to project";
   const pct = Math.round(share(s.projected, s.usage_limit));
   return item.kind === "cumulative"
-    ? `On course for ${s.projected_text} (${pct}%) by ${s.period_end}`
+    ? `On course for ${s.projected_text} (${pct}%) by ${formatDate(calendarDay(s.period_end))}`
     : `On course for ${s.projected_text} (${pct}%) in 30 days`;
 }
 

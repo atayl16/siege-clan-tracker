@@ -10,6 +10,8 @@ import { useGroup } from "../hooks/useGroup"; // Added to get WOM group data
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { TitleBadges } from "./WeeklyTitles";
 import { useTitleHolders } from "../hooks/useWeeklyTitles";
+import { formatDate } from "../utils/dates";
+import { formatNumber } from "../utils/numbers";
 import "./MemberTable.css";
 
 // Define lists of rank names for each type
@@ -71,7 +73,7 @@ const safeFormat = (value, options = {}) => {
     value = Math.floor(value);
   }
 
-  return Number(value).toLocaleString();
+  return formatNumber(value);
 };
 
 // Helper function to safely parse integers
@@ -365,13 +367,7 @@ export default function MemberTable({ filteredMembers = null }) {
         cell: ({ row }) => {
           if (!row.original.join_date) return <div className="ui-cell-content ui-center-content">-</div>;
           
-          const date = new Date(row.original.join_date);
-          // Format date with shortened month (Jan, Feb, Mar, etc.)
-          const formattedDate = date.toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
-          });
+          const formattedDate = formatDate(row.original.join_date);
           
           return (
             <div className="ui-cell-content ui-center-content">
@@ -458,15 +454,7 @@ export default function MemberTable({ filteredMembers = null }) {
                         <div className="ui-detail-item">
                           <span className="ui-detail-label">Joined</span>
                           <span className="ui-detail-value">
-                            {row.original.join_date
-                              ? new Date(
-                                  row.original.join_date
-                                ).toLocaleDateString(undefined, {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })
-                              : "N/A"}
+                            {formatDate(row.original.join_date, { month: "long" }) || "N/A"}
                           </span>
                         </div>
                         {/* Next rank information */}

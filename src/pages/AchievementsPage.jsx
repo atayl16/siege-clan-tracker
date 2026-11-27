@@ -9,6 +9,7 @@ import Tabs from "../components/ui/Tabs";
 import ActivityList from "../components/ActivityList";
 import { useClanActivity } from "../hooks/useRuneProfile";
 import { RUNEPROFILE_URL, RUNEPROFILE_GUIDE_URL, describeActivity } from "../utils/runeProfile";
+import { formatDate, formatDay } from "../utils/dates";
 import "./AchievementsPage.css";
 
 /** Wise Old Man's milestones for the clan: 99s, base stats, kill counts. */
@@ -97,19 +98,12 @@ function Milestones() {
                             {achievement.name}
                             {/* Phones hide the Date column; show it here. */}
                             <span className="achievement-date-inline">
-                              {new Date(achievement.createdAt).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                              })}
+                              {formatDay(achievement.createdAt)}
                             </span>
                           </span>
                         </td>
                         <td className="achievement-date">
-                          {new Date(achievement.createdAt).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                          {formatDate(achievement.createdAt, { month: "long" })}
                         </td>
                       </tr>
                     ))}

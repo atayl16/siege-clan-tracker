@@ -1,3 +1,5 @@
+import { formatNumber } from "./numbers";
+
 // Rank name definitions
 export const SKILLER_RANK_NAMES = ["Opal", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte", "Maxed"];
 export const FIGHTER_RANK_NAMES = ["Mentor", "Prefect", "Leader", "Supervisor", "Superior", "Executive", "Senator", "Monarch", "TzKal"];
@@ -30,7 +32,7 @@ export const FIGHTER_RANKS = [
 // Helper functions
 export const safeFormat = (value) => {
   if (value === null || value === undefined) return "0";
-  return Number(value).toLocaleString();
+  return formatNumber(value);
 };
 
 export const safeParseInt = (value) => {

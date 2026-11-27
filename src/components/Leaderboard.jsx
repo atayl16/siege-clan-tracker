@@ -3,6 +3,7 @@ import PlaceBadge from "./PlaceBadge";
 import SiegeScoreSince from "./SiegeScoreSince";
 import { titleize } from "../utils/stringUtils";
 import "./Leaderboard.css";
+import { formatNumber } from "../utils/numbers";
 
 export default function SiegeLeaderboard({
   members = [],
@@ -118,7 +119,7 @@ export default function SiegeLeaderboard({
               </span>
               <span className="ui-player-score">
                 {type === "score"
-                  ? `${player.siege_score.toLocaleString()} pts`
+                  ? `${formatNumber(player.siege_score)} pts`
                   : `${player.event_wins} ${
                       player.event_wins === 1 ? "win" : "wins"
                     }`}
@@ -168,7 +169,7 @@ export default function SiegeLeaderboard({
                   </td>
                   <td className="ui-player-score">
                     {type === "score"
-                      ? player.siege_score.toLocaleString()
+                      ? formatNumber(player.siege_score)
                       : player.event_wins}
                   </td>
                 </tr>

@@ -6,6 +6,7 @@ import Button from "./ui/Button";
 import Card from "./ui/Card";
 import BoardFilters from "./BoardFilters";
 import "./HallOfFame.css";
+import { formatNumber } from "../utils/numbers";
 
 const VIEWS = [
   { value: "bosses", label: "Boss Kills" },
@@ -105,10 +106,10 @@ export default function HallOfFame() {
                             {boss.player ? boss.player.displayName : "N/A"}
                           </td>
                           <td className="boss-kills">
-                            {boss.kills.toLocaleString()}
+                            {formatNumber(boss.kills)}
                           </td>
                           <td className="boss-rank">
-                            {boss.rank.toLocaleString()}
+                            {formatNumber(boss.rank)}
                           </td>
                         </tr>
                       ))}
@@ -148,10 +149,10 @@ export default function HallOfFame() {
                             {activity.player ? activity.player.displayName : "N/A"}
                           </td>
                           <td className="boss-activity-score">
-                            {activity.score.toLocaleString()}
+                            {formatNumber(activity.score)}
                           </td>
                           <td className="boss-activity-rank">
-                            {activity.rank.toLocaleString()}
+                            {formatNumber(activity.rank)}
                           </td>
                         </tr>
                       ))}

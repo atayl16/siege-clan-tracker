@@ -5,6 +5,8 @@ import MetricIcon from "./MetricIcon"; // Use MetricIcon
 import PlaceBadge from "./PlaceBadge";
 import { SKILL_METRICS } from "../utils/skillLevels";
 import { formatXp } from "../utils/xpWeek";
+import { formatDate } from "../utils/dates";
+import { formatNumber } from "../utils/numbers";
 import "./EventsTable.css";
 
 export default function EventsTable({
@@ -108,16 +110,7 @@ export default function EventsTable({
   // is on the page, and served from the edge cache.
   const leaders = useCompetitionLeaders(activeEvents.some((event) => event.wom_id));
 
-  // Format the date consistently (handles UTC correctly)
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const eventDate = (value) => formatDate(value) || "N/A";
 
   const formatRelativeTime = (milliseconds) => {
     if (!milliseconds) return "";
@@ -200,7 +193,7 @@ export default function EventsTable({
                             )}
                           </strong>
                         </td>
-                        <td className="ui-event-date">{formatDate(event.end_date)}</td>
+                        <td className="ui-event-date">{eventDate(event.end_date)}</td>
                         <td>
                           <span className="ui-badge ui-badge-warning">
                             {formatRelativeTime(event.timeRemaining)} left
@@ -257,7 +250,7 @@ export default function EventsTable({
                         )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">{formatDate(event.start_date)}</td>
+                    <td className="ui-event-date">{eventDate(event.start_date)}</td>
                     <td>
                       <span className="ui-badge ui-badge-info">
                         {formatRelativeTime(event.timeUntil)}
@@ -305,7 +298,7 @@ export default function EventsTable({
                         )}
                       </strong>
                     </td>
-                    <td className="ui-event-date">{formatDate(event.end_date)}</td>
+                    <td className="ui-event-date">{eventDate(event.end_date)}</td>
                     <td>
                       {event.winner_username ? (
                         <span className="ui-winner-badge">
@@ -337,7 +330,7 @@ export function formatGain(metric, gained) {
   const n = Number(gained) || 0;
   if (SKILL_METRICS.has(metric)) return `${formatXp(n)} XP`;
   if (metric === "ehp" || metric === "ehb") return `${Number(n.toFixed(1))} hrs`;
-  return `${n.toLocaleString()} KC`;
+  return `${formatNumber(n)} KC`;
 }
 
 /** A running competition's top three, under its row in Active Events. */

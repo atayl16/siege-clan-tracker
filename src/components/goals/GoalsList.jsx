@@ -12,7 +12,7 @@ import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import EmptyState from "../ui/EmptyState";
 import "./Goals.css";
-import { formatDate } from "../../utils/dates";
+import { calendarDay, formatDate } from "../../utils/dates";
 import { goalName } from "../../utils/goalName";
 
 export default function GoalsList({ player, userId, onClose }) {
@@ -230,7 +230,7 @@ export default function GoalsList({ player, userId, onClose }) {
                     <div className="ui-goal-deadline">
                       <span className="ui-detail-label">Deadline:</span>
                       <span className="ui-detail-value">
-                        {formatDate(goal.target_date)}
+                        {formatDate(calendarDay(goal.target_date))}
                       </span>
                     </div>
                   )}

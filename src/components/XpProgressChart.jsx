@@ -2,6 +2,8 @@ import React, { useMemo, useState, useId } from "react";
 import useSWR from "swr";
 import { fetchJson } from "../utils/fetchJson";
 import { formatXp } from "../utils/xpWeek";
+import { formatDateTime, formatDay } from "../utils/dates";
+import { formatNumber } from "../utils/numbers";
 import "./XpProgressChart.css";
 
 const PERIODS = [
@@ -16,21 +18,7 @@ const W = 300;
 const H = 80;
 const PAD_Y = 6;
 
-const dateLabel = (iso, period) =>
-  new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    ...(period === "year" ? { year: "2-digit" } : {}),
-  });
-
-const fullDate = (iso) =>
-  new Date(iso).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const dateLabel = (iso, period) => formatDay(iso, period === "year" ? { year: "2-digit" } : undefined);
 
 /** Plot coordinates for each point: x by time, y scaled to the period's range. */
 export function layoutPoints(points) {
@@ -162,8 +150,8 @@ export default function XpProgressChart({ womId }) {
                 style={{ left: `${(hovered.x / W) * 100}%` }}
                 role="status"
               >
-                <strong>{hovered.value.toLocaleString()} XP</strong>
-                <span>{fullDate(hovered.date)}</span>
+                <strong>{formatNumber(hovered.value)} XP</strong>
+                <span>{formatDateTime(hovered.date)}</span>
               </div>
             </>
           )}

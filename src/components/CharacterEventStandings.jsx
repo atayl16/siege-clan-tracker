@@ -3,6 +3,7 @@ import { FaTrophy } from "react-icons/fa";
 import { usePlayerEvents } from "../hooks/usePlayerEvents";
 import { titleize } from "../utils/stringUtils";
 import "./CharacterEventStandings.css";
+import { formatNumber } from "../utils/numbers";
 
 export function ordinal(n) {
   const mod100 = n % 100;
@@ -53,7 +54,7 @@ export default function CharacterEventStandings({ womId }) {
               )}
               <span>
                 {titleize(event.metric || "")} +
-                {Number(event.gained || 0).toLocaleString()}
+                {formatNumber(event.gained || 0)}
               </span>
               <span className="character-event-ends">{timeLeft(event.endsAt)}</span>
             </div>

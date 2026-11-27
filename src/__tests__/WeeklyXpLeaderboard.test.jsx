@@ -5,6 +5,7 @@ const hookState = vi.hoisted(() => ({ value: null }));
 vi.mock("../hooks/useWeeklyXp", () => ({ useWeeklyXp: () => hookState.value }));
 
 import WeeklyXpLeaderboard, { YourWeeklyXp } from "../components/WeeklyXpLeaderboard";
+import { localWhen } from "../utils/dates";
 
 const week = {
   start: new Date("2026-11-09T19:00:00Z"),
@@ -47,7 +48,10 @@ describe("WeeklyXpLeaderboard", () => {
     expect(within(rows[0]).getByText("OakSmasher")).toBeInTheDocument();
     expect(within(rows[0]).getByText("9.38M XP")).toBeInTheDocument();
     expect(within(rows[0]).getByText("+150")).toBeInTheDocument();
-    expect(screen.getByText(/Top 5 earn Siege Score · ends Mon 16 Nov, 19:00 UK/)).toBeInTheDocument();
+    // On the visitor's clock, not the UK's.
+    const note = screen.getByText(/^Top 5 earn Siege Score · ends /);
+    expect(note).toHaveTextContent(`ends ${localWhen(week.end)}`);
+    expect(note).not.toHaveTextContent("UK");
   });
 
   it("marks the viewer's own character", () => {

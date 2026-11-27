@@ -13,6 +13,8 @@ import { titleize } from "../utils/stringUtils";
 import { MAX_LEVEL, SKILL_METRICS, hasLevels, levelForXp, xpForLevel } from "../utils/skillLevels";
 import { fetchFreshPlayerStats } from "../services/playerRefresh";
 import { fetchPlayerStats } from "../services/goalProgressService";
+import { localIsoDate } from "../utils/dates";
+import { formatNumber } from "../utils/numbers";
 
 /**
  * A row's target is either "gain" (XP or kills to gain, which is what
@@ -69,7 +71,7 @@ export default function CreateRace({ userId, race = null, onCreated, onCancel })
   // New end dates must not be in the past, but an ended race's saved date
   // has to stay valid while it is unchanged, or none of its other fields
   // could be saved. Any other date picked must still be today or later.
-  const today = new Date().toISOString().split("T")[0];
+  const today = localIsoDate();
   const minEndDate =
     isEditing && savedEndDate && savedEndDate < today && endDate === savedEndDate
       ? savedEndDate
@@ -522,9 +524,9 @@ function RaceTarget({ row, index, startXp, status, onChange }) {
     if (startXp === undefined) {
       hint = status === "failed" ? "Could not get current XP. Use XP Gain instead." : "Getting current XP...";
     } else if (Number.isInteger(typed) && typed > currentLevel && typed <= MAX_LEVEL) {
-      hint = `Level ${currentLevel} now. Level ${typed} is +${(xpForLevel(typed) - startXp).toLocaleString()} XP.`;
+      hint = `Level ${currentLevel} now. Level ${typed} is +${formatNumber(xpForLevel(typed) - startXp)} XP.`;
     } else {
-      hint = `Level ${currentLevel} now (${startXp.toLocaleString()} XP).`;
+      hint = `Level ${currentLevel} now (${formatNumber(startXp)} XP).`;
     }
   }
 

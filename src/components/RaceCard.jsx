@@ -8,6 +8,7 @@ import './RaceCard.css';
 
 import Card from "./ui/Card";
 import ProgressBar from "./ui/ProgressBar";
+import { formatNumber } from "../utils/numbers";
 
 /**
  * "Level 81 → 85" for a skill racer whose starting point is recorded: the
@@ -141,7 +142,7 @@ export default function RaceCard({ race, isOwner, onRefresh }) {
 
               <ProgressBar
                 value={participant.progressPercent}
-                label={`+${(participant.current_value ?? 0).toLocaleString()} / ${(participant.target_value ?? 0).toLocaleString()}`}
+                label={`+${formatNumber(participant.current_value ?? 0)} / ${formatNumber(participant.target_value ?? 0)}`}
                 variant={index === 0 ? "success" : "primary"}
               />
               {/* null (not undefined): the column exists and nothing has

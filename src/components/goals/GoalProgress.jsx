@@ -1,6 +1,7 @@
 import React from 'react';
 import { hasLevels, levelForXp } from '../../utils/skillLevels';
 import './GoalProgress.css';
+import { formatNumber } from "../../utils/numbers";
 
 /**
  * One side of the values row. A skill reads as its level, with the XP
@@ -8,7 +9,7 @@ import './GoalProgress.css';
  * the number itself.
  */
 function valueLines(goal, value) {
-  const amount = value.toLocaleString();
+  const amount = formatNumber(value);
   if (goal.goal_type === 'boss') return { main: `${amount} kills`, detail: null };
   if (!hasLevels(goal.metric)) return { main: `${amount} XP`, detail: null };
   return { main: `Level ${levelForXp(value)}`, detail: `${amount} XP` };
@@ -84,7 +85,7 @@ export default function GoalProgress({ goal }) {
             {current.detail}
             {goal.start_value > 0 && (
               <span className="ui-gained-value">
-                +{(goal.current_value - goal.start_value).toLocaleString()}
+                +{formatNumber(goal.current_value - goal.start_value)}
               </span>
             )}
           </span>

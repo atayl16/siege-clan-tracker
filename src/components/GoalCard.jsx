@@ -1,5 +1,4 @@
 import React from 'react';
-import { format } from 'date-fns';
 import { hasLevels, levelForXp } from '../utils/skillLevels';
 import './GoalCard.css';
 
@@ -7,8 +6,8 @@ import Badge from './ui/Badge';
 import Card from './ui/Card';
 import ProgressBar from './ui/ProgressBar';
 import { goalName } from "../utils/goalName";
-
-const shortDate = (value) => format(new Date(value), 'MMM d');
+import { calendarDay, formatDay, localIsoDate } from "../utils/dates";
+import { formatNumber } from "../utils/numbers";
 
 /**
  * "Level 92 → 99" while a skill goal still has levels to go, or just
@@ -39,17 +38,15 @@ export default function GoalCard({ goal }) {
       : 0;
 
   // Past its deadline and not done. Compared by day, so a goal due today is
-  // not overdue yet.
-  const overdue =
-    !completed &&
-    goal.target_date &&
-    format(new Date(goal.target_date), 'yyyy-MM-dd') < format(new Date(), 'yyyy-MM-dd');
+  // not overdue yet. The deadline is a calendar day, not a moment.
+  const dueDay = calendarDay(goal.target_date);
+  const overdue = !completed && dueDay && localIsoDate(dueDay) < localIsoDate();
 
   let when = null;
   if (completed) {
-    when = goal.completed_date ? `Done ${shortDate(goal.completed_date)}` : 'Done';
-  } else if (goal.target_date) {
-    when = overdue ? `Overdue (${shortDate(goal.target_date)})` : `Due ${shortDate(goal.target_date)}`;
+    when = goal.completed_date ? `Done ${formatDay(goal.completed_date)}` : 'Done';
+  } else if (dueDay) {
+    when = overdue ? `Overdue (${formatDay(dueDay)})` : `Due ${formatDay(dueDay)}`;
   }
 
   const levels = levelLine(goal);
@@ -83,8 +80,8 @@ export default function GoalCard({ goal }) {
         <div className="ui-board-goal-footer">
           <span className="ui-board-goal-amount">
             {completed
-              ? `+${gained.toLocaleString()} ${unit} (goal ${needed.toLocaleString()})`
-              : `${gained.toLocaleString()} / ${needed.toLocaleString()} ${unit}`}
+              ? `+${formatNumber(gained)} ${unit} (goal ${formatNumber(needed)})`
+              : `${formatNumber(gained)} / ${formatNumber(needed)} ${unit}`}
           </span>
           {when && (
             <span className={`ui-board-goal-when ${overdue ? 'ui-board-goal-overdue' : ''}`}>{when}</span>
