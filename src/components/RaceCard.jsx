@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { titleize, displayUsername } from '../utils/stringUtils';
 import { SKILL_METRICS, hasLevels, levelForXp } from '../utils/skillLevels';
 import { formatDistanceToNow } from 'date-fns';
+import { raceEndsAt } from '../utils/races';
 import './RaceCard.css';
 
 import Card from "./ui/Card";
@@ -82,7 +83,9 @@ export default function RaceCard({ race, isOwner, onRefresh }) {
       setRefreshing(false);
     }
   };
-  const endDate = race.end_date ? formatDate(race.end_date) : null;
+  // The race runs to the end of its end date (see raceEndsAt).
+  const endsAt = raceEndsAt(race.end_date);
+  const endDate = endsAt ? formatDate(endsAt) : null;
 
   return (
     <Card className="ui-race-card">

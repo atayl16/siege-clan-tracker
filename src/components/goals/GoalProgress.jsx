@@ -2,6 +2,7 @@ import React from 'react';
 import { hasLevels, levelForXp } from '../../utils/skillLevels';
 import './GoalProgress.css';
 import { formatNumber } from "../../utils/numbers";
+import { endOfCalendarDay } from "../../utils/dates";
 
 /**
  * One side of the values row. A skill reads as its level, with the XP
@@ -22,11 +23,14 @@ export default function GoalProgress({ goal }) {
     100
   );
   
-  // Calculate expected progress based on time elapsed if target date exists
+  // Expected progress from the time elapsed, when there is a deadline. The
+  // deadline is a calendar day, so the time runs to the end of it, the
+  // moment GoalCard starts calling the goal overdue.
   let expectedProgress = null;
-  if (goal.target_date) {
+  const deadline = endOfCalendarDay(goal.target_date);
+  if (deadline) {
     const startDate = new Date(goal.start_date).getTime();
-    const targetDate = new Date(goal.target_date).getTime();
+    const targetDate = deadline.getTime();
     const currentDate = new Date().getTime();
     const totalTimespan = targetDate - startDate;
     const elapsedTimespan = currentDate - startDate;

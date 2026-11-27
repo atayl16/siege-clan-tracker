@@ -35,6 +35,25 @@ const MAX_RACES_PER_REQUEST = 20;
 // it; the Refresh button (`force`, signed-in members) can go every minute,
 // which is about as often as WOM will update a player anyway.
 const COOLDOWN_MS = { view: 5 * 60_000, force: 60_000 };
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * When a race ends. The race form saves a date ("2026-12-01"), which the
+ * database stores as midnight UTC at the start of that day; the race runs to
+ * the end of it, so it ends at the next midnight UTC (midnight UK time in
+ * winter, 1am in summer). A stored time other than midnight UTC is kept as it
+ * is. The race card reads it the same way: src/utils/races.js.
+ *
+ * @param {string|null} endDate - races.end_date
+ * @returns {Date|null} null for no end date
+ */
+function raceEndsAt(endDate) {
+  if (!endDate) return null;
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return null;
+  const bareDate = end.getTime() % DAY_MS === 0;
+  return bareDate ? new Date(end.getTime() + DAY_MS) : end;
+}
 
 class RaceRefreshError extends Error {
   constructor(message, statusCode = 400) {
@@ -70,7 +89,8 @@ function metricValue(snapshotData, metric) {
  * @returns {{ participantUpdates: Array<{id, changes}>, completeRace: boolean }}
  */
 function planRaceUpdates(race, snapshots, now = new Date()) {
-  const ended = race.end_date && new Date(race.end_date) < now;
+  const endsAt = raceEndsAt(race.end_date);
+  const ended = endsAt !== null && endsAt <= now;
   const participantUpdates = [];
   const participants = race.participants ?? [];
   const alreadyWon = participants.some((p) => p.is_winner);
@@ -255,6 +275,7 @@ module.exports = {
   RaceRefreshError,
   metricValue,
   planRaceUpdates,
+  raceEndsAt,
   refreshDecision,
   fetchSnapshots,
   applyRaceUpdates,
