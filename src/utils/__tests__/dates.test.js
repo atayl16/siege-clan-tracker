@@ -13,6 +13,10 @@ import {
 // jsdom's browser language is en-US, so these read US style unless a test
 // loads the module again with another browser.
 
+// Local midday on 9 Nov: 9 Nov on any test machine's clock. (Noon UTC is
+// already 10 Nov in New Zealand.)
+const NOV_9 = new Date(2026, 10, 9, 12);
+
 describe("pickLocale", () => {
   it("takes the first regional English in the browser's list", () => {
     expect(pickLocale(["en-AU", "en-US"], "America/Chicago")).toBe("en-AU");
@@ -49,32 +53,32 @@ describe("siteLocale", () => {
   it("writes dates in the browser's own English", async () => {
     const uk = await withBrowser(["fr-FR", "en-GB"]);
     expect(uk.siteLocale()).toBe("en-GB");
-    expect(uk.formatDate("2026-11-09T12:00:00Z")).toBe("9 Nov 2026");
+    expect(uk.formatDate(NOV_9)).toBe("9 Nov 2026");
 
     const us = await withBrowser(["en-US"]);
-    expect(us.formatDate("2026-11-09T12:00:00Z")).toBe("Nov 9, 2026");
+    expect(us.formatDate(NOV_9)).toBe("Nov 9, 2026");
   });
 
   it("keeps the page in English for a browser in another language", async () => {
     const dates = await withBrowser(["de-DE"]);
     expect(dates.siteLocale()).toMatch(/^en-(GB|US)$/);
-    expect(dates.formatDate("2026-11-09T12:00:00Z")).toMatch(/Nov/);
-    expect(dates.formatDate("2026-11-09T12:00:00Z")).not.toMatch(/\./);
+    expect(dates.formatDate(NOV_9)).toMatch(/Nov/);
+    expect(dates.formatDate(NOV_9)).not.toMatch(/\./);
   });
 });
 
 describe("formatDate and friends", () => {
-  const noonUtc = "2026-11-09T12:00:00Z";
-
   it("writes the month as a word, never an all-number date", () => {
-    expect(formatDate(noonUtc)).toBe("Nov 9, 2026");
-    expect(formatDate(noonUtc, { month: "long" })).toBe("November 9, 2026");
-    expect(formatDay(noonUtc)).toBe("Nov 9");
-    expect(formatDay(noonUtc, { year: "2-digit" })).toBe("Nov 9, 26");
+    expect(formatDate(NOV_9)).toBe("Nov 9, 2026");
+    // Pages pass ISO strings from the database.
+    expect(formatDate(NOV_9.toISOString())).toBe("Nov 9, 2026");
+    expect(formatDate(NOV_9, { month: "long" })).toBe("November 9, 2026");
+    expect(formatDay(NOV_9)).toBe("Nov 9");
+    expect(formatDay(NOV_9, { year: "2-digit" })).toBe("Nov 9, 26");
   });
 
   it("adds the time on the visitor's clock", () => {
-    expect(formatDateTime(noonUtc)).toMatch(/^Nov 9, 2026, \d{1,2}:\d{2} [AP]M$/);
+    expect(formatDateTime(NOV_9)).toMatch(/^Nov 9, 2026, \d{1,2}:\d{2} [AP]M$/);
   });
 
   it("gives a weekly moment on any clock", () => {
