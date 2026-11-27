@@ -5,8 +5,6 @@ import {
   FaSearch,
   FaTimes,
   FaInfoCircle,
-  FaChevronDown,
-  FaChevronUp,
 } from "react-icons/fa";
 
 // Import UI components
@@ -30,7 +28,6 @@ export default function Competitions() {
   // State for filters and expanded views
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showInfo, setShowInfo] = useState(false);
 
   // Filter events based on search term and filter type
   const filteredEvents = useMemo(() => {
@@ -131,65 +128,59 @@ export default function Competitions() {
       {/* What each kind of event is. Below the list: people come here for
           this week's events, and this is reading for newer members. */}
       <div className="ui-section-container event-info-container">
-        <div
-          className="event-info-header"
-          onClick={() => setShowInfo(!showInfo)}
-        >
+        <div className="event-info-header">
           <FaInfoCircle className="event-info-icon" />
           <h3>About Our Events</h3>
-          {showInfo ? <FaChevronUp /> : <FaChevronDown />}
         </div>
-        {showInfo && (
-          <div className="event-info-content">
-            <p>
-              We encourage our clan members to enjoy different play styles, hang
-              out with each other and most of all have fun! To help this, we
-              host regular events, including:
-            </p>
+        <div className="event-info-content">
+          <p>
+            We encourage our clan members to enjoy different play styles, hang
+            out with each other and most of all have fun! To help this, we
+            host regular events, including:
+          </p>
 
-            <div className="event-types-grid">
-              <div className="event-type-card">
-                <h4>SotW</h4>
-                <p>
-                  Skill of the Week - A competition to gain the most XP in a
-                  specific skill over 7 days.
-                </p>
-              </div>
+          <div className="event-types-grid">
+            <div className="event-type-card">
+              <h4>SotW</h4>
+              <p>
+                Skill of the Week - A competition to gain the most XP in a
+                specific skill over 7 days.
+              </p>
+            </div>
 
-              <div className="event-type-card">
-                <h4>BotW</h4>
-                <p>
-                  Boss of the Week - A competition to get the most kills at a
-                  specific boss over 7 days.
-                </p>
-              </div>
+            <div className="event-type-card">
+              <h4>BotW</h4>
+              <p>
+                Boss of the Week - A competition to get the most kills at a
+                specific boss over 7 days.
+              </p>
+            </div>
 
-              <div className="event-type-card">
-                <h4>Raids</h4>
-                <p>
-                  We host regular raid events including group raids, learner
-                  raids with experienced teachers, and Raid Week.
-                </p>
-              </div>
+            <div className="event-type-card">
+              <h4>Raids</h4>
+              <p>
+                We host regular raid events including group raids, learner
+                raids with experienced teachers, and Raid Week.
+              </p>
+            </div>
 
-              <div className="event-type-card">
-                <h4>Bingo/Tile Races</h4>
-                <p>
-                  Teams compete to complete tasks on a bingo board within a time
-                  limit. Winners receive prizes!
-                </p>
-              </div>
+            <div className="event-type-card">
+              <h4>Bingo/Tile Races</h4>
+              <p>
+                Teams compete to complete tasks on a bingo board within a time
+                limit. Winners receive prizes!
+              </p>
+            </div>
 
-              <div className="event-type-card">
-                <h4>Member-run Events</h4>
-                <p>
-                  Short events (1-2 hours) organized by clan members, such as
-                  group bossing, skilling, minigames, hide and seek, and more.
-                </p>
-              </div>
+            <div className="event-type-card">
+              <h4>Member-run Events</h4>
+              <p>
+                Short events (1-2 hours) organized by clan members, such as
+                group bossing, skilling, minigames, hide and seek, and more.
+              </p>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </>
   );

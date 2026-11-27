@@ -73,4 +73,12 @@ describe("Competitions summary", () => {
     const about = screen.getByRole("heading", { name: "About Our Events" });
     expect(table.compareDocumentPosition(about) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+
+  it("shows About Our Events as a plain card, with nothing to expand", () => {
+    render(<Competitions />);
+    expect(screen.getByText(/Skill of the Week - A competition/)).toBeInTheDocument();
+    expect(screen.getByText("Member-run Events")).toBeInTheDocument();
+    const header = screen.getByRole("heading", { name: "About Our Events" }).parentElement;
+    expect(header.querySelectorAll("svg")).toHaveLength(1); // the info icon, no chevron
+  });
 });
