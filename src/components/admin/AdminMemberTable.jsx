@@ -16,6 +16,8 @@ import { rankPromotionFor } from "../../utils/rankUtils";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import Card from "../ui/Card";
+import { formatDate, formatDateTime } from "../../utils/dates";
+import { formatNumber } from "../../utils/numbers";
 import "./AdminMemberTable.css";
 
 export default function AdminMemberTable({
@@ -347,18 +349,13 @@ export default function AdminMemberTable({
                       {Math.floor(member.ehb) || 0}
                     </td>
                     <td className="ui-text-center">
-                      {Number(
+                      {formatNumber(
                         (parseInt(member.current_xp) || 0) -
                           (parseInt(member.first_xp) || 0)
-                      ).toLocaleString()}
+                      )}
                     </td>
                     <td className="ui-text-center">
-                      {member.join_date
-                        ? new Date(member.join_date).toLocaleDateString(
-                            undefined,
-                            { year: "numeric", month: "short", day: "numeric" }
-                          )
-                        : "-"}
+                      {formatDate(member.join_date) || "-"}
                     </td>
                   </tr>
 
@@ -431,9 +428,7 @@ export default function AdminMemberTable({
                                   Current XP:
                                 </span>
                                 <span className="ui-detail-value">
-                                  {Number(
-                                    member.current_xp || 0
-                                  ).toLocaleString()}
+                                  {formatNumber(member.current_xp || 0)}
                                 </span>
                               </div>
 
@@ -442,9 +437,7 @@ export default function AdminMemberTable({
                                   Initial XP:
                                 </span>
                                 <span className="ui-detail-value">
-                                  {Number(
-                                    member.first_xp || 0
-                                  ).toLocaleString()}
+                                  {formatNumber(member.first_xp || 0)}
                                 </span>
                               </div>
 
@@ -453,11 +446,7 @@ export default function AdminMemberTable({
                                   Updated At:
                                 </span>
                                 <span className="ui-detail-value">
-                                  {member.updated_at
-                                    ? new Date(
-                                        member.updated_at
-                                      ).toLocaleString()
-                                    : "-"}
+                                  {formatDateTime(member.updated_at) || "-"}
                                 </span>
                               </div>
 

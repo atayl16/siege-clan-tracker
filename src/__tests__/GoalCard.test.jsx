@@ -47,7 +47,7 @@ test('a completed goal reads as done, not as over target', () => {
     <GoalCard
       goal={goal({
         goal_type: 'skill', metric: 'runecrafting', start_value: 3_143_952, current_value: 3_148_870,
-        target_value: 3_145_952, completed: true, completed_date: '2026-11-10T12:00:00Z',
+        target_value: 3_145_952, completed: true, completed_date: new Date(2026, 10, 10, 12).toISOString(), // local midday
       })}
     />
   );
@@ -65,13 +65,25 @@ test('says when a goal is due, and when it is overdue', () => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-11-10T12:00:00'));
 
-  const { rerender } = render(<GoalCard goal={goal({ target_date: '2026-11-13T12:00:00' })} />);
+  // Due dates as Supabase stores a date field's day: midnight UTC.
+  const { rerender } = render(<GoalCard goal={goal({ target_date: '2026-11-13T00:00:00+00:00' })} />);
   expect(screen.getByText('Due Nov 13')).not.toHaveClass('ui-board-goal-overdue');
 
-  rerender(<GoalCard goal={goal({ target_date: '2026-11-08T12:00:00' })} />);
+  rerender(<GoalCard goal={goal({ target_date: '2026-11-08T00:00:00+00:00' })} />);
   expect(screen.getByText('Overdue (Nov 8)')).toHaveClass('ui-board-goal-overdue');
 
   // Due today is not overdue yet.
-  rerender(<GoalCard goal={goal({ target_date: '2026-11-10T12:00:00' })} />);
+  rerender(<GoalCard goal={goal({ target_date: '2026-11-10T00:00:00+00:00' })} />);
   expect(screen.getByText('Due Nov 10')).toBeInTheDocument();
+});
+
+test("keeps the due day the member picked, whatever the visitor's time zone", () => {
+  // A date field's "2026-12-01", as Supabase stores it. Read on a US clock
+  // that instant is still 30 Nov, which used to show as due (and overdue) a
+  // day early. CI runs in UTC; run with TZ=America/Los_Angeles to see it.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 11, 1, 12)); // local midday, 1 Dec
+
+  render(<GoalCard goal={goal({ target_date: '2026-12-01T00:00:00+00:00' })} />);
+  expect(screen.getByText('Due Dec 1')).not.toHaveClass('ui-board-goal-overdue');
 });

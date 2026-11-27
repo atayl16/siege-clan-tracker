@@ -54,18 +54,3 @@ export function dayOf(competition, now = Date.now()) {
   const day = Math.min(total, Math.floor((now - start) / DAY) + 1);
   return `day ${day} of ${total}`;
 }
-
-/**
- * When a date is, in the visitor's own time zone and format:
- * "today, 7:00 PM", "tomorrow, 19:00", "Mon 30 Nov, 19:00".
- */
-export function localWhen(value, now = Date.now()) {
-  const date = new Date(value);
-  const timeText = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const days = Math.round((startOfDay(date) - startOfDay(new Date(now))) / DAY);
-  if (days === 0) return `today, ${timeText}`;
-  if (days === 1) return `tomorrow, ${timeText}`;
-  const dayText = date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
-  return `${dayText}, ${timeText}`;
-}

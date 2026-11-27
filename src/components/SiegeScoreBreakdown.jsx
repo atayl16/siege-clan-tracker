@@ -5,6 +5,7 @@ import { ordinal } from "../utils/xpWeek";
 import { titleById } from "../utils/weeklyTitles";
 import { fetchLastReset } from "../hooks/useSiegeScoreReset";
 import "./SiegeScoreBreakdown.css";
+import { formatNumber } from "../utils/numbers";
 
 const RECENT_SHOWN = 8;
 
@@ -66,7 +67,7 @@ export default function SiegeScoreBreakdown({ womId, total }) {
   );
 }
 
-const signed = (n) => `${n > 0 ? "+" : "\u2212"}${Math.abs(n).toLocaleString()}`;
+const signed = (n) => `${n > 0 ? "+" : "\u2212"}${formatNumber(Math.abs(n))}`;
 
 /** Totals by source, then the most recent awards. */
 export function Breakdown({ awards, total, since = null }) {
@@ -102,7 +103,7 @@ export function Breakdown({ awards, total, since = null }) {
             <span>
               {label} <small>({n})</small>
             </span>
-            <b>{points.toLocaleString()}</b>
+            <b>{formatNumber(points)}</b>
           </li>
         ))}
         {other !== 0 && (

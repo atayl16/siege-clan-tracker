@@ -14,7 +14,7 @@ import {
 import PlaceBadge from "./PlaceBadge";
 import { useTitleRaces, useTitleHolders } from "../hooks/useWeeklyTitles";
 import { formatTitleValue, formatMinimum } from "../utils/weeklyTitles";
-import { formatUkTime } from "../utils/xpWeek";
+import { localWhen } from "../utils/dates";
 import "./WeeklyTitles.css";
 
 const ICONS = {
@@ -184,7 +184,7 @@ export function TitleRaces() {
         <h2 id="title-races-h">This Week's Title Races</h2>
         <p>
           Top 3 over the minimum earn 150 / 100 / 50 Siege Score, and 1st takes the title.
-          {updatedAt && ` Last updated ${formatUkTime(updatedAt)} UK.`}
+          {updatedAt && ` Last updated ${localWhen(updatedAt)}.`}
         </p>
       </div>
       {body}

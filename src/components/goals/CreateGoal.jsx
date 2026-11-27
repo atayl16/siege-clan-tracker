@@ -10,6 +10,8 @@ import MetricSelector from "../MetricSelector";
 // Import UI components
 import Button from "../ui/Button";
 import Card from "../ui/Card";
+import { localIsoDate } from "../../utils/dates";
+import { formatNumber } from "../../utils/numbers";
 import "./CreateGoal.css";
 
 /**
@@ -302,7 +304,7 @@ export default function CreateGoal({
                     Current {goalType === "skill" ? "XP" : "Kills"}
                   </div>
                   <div className="ui-stats-value">
-                    {currentValueOf(currentStats, goalType, selectedMetric)?.toLocaleString() ?? "-"}
+                    {formatNumber(currentValueOf(currentStats, goalType, selectedMetric)) || "-"}
                   </div>
                   {goalType === "skill" && hasLevels(selectedMetric) &&
                     currentValueOf(currentStats, "skill", selectedMetric) !== undefined && (
@@ -431,9 +433,9 @@ export default function CreateGoal({
             />
             {levelTargetXp !== null && (
               <div className="ui-form-hint">
-                {levelTargetXp.toLocaleString()} XP
+                {formatNumber(levelTargetXp)} XP
                 {currentValue !== undefined && levelTargetXp > currentValue &&
-                  ` (${(levelTargetXp - currentValue).toLocaleString()} to go)`}
+                  ` (${formatNumber(levelTargetXp - currentValue)} to go)`}
               </div>
             )}
           </div>
@@ -448,7 +450,7 @@ export default function CreateGoal({
                 setTargetDate(e.target.value);
                 setHasInteracted(true);
               }}
-              min={new Date().toISOString().split("T")[0]}
+              min={localIsoDate()}
             />
           </div>
         </div>
