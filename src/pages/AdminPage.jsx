@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { memberNeedsRankUpdate } from "../utils/rankUtils";
 import { useData } from "../context/DataContext";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 
 // Components
 import AdminMemberTable from "../components/admin/AdminMemberTable";

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import LeaderboardPage from '../pages/LeaderboardPage';
 import { xpWeekContaining } from '../utils/xpWeek';
 import { formatWeekdayTime } from '../utils/dates';

@@ -1,13 +1,13 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { vi } from "vitest";
 
 const login = vi.fn();
 const navigate = vi.fn();
 vi.mock("../context/AuthContext", () => ({ useAuth: () => ({ login }) }));
-vi.mock("react-router-dom", async (orig) => ({ ...(await orig()), useNavigate: () => navigate }));
+vi.mock("react-router", async (orig) => ({ ...(await orig()), useNavigate: () => navigate }));
 
 import Login from "../components/Login";
 import ForgotPassword from "../components/ForgotPassword";

@@ -3,7 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
-} from "react-router-dom";
+} from "react-router";
 
 import BackgroundLoader from "./utils/BackgroundLoader";
 

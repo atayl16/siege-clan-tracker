@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 
 /**
  * A page's open tab, kept in ?tab= so a link can open it (from Discord, say)

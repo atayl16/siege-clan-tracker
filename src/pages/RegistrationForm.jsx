@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router";
 import { useAuth } from "../context/AuthContext"; // Corrected path
 import Card from "../components/ui/Card"; // Corrected path
 import Button from "../components/ui/Button"; // Corrected path

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { getSeasonalIcon } from "../utils/seasonalIcons";
 import "./Navbar.css";

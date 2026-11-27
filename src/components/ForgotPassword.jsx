@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FaKey, FaDiscord } from "react-icons/fa";
 import Card from "./ui/Card";
 import "../pages/RegistrationForm.css";

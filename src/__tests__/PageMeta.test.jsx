@@ -1,6 +1,6 @@
 import React from "react";
 import { render } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { describe, it, expect, beforeEach } from "vitest";
 import PageMeta, { metaFor, PAGES } from "../components/PageMeta";
 

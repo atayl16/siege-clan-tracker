@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation, useNavigationType } from "react-router-dom";
+import { useLocation, useNavigationType } from "react-router";
 
 /**
  * Start each new page at the top. The router keeps the scroll position, so a

@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Link, Routes, Route, useLocation } from "react-router-dom";
+import { MemoryRouter, Link, Routes, Route, useLocation } from "react-router";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Each tab's content is a stand-in that records being mounted, so the tests

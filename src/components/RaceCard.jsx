@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaLock, FaGlobe, FaCalendarAlt, FaTrophy, FaSyncAlt } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { titleize, displayUsername } from '../utils/stringUtils';
 import { SKILL_METRICS, hasLevels, levelForXp } from '../utils/skillLevels';
 import { formatDistanceToNow } from 'date-fns';

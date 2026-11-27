@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useTitleRaces } from "../hooks/useWeeklyTitles";
 import { formatTitleValue } from "../utils/weeklyTitles";
 import { titleStanding, standingOrder } from "../utils/titleStanding";
