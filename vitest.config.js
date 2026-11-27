@@ -31,7 +31,9 @@ export default defineConfig({
         test: {
           name: 'app',
           include: ['**/*.{test,spec}.{js,jsx}'],
-          exclude: ['node_modules/**', 'src/setupTests.js', 'tests/smoke/**', 'netlify/**'],
+          // .claude/ holds scratch files and other Claude sessions' git
+          // worktrees, each a whole copy of the repo with its own tests.
+          exclude: ['node_modules/**', 'src/setupTests.js', 'tests/smoke/**', 'netlify/**', '.claude/**'],
         },
       },
     ],
